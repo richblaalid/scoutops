@@ -311,10 +311,10 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       </div>
 
       {/* Amount and Description */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
+      <div className="flex gap-4">
+        <div className="w-40 shrink-0 space-y-2">
           <Label htmlFor="amount">
-            {billingType === 'split' ? 'Total Amount' : 'Amount Per Scout'} *
+            {billingType === 'split' ? 'Total Amount' : 'Per Scout'} *
           </Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
@@ -326,7 +326,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
               step="0.01"
               min="0"
               required
-              className="pl-7"
+              className="pl-7 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -334,7 +334,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             />
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="flex-1 space-y-2">
           <Label htmlFor="description">Description *</Label>
           <Input
             id="description"

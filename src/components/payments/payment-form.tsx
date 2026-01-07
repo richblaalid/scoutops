@@ -278,7 +278,7 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
               step="0.01"
               min="0"
               required
-              className="pl-7"
+              className="pl-7 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
