@@ -282,6 +282,7 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </div>
         </div>

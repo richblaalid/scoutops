@@ -21,6 +21,8 @@ interface BillingFormProps {
   scouts: Scout[]
 }
 
+type BillingType = 'split' | 'fixed'
+
 export function BillingForm({ unitId, scouts }: BillingFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,9 +30,18 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
   const [selectedScouts, setSelectedScouts] = useState<Set<string>>(new Set())
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
+  const [billingType, setBillingType] = useState<BillingType>('split')
 
-  const totalAmount = parseFloat(amount) || 0
-  const perScoutAmount = selectedScouts.size > 0 ? totalAmount / selectedScouts.size : 0
+  const parsedAmount = parseFloat(amount) || 0
+
+  // Calculate per-scout and total based on billing type
+  const perScoutAmount = billingType === 'split'
+    ? (selectedScouts.size > 0 ? parsedAmount / selectedScouts.size : 0)
+    : parsedAmount
+
+  const totalAmount = billingType === 'split'
+    ? parsedAmount
+    : parsedAmount * selectedScouts.size
 
   const toggleScout = (scoutId: string) => {
     const newSelected = new Set(selectedScouts)
@@ -62,7 +73,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       return
     }
 
-    if (totalAmount <= 0) {
+    if (parsedAmount <= 0) {
       setError('Please enter a valid amount')
       setIsLoading(false)
       return
@@ -136,6 +147,10 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       if (chargesError) throw chargesError
 
       // Create journal entry for the billing
+      const entryDescription = billingType === 'split'
+        ? `Fair Share: ${description}`
+        : `Fixed Charge: ${description}`
+
       const { data: journalEntry, error: journalError } = await (supabase as unknown as {
         from: (table: string) => {
           insert: (data: {
@@ -155,7 +170,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
         .insert({
           unit_id: unitId,
           entry_date: billingDate,
-          description: `Fair Share: ${description}`,
+          description: entryDescription,
           entry_type: 'charge',
           is_posted: true,
         })
@@ -261,10 +276,46 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Billing Type Toggle */}
+      <div className="space-y-2">
+        <Label>Billing Type</Label>
+        <div className="inline-flex rounded-lg border border-gray-300 bg-white p-1">
+          <button
+            type="button"
+            onClick={() => setBillingType('split')}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              billingType === 'split'
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Split Total
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingType('fixed')}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              billingType === 'fixed'
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Fixed Amount
+          </button>
+        </div>
+        <p className="text-sm text-gray-500">
+          {billingType === 'split'
+            ? 'Enter a total amount to split equally among selected scouts (e.g., camping trip costs)'
+            : 'Enter an amount to charge each selected scout (e.g., annual dues)'}
+        </p>
+      </div>
+
       {/* Amount and Description */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="amount">Total Amount *</Label>
+          <Label htmlFor="amount">
+            {billingType === 'split' ? 'Total Amount' : 'Amount Per Scout'} *
+          </Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
               $
@@ -279,6 +330,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </div>
         </div>
@@ -287,7 +339,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
           <Input
             id="description"
             required
-            placeholder="e.g., Summer Camp 2024"
+            placeholder={billingType === 'split' ? 'e.g., Summer Camp 2024' : 'e.g., Annual Dues 2024'}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -349,22 +401,44 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       </div>
 
       {/* Summary */}
-      {selectedScouts.size > 0 && totalAmount > 0 && (
+      {selectedScouts.size > 0 && parsedAmount > 0 && (
         <div className="rounded-lg bg-gray-50 p-4">
           <h4 className="font-medium text-gray-900">Billing Summary</h4>
-          <div className="mt-2 grid gap-2 text-sm sm:grid-cols-3">
-            <div>
-              <span className="text-gray-500">Total Amount:</span>{' '}
-              <span className="font-medium">{formatCurrency(totalAmount)}</span>
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Billing Type:</span>
+              <span className="font-medium">
+                {billingType === 'split' ? 'Split Total' : 'Fixed Amount Per Scout'}
+              </span>
             </div>
-            <div>
-              <span className="text-gray-500">Scouts:</span>{' '}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Scouts Selected:</span>
               <span className="font-medium">{selectedScouts.size}</span>
             </div>
-            <div>
-              <span className="text-gray-500">Per Scout:</span>{' '}
-              <span className="font-medium">{formatCurrency(perScoutAmount)}</span>
+            <div className="border-t border-gray-200 pt-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Amount Per Scout:</span>
+                <span className={`font-medium ${billingType === 'fixed' ? 'text-gray-900' : 'text-blue-600'}`}>
+                  {formatCurrency(perScoutAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Total Amount:</span>
+                <span className={`font-medium ${billingType === 'split' ? 'text-gray-900' : 'text-blue-600'}`}>
+                  {formatCurrency(totalAmount)}
+                </span>
+              </div>
             </div>
+            {billingType === 'split' && (
+              <p className="text-xs text-gray-500">
+                {formatCurrency(parsedAmount)} ÷ {selectedScouts.size} scouts = {formatCurrency(perScoutAmount)} each
+              </p>
+            )}
+            {billingType === 'fixed' && (
+              <p className="text-xs text-gray-500">
+                {formatCurrency(parsedAmount)} × {selectedScouts.size} scouts = {formatCurrency(totalAmount)} total
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -385,7 +459,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       {/* Submit */}
       <Button
         type="submit"
-        disabled={isLoading || selectedScouts.size === 0 || totalAmount <= 0}
+        disabled={isLoading || selectedScouts.size === 0 || parsedAmount <= 0}
         className="w-full"
       >
         {isLoading ? 'Creating...' : 'Create Billing'}
