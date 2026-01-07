@@ -27,28 +27,27 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Do not run code between createServerClient and supabase.auth.getUser()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Use getUser() to validate the session with Supabase servers
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // Redirect to login if not authenticated and trying to access protected routes
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    request.nextUrl.pathname.startsWith('/dashboard')
-  ) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  const pathname = request.nextUrl.pathname
+
+  // Public routes that don't require authentication
+  const isPublicRoute =
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname.startsWith('/auth/')
+
+  // If user is not authenticated and trying to access a protected route
+  if (!user && !isPublicRoute) {
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // Redirect authenticated users away from login page
-  if (user && request.nextUrl.pathname === '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // If user is authenticated and trying to access login page, redirect to dashboard
+  if (user && pathname === '/login') {
+    const dashboardUrl = new URL('/scouts', request.url)
+    return NextResponse.redirect(dashboardUrl)
   }
 
   return supabaseResponse

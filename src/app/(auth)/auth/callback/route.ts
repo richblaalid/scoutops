@@ -1,20 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Legacy callback route - forwards to /auth/confirm with all parameters
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
 
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+  // Forward all search params to the confirm page
+  const confirmUrl = new URL('/auth/confirm', origin)
+  searchParams.forEach((value, key) => {
+    confirmUrl.searchParams.set(key, value)
+  })
 
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
-  }
-
-  // Return to login with error if something went wrong
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  return NextResponse.redirect(confirmUrl)
 }
