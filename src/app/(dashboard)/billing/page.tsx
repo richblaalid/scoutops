@@ -119,9 +119,9 @@ export default async function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Fair Share Billing</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Scout Billing</h1>
         <p className="mt-1 text-gray-600">
-          Create bills to divide costs among scouts
+          Create charges for shared expenses or fixed fees
         </p>
       </div>
 
@@ -131,7 +131,7 @@ export default async function BillingPage() {
           <CardHeader>
             <CardTitle>Create New Billing</CardTitle>
             <CardDescription>
-              Divide a total cost among selected scouts
+              Split costs among scouts or apply fixed charges
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -224,14 +224,19 @@ export default async function BillingPage() {
       {/* Help Text */}
       <Card>
         <CardHeader>
-          <CardTitle>How Fair Share Billing Works</CardTitle>
+          <CardTitle>How Scout Billing Works</CardTitle>
         </CardHeader>
         <CardContent className="prose prose-sm max-w-none text-gray-600">
+          <p className="mb-3 font-medium">Two billing options:</p>
+          <ul className="list-disc pl-4 space-y-1 mb-4">
+            <li><strong>Split Total</strong> – Divide a shared expense equally among selected scouts (e.g., camping trips)</li>
+            <li><strong>Fixed Amount</strong> – Charge each selected scout the same amount (e.g., annual dues)</li>
+          </ul>
           <ol className="list-decimal pl-4 space-y-2">
-            <li>Enter the total cost of an event or expense</li>
-            <li>Select which scouts should share the cost</li>
-            <li>The system automatically divides the cost equally</li>
-            <li>Each scout&apos;s account is debited with their share</li>
+            <li>Choose your billing type</li>
+            <li>Enter the amount and description</li>
+            <li>Select which scouts to charge</li>
+            <li>Each scout&apos;s account is debited accordingly</li>
             <li>Parents can view and pay their balance online</li>
           </ol>
           <p className="mt-4">
