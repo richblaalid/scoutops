@@ -279,7 +279,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       {/* Billing Type Toggle */}
       <div className="space-y-2">
         <Label>Billing Type</Label>
-        <div className="inline-flex rounded-lg border border-gray-300 bg-white p-1">
+        <div className="ml-4 mt-3 inline-flex rounded-lg border border-gray-300 bg-white p-1">
           <button
             type="button"
             onClick={() => setBillingType('split')}
