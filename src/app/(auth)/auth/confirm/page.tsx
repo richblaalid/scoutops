@@ -1,67 +1,72 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function AuthConfirmContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const exchangeAttempted = useRef(false)
 
   useEffect(() => {
+    // Prevent double execution in React Strict Mode
+    if (exchangeAttempted.current) return
+    exchangeAttempted.current = true
+
     const handleAuth = async () => {
-      const token_hash = searchParams.get('token_hash')
-      const type = searchParams.get('type')
       const code = searchParams.get('code')
-      const next = searchParams.get('next') ?? '/'
+      const next = searchParams.get('next') ?? '/scouts'
 
       const supabase = createClient()
 
-      // Check if we already have a session
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        window.location.href = next
+      // First check if we already have a session (code might already be exchanged)
+      const { data: { session: existingSession } } = await supabase.auth.getSession()
+      if (existingSession) {
+        router.push(next)
+        router.refresh()
         return
       }
 
-      // Prefer token_hash flow (doesn't require PKCE verifier)
-      if (token_hash && type) {
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash,
-          type: type as 'email' | 'magiclink',
-        })
+      if (!code) {
+        setError('No authentication code provided. Please request a new magic link.')
+        return
+      }
 
-        if (error) {
-          setError(error.message)
+      // Exchange the code for a session
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+      if (exchangeError) {
+        // Check if we actually have a session despite the error (code already used)
+        const { data: { session: checkSession } } = await supabase.auth.getSession()
+        if (checkSession) {
+          router.push(next)
+          router.refresh()
           return
         }
 
-        window.location.href = next
-        return
-      }
-
-      // Fallback: try code exchange (requires PKCE verifier from same browser)
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-        if (error) {
-          if (error.message.includes('PKCE') || error.message.includes('code verifier')) {
-            setError('Please open the magic link in the same browser where you requested it.')
-          } else {
-            setError(error.message)
-          }
-          return
+        console.error('Code exchange error:', exchangeError.message)
+        if (exchangeError.message.includes('code verifier')) {
+          setError('Please open the magic link in the same browser where you requested it.')
+        } else {
+          setError(exchangeError.message)
         }
-
-        window.location.href = next
         return
       }
 
-      setError('No authentication token provided. Please request a new magic link.')
+      if (!data.session) {
+        setError('Authentication failed. Please try again.')
+        return
+      }
+
+      // Session is set - redirect to dashboard
+      router.push(next)
+      router.refresh()
     }
 
     handleAuth()
-  }, [searchParams])
+  }, [searchParams, router])
 
   if (error) {
     return (

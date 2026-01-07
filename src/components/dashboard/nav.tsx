@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { User } from '@supabase/supabase-js'
 
@@ -18,28 +17,22 @@ interface DashboardNavProps {
 }
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/scouts', label: 'Scouts' },
-  { href: '/dashboard/accounts', label: 'Accounts' },
-  { href: '/dashboard/billing', label: 'Billing' },
-  { href: '/dashboard/payments', label: 'Payments' },
-  { href: '/dashboard/reports', label: 'Reports' },
+  { href: '/', label: 'Dashboard' },
+  { href: '/scouts', label: 'Scouts' },
+  { href: '/accounts', label: 'Accounts' },
+  { href: '/billing', label: 'Billing' },
+  { href: '/payments', label: 'Payments' },
+  { href: '/reports', label: 'Reports' },
 ]
 
 export function DashboardNav({ user, membership }: DashboardNavProps) {
   const pathname = usePathname()
-  const supabase = createClient()
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/login'
-  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-bold text-primary">ScoutOps</span>
             {membership?.units && (
               <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
@@ -73,12 +66,12 @@ export function DashboardNav({ user, membership }: DashboardNavProps) {
               <p className="text-xs text-gray-500 capitalize">{membership.role}</p>
             )}
           </div>
-          <button
-            onClick={handleSignOut}
+          <a
+            href="/logout"
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Sign Out
-          </button>
+          </a>
         </div>
       </div>
     </header>
