@@ -14,7 +14,7 @@ interface Scout {
   is_active: boolean | null
   date_of_birth: string | null
   bsa_member_id: string | null
-  scout_accounts: { id: string; balance: number | null }[] | null
+  scout_accounts: { id: string; balance: number | null } | null
 }
 
 interface ScoutsListProps {
@@ -53,8 +53,8 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
         </thead>
         <tbody>
           {scouts.map((scout) => {
-            const balance = scout.scout_accounts?.[0]?.balance ?? 0
-            const accountId = scout.scout_accounts?.[0]?.id
+            const balance = scout.scout_accounts?.balance ?? 0
+            const accountId = scout.scout_accounts?.id
 
             return (
               <tr key={scout.id} className="border-b last:border-0">

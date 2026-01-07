@@ -64,12 +64,12 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     created_at: string | null
     updated_at: string | null
     unit_id: string
-    scout_accounts: { id: string; balance: number | null }[] | null
+    scout_accounts: { id: string; balance: number | null } | null
     units: { id: string; name: string; unit_number: string } | null
   }
 
   const scout = scoutData as Scout
-  const scoutAccount = scout.scout_accounts?.[0]
+  const scoutAccount = scout.scout_accounts
   const balance = scoutAccount?.balance ?? 0
 
   // Get recent transactions for this scout

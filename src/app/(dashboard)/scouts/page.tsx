@@ -62,7 +62,7 @@ export default async function ScoutsPage() {
     is_active: boolean | null
     date_of_birth: string | null
     bsa_member_id: string | null
-    scout_accounts: { id: string; balance: number | null }[] | null
+    scout_accounts: { id: string; balance: number | null } | null
   }
 
   const scouts = (scoutsData as ScoutWithAccount[]) || []
