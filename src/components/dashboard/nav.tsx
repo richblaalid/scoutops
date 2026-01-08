@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { getVisibleNavItems } from '@/lib/roles'
 import { UserMenu } from './user-menu'
+import { Logo } from '@/components/ui/logo'
 import type { User } from '@supabase/supabase-js'
 
 interface DashboardNavProps {
@@ -24,13 +25,13 @@ export function DashboardNav({ user, userName, membership }: DashboardNavProps) 
   const navItems = membership ? getVisibleNavItems(membership.role) : []
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white">
+    <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-white shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-primary">ScoutOps</span>
+          <Link href="/" className="flex items-center gap-3">
+            <Logo variant="full" size="sm" />
             {membership?.units && (
-              <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+              <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
                 {membership.units.name}
               </span>
             )}
@@ -44,8 +45,8 @@ export function DashboardNav({ user, userName, membership }: DashboardNavProps) 
                 className={cn(
                   'rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   pathname === item.href
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-forest-50 text-forest-700'
+                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                 )}
               >
                 {item.label}

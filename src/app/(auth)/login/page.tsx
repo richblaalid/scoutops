@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Logo } from '@/components/ui/logo'
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -56,15 +57,15 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-lg border bg-white px-8 py-10 shadow-sm">
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">ScoutOps</h1>
-        <p className="mt-2 text-sm text-gray-600">Sign in with your email to continue</p>
+    <div className="rounded-xl border border-stone-200 bg-white px-8 py-10 shadow-md">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <Logo variant="full" size="md" className="mb-2" />
+        <p className="mt-2 text-sm text-stone-500">Sign in with your email to continue</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-6">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-stone-700">
             Email address
           </label>
           <input
@@ -74,26 +75,26 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="mt-1 block w-full rounded-lg border border-stone-300 px-4 py-2.5 text-stone-900 shadow-sm placeholder:text-stone-400 focus:border-forest-600 focus:outline-none focus:ring-2 focus:ring-forest-600/20"
           />
         </div>
 
         {message && (
           <div
-            className={`rounded-md p-4 ${
+            className={`rounded-lg p-4 ${
               message.type === 'error'
-                ? 'bg-red-50 text-red-800'
-                : 'bg-green-50 text-green-800'
+                ? 'bg-error-light text-error-dark'
+                : 'bg-success-light text-success-dark'
             }`}
           >
-            <p className="text-sm">{message.text}</p>
+            <p className="text-sm font-medium">{message.text}</p>
           </div>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center rounded-lg bg-forest-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-800 hover:shadow-forest hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
         >
           {loading ? (
             <svg
@@ -136,19 +137,23 @@ function LoginForm() {
           )}
         </button>
       </form>
+
+      <p className="mt-6 text-center text-xs text-stone-400">
+        Unit Operations Simplified
+      </p>
     </div>
   )
 }
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4 py-12">
       <div className="w-full max-w-md">
         <Suspense fallback={
-          <div className="rounded-lg border bg-white px-8 py-10 shadow-sm">
-            <div className="mb-8 text-center">
-              <h1 className="text-2xl font-bold text-gray-900">ScoutOps</h1>
-              <p className="mt-2 text-sm text-gray-600">Loading...</p>
+          <div className="rounded-xl border border-stone-200 bg-white px-8 py-10 shadow-md">
+            <div className="mb-8 flex flex-col items-center text-center">
+              <Logo variant="full" size="md" className="mb-2" />
+              <p className="mt-2 text-sm text-stone-500">Loading...</p>
             </div>
           </div>
         }>
