@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
 import { hasFilteredView, isFinancialRole } from '@/lib/roles'
-import Link from 'next/link'
+import { AccountsList } from '@/components/accounts/accounts-list'
 
 interface ScoutAccount {
   id: string
@@ -185,76 +185,10 @@ export default async function AccountsPage() {
           </CardTitle>
           <CardDescription>
             {accounts.length} account{accounts.length !== 1 ? 's' : ''}
-            {!hasFilteredView(role) && ' • Sorted by balance'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {accounts.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b text-left text-sm font-medium text-gray-500">
-                    <th className="pb-3 pr-4">Scout</th>
-                    <th className="pb-3 pr-4">Patrol</th>
-                    <th className="pb-3 pr-4">Status</th>
-                    <th className="pb-3 pr-4 text-right">Balance</th>
-                    <th className="pb-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {accounts.map((account) => {
-                    const balance = account.balance || 0
-                    return (
-                      <tr key={account.id} className="border-b last:border-0">
-                        <td className="py-3 pr-4">
-                          <p className="font-medium text-gray-900">
-                            {account.scouts?.first_name} {account.scouts?.last_name}
-                          </p>
-                        </td>
-                        <td className="py-3 pr-4 text-gray-600">
-                          {account.scouts?.patrol || '—'}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                              account.scouts?.is_active
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            {account.scouts?.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="py-3 pr-4 text-right">
-                          <span
-                            className={`font-medium ${
-                              balance < 0
-                                ? 'text-red-600'
-                                : balance > 0
-                                  ? 'text-green-600'
-                                  : 'text-gray-600'
-                            }`}
-                          >
-                            {formatCurrency(balance)}
-                          </span>
-                        </td>
-                        <td className="py-3">
-                          <Link
-                            href={`/accounts/${account.id}`}
-                            className="text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            View Details
-                          </Link>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-500">No scout accounts yet.</p>
-          )}
+          <AccountsList accounts={accounts} showPatrolFilter={!hasFilteredView(role)} />
         </CardContent>
       </Card>
     </div>

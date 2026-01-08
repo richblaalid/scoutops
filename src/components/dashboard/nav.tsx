@@ -4,10 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { getVisibleNavItems } from '@/lib/roles'
+import { UserMenu } from './user-menu'
 import type { User } from '@supabase/supabase-js'
 
 interface DashboardNavProps {
   user: User
+  userName?: string | null
   membership: {
     role: string
     units: {
@@ -17,7 +19,7 @@ interface DashboardNavProps {
   } | null
 }
 
-export function DashboardNav({ user, membership }: DashboardNavProps) {
+export function DashboardNav({ user, userName, membership }: DashboardNavProps) {
   const pathname = usePathname()
   const navItems = membership ? getVisibleNavItems(membership.role) : []
 
@@ -52,20 +54,11 @@ export function DashboardNav({ user, membership }: DashboardNavProps) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-900">{user.email}</p>
-            {membership && (
-              <p className="text-xs text-gray-500 capitalize">{membership.role}</p>
-            )}
-          </div>
-          <a
-            href="/logout"
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Sign Out
-          </a>
-        </div>
+        <UserMenu
+          email={user.email || ''}
+          name={userName}
+          role={membership?.role}
+        />
       </div>
     </header>
   )

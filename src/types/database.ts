@@ -626,25 +626,52 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
+          email_secondary: string | null
+          first_name: string | null
           full_name: string | null
           id: string
-          phone: string | null
+          is_active: boolean | null
+          last_name: string | null
+          phone_primary: string | null
+          phone_secondary: string | null
+          address_street: string | null
+          address_city: string | null
+          address_state: string | null
+          address_zip: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
+          email_secondary?: string | null
+          first_name?: string | null
           full_name?: string | null
           id: string
-          phone?: string | null
+          is_active?: boolean | null
+          last_name?: string | null
+          phone_primary?: string | null
+          phone_secondary?: string | null
+          address_street?: string | null
+          address_city?: string | null
+          address_state?: string | null
+          address_zip?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
+          email_secondary?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
-          phone?: string | null
+          is_active?: boolean | null
+          last_name?: string | null
+          phone_primary?: string | null
+          phone_secondary?: string | null
+          address_street?: string | null
+          address_city?: string | null
+          address_state?: string | null
+          address_zip?: string | null
           updated_at?: string | null
         }
         Relationships: []

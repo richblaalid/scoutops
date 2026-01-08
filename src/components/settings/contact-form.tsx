@@ -1,0 +1,192 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { updateProfile, changeEmail } from '@/app/actions/profile'
+
+interface ContactFormProps {
+  profile: {
+    email: string
+    email_secondary: string | null
+    phone_primary: string | null
+    phone_secondary: string | null
+  }
+}
+
+export function ContactForm({ profile }: ContactFormProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [isChangingEmail, setIsChangingEmail] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  async function handlePhoneSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setIsLoading(true)
+    setMessage(null)
+
+    const formData = new FormData(e.currentTarget)
+
+    const result = await updateProfile({
+      email_secondary: formData.get('email_secondary') as string || null,
+      phone_primary: formData.get('phone_primary') as string || null,
+      phone_secondary: formData.get('phone_secondary') as string || null,
+    })
+
+    setIsLoading(false)
+
+    if (result.success) {
+      setMessage({ type: 'success', text: 'Contact information updated!' })
+    } else {
+      setMessage({ type: 'error', text: result.error || 'Failed to update' })
+    }
+  }
+
+  async function handleEmailChange() {
+    if (!newEmail.trim()) {
+      setMessage({ type: 'error', text: 'Please enter a new email address' })
+      return
+    }
+
+    setIsLoading(true)
+    setMessage(null)
+
+    const result = await changeEmail(newEmail)
+
+    setIsLoading(false)
+
+    if (result.success) {
+      setMessage({
+        type: 'success',
+        text: 'Verification email sent! Check your new email to confirm the change.',
+      })
+      setIsChangingEmail(false)
+      setNewEmail('')
+    } else {
+      setMessage({ type: 'error', text: result.error || 'Failed to change email' })
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Contact Information</CardTitle>
+        <CardDescription>Manage your email and phone numbers</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Primary Email Section */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-700">Primary Email (Login)</h4>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Input
+                value={profile.email}
+                disabled
+                className="bg-gray-50"
+              />
+            </div>
+            {!isChangingEmail && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsChangingEmail(true)}
+              >
+                Change
+              </Button>
+            )}
+          </div>
+
+          {isChangingEmail && (
+            <div className="space-y-3 rounded-md border p-4">
+              <p className="text-sm text-gray-600">
+                Enter your new email address. You will receive a verification email to confirm the change.
+              </p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="email"
+                  placeholder="New email address"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  onClick={handleEmailChange}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Sending...' : 'Send Verification'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsChangingEmail(false)
+                    setNewEmail('')
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Phone and Secondary Email Form */}
+        <form onSubmit={handlePhoneSubmit} className="space-y-4">
+          {/* Secondary Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email_secondary">Secondary Email</Label>
+            <Input
+              id="email_secondary"
+              name="email_secondary"
+              type="email"
+              defaultValue={profile.email_secondary || ''}
+              placeholder="Enter secondary email"
+            />
+          </div>
+
+          {/* Phone Fields */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="phone_primary">Primary Phone</Label>
+              <Input
+                id="phone_primary"
+                name="phone_primary"
+                type="tel"
+                defaultValue={profile.phone_primary || ''}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone_secondary">Secondary Phone</Label>
+              <Input
+                id="phone_secondary"
+                name="phone_secondary"
+                type="tel"
+                defaultValue={profile.phone_secondary || ''}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+          </div>
+
+          {message && (
+            <div
+              className={`rounded-md p-3 text-sm ${
+                message.type === 'success'
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Save Contact Info'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
