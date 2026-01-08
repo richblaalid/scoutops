@@ -52,7 +52,7 @@ const ACTION_ACCESS: Record<AppAction, MemberRole[]> = {
 
 // Navigation items with their required pages
 const NAV_ITEMS = [
-  { href: '/', label: 'Dashboard', page: 'dashboard' as AppPage },
+  { href: '/dashboard', label: 'Dashboard', page: 'dashboard' as AppPage },
   { href: '/scouts', label: 'Scouts', page: 'scouts' as AppPage },
   { href: '/accounts', label: 'Accounts', page: 'accounts' as AppPage },
   { href: '/billing', label: 'Billing', page: 'billing' as AppPage },

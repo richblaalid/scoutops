@@ -56,7 +56,7 @@ function AuthConfirmContent() {
           setStatus('Welcome! You have been added to your unit.')
           await new Promise(resolve => setTimeout(resolve, 1500))
         }
-        const next = searchParams.get('next') ?? '/scouts'
+        const next = searchParams.get('next') ?? '/dashboard'
         router.push(next)
         router.refresh()
       }
@@ -66,7 +66,7 @@ function AuthConfirmContent() {
       const code = searchParams.get('code')
       const tokenHash = searchParams.get('token_hash')
       const type = searchParams.get('type') as 'email' | 'magiclink' | 'invite' | 'signup' | null
-      const next = searchParams.get('next') ?? '/scouts'
+      const next = searchParams.get('next') ?? '/dashboard'
 
       // Check for hash fragment params (from invite links)
       const hashParams = parseHashParams()

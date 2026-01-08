@@ -19,9 +19,9 @@ export default async function Home({ searchParams }: HomeProps) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // If user exists, redirect to scouts (main dashboard)
+  // If user exists, redirect to dashboard
   if (user) {
-    redirect('/scouts')
+    redirect('/dashboard')
   }
 
   // Show error if auth failed
