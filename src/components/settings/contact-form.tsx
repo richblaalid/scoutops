@@ -78,13 +78,13 @@ export function ContactForm({ profile }: ContactFormProps) {
       <CardContent className="space-y-6">
         {/* Primary Email Section */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-gray-700">Primary Email (Login)</h4>
+          <h4 className="text-sm font-medium text-stone-700">Primary Email (Login)</h4>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <Input
                 value={profile.email}
                 disabled
-                className="bg-gray-50"
+                className="bg-stone-50"
               />
             </div>
             {!isChangingEmail && (
@@ -100,7 +100,7 @@ export function ContactForm({ profile }: ContactFormProps) {
 
           {isChangingEmail && (
             <div className="space-y-3 rounded-md border p-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-stone-600">
                 Enter your new email address. You will receive a verification email to confirm the change.
               </p>
               <div className="flex items-center gap-2">
@@ -174,8 +174,8 @@ export function ContactForm({ profile }: ContactFormProps) {
             <div
               className={`rounded-md p-3 text-sm ${
                 message.type === 'success'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
+                  ? 'bg-success-light text-success'
+                  : 'bg-error-light text-error'
               }`}
             >
               {message.text}

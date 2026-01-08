@@ -52,8 +52,8 @@ export default async function MembersPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">No Unit Access</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-stone-900">No Unit Access</h1>
+        <p className="mt-2 text-stone-600">
           You are not currently a member of any unit.
         </p>
       </div>
@@ -122,8 +122,8 @@ export default async function MembersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Members</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-3xl font-bold text-stone-900">Members</h1>
+          <p className="mt-1 text-stone-600">
             Manage members of {unit?.name || 'your unit'}
           </p>
         </div>
@@ -153,8 +153,8 @@ export default async function MembersPage() {
                     className="flex items-center justify-between rounded-lg border p-3"
                   >
                     <div>
-                      <p className="font-medium text-gray-900">{invite.email}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-stone-900">{invite.email}</p>
+                      <p className="text-sm text-stone-500">
                         Role: <span className="capitalize">{invite.role}</span>
                         {invite.expires_at && (
                           <>
@@ -164,7 +164,7 @@ export default async function MembersPage() {
                         )}
                       </p>
                       {linkedScouts.length > 0 && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-stone-500">
                           Scouts: {linkedScouts.map(s => `${s.first_name} ${s.last_name}`).join(', ')}
                         </p>
                       )}
@@ -177,7 +177,7 @@ export default async function MembersPage() {
                       }}>
                         <button
                           type="submit"
-                          className="text-sm text-blue-600 hover:text-blue-800"
+                          className="text-sm text-forest-600 hover:text-forest-800"
                         >
                           Resend
                         </button>
@@ -189,7 +189,7 @@ export default async function MembersPage() {
                       }}>
                         <button
                           type="submit"
-                          className="text-sm text-red-600 hover:text-red-800"
+                          className="text-sm text-error hover:text-error/80"
                         >
                           Cancel
                         </button>
@@ -226,7 +226,7 @@ export default async function MembersPage() {
         <CardHeader>
           <CardTitle>Role Permissions</CardTitle>
         </CardHeader>
-        <CardContent className="prose prose-sm max-w-none text-gray-600">
+        <CardContent className="prose prose-sm max-w-none text-stone-600">
           <ul className="list-disc pl-4 space-y-2">
             <li><strong>Admin</strong> – Full access: manage members, billing, payments, scouts, and settings</li>
             <li><strong>Treasurer</strong> – Financial access: manage billing, payments, and scout accounts</li>

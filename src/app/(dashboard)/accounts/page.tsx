@@ -39,8 +39,8 @@ export default async function AccountsPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">No Unit Access</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-stone-900">No Unit Access</h1>
+        <p className="mt-2 text-stone-600">
           You are not currently a member of any unit.
         </p>
       </div>
@@ -116,10 +116,10 @@ export default async function AccountsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-stone-900">
           {isScout ? 'My Account' : isParent ? 'Family Accounts' : 'Scout Accounts'}
         </h1>
-        <p className="mt-1 text-gray-600">
+        <p className="mt-1 text-stone-600">
           {isScout
             ? 'View your account balance and transactions'
             : isParent
@@ -134,7 +134,7 @@ export default async function AccountsPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Owed to Unit</CardDescription>
-              <CardTitle className="text-2xl text-red-600">
+              <CardTitle className="text-2xl text-error">
                 {formatCurrency(totalOwed)}
               </CardTitle>
             </CardHeader>
@@ -148,7 +148,7 @@ export default async function AccountsPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Credit Balance</CardDescription>
-              <CardTitle className="text-2xl text-green-600">
+              <CardTitle className="text-2xl text-success">
                 {formatCurrency(totalCredit)}
               </CardTitle>
             </CardHeader>
@@ -163,7 +163,7 @@ export default async function AccountsPage() {
             <CardHeader className="pb-2">
               <CardDescription>Net Balance</CardDescription>
               <CardTitle
-                className={`text-2xl ${netBalance < 0 ? 'text-red-600' : 'text-green-600'}`}
+                className={`text-2xl ${netBalance < 0 ? 'text-error' : 'text-success'}`}
               >
                 {formatCurrency(netBalance)}
               </CardTitle>

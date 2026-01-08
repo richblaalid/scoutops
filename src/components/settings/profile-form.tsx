@@ -85,7 +85,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
           {/* Address Fields */}
           <div className="space-y-4">
-            <h4 className="text-sm font-medium text-gray-700">Address</h4>
+            <h4 className="text-sm font-medium text-stone-700">Address</h4>
             <div className="space-y-2">
               <Label htmlFor="address_street">Street Address</Label>
               <Input
@@ -132,8 +132,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             <div
               className={`rounded-md p-3 text-sm ${
                 message.type === 'success'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
+                  ? 'bg-success-light text-success'
+                  : 'bg-error-light text-error'
               }`}
             >
               {message.text}

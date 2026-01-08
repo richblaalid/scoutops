@@ -55,7 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardNav user={user} userName={userName} membership={membership} />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 bg-stone-50">
         <div className="container mx-auto px-4 py-8">{children}</div>
       </main>
     </div>

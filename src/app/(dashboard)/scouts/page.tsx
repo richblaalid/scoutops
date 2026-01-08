@@ -27,8 +27,8 @@ export default async function ScoutsPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">No Unit Access</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-stone-900">No Unit Access</h1>
+        <p className="mt-2 text-stone-600">
           You are not currently a member of any unit.
         </p>
       </div>
@@ -117,8 +117,8 @@ export default async function ScoutsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Scouts</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-3xl font-bold text-stone-900">Scouts</h1>
+          <p className="mt-1 text-stone-600">
             {isParent ? 'Your linked scouts' : 'Manage your unit\'s scout roster'}
           </p>
         </div>

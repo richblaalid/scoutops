@@ -56,8 +56,8 @@ export default async function DashboardPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Welcome to ScoutOps</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-stone-900">Welcome to ScoutOps</h1>
+        <p className="mt-2 text-stone-600">
           You are not currently a member of any unit. Please contact your unit administrator.
         </p>
       </div>
@@ -167,8 +167,8 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
-          <p className="mt-1 text-gray-600">View your scout account balance and activity</p>
+          <h1 className="text-3xl font-bold text-stone-900">My Account</h1>
+          <p className="mt-1 text-stone-600">View your scout account balance and activity</p>
         </div>
 
         {myAccount ? (
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Current Balance</CardDescription>
                 <CardTitle
-                  className={`text-4xl ${(myAccount.balance || 0) < 0 ? 'text-red-600' : 'text-green-600'}`}
+                  className={`text-4xl ${(myAccount.balance || 0) < 0 ? 'text-error' : 'text-success'}`}
                 >
                   {formatCurrency(myAccount.balance || 0)}
                 </CardTitle>
@@ -201,10 +201,10 @@ export default async function DashboardPage() {
                       <div key={line.id} className="flex items-center justify-between border-b pb-2">
                         <div>
                           <p className="font-medium">{line.journal_entries?.description}</p>
-                          <p className="text-sm text-gray-500">{line.journal_entries?.entry_date}</p>
+                          <p className="text-sm text-stone-500">{line.journal_entries?.entry_date}</p>
                         </div>
                         <span
-                          className={`font-medium ${line.debit ? 'text-red-600' : 'text-green-600'}`}
+                          className={`font-medium ${line.debit ? 'text-error' : 'text-success'}`}
                         >
                           {line.debit
                             ? `-${formatCurrency(line.debit)}`
@@ -214,7 +214,7 @@ export default async function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">No recent activity</p>
+                  <p className="text-stone-500">No recent activity</p>
                 )}
               </CardContent>
             </Card>
@@ -222,7 +222,7 @@ export default async function DashboardPage() {
         ) : (
           <Card>
             <CardContent className="py-8 text-center">
-              <p className="text-gray-500">No account found. Please contact your unit administrator.</p>
+              <p className="text-stone-500">No account found. Please contact your unit administrator.</p>
             </CardContent>
           </Card>
         )}
@@ -235,8 +235,8 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Family Dashboard</h1>
-          <p className="mt-1 text-gray-600">View your scouts&apos; account balances</p>
+          <h1 className="text-3xl font-bold text-stone-900">Family Dashboard</h1>
+          <p className="mt-1 text-stone-600">View your scouts&apos; account balances</p>
         </div>
 
         {scoutAccounts && scoutAccounts.length > 0 ? (
@@ -246,7 +246,7 @@ export default async function DashboardPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Total Family Balance</CardDescription>
                 <CardTitle
-                  className={`text-4xl ${totalBalance < 0 ? 'text-red-600' : 'text-green-600'}`}
+                  className={`text-4xl ${totalBalance < 0 ? 'text-error' : 'text-success'}`}
                 >
                   {formatCurrency(totalBalance)}
                 </CardTitle>
@@ -270,19 +270,19 @@ export default async function DashboardPage() {
                     <Link
                       key={account.id}
                       href={`/accounts/${account.id}`}
-                      className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50"
+                      className="flex items-center justify-between rounded-lg border p-4 hover:bg-stone-50"
                     >
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-stone-900">
                           {account.scouts?.first_name} {account.scouts?.last_name}
                         </p>
                         {account.scouts?.patrol && (
-                          <p className="text-sm text-gray-500">{account.scouts.patrol}</p>
+                          <p className="text-sm text-stone-500">{account.scouts.patrol}</p>
                         )}
                       </div>
                       <span
                         className={`text-lg font-bold ${
-                          (account.balance || 0) < 0 ? 'text-red-600' : 'text-green-600'
+                          (account.balance || 0) < 0 ? 'text-error' : 'text-success'
                         }`}
                       >
                         {formatCurrency(account.balance || 0)}
@@ -296,7 +296,7 @@ export default async function DashboardPage() {
         ) : (
           <Card>
             <CardContent className="py-8 text-center">
-              <p className="text-gray-500">No scouts linked to your account. Please contact your unit administrator.</p>
+              <p className="text-stone-500">No scouts linked to your account. Please contact your unit administrator.</p>
             </CardContent>
           </Card>
         )}
@@ -308,8 +308,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-gray-600">Overview of your unit&apos;s finances</p>
+        <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
+        <p className="mt-1 text-stone-600">Overview of your unit&apos;s finances</p>
       </div>
 
       {/* Stats Cards */}
@@ -330,7 +330,7 @@ export default async function DashboardPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Net Balance</CardDescription>
                 <CardTitle
-                  className={`text-3xl ${totalBalance < 0 ? 'text-red-600' : 'text-green-600'}`}
+                  className={`text-3xl ${totalBalance < 0 ? 'text-error' : 'text-success'}`}
                 >
                   {formatCurrency(totalBalance)}
                 </CardTitle>
@@ -345,7 +345,7 @@ export default async function DashboardPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Scouts Owing</CardDescription>
-                <CardTitle className="text-3xl text-red-600">{scoutsOwing}</CardTitle>
+                <CardTitle className="text-3xl text-error">{scoutsOwing}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">Negative balance</p>
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Scouts with Credit</CardDescription>
-                <CardTitle className="text-3xl text-green-600">{scoutsWithCredit}</CardTitle>
+                <CardTitle className="text-3xl text-success">{scoutsWithCredit}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">Positive balance</p>
@@ -368,7 +368,7 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Scouts Owing</CardDescription>
-              <CardTitle className="text-3xl text-red-600">{scoutsOwing}</CardTitle>
+              <CardTitle className="text-3xl text-error">{scoutsOwing}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">With negative balance</p>
@@ -392,16 +392,16 @@ export default async function DashboardPage() {
                     <div key={tx.id} className="flex items-center justify-between border-b pb-2">
                       <div>
                         <p className="font-medium">{tx.description}</p>
-                        <p className="text-sm text-gray-500">{tx.entry_date}</p>
+                        <p className="text-sm text-stone-500">{tx.entry_date}</p>
                       </div>
-                      <span className="rounded bg-gray-100 px-2 py-1 text-xs capitalize">
+                      <span className="rounded bg-stone-100 px-2 py-1 text-xs capitalize">
                         {tx.entry_type || 'entry'}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No recent transactions</p>
+                <p className="text-stone-500">No recent transactions</p>
               )}
             </CardContent>
           </Card>
@@ -425,12 +425,12 @@ export default async function DashboardPage() {
                         {account.scouts?.first_name} {account.scouts?.last_name}
                       </p>
                       {account.scouts?.patrol && (
-                        <p className="text-xs text-gray-500">{account.scouts.patrol}</p>
+                        <p className="text-xs text-stone-500">{account.scouts.patrol}</p>
                       )}
                     </div>
                     <span
                       className={`font-medium ${
-                        (account.balance || 0) < 0 ? 'text-red-600' : 'text-green-600'
+                        (account.balance || 0) < 0 ? 'text-error' : 'text-success'
                       }`}
                     >
                       {formatCurrency(account.balance || 0)}
@@ -438,13 +438,13 @@ export default async function DashboardPage() {
                   </div>
                 ))}
                 {scoutAccounts.length > 5 && (
-                  <p className="text-center text-sm text-gray-500">
+                  <p className="text-center text-sm text-stone-500">
                     +{scoutAccounts.length - 5} more scouts
                   </p>
                 )}
               </div>
             ) : (
-              <p className="text-gray-500">No scout accounts yet</p>
+              <p className="text-stone-500">No scout accounts yet</p>
             )}
           </CardContent>
         </Card>

@@ -29,7 +29,7 @@ type BalanceFilter = 'all' | 'owes' | 'credit' | 'zero'
 
 function SearchIcon() {
   return (
-    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="h-5 w-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
   )
@@ -62,17 +62,17 @@ function CheckIcon() {
 function SortIcon({ direction, active }: { direction: SortDirection; active: boolean }) {
   if (!active) {
     return (
-      <svg className="ml-1 inline h-4 w-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="ml-1 inline h-4 w-4 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
       </svg>
     )
   }
   return direction === 'asc' ? (
-    <svg className="ml-1 inline h-4 w-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="ml-1 inline h-4 w-4 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
     </svg>
   ) : (
-    <svg className="ml-1 inline h-4 w-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="ml-1 inline h-4 w-4 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
     </svg>
   )
@@ -122,13 +122,13 @@ function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelect
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
           hasSelection
-            ? 'border-blue-300 bg-blue-50 text-blue-700'
-            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            ? 'border-forest-300 bg-forest-50 text-forest-700'
+            : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50'
         }`}
       >
         {label}
         {hasSelection && (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-forest-600 text-xs text-white">
             {selected.size}
           </span>
         )}
@@ -136,15 +136,15 @@ function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelect
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+        <div className="absolute left-0 z-10 mt-1 w-48 rounded-lg border border-stone-200 bg-white py-1 shadow-lg">
           {options.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-500">No options</div>
+            <div className="px-3 py-2 text-sm text-stone-500">No options</div>
           ) : (
             <>
               {hasSelection && (
                 <button
                   onClick={clearAll}
-                  className="w-full px-3 py-1.5 text-left text-xs text-gray-500 hover:bg-gray-50"
+                  className="w-full px-3 py-1.5 text-left text-xs text-stone-500 hover:bg-stone-50"
                 >
                   Clear all
                 </button>
@@ -153,13 +153,13 @@ function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelect
                 <button
                   key={option}
                   onClick={() => toggleOption(option)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-stone-50"
                 >
                   <span
                     className={`flex h-4 w-4 items-center justify-center rounded border ${
                       selected.has(option)
-                        ? 'border-blue-600 bg-blue-600 text-white'
-                        : 'border-gray-300'
+                        ? 'border-forest-600 bg-forest-600 text-white'
+                        : 'border-stone-300'
                     }`}
                   >
                     {selected.has(option) && <CheckIcon />}
@@ -188,15 +188,15 @@ function StatusFilterButtons({ value, onChange }: StatusFilterProps) {
   ]
 
   return (
-    <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5">
+    <div className="inline-flex rounded-lg border border-stone-300 bg-white p-0.5">
       {options.map((option) => (
         <button
           key={option.key}
           onClick={() => onChange(option.key)}
           className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
             value === option.key
-              ? 'bg-gray-900 text-white'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-forest-800 text-white'
+              : 'text-stone-600 hover:text-stone-900'
           }`}
         >
           {option.label}
@@ -220,15 +220,15 @@ function BalanceFilterButtons({ value, onChange }: BalanceFilterProps) {
   ]
 
   return (
-    <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5">
+    <div className="inline-flex rounded-lg border border-stone-300 bg-white p-0.5">
       {options.map((option) => (
         <button
           key={option.key}
           onClick={() => onChange(option.key)}
           className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
             value === option.key
-              ? 'bg-gray-900 text-white'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-forest-800 text-white'
+              : 'text-stone-600 hover:text-stone-900'
           }`}
         >
           {option.label}
@@ -341,12 +341,12 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
   if (accounts.length === 0) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-500">No scout accounts yet.</p>
+        <p className="text-stone-500">No scout accounts yet.</p>
       </div>
     )
   }
 
-  const headerClass = "pb-3 pr-4 cursor-pointer select-none hover:text-gray-700 transition-colors"
+  const headerClass = "pb-3 pr-4 cursor-pointer select-none hover:text-stone-700 transition-colors"
 
   return (
     <div className="space-y-4">
@@ -362,12 +362,12 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
             placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-10 text-sm placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="block w-full rounded-lg border border-stone-300 bg-white py-2 pl-10 pr-10 text-sm placeholder-stone-500 focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-stone-400 hover:text-stone-600"
             >
               <ClearIcon />
             </button>
@@ -394,7 +394,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
         {(hasActiveFilters || searchQuery) && (
           <button
             onClick={clearAllFilters}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className="text-sm text-stone-500 hover:text-stone-700"
           >
             Clear all
           </button>
@@ -403,7 +403,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
 
       {/* Results count */}
       {(searchQuery || hasActiveFilters) && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-stone-500">
           {filteredAndSortedAccounts.length === 0
             ? 'No accounts found'
             : `${filteredAndSortedAccounts.length} of ${accounts.length} account${accounts.length !== 1 ? 's' : ''}`}
@@ -414,7 +414,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b text-left text-sm font-medium text-gray-500">
+            <tr className="border-b text-left text-sm font-medium text-stone-500">
               <th className={headerClass} onClick={() => handleSort('name')}>
                 Scout
                 <SortIcon direction={sortDirection} active={sortColumn === 'name'} />
@@ -437,7 +437,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
           <tbody>
             {filteredAndSortedAccounts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-500">
+                <td colSpan={5} className="py-8 text-center text-stone-500">
                   No accounts match your filters
                 </td>
               </tr>
@@ -447,19 +447,19 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                 return (
                   <tr key={account.id} className="border-b last:border-0">
                     <td className="py-3 pr-4">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-stone-900">
                         {account.scouts?.first_name} {account.scouts?.last_name}
                       </p>
                     </td>
-                    <td className="py-3 pr-4 text-gray-600">
+                    <td className="py-3 pr-4 text-stone-600">
                       {account.scouts?.patrol || '—'}
                     </td>
                     <td className="py-3 pr-4">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                           account.scouts?.is_active
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-success-light text-success'
+                            : 'bg-stone-100 text-stone-600'
                         }`}
                       >
                         {account.scouts?.is_active ? 'Active' : 'Inactive'}
@@ -469,10 +469,10 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                       <span
                         className={`font-medium ${
                           balance < 0
-                            ? 'text-red-600'
+                            ? 'text-error'
                             : balance > 0
-                              ? 'text-green-600'
-                              : 'text-gray-600'
+                              ? 'text-success'
+                              : 'text-stone-600'
                         }`}
                       >
                         {formatCurrency(balance)}
@@ -481,7 +481,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                     <td className="py-3">
                       <Link
                         href={`/accounts/${account.id}`}
-                        className="text-sm text-blue-600 hover:text-blue-800"
+                        className="text-sm text-forest-600 hover:text-forest-800"
                       >
                         View Details
                       </Link>

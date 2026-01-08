@@ -58,8 +58,8 @@ export default async function ReportsPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">No Unit Access</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-stone-900">No Unit Access</h1>
+        <p className="mt-2 text-stone-600">
           You are not currently a member of any unit.
         </p>
       </div>
@@ -143,8 +143,8 @@ export default async function ReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-        <p className="mt-1 text-gray-600">
+        <h1 className="text-3xl font-bold text-stone-900">Reports</h1>
+        <p className="mt-1 text-stone-600">
           Financial reports for {membership.units?.name || 'your unit'}
         </p>
       </div>
@@ -161,7 +161,7 @@ export default async function ReportsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Owed</CardDescription>
-            <CardTitle className="text-2xl text-red-600">
+            <CardTitle className="text-2xl text-error">
               {formatCurrency(totalOwed)}
             </CardTitle>
           </CardHeader>
@@ -170,7 +170,7 @@ export default async function ReportsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Credit</CardDescription>
-            <CardTitle className="text-2xl text-green-600">
+            <CardTitle className="text-2xl text-success">
               {formatCurrency(totalCredit)}
             </CardTitle>
           </CardHeader>
@@ -180,7 +180,7 @@ export default async function ReportsPage() {
           <CardHeader className="pb-2">
             <CardDescription>Net Balance</CardDescription>
             <CardTitle
-              className={`text-2xl ${netBalance < 0 ? 'text-red-600' : 'text-green-600'}`}
+              className={`text-2xl ${netBalance < 0 ? 'text-error' : 'text-success'}`}
             >
               {formatCurrency(netBalance)}
             </CardTitle>
@@ -198,7 +198,7 @@ export default async function ReportsPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b text-left text-sm font-medium text-gray-500">
+                <tr className="border-b text-left text-sm font-medium text-stone-500">
                   <th className="pb-3 pr-4">Patrol</th>
                   <th className="pb-3 pr-4 text-center">Scouts</th>
                   <th className="pb-3 pr-4 text-right">Total Owed</th>
@@ -210,18 +210,18 @@ export default async function ReportsPage() {
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([patrol, data]) => (
                     <tr key={patrol} className="border-b last:border-0">
-                      <td className="py-3 pr-4 font-medium text-gray-900">
+                      <td className="py-3 pr-4 font-medium text-stone-900">
                         {patrol}
                       </td>
-                      <td className="py-3 pr-4 text-center text-gray-600">
+                      <td className="py-3 pr-4 text-center text-stone-600">
                         {data.count}
                       </td>
-                      <td className="py-3 pr-4 text-right text-red-600">
+                      <td className="py-3 pr-4 text-right text-error">
                         {data.owing > 0 ? formatCurrency(data.owing) : '—'}
                       </td>
                       <td
                         className={`py-3 text-right font-medium ${
-                          data.total < 0 ? 'text-red-600' : 'text-green-600'
+                          data.total < 0 ? 'text-error' : 'text-success'
                         }`}
                       >
                         {formatCurrency(data.total)}
@@ -233,12 +233,12 @@ export default async function ReportsPage() {
                 <tr className="border-t-2 font-medium">
                   <td className="py-3 pr-4">Total</td>
                   <td className="py-3 pr-4 text-center">{accounts.length}</td>
-                  <td className="py-3 pr-4 text-right text-red-600">
+                  <td className="py-3 pr-4 text-right text-error">
                     {formatCurrency(totalOwed)}
                   </td>
                   <td
                     className={`py-3 text-right ${
-                      netBalance < 0 ? 'text-red-600' : 'text-green-600'
+                      netBalance < 0 ? 'text-error' : 'text-success'
                     }`}
                   >
                     {formatCurrency(netBalance)}
@@ -264,7 +264,7 @@ export default async function ReportsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b text-left text-sm font-medium text-gray-500">
+                  <tr className="border-b text-left text-sm font-medium text-stone-500">
                     <th className="pb-3 pr-4">Scout</th>
                     <th className="pb-3 pr-4">Patrol</th>
                     <th className="pb-3 text-right">Amount Owed</th>
@@ -278,15 +278,15 @@ export default async function ReportsPage() {
                         <td className="py-3 pr-4">
                           <Link
                             href={`/accounts/${account.id}`}
-                            className="font-medium text-blue-600 hover:text-blue-800"
+                            className="font-medium text-forest-600 hover:text-forest-800"
                           >
                             {account.scouts?.first_name} {account.scouts?.last_name}
                           </Link>
                         </td>
-                        <td className="py-3 pr-4 text-gray-600">
+                        <td className="py-3 pr-4 text-stone-600">
                           {account.scouts?.patrol || '—'}
                         </td>
-                        <td className="py-3 text-right font-medium text-red-600">
+                        <td className="py-3 text-right font-medium text-error">
                           {formatCurrency(Math.abs(account.balance || 0))}
                         </td>
                       </tr>
@@ -295,7 +295,7 @@ export default async function ReportsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-green-600">No scouts currently owe money!</p>
+            <p className="text-success">No scouts currently owe money!</p>
           )}
         </CardContent>
       </Card>
@@ -311,7 +311,7 @@ export default async function ReportsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b text-left text-sm font-medium text-gray-500">
+                  <tr className="border-b text-left text-sm font-medium text-stone-500">
                     <th className="pb-3 pr-4">Date</th>
                     <th className="pb-3 pr-4">Description</th>
                     <th className="pb-3 pr-4">Type</th>
@@ -329,19 +329,19 @@ export default async function ReportsPage() {
                         key={entry.id}
                         className={`border-b last:border-0 ${entry.is_void ? 'opacity-50' : ''}`}
                       >
-                        <td className="py-3 pr-4 text-gray-600">
+                        <td className="py-3 pr-4 text-stone-600">
                           {entry.entry_date}
                         </td>
                         <td className="py-3 pr-4">
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-stone-900">
                             {entry.description}
                           </p>
                           {entry.is_void && (
-                            <span className="text-xs text-red-500">(VOID)</span>
+                            <span className="text-xs text-error">(VOID)</span>
                           )}
                         </td>
                         <td className="py-3 pr-4">
-                          <span className="rounded bg-gray-100 px-2 py-1 text-xs capitalize">
+                          <span className="rounded bg-stone-100 px-2 py-1 text-xs capitalize">
                             {entry.entry_type || 'entry'}
                           </span>
                         </td>
@@ -355,7 +355,7 @@ export default async function ReportsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-gray-500">No transactions yet</p>
+            <p className="text-stone-500">No transactions yet</p>
           )}
         </CardContent>
       </Card>

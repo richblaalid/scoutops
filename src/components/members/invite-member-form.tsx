@@ -74,7 +74,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-bold">Invite Member</h2>
-        <p className="mb-4 text-sm text-gray-600">
+        <p className="mb-4 text-sm text-stone-600">
           Send an invitation to join your unit. They&apos;ll receive an email with a magic link to sign up or log in.
         </p>
 
@@ -111,7 +111,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-stone-500">
               {ROLES.find((r) => r.value === role)?.description}
             </p>
           </div>
@@ -119,25 +119,25 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
           {role === 'parent' && (
             <div className="space-y-2">
               <Label>Link to Scout(s) *</Label>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-xs text-stone-500 mb-2">
                 Select the scout(s) this parent is a guardian of
               </p>
               <div className="max-h-48 overflow-y-auto rounded-md border p-2 space-y-1">
                 {scouts.length === 0 ? (
-                  <p className="text-sm text-gray-500 py-2 text-center">
+                  <p className="text-sm text-stone-500 py-2 text-center">
                     No scouts in this unit yet
                   </p>
                 ) : (
                   scouts.map((scout) => (
                     <label
                       key={scout.id}
-                      className="flex items-center gap-2 rounded p-2 hover:bg-gray-50 cursor-pointer"
+                      className="flex items-center gap-2 rounded p-2 hover:bg-stone-50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         checked={selectedScoutIds.includes(scout.id)}
                         onChange={() => handleScoutToggle(scout.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"
                       />
                       <span className="text-sm">
                         {scout.first_name} {scout.last_name}
@@ -147,7 +147,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
                 )}
               </div>
               {selectedScoutIds.length > 0 && (
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-stone-600">
                   {selectedScoutIds.length} scout{selectedScoutIds.length !== 1 ? 's' : ''} selected
                 </p>
               )}
@@ -155,7 +155,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
           )}
 
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-md bg-error-light p-3 text-sm text-error">
               {error}
             </div>
           )}

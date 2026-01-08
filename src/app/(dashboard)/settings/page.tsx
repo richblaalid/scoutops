@@ -26,7 +26,7 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Account Settings</h1>
-        <p className="text-gray-600">Manage your personal information and account preferences</p>
+        <p className="text-stone-600">Manage your personal information and account preferences</p>
       </div>
 
       <div className="grid gap-6">

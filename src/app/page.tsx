@@ -30,14 +30,14 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+        <h1 className="text-4xl font-bold tracking-tight text-stone-900 sm:text-6xl">
           ScoutOps
         </h1>
-        <p className="mt-6 text-lg leading-8 text-gray-600">
+        <p className="mt-6 text-lg leading-8 text-stone-600">
           Unit management platform for Scouting America troops
         </p>
         {authError && (
-          <div className="mt-6 rounded-md bg-red-50 p-4 text-sm text-red-600">
+          <div className="mt-6 rounded-md bg-error-light p-4 text-sm text-error">
             {decodeURIComponent(authError.replace(/\+/g, ' '))}
           </div>
         )}

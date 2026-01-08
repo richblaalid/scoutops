@@ -60,8 +60,8 @@ export default async function BillingPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">No Unit Access</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-stone-900">No Unit Access</h1>
+        <p className="mt-2 text-stone-600">
           You are not currently a member of any unit.
         </p>
       </div>
@@ -126,8 +126,8 @@ export default async function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Scout Billing</h1>
-        <p className="mt-1 text-gray-600">
+        <h1 className="text-3xl font-bold text-stone-900">Scout Billing</h1>
+        <p className="mt-1 text-stone-600">
           Create charges for shared expenses or fixed fees
         </p>
       </div>
@@ -165,23 +165,23 @@ export default async function BillingPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-stone-900">
                         {record.description}
                       </h3>
                       {record.events && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-stone-500">
                           Event: {record.events.title}
                         </p>
                       )}
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-stone-500">
                         {record.billing_date} • {record.billing_charges.length} scouts
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-gray-900">
+                      <p className="text-lg font-bold text-stone-900">
                         {formatCurrency(record.total_amount)}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-stone-500">
                         {formatCurrency(
                           record.total_amount / (record.billing_charges.length || 1)
                         )}{' '}
@@ -197,8 +197,8 @@ export default async function BillingPage() {
                         key={charge.id}
                         className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
                           charge.is_paid
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-yellow-100 text-yellow-700'
+                            ? 'bg-success-light text-success'
+                            : 'bg-warning-light text-warning'
                         }`}
                       >
                         {charge.scout_accounts?.scouts?.first_name}{' '}
@@ -207,7 +207,7 @@ export default async function BillingPage() {
                       </span>
                     ))}
                     {record.billing_charges.length > 5 && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-stone-500">
                         +{record.billing_charges.length - 5} more
                       </span>
                     )}
@@ -217,9 +217,9 @@ export default async function BillingPage() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500">No billing records yet</p>
+              <p className="text-stone-500">No billing records yet</p>
               {canCreateBilling && (
-                <p className="mt-2 text-sm text-gray-400">
+                <p className="mt-2 text-sm text-stone-400">
                   Create your first billing record above
                 </p>
               )}
@@ -233,7 +233,7 @@ export default async function BillingPage() {
         <CardHeader>
           <CardTitle>How Scout Billing Works</CardTitle>
         </CardHeader>
-        <CardContent className="prose prose-sm max-w-none text-gray-600">
+        <CardContent className="prose prose-sm max-w-none text-stone-600">
           <p className="mb-3 font-medium">Two billing options:</p>
           <ul className="list-disc pl-4 space-y-1 mb-4">
             <li><strong>Split Total</strong> – Divide a shared expense equally among selected scouts (e.g., camping trips)</li>
@@ -247,7 +247,7 @@ export default async function BillingPage() {
             <li>Parents can view and pay their balance online</li>
           </ol>
           <p className="mt-4">
-            <Link href="/accounts" className="text-blue-600 hover:text-blue-800">
+            <Link href="/accounts" className="text-forest-600 hover:text-forest-800">
               View Scout Account Balances →
             </Link>
           </p>
