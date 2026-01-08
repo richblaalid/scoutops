@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .from('unit_memberships')
     .select('*, units(*)')
     .eq('profile_id', user.id)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .single()
 
   const membership = membershipData as {

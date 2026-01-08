@@ -23,6 +23,7 @@ const navItems = [
   { href: '/billing', label: 'Billing' },
   { href: '/payments', label: 'Payments' },
   { href: '/reports', label: 'Reports' },
+  { href: '/members', label: 'Members' },
 ]
 
 export function DashboardNav({ user, membership }: DashboardNavProps) {

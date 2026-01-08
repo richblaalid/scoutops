@@ -35,7 +35,7 @@ export default async function DashboardPage() {
     .from('unit_memberships')
     .select('unit_id, role')
     .eq('profile_id', user.id)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .single()
 
   const membership = membershipData as { unit_id: string; role: string } | null

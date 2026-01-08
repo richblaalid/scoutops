@@ -121,33 +121,29 @@ DECLARE
     v_unit_id UUID;
     v_old_values JSONB;
     v_new_values JSONB;
+    v_record_jsonb JSONB;
 BEGIN
-    -- Try to get unit_id from the record
+    -- Convert record to JSONB for inspection (can't use ? operator on record type)
     IF TG_OP = 'DELETE' THEN
-        v_unit_id := CASE
-            WHEN TG_TABLE_NAME IN ('units') THEN OLD.id
-            WHEN OLD ? 'unit_id' THEN (OLD->>'unit_id')::UUID
-            ELSE NULL
-        END;
-        v_old_values := to_jsonb(OLD);
+        v_record_jsonb := to_jsonb(OLD);
+        v_old_values := v_record_jsonb;
         v_new_values := NULL;
     ELSIF TG_OP = 'INSERT' THEN
-        v_unit_id := CASE
-            WHEN TG_TABLE_NAME IN ('units') THEN NEW.id
-            WHEN NEW ? 'unit_id' THEN (NEW->>'unit_id')::UUID
-            ELSE NULL
-        END;
+        v_record_jsonb := to_jsonb(NEW);
         v_old_values := NULL;
-        v_new_values := to_jsonb(NEW);
+        v_new_values := v_record_jsonb;
     ELSE -- UPDATE
-        v_unit_id := CASE
-            WHEN TG_TABLE_NAME IN ('units') THEN NEW.id
-            WHEN NEW ? 'unit_id' THEN (NEW->>'unit_id')::UUID
-            ELSE NULL
-        END;
+        v_record_jsonb := to_jsonb(NEW);
         v_old_values := to_jsonb(OLD);
-        v_new_values := to_jsonb(NEW);
+        v_new_values := v_record_jsonb;
     END IF;
+
+    -- Try to get unit_id from the JSONB record
+    v_unit_id := CASE
+        WHEN TG_TABLE_NAME = 'units' THEN (v_record_jsonb->>'id')::UUID
+        WHEN v_record_jsonb ? 'unit_id' THEN (v_record_jsonb->>'unit_id')::UUID
+        ELSE NULL
+    END;
 
     INSERT INTO audit_log (
         unit_id,
@@ -160,7 +156,7 @@ BEGIN
     ) VALUES (
         v_unit_id,
         TG_TABLE_NAME,
-        CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
+        (v_record_jsonb->>'id')::UUID,
         TG_OP,
         v_old_values,
         v_new_values,

@@ -17,7 +17,7 @@ export default async function ScoutsPage() {
     .from('unit_memberships')
     .select('unit_id, role')
     .eq('profile_id', user.id)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .single()
 
   const membership = membershipData as { unit_id: string; role: string } | null
@@ -33,26 +33,6 @@ export default async function ScoutsPage() {
     )
   }
 
-  // Get scouts for this unit
-  const { data: scoutsData } = await supabase
-    .from('scouts')
-    .select(`
-      id,
-      first_name,
-      last_name,
-      patrol,
-      rank,
-      is_active,
-      date_of_birth,
-      bsa_member_id,
-      scout_accounts (
-        id,
-        balance
-      )
-    `)
-    .eq('unit_id', membership.unit_id)
-    .order('last_name', { ascending: true })
-
   interface ScoutWithAccount {
     id: string
     first_name: string
@@ -65,16 +45,75 @@ export default async function ScoutsPage() {
     scout_accounts: { id: string; balance: number | null } | null
   }
 
-  const scouts = (scoutsData as ScoutWithAccount[]) || []
-
   const canManageScouts = ['admin', 'treasurer', 'leader'].includes(membership.role)
+  const isParent = membership.role === 'parent'
+
+  let scouts: ScoutWithAccount[] = []
+
+  if (isParent) {
+    // Parents only see scouts they are guardians of
+    const { data: guardianData } = await supabase
+      .from('scout_guardians')
+      .select('scout_id')
+      .eq('profile_id', user.id)
+
+    const scoutIds = (guardianData || []).map(g => g.scout_id)
+
+    if (scoutIds.length > 0) {
+      const { data: scoutsData } = await supabase
+        .from('scouts')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          patrol,
+          rank,
+          is_active,
+          date_of_birth,
+          bsa_member_id,
+          scout_accounts (
+            id,
+            balance
+          )
+        `)
+        .in('id', scoutIds)
+        .eq('unit_id', membership.unit_id)
+        .order('last_name', { ascending: true })
+
+      scouts = (scoutsData as ScoutWithAccount[]) || []
+    }
+  } else {
+    // Admin, treasurer, leader see all scouts
+    const { data: scoutsData } = await supabase
+      .from('scouts')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        patrol,
+        rank,
+        is_active,
+        date_of_birth,
+        bsa_member_id,
+        scout_accounts (
+          id,
+          balance
+        )
+      `)
+      .eq('unit_id', membership.unit_id)
+      .order('last_name', { ascending: true })
+
+    scouts = (scoutsData as ScoutWithAccount[]) || []
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Scouts</h1>
-          <p className="mt-1 text-gray-600">Manage your unit&apos;s scout roster</p>
+          <p className="mt-1 text-gray-600">
+            {isParent ? 'Your linked scouts' : 'Manage your unit\'s scout roster'}
+          </p>
         </div>
         {canManageScouts && <AddScoutButton unitId={membership.unit_id} />}
       </div>
