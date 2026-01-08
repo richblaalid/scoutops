@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AccessDenied } from '@/components/ui/access-denied'
+import { canAccessPage, isAdmin } from '@/lib/roles'
 import { MembersList } from '@/components/members/members-list'
 import { InviteMemberButton } from '@/components/members/invite-member-button'
 
@@ -58,7 +60,12 @@ export default async function MembersPage() {
     )
   }
 
-  const isAdmin = membership.role === 'admin'
+  // Check role-based access
+  if (!canAccessPage(membership.role, 'members')) {
+    return <AccessDenied message="Only administrators can manage members." />
+  }
+
+  const userIsAdmin = isAdmin(membership.role)
 
   // Get all members for this unit (both active and invited)
   const { data: membersData } = await supabase
@@ -72,7 +79,7 @@ export default async function MembersPage() {
       invited_at,
       expires_at,
       scout_ids,
-      profiles (
+      profiles!unit_memberships_profile_id_fkey (
         id,
         email,
         full_name
@@ -86,7 +93,7 @@ export default async function MembersPage() {
     .order('status', { ascending: true }) // 'active' comes before 'invited'
     .order('joined_at', { ascending: true, nullsFirst: false })
 
-  const allMembers = (membersData as Member[]) || []
+  const allMembers = (membersData as unknown as Member[]) || []
 
   // Separate active members and pending invites
   const activeMembers = allMembers.filter(m => m.status === 'active')
@@ -120,11 +127,11 @@ export default async function MembersPage() {
             Manage members of {unit?.name || 'your unit'}
           </p>
         </div>
-        {isAdmin && <InviteMemberButton unitId={membership.unit_id} scouts={scouts} />}
+        {userIsAdmin && <InviteMemberButton unitId={membership.unit_id} scouts={scouts} />}
       </div>
 
       {/* Pending Invites (Admin only) */}
-      {isAdmin && pendingInvites.length > 0 && (
+      {userIsAdmin && pendingInvites.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Pending Invites</CardTitle>
@@ -207,7 +214,7 @@ export default async function MembersPage() {
         <CardContent>
           <MembersList
             members={activeMembers}
-            isAdmin={isAdmin}
+            isAdmin={userIsAdmin}
             currentUserId={user.id}
             unitId={membership.unit_id}
           />

@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AccessDenied } from '@/components/ui/access-denied'
+import { canAccessPage, canPerformAction } from '@/lib/roles'
 import { ScoutsList } from '@/components/scouts/scouts-list'
 import { AddScoutButton } from '@/components/scouts/add-scout-button'
 
@@ -33,6 +35,11 @@ export default async function ScoutsPage() {
     )
   }
 
+  // Check role-based access
+  if (!canAccessPage(membership.role, 'scouts')) {
+    return <AccessDenied message="You don't have permission to view the scouts roster." />
+  }
+
   interface ScoutWithAccount {
     id: string
     first_name: string
@@ -45,7 +52,7 @@ export default async function ScoutsPage() {
     scout_accounts: { id: string; balance: number | null } | null
   }
 
-  const canManageScouts = ['admin', 'treasurer', 'leader'].includes(membership.role)
+  const canManageScouts = canPerformAction(membership.role, 'manage_scouts')
   const isParent = membership.role === 'parent'
 
   let scouts: ScoutWithAccount[] = []

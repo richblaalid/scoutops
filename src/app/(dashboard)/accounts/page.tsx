@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
+import { hasFilteredView, isFinancialRole } from '@/lib/roles'
 import Link from 'next/link'
 
 interface ScoutAccount {
   id: string
   balance: number | null
+  scout_id: string
   scouts: {
     id: string
     first_name: string
@@ -45,12 +47,40 @@ export default async function AccountsPage() {
     )
   }
 
-  // Get scout accounts
-  const { data: accountsData } = await supabase
+  const role = membership.role
+  const isParent = role === 'parent'
+  const isScout = role === 'scout'
+
+  // For parents/scouts, get their linked scout IDs
+  let linkedScoutIds: string[] = []
+
+  if (isParent) {
+    const { data: guardianData } = await supabase
+      .from('scout_guardians')
+      .select('scout_id')
+      .eq('profile_id', user.id)
+    linkedScoutIds = (guardianData || []).map((g) => g.scout_id)
+  }
+
+  if (isScout) {
+    const { data: scoutData } = await supabase
+      .from('scouts')
+      .select('id')
+      .eq('profile_id', user.id)
+      .single()
+
+    if (scoutData) {
+      linkedScoutIds = [scoutData.id]
+    }
+  }
+
+  // Get scout accounts (filtered for parents/scouts)
+  let accountsQuery = supabase
     .from('scout_accounts')
     .select(`
       id,
       balance,
+      scout_id,
       scouts (
         id,
         first_name,
@@ -62,6 +92,14 @@ export default async function AccountsPage() {
     .eq('unit_id', membership.unit_id)
     .order('balance', { ascending: true })
 
+  if (hasFilteredView(role) && linkedScoutIds.length > 0) {
+    accountsQuery = accountsQuery.in('scout_id', linkedScoutIds)
+  } else if (hasFilteredView(role)) {
+    // No linked scouts, will show empty
+    accountsQuery = accountsQuery.eq('id', 'none')
+  }
+
+  const { data: accountsData } = await accountsQuery
   const accounts = (accountsData as ScoutAccount[]) || []
 
   // Calculate totals
@@ -78,63 +116,76 @@ export default async function AccountsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Scout Accounts</h1>
-        <p className="mt-1 text-gray-600">View and manage scout financial accounts</p>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isScout ? 'My Account' : isParent ? 'Family Accounts' : 'Scout Accounts'}
+        </h1>
+        <p className="mt-1 text-gray-600">
+          {isScout
+            ? 'View your account balance and transactions'
+            : isParent
+              ? 'View your scouts\' account balances'
+              : 'View and manage scout financial accounts'}
+        </p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Owed to Unit</CardDescription>
-            <CardTitle className="text-2xl text-red-600">
-              {formatCurrency(totalOwed)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              From {accounts.filter((a) => (a.balance || 0) < 0).length} scouts
-            </p>
-          </CardContent>
-        </Card>
+      {/* Summary Cards (only for management/financial roles) */}
+      {isFinancialRole(role) && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total Owed to Unit</CardDescription>
+              <CardTitle className="text-2xl text-red-600">
+                {formatCurrency(totalOwed)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                From {accounts.filter((a) => (a.balance || 0) < 0).length} scouts
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Credit Balance</CardDescription>
-            <CardTitle className="text-2xl text-green-600">
-              {formatCurrency(totalCredit)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              From {accounts.filter((a) => (a.balance || 0) > 0).length} scouts
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total Credit Balance</CardDescription>
+              <CardTitle className="text-2xl text-green-600">
+                {formatCurrency(totalCredit)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                From {accounts.filter((a) => (a.balance || 0) > 0).length} scouts
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Net Balance</CardDescription>
-            <CardTitle
-              className={`text-2xl ${netBalance < 0 ? 'text-red-600' : 'text-green-600'}`}
-            >
-              {formatCurrency(netBalance)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              {netBalance < 0 ? 'Net owed to unit' : 'Net credit available'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Net Balance</CardDescription>
+              <CardTitle
+                className={`text-2xl ${netBalance < 0 ? 'text-red-600' : 'text-green-600'}`}
+              >
+                {formatCurrency(netBalance)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                {netBalance < 0 ? 'Net owed to unit' : 'Net credit available'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Accounts List */}
       <Card>
         <CardHeader>
-          <CardTitle>All Scout Accounts</CardTitle>
+          <CardTitle>
+            {isScout ? 'Account Details' : isParent ? 'Your Scouts' : 'All Scout Accounts'}
+          </CardTitle>
           <CardDescription>
-            {accounts.length} account{accounts.length !== 1 ? 's' : ''} • Sorted by balance
+            {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+            {!hasFilteredView(role) && ' • Sorted by balance'}
           </CardDescription>
         </CardHeader>
         <CardContent>

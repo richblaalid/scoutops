@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
+import { canAccessPage, canPerformAction, isFinancialRole } from '@/lib/roles'
 import { PaymentForm } from '@/components/payments/payment-form'
 
 interface Payment {
@@ -12,6 +14,7 @@ interface Payment {
   status: string | null
   created_at: string | null
   notes: string | null
+  scout_account_id: string
   scout_accounts: {
     scouts: {
       first_name: string
@@ -60,28 +63,57 @@ export default async function PaymentsPage() {
     )
   }
 
-  const canRecordPayment = ['admin', 'treasurer'].includes(membership.role)
+  // Check role-based access
+  if (!canAccessPage(membership.role, 'payments')) {
+    return <AccessDenied message="You don't have permission to view payments." />
+  }
 
-  // Get scouts with balances for payment form
-  const { data: scoutsData } = await supabase
-    .from('scouts')
-    .select(`
-      id,
-      first_name,
-      last_name,
-      scout_accounts (
+  const canRecordPayment = canPerformAction(membership.role, 'record_payments')
+  const isParent = membership.role === 'parent'
+
+  // For parents, get their linked scout IDs
+  let linkedScoutAccountIds: string[] = []
+  if (isParent) {
+    const { data: guardianData } = await supabase
+      .from('scout_guardians')
+      .select('scout_id')
+      .eq('profile_id', user.id)
+
+    if (guardianData && guardianData.length > 0) {
+      const scoutIds = guardianData.map((g) => g.scout_id)
+      // Get the account IDs for these scouts
+      const { data: accountData } = await supabase
+        .from('scout_accounts')
+        .select('id')
+        .in('scout_id', scoutIds)
+
+      linkedScoutAccountIds = (accountData || []).map((a) => a.id)
+    }
+  }
+
+  // Get scouts with balances for payment form (only for financial roles)
+  let scouts: Scout[] = []
+  if (isFinancialRole(membership.role)) {
+    const { data: scoutsData } = await supabase
+      .from('scouts')
+      .select(`
         id,
-        balance
-      )
-    `)
-    .eq('unit_id', membership.unit_id)
-    .eq('is_active', true)
-    .order('last_name')
+        first_name,
+        last_name,
+        scout_accounts (
+          id,
+          balance
+        )
+      `)
+      .eq('unit_id', membership.unit_id)
+      .eq('is_active', true)
+      .order('last_name')
 
-  const scouts = (scoutsData as Scout[]) || []
+    scouts = (scoutsData as Scout[]) || []
+  }
 
-  // Get recent payments
-  const { data: paymentsData } = await supabase
+  // Get recent payments (filtered for parents)
+  let paymentsQuery = supabase
     .from('payments')
     .select(`
       id,
@@ -92,6 +124,7 @@ export default async function PaymentsPage() {
       status,
       created_at,
       notes,
+      scout_account_id,
       scout_accounts (
         scouts (
           first_name,
@@ -103,6 +136,16 @@ export default async function PaymentsPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  // Filter for parent's linked scouts
+  if (isParent && linkedScoutAccountIds.length > 0) {
+    paymentsQuery = paymentsQuery.in('scout_account_id', linkedScoutAccountIds)
+  } else if (isParent) {
+    // Parent with no linked scouts sees no payments
+    paymentsQuery = paymentsQuery.eq('id', 'none')
+  }
+
+  const { data: paymentsData } = await paymentsQuery
+
   const payments = (paymentsData as Payment[]) || []
 
   // Calculate totals
@@ -113,54 +156,62 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
-        <p className="mt-1 text-gray-600">Record and track payments from scouts</p>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isParent ? 'Payment History' : 'Payments'}
+        </h1>
+        <p className="mt-1 text-gray-600">
+          {isParent
+            ? 'View payments made for your scouts'
+            : 'Record and track payments from scouts'}
+        </p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Collected</CardDescription>
-            <CardTitle className="text-2xl text-green-600">
-              {formatCurrency(totalCollected)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              From {payments.length} payment{payments.length !== 1 ? 's' : ''}
-            </p>
-          </CardContent>
-        </Card>
+      {/* Summary Cards (only for financial roles) */}
+      {isFinancialRole(membership.role) && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total Collected</CardDescription>
+              <CardTitle className="text-2xl text-green-600">
+                {formatCurrency(totalCollected)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                From {payments.length} payment{payments.length !== 1 ? 's' : ''}
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Processing Fees</CardDescription>
-            <CardTitle className="text-2xl text-red-600">
-              {formatCurrency(totalFees)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Card payment fees
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Processing Fees</CardDescription>
+              <CardTitle className="text-2xl text-red-600">
+                {formatCurrency(totalFees)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Card payment fees
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Net Received</CardDescription>
-            <CardTitle className="text-2xl text-blue-600">
-              {formatCurrency(netCollected)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              After fees
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Net Received</CardDescription>
+              <CardTitle className="text-2xl text-blue-600">
+                {formatCurrency(netCollected)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                After fees
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Record Payment */}
       {canRecordPayment && (
@@ -243,18 +294,20 @@ export default async function PaymentsPage() {
         </CardContent>
       </Card>
 
-      {/* Square Integration Notice */}
-      <Card className="border-dashed">
-        <CardHeader>
-          <CardTitle className="text-gray-500">Online Payments (Coming Soon)</CardTitle>
-        </CardHeader>
-        <CardContent className="text-gray-500">
-          <p>
-            Square integration for online card payments will be available in a future update.
-            For now, record cash and check payments manually above.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Square Integration Notice (only for financial roles) */}
+      {isFinancialRole(membership.role) && (
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle className="text-gray-500">Online Payments (Coming Soon)</CardTitle>
+          </CardHeader>
+          <CardContent className="text-gray-500">
+            <p>
+              Square integration for online card payments will be available in a future update.
+              For now, record cash and check payments manually above.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

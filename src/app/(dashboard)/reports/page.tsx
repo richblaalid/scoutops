@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
+import { canAccessPage } from '@/lib/roles'
 import Link from 'next/link'
 
 interface ScoutAccount {
@@ -62,6 +64,11 @@ export default async function ReportsPage() {
         </p>
       </div>
     )
+  }
+
+  // Check role-based access
+  if (!canAccessPage(membership.role, 'reports')) {
+    return <AccessDenied message="Only administrators, treasurers, and leaders can access reports." />
   }
 
   // Get all scout accounts

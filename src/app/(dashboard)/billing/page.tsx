@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
+import { canAccessPage, canPerformAction } from '@/lib/roles'
 import { BillingForm } from '@/components/billing/billing-form'
 import Link from 'next/link'
 
@@ -66,7 +68,12 @@ export default async function BillingPage() {
     )
   }
 
-  const canCreateBilling = ['admin', 'treasurer'].includes(membership.role)
+  // Check role-based access
+  if (!canAccessPage(membership.role, 'billing')) {
+    return <AccessDenied message="Only administrators and treasurers can access billing." />
+  }
+
+  const canCreateBilling = canPerformAction(membership.role, 'manage_billing')
 
   // Get active scouts for billing form
   const { data: scoutsData } = await supabase

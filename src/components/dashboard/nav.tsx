@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { getVisibleNavItems } from '@/lib/roles'
 import type { User } from '@supabase/supabase-js'
 
 interface DashboardNavProps {
@@ -16,18 +17,9 @@ interface DashboardNavProps {
   } | null
 }
 
-const navItems = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/scouts', label: 'Scouts' },
-  { href: '/accounts', label: 'Accounts' },
-  { href: '/billing', label: 'Billing' },
-  { href: '/payments', label: 'Payments' },
-  { href: '/reports', label: 'Reports' },
-  { href: '/members', label: 'Members' },
-]
-
 export function DashboardNav({ user, membership }: DashboardNavProps) {
   const pathname = usePathname()
+  const navItems = membership ? getVisibleNavItems(membership.role) : []
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
