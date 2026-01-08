@@ -279,14 +279,14 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       {/* Billing Type Toggle */}
       <div className="space-y-2">
         <Label>Billing Type</Label>
-        <div className="ml-4 mt-3 inline-flex rounded-lg border border-gray-300 bg-white p-1">
+        <div className="ml-4 mt-3 inline-flex rounded-lg border border-stone-300 bg-white p-1">
           <button
             type="button"
             onClick={() => setBillingType('split')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               billingType === 'split'
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-forest-700 text-white'
+                : 'text-stone-600 hover:text-stone-900'
             }`}
           >
             Split Total
@@ -296,14 +296,14 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             onClick={() => setBillingType('fixed')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               billingType === 'fixed'
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-forest-700 text-white'
+                : 'text-stone-600 hover:text-stone-900'
             }`}
           >
             Fixed Amount
           </button>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-stone-500">
           {billingType === 'split'
             ? 'Enter a total amount to split equally among selected scouts (e.g., camping trip costs)'
             : 'Enter an amount to charge each selected scout (e.g., annual dues)'}
@@ -317,7 +317,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             {billingType === 'split' ? 'Total Amount' : 'Per Scout'} *
           </Label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">
               $
             </span>
             <Input
@@ -354,42 +354,42 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             <button
               type="button"
               onClick={selectAll}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-forest-600 hover:text-forest-800"
             >
               Select All
             </button>
-            <span className="text-gray-300">|</span>
+            <span className="text-stone-300">|</span>
             <button
               type="button"
               onClick={selectNone}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-forest-600 hover:text-forest-800"
             >
               Clear
             </button>
           </div>
         </div>
 
-        <div className="max-h-64 overflow-y-auto rounded-lg border p-4">
+        <div className="max-h-64 overflow-y-auto rounded-lg border border-stone-200 p-4">
           {Object.entries(patrolGroups).map(([patrol, patrolScouts]) => (
             <div key={patrol} className="mb-4 last:mb-0">
-              <h4 className="mb-2 text-sm font-medium text-gray-500">{patrol}</h4>
+              <h4 className="mb-2 text-sm font-medium text-stone-500">{patrol}</h4>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {patrolScouts.map((scout) => (
                   <label
                     key={scout.id}
                     className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-colors ${
                       selectedScouts.has(scout.id)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:bg-gray-50'
+                        ? 'border-forest-600 bg-forest-50'
+                        : 'border-stone-200 hover:bg-stone-50'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={selectedScouts.has(scout.id)}
                       onChange={() => toggleScout(scout.id)}
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
                     />
-                    <span className="text-sm">
+                    <span className="text-sm text-stone-700">
                       {scout.first_name} {scout.last_name}
                     </span>
                   </label>
@@ -402,40 +402,40 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
 
       {/* Summary */}
       {selectedScouts.size > 0 && parsedAmount > 0 && (
-        <div className="rounded-lg bg-gray-50 p-4">
-          <h4 className="font-medium text-gray-900">Billing Summary</h4>
+        <div className="rounded-lg bg-stone-50 p-4">
+          <h4 className="font-medium text-stone-900">Billing Summary</h4>
           <div className="mt-3 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Billing Type:</span>
-              <span className="font-medium">
+              <span className="text-stone-500">Billing Type:</span>
+              <span className="font-medium text-stone-700">
                 {billingType === 'split' ? 'Split Total' : 'Fixed Amount Per Scout'}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Scouts Selected:</span>
-              <span className="font-medium">{selectedScouts.size}</span>
+              <span className="text-stone-500">Scouts Selected:</span>
+              <span className="font-medium text-stone-700">{selectedScouts.size}</span>
             </div>
-            <div className="border-t border-gray-200 pt-2">
+            <div className="border-t border-stone-200 pt-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Amount Per Scout:</span>
-                <span className={`font-medium ${billingType === 'fixed' ? 'text-gray-900' : 'text-blue-600'}`}>
+                <span className="text-stone-500">Amount Per Scout:</span>
+                <span className={`font-medium ${billingType === 'fixed' ? 'text-stone-900' : 'text-forest-700'}`}>
                   {formatCurrency(perScoutAmount)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Total Amount:</span>
-                <span className={`font-medium ${billingType === 'split' ? 'text-gray-900' : 'text-blue-600'}`}>
+                <span className="text-stone-500">Total Amount:</span>
+                <span className={`font-medium ${billingType === 'split' ? 'text-stone-900' : 'text-forest-700'}`}>
                   {formatCurrency(totalAmount)}
                 </span>
               </div>
             </div>
             {billingType === 'split' && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-stone-500">
                 {formatCurrency(parsedAmount)} ÷ {selectedScouts.size} scouts = {formatCurrency(perScoutAmount)} each
               </p>
             )}
             {billingType === 'fixed' && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-stone-500">
                 {formatCurrency(parsedAmount)} × {selectedScouts.size} scouts = {formatCurrency(totalAmount)} total
               </p>
             )}
@@ -445,13 +445,13 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+        <div className="rounded-lg bg-error-light p-3 text-sm font-medium text-error-dark">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+        <div className="rounded-lg bg-success-light p-3 text-sm font-medium text-success-dark">
           Billing created successfully! Refreshing...
         </div>
       )}

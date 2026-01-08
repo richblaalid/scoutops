@@ -55,8 +55,8 @@ export default async function PaymentsPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">No Unit Access</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-2xl font-bold text-stone-900">No Unit Access</h1>
+        <p className="mt-2 text-stone-600">
           You are not currently a member of any unit.
         </p>
       </div>
@@ -156,10 +156,10 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-stone-900">
           {isParent ? 'Payment History' : 'Payments'}
         </h1>
-        <p className="mt-1 text-gray-600">
+        <p className="mt-1 text-stone-600">
           {isParent
             ? 'View payments made for your scouts'
             : 'Record and track payments from scouts'}
@@ -172,12 +172,12 @@ export default async function PaymentsPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Collected</CardDescription>
-              <CardTitle className="text-2xl text-green-600">
+              <CardTitle className="text-2xl text-success">
                 {formatCurrency(totalCollected)}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-stone-500">
                 From {payments.length} payment{payments.length !== 1 ? 's' : ''}
               </p>
             </CardContent>
@@ -186,12 +186,12 @@ export default async function PaymentsPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Processing Fees</CardDescription>
-              <CardTitle className="text-2xl text-red-600">
+              <CardTitle className="text-2xl text-error">
                 {formatCurrency(totalFees)}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-stone-500">
                 Card payment fees
               </p>
             </CardContent>
@@ -200,12 +200,12 @@ export default async function PaymentsPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Net Received</CardDescription>
-              <CardTitle className="text-2xl text-blue-600">
+              <CardTitle className="text-2xl text-info">
                 {formatCurrency(netCollected)}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-stone-500">
                 After fees
               </p>
             </CardContent>
@@ -241,7 +241,7 @@ export default async function PaymentsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b text-left text-sm font-medium text-gray-500">
+                  <tr className="border-b border-stone-200 text-left text-sm font-medium text-stone-500">
                     <th className="pb-3 pr-4">Date</th>
                     <th className="pb-3 pr-4">Scout</th>
                     <th className="pb-3 pr-4">Method</th>
@@ -252,35 +252,35 @@ export default async function PaymentsPage() {
                 </thead>
                 <tbody>
                   {payments.map((payment) => (
-                    <tr key={payment.id} className="border-b last:border-0">
-                      <td className="py-3 pr-4 text-gray-600">
+                    <tr key={payment.id} className="border-b border-stone-100 last:border-0">
+                      <td className="py-3 pr-4 text-stone-600">
                         {payment.created_at
                           ? new Date(payment.created_at).toLocaleDateString()
                           : '—'}
                       </td>
                       <td className="py-3 pr-4">
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-stone-900">
                           {payment.scout_accounts?.scouts?.first_name}{' '}
                           {payment.scout_accounts?.scouts?.last_name}
                         </p>
                         {payment.notes && (
-                          <p className="text-xs text-gray-500">{payment.notes}</p>
+                          <p className="text-xs text-stone-500">{payment.notes}</p>
                         )}
                       </td>
                       <td className="py-3 pr-4">
-                        <span className="rounded bg-gray-100 px-2 py-1 text-xs capitalize">
+                        <span className="rounded-md bg-stone-100 px-2 py-1 text-xs font-medium capitalize text-stone-700">
                           {payment.payment_method || 'unknown'}
                         </span>
                       </td>
-                      <td className="py-3 pr-4 text-right font-medium text-green-600">
+                      <td className="py-3 pr-4 text-right font-medium text-success">
                         {formatCurrency(payment.amount)}
                       </td>
-                      <td className="py-3 pr-4 text-right text-red-600">
+                      <td className="py-3 pr-4 text-right text-error">
                         {payment.fee_amount
                           ? formatCurrency(payment.fee_amount)
                           : '—'}
                       </td>
-                      <td className="py-3 text-right font-medium">
+                      <td className="py-3 text-right font-medium text-stone-900">
                         {formatCurrency(payment.net_amount)}
                       </td>
                     </tr>
@@ -289,18 +289,18 @@ export default async function PaymentsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-gray-500">No payments recorded yet</p>
+            <p className="text-stone-500">No payments recorded yet</p>
           )}
         </CardContent>
       </Card>
 
       {/* Square Integration Notice (only for financial roles) */}
       {isFinancialRole(membership.role) && (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-stone-300">
           <CardHeader>
-            <CardTitle className="text-gray-500">Online Payments (Coming Soon)</CardTitle>
+            <CardTitle className="text-stone-500">Online Payments (Coming Soon)</CardTitle>
           </CardHeader>
-          <CardContent className="text-gray-500">
+          <CardContent className="text-stone-500">
             <p>
               Square integration for online card payments will be available in a future update.
               For now, record cash and check payments manually above.

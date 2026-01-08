@@ -233,7 +233,7 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
           <select
             id="scout"
             required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-10 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
             value={selectedScoutId}
             onChange={(e) => setSelectedScoutId(e.target.value)}
           >
@@ -248,14 +248,14 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
             })}
           </select>
           {selectedScout && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-stone-500">
               Current balance:{' '}
               <span
                 className={
                   currentBalance < 0
-                    ? 'text-red-600'
+                    ? 'text-error'
                     : currentBalance > 0
-                      ? 'text-green-600'
+                      ? 'text-success'
                       : ''
                 }
               >
@@ -269,7 +269,7 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
         <div className="space-y-2">
           <Label htmlFor="amount">Amount *</Label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">
               $
             </span>
             <Input
@@ -295,7 +295,7 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
           <select
             id="method"
             required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-10 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
@@ -332,31 +332,31 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
 
       {/* Summary */}
       {parsedAmount > 0 && (
-        <div className="rounded-lg bg-gray-50 p-4">
-          <h4 className="font-medium text-gray-900">Payment Summary</h4>
+        <div className="rounded-lg bg-stone-50 p-4">
+          <h4 className="font-medium text-stone-900">Payment Summary</h4>
           <div className="mt-2 space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Amount:</span>
-              <span className="font-medium">{formatCurrency(parsedAmount)}</span>
+              <span className="text-stone-500">Amount:</span>
+              <span className="font-medium text-stone-900">{formatCurrency(parsedAmount)}</span>
             </div>
             {isCard && (
-              <div className="flex justify-between text-red-600">
+              <div className="flex justify-between text-error">
                 <span>Processing Fee (2.6% + $0.10):</span>
                 <span>-{formatCurrency(feeAmount)}</span>
               </div>
             )}
-            <div className="flex justify-between border-t pt-1 font-medium">
-              <span>Net to Bank:</span>
-              <span className="text-green-600">{formatCurrency(netAmount)}</span>
+            <div className="flex justify-between border-t border-stone-200 pt-1 font-medium">
+              <span className="text-stone-700">Net to Bank:</span>
+              <span className="text-success">{formatCurrency(netAmount)}</span>
             </div>
             {selectedScout && (
-              <div className="flex justify-between border-t pt-1">
-                <span className="text-gray-500">New Balance:</span>
+              <div className="flex justify-between border-t border-stone-200 pt-1">
+                <span className="text-stone-500">New Balance:</span>
                 <span
                   className={
                     currentBalance + parsedAmount < 0
-                      ? 'text-red-600'
-                      : 'text-green-600'
+                      ? 'text-error'
+                      : 'text-success'
                   }
                 >
                   {formatCurrency(currentBalance + parsedAmount)}
@@ -369,13 +369,13 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
 
       {/* Error/Success */}
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+        <div className="rounded-lg bg-error-light p-3 text-sm font-medium text-error-dark">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+        <div className="rounded-lg bg-success-light p-3 text-sm font-medium text-success-dark">
           Payment recorded successfully! Refreshing...
         </div>
       )}
