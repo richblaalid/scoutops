@@ -36,6 +36,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     pathname === '/' ||
     pathname === '/login' ||
+    pathname === '/early-access' ||
     pathname.startsWith('/auth/')
 
   // If user is not authenticated and trying to access a protected route

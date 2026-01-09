@@ -57,13 +57,10 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white px-8 py-10 shadow-md">
-      <div className="mb-8 flex flex-col items-center text-center">
-        <Logo variant="full" size="md" className="mb-2" />
-        <p className="mt-2 text-sm text-stone-500">Sign in with your email to continue</p>
-      </div>
+    <div className="rounded-xl border border-cream-400 bg-white px-8 py-8 shadow-lg">
+      <p className="mb-6 text-center text-sm text-stone-600">Sign in with your email to continue</p>
 
-      <form onSubmit={handleLogin} className="space-y-6">
+      <form onSubmit={handleLogin} className="space-y-5">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-stone-700">
             Email address
@@ -94,7 +91,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-lg bg-forest-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-800 hover:shadow-forest hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+          className="flex w-full items-center justify-center rounded-lg bg-forest-800 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-700 hover:shadow-forest hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
         >
           {loading ? (
             <svg
@@ -137,28 +134,56 @@ function LoginForm() {
           )}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-xs text-stone-400">
-        Your unit, organized.
-      </p>
     </div>
   )
 }
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-cream-300 px-4 py-12">
+      {/* Hero branding section */}
+      <div className="mb-8 flex flex-col items-center text-center">
+        <Logo variant="icon" size="lg" className="mb-4" />
+        <h1 className="text-3xl font-bold tracking-tight">
+          <span className="text-forest-800">Chuck </span>
+          <span className="text-tan-500">Box</span>
+        </h1>
+        <p className="mt-2 text-lg font-medium text-forest-600 italic">
+          Your unit, organized.
+        </p>
+        <p className="mt-4 max-w-sm text-sm text-stone-500">
+          The all-in-one platform for Scout unit finances, billing, and operations.
+        </p>
+        <div className="mt-4">
+          <span className="inline-flex items-center rounded-full bg-tan-500/10 px-3 py-1 text-xs font-medium text-tan-600">
+            Private Beta — Invited Users Only
+          </span>
+        </div>
+      </div>
+
       <div className="w-full max-w-md">
         <Suspense fallback={
           <div className="rounded-xl border border-stone-200 bg-white px-8 py-10 shadow-md">
-            <div className="mb-8 flex flex-col items-center text-center">
-              <Logo variant="full" size="md" className="mb-2" />
-              <p className="mt-2 text-sm text-stone-500">Loading...</p>
+            <div className="flex flex-col items-center text-center">
+              <p className="text-sm text-stone-500">Loading...</p>
             </div>
           </div>
         }>
           <LoginForm />
         </Suspense>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        <p className="text-sm text-stone-500">
+          Don&apos;t have access?{' '}
+          <a href="/" className="font-medium text-forest-600 hover:text-forest-700">
+            Request an invite
+          </a>
+        </p>
+        <p className="mt-2 text-xs text-stone-400">
+          chuckbox.app
+        </p>
       </div>
     </div>
   )
