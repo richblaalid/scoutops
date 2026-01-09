@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { Outfit, Source_Serif_4 } from 'next/font/google'
+import { Nunito, Source_Serif_4 } from 'next/font/google'
 import './globals.css'
 
-const outfit = Outfit({
+const nunito = Nunito({
   subsets: ['latin'],
-  variable: '--font-outfit',
+  variable: '--font-nunito',
   display: 'swap',
 })
 
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${sourceSerif.variable} font-sans`}>{children}</body>
+      <body className={`${nunito.variable} ${sourceSerif.variable} font-sans`}>{children}</body>
     </html>
   )
 }

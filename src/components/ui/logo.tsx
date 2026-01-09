@@ -13,6 +13,61 @@ const sizes = {
   lg: { icon: 64, wordmark: 'text-3xl' },
 }
 
+// Chuckbox brand colors
+const brandColors = {
+  light: {
+    boxBody: '#234D3E',      // Pine 800
+    compartments: '#3D8B6A', // Pine 600
+    accent: '#E85D04',       // Campfire 500
+    wordPrimary: '#234D3E',
+    wordAccent: '#E85D04',
+  },
+  dark: {
+    boxBody: '#3D8B6A',      // Pine 600
+    compartments: '#52A07E', // Pine 500
+    accent: '#F48C06',       // Campfire 400
+    wordPrimary: 'white',
+    wordAccent: '#F48C06',
+  }
+}
+
+function IconMark({ iconSize, colors }: { iconSize: number; colors: typeof brandColors.light }) {
+  return (
+    <svg
+      viewBox="0 0 72 66"
+      width={iconSize}
+      height={Math.round(iconSize * 66 / 72)}
+      className="shrink-0"
+    >
+      {/* Main box body */}
+      <path d="M60.1818 10H11.8182C9.70946 10 8 11.7349 8 13.875V37.125C8 39.2651 9.70946 41 11.8182 41H60.1818C62.2905 41 64 39.2651 64 37.125V13.875C64 11.7349 62.2905 10 60.1818 10Z" fill={colors.boxBody}/>
+      {/* Left leg */}
+      <path d="M15.6924 40.6155L5.53857 60.9232" stroke={colors.boxBody} strokeWidth="5.07692" strokeLinecap="round"/>
+      {/* Right leg */}
+      <path d="M56.3076 40.6155L66.4615 60.9232" stroke={colors.boxBody} strokeWidth="5.07692" strokeLinecap="round"/>
+      {/* Work surface (orange bar) */}
+      <path d="M62.0195 43.1538H9.98099C8.92953 43.1538 8.07715 44.0062 8.07715 45.0577V48.8653C8.07715 49.9168 8.92953 50.7692 9.98099 50.7692H62.0195C63.0709 50.7692 63.9233 49.9168 63.9233 48.8653V45.0577C63.9233 44.0062 63.0709 43.1538 62.0195 43.1538Z" fill={colors.accent}/>
+      {/* Top right compartment */}
+      <path d="M57.9643 14H43.0357C41.9114 14 41 14.6716 41 15.5V22.5C41 23.3284 41.9114 24 43.0357 24H57.9643C59.0886 24 60 23.3284 60 22.5V15.5C60 14.6716 59.0886 14 57.9643 14Z" fill={colors.compartments}/>
+      {/* Bottom right compartment */}
+      <path d="M57.9643 28H43.0357C41.9114 28 41 28.6044 41 29.35V35.65C41 36.3956 41.9114 37 43.0357 37H57.9643C59.0886 37 60 36.3956 60 35.65V29.35C60 28.6044 59.0886 28 57.9643 28Z" fill={colors.compartments}/>
+      {/* Left compartment */}
+      <path d="M34.3214 14H14.6786C13.1992 14 12 15.5446 12 17.45V33.55C12 35.4554 13.1992 37 14.6786 37H34.3214C35.8008 37 37 35.4554 37 33.55V17.45C37 15.5446 35.8008 14 34.3214 14Z" fill={colors.compartments}/>
+      {/* Center divider */}
+      <path d="M36 11V40" stroke={colors.compartments} strokeWidth="2.53846"/>
+    </svg>
+  )
+}
+
+function Wordmark({ wordmarkClass, colors }: { wordmarkClass: string; colors: typeof brandColors.light }) {
+  return (
+    <span className={cn('font-bold tracking-tight', wordmarkClass)}>
+      <span style={{ color: colors.wordPrimary }}>Chuck </span>
+      <span style={{ color: colors.wordAccent }}>Box</span>
+    </span>
+  )
+}
+
 export function Logo({
   className,
   variant = 'full',
@@ -20,82 +75,12 @@ export function Logo({
   size = 'md'
 }: LogoProps) {
   const { icon: iconSize, wordmark: wordmarkClass } = sizes[size]
-
-  const IconMark = () => (
-    <svg
-      viewBox="0 0 80 80"
-      width={iconSize}
-      height={iconSize}
-      className="shrink-0"
-    >
-      {/* Outer ring */}
-      <circle
-        cx="40"
-        cy="40"
-        r="36"
-        fill="none"
-        stroke={theme === 'light' ? '#1B4332' : 'white'}
-        strokeWidth="3"
-      />
-
-      {/* Compass cardinal points */}
-      <path d="M40 8 L43 20 L40 17 L37 20 Z" fill="#D4A574"/>
-      <path
-        d="M72 40 L60 43 L63 40 L60 37 Z"
-        fill={theme === 'light' ? '#1B4332' : 'white'}
-      />
-      <path
-        d="M40 72 L37 60 L40 63 L43 60 Z"
-        fill={theme === 'light' ? '#1B4332' : 'white'}
-      />
-      <path
-        d="M8 40 L20 37 L17 40 L20 43 Z"
-        fill={theme === 'light' ? '#1B4332' : 'white'}
-      />
-
-      {/* Center operational crosshair */}
-      <circle cx="40" cy="40" r="8" fill={theme === 'light' ? '#1B4332' : 'white'}/>
-      <circle cx="40" cy="40" r="4" fill="#D4A574"/>
-
-      {/* Grid lines */}
-      <line
-        x1="25" y1="40" x2="32" y2="40"
-        stroke={theme === 'light' ? '#2D6A4F' : 'rgba(255,255,255,0.6)'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="48" y1="40" x2="55" y2="40"
-        stroke={theme === 'light' ? '#2D6A4F' : 'rgba(255,255,255,0.6)'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="40" y1="25" x2="40" y2="32"
-        stroke={theme === 'light' ? '#2D6A4F' : 'rgba(255,255,255,0.6)'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="40" y1="48" x2="40" y2="55"
-        stroke={theme === 'light' ? '#2D6A4F' : 'rgba(255,255,255,0.6)'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-
-  const Wordmark = () => (
-    <span className={cn('font-bold tracking-tight', wordmarkClass)}>
-      <span className={theme === 'light' ? 'text-[#1B4332]' : 'text-white'}>Scout</span>
-      <span className="text-[#D4A574]">Ops</span>
-    </span>
-  )
+  const colors = brandColors[theme]
 
   if (variant === 'icon') {
     return (
       <div className={cn('inline-flex', className)}>
-        <IconMark />
+        <IconMark iconSize={iconSize} colors={colors} />
       </div>
     )
   }
@@ -103,7 +88,7 @@ export function Logo({
   if (variant === 'wordmark') {
     return (
       <div className={cn('inline-flex', className)}>
-        <Wordmark />
+        <Wordmark wordmarkClass={wordmarkClass} colors={colors} />
       </div>
     )
   }
@@ -111,8 +96,8 @@ export function Logo({
   // Full logo (icon + wordmark)
   return (
     <div className={cn('inline-flex items-center gap-2', className)}>
-      <IconMark />
-      <Wordmark />
+      <IconMark iconSize={iconSize} colors={colors} />
+      <Wordmark wordmarkClass={wordmarkClass} colors={colors} />
     </div>
   )
 }

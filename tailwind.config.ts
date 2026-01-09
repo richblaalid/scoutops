@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-outfit)', 'Avenir Next', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-nunito)', 'Avenir Next', 'system-ui', 'sans-serif'],
         serif: ['var(--font-source-serif)', 'Georgia', 'serif'],
       },
       colors: {
@@ -49,32 +49,40 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
 
-        // Chuckbox Brand Colors - Direct use
+        // Chuckbox Brand Colors - Pine (keeping 'forest' name for compatibility)
         forest: {
           50: '#E8F5EE',
           100: '#D1EBDD',
           200: '#A3D7BB',
           300: '#75C399',
           400: '#52796F',
-          500: '#40916C',
-          600: '#2D6A4F',
-          700: '#1B4332',
-          800: '#0D2818',
-          900: '#061410',
-          DEFAULT: '#1B4332',
+          500: '#52A07E',   // Pine 500
+          600: '#3D8B6A',   // Pine 600
+          700: '#2D6A4F',   // Pine 700
+          800: '#234D3E',   // Pine 800 - Primary brand
+          900: '#1A3A2F',   // Pine 900
+          DEFAULT: '#234D3E',
         },
+        // Chuckbox Brand Colors - Campfire (keeping 'tan' name for compatibility)
         tan: {
-          50: '#FDF8F3',
-          100: '#FAF0E6',
-          200: '#F0DCC8',
-          300: '#E5C4A1',
-          400: '#D4A574',
-          500: '#C48B4F',
-          600: '#A67035',
-          700: '#7D5428',
-          800: '#53381A',
-          900: '#2A1C0D',
-          DEFAULT: '#D4A574',
+          50: '#FFF7ED',
+          100: '#FFEDD5',
+          200: '#FED7AA',
+          300: '#FAA307',   // Campfire 300
+          400: '#F48C06',   // Campfire 400
+          500: '#E85D04',   // Campfire 500 - Primary accent
+          600: '#C2410C',
+          700: '#9A3412',
+          800: '#7C2D12',
+          900: '#431407',
+          DEFAULT: '#E85D04',
+        },
+        // Chuckbox Brand Colors - Cream backgrounds
+        cream: {
+          100: '#FFFDF9',
+          300: '#FAF3EB',   // Page background
+          400: '#F5E6D3',   // Card accents
+          DEFAULT: '#FAF3EB',
         },
         stone: {
           50: '#FAFAF9',
@@ -117,8 +125,8 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       boxShadow: {
-        'forest': '0 4px 12px rgba(27, 67, 50, 0.3)',
-        'tan': '0 4px 12px rgba(212, 165, 116, 0.3)',
+        'forest': '0 4px 12px rgba(35, 77, 62, 0.3)',   // Pine 800
+        'tan': '0 4px 12px rgba(232, 93, 4, 0.3)',       // Campfire 500
       },
     },
   },

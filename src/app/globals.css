@@ -8,8 +8,9 @@
 /*
  * Chuckbox Brand Color System
  *
- * Primary: Forest greens (#1B4332 family)
- * Accent: Tan/gold (#D4A574 family)
+ * Primary: Pine greens (#234D3E family)
+ * Accent: Campfire orange (#E85D04 family)
+ * Background: Cream (#FAF3EB family)
  * Neutrals: Warm stone grays
  * Semantic: Success, warning, error, info
  */
@@ -20,7 +21,7 @@
     --radius: 0.5rem;
 
     /* Background & Foreground */
-    --background: 40 20% 98%;           /* stone-50: #FAFAF9 */
+    --background: 33 56% 95%;           /* cream-300: #FAF3EB */
     --foreground: 24 10% 10%;           /* stone-900: #1C1917 */
 
     /* Card */
@@ -31,21 +32,21 @@
     --popover: 0 0% 100%;
     --popover-foreground: 24 10% 10%;
 
-    /* Primary - Forest Green */
-    --primary: 152 43% 18%;             /* forest-800: #1B4332 */
-    --primary-foreground: 40 20% 98%;   /* light text on dark bg */
+    /* Primary - Pine Green */
+    --primary: 157 39% 22%;             /* pine-800: #234D3E */
+    --primary-foreground: 33 56% 95%;   /* cream-300 for contrast */
 
-    /* Secondary - Light stone for subtle backgrounds */
-    --secondary: 40 6% 96%;             /* stone-100: #F5F5F4 */
+    /* Secondary - Light cream for subtle backgrounds */
+    --secondary: 30 54% 89%;            /* cream-400: #F5E6D3 */
     --secondary-foreground: 24 6% 32%;  /* stone-700: #44403C */
 
     /* Muted */
     --muted: 40 6% 96%;                 /* stone-100 */
     --muted-foreground: 24 5% 45%;      /* stone-500: #78716C */
 
-    /* Accent - Tan/Gold */
-    --accent: 30 52% 64%;               /* tan-400: #D4A574 */
-    --accent-foreground: 152 53% 8%;    /* forest-900: #0D2818 */
+    /* Accent - Campfire Orange */
+    --accent: 24 97% 46%;               /* campfire-500: #E85D04 */
+    --accent-foreground: 0 0% 100%;     /* white for contrast */
 
     /* Destructive - Error Red */
     --destructive: 0 72% 51%;           /* #DC2626 */
@@ -54,24 +55,24 @@
     /* Border & Input */
     --border: 30 6% 90%;                /* stone-200: #E7E5E4 */
     --input: 30 6% 90%;
-    --ring: 152 43% 18%;                /* forest-800 for focus rings */
+    --ring: 157 39% 22%;                /* pine-800 for focus rings */
 
     /* Chart colors - Chuckbox branded */
-    --chart-1: 152 43% 18%;             /* forest-800 */
-    --chart-2: 30 52% 64%;              /* tan-400 */
+    --chart-1: 157 39% 22%;             /* pine-800 */
+    --chart-2: 24 97% 46%;              /* campfire-500 */
     --chart-3: 160 84% 39%;             /* success green */
-    --chart-4: 152 36% 47%;             /* forest-600 */
+    --chart-4: 152 39% 39%;             /* pine-600 */
     --chart-5: 32 95% 44%;              /* warning amber */
 
     /* Sidebar */
     --sidebar: 0 0% 100%;
     --sidebar-foreground: 24 10% 10%;
-    --sidebar-primary: 152 43% 18%;
-    --sidebar-primary-foreground: 40 20% 98%;
-    --sidebar-accent: 40 6% 96%;
+    --sidebar-primary: 157 39% 22%;
+    --sidebar-primary-foreground: 33 56% 95%;
+    --sidebar-accent: 30 54% 89%;
     --sidebar-accent-foreground: 24 6% 32%;
     --sidebar-border: 30 6% 90%;
-    --sidebar-ring: 152 43% 18%;
+    --sidebar-ring: 157 39% 22%;
 
     /* Semantic colors (for direct use) */
     --success: 160 84% 39%;             /* #059669 */
@@ -92,7 +93,7 @@
     --popover: 24 10% 16%;
     --popover-foreground: 40 20% 98%;
 
-    --primary: 152 36% 47%;             /* forest-600: #40916C - lighter for dark mode */
+    --primary: 152 39% 39%;             /* pine-600: #3D8B6A - lighter for dark mode */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 24 6% 26%;             /* stone-700 */
@@ -101,30 +102,30 @@
     --muted: 24 6% 26%;
     --muted-foreground: 24 5% 64%;      /* stone-400 */
 
-    --accent: 30 52% 64%;               /* tan-400 */
-    --accent-foreground: 152 53% 8%;
+    --accent: 35 97% 49%;               /* campfire-400: #F48C06 */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 24 6% 26%;
     --input: 24 6% 26%;
-    --ring: 152 36% 47%;
+    --ring: 152 39% 39%;
 
-    --chart-1: 152 36% 47%;
-    --chart-2: 30 52% 64%;
+    --chart-1: 152 39% 39%;
+    --chart-2: 35 97% 49%;
     --chart-3: 160 84% 39%;
-    --chart-4: 152 30% 60%;
+    --chart-4: 152 32% 47%;
     --chart-5: 32 95% 54%;
 
     --sidebar: 24 10% 10%;
     --sidebar-foreground: 40 20% 98%;
-    --sidebar-primary: 152 36% 47%;
+    --sidebar-primary: 152 39% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 24 6% 26%;
     --sidebar-accent-foreground: 40 20% 98%;
     --sidebar-border: 24 6% 26%;
-    --sidebar-ring: 152 36% 47%;
+    --sidebar-ring: 152 39% 39%;
   }
 }
 

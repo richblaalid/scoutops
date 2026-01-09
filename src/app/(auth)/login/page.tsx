@@ -139,7 +139,7 @@ function LoginForm() {
       </form>
 
       <p className="mt-6 text-center text-xs text-stone-400">
-        Unit Operations Simplified
+        Your unit, organized.
       </p>
     </div>
   )
