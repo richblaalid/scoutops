@@ -4,6 +4,9 @@ import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
 import { canAccessPage, canPerformAction, isFinancialRole } from '@/lib/roles'
 import { PaymentForm } from '@/components/payments/payment-form'
+import { SquarePaymentForm } from '@/components/payments/square-payment-form'
+import { getDefaultLocationId } from '@/lib/square/client'
+import Link from 'next/link'
 
 interface Payment {
   id: string
@@ -111,6 +114,38 @@ export default async function PaymentsPage() {
 
     scouts = (scoutsData as Scout[]) || []
   }
+
+  // Check if Square is connected
+  interface SquareCredentialsData {
+    merchant_id: string
+    location_id: string | null
+    environment: 'sandbox' | 'production'
+  }
+  let squareCredentials: SquareCredentialsData | null = null
+
+  if (isFinancialRole(membership.role)) {
+    const { data: credentials } = await supabase
+      .from('unit_square_credentials')
+      .select('merchant_id, location_id, environment')
+      .eq('unit_id', membership.unit_id)
+      .eq('is_active', true)
+      .single()
+
+    if (credentials) {
+      squareCredentials = credentials as SquareCredentialsData
+
+      // Get location ID if not cached
+      if (!squareCredentials.location_id) {
+        const locationId = await getDefaultLocationId(membership.unit_id)
+        if (locationId) {
+          squareCredentials = { ...squareCredentials, location_id: locationId }
+        }
+      }
+    }
+  }
+
+  const squareApplicationId = process.env.SQUARE_APPLICATION_ID || ''
+  const isSquareConnected = !!squareCredentials && !!squareCredentials.location_id
 
   // Get recent payments (filtered for parents)
   let paymentsQuery = supabase
@@ -294,19 +329,43 @@ export default async function PaymentsPage() {
         </CardContent>
       </Card>
 
-      {/* Square Integration Notice (only for financial roles) */}
+      {/* Square Online Payments (only for financial roles) */}
       {isFinancialRole(membership.role) && (
-        <Card className="border-dashed border-stone-300">
-          <CardHeader>
-            <CardTitle className="text-stone-500">Online Payments (Coming Soon)</CardTitle>
-          </CardHeader>
-          <CardContent className="text-stone-500">
-            <p>
-              Square integration for online card payments will be available in a future update.
-              For now, record cash and check payments manually above.
-            </p>
-          </CardContent>
-        </Card>
+        isSquareConnected ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Online Card Payment</CardTitle>
+              <CardDescription>
+                Accept card payments via Square
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SquarePaymentForm
+                applicationId={squareApplicationId}
+                locationId={squareCredentials!.location_id!}
+                scouts={scouts}
+                environment={squareCredentials!.environment}
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-dashed border-stone-300">
+            <CardHeader>
+              <CardTitle className="text-stone-500">Online Payments</CardTitle>
+            </CardHeader>
+            <CardContent className="text-stone-500">
+              <p>
+                Connect your Square account to accept online card payments from scouts and parents.
+              </p>
+              <Link
+                href="/settings/integrations"
+                className="mt-3 inline-flex items-center text-sm font-medium text-forest-600 hover:text-forest-700"
+              >
+                Connect Square &rarr;
+              </Link>
+            </CardContent>
+          </Card>
+        )
       )}
     </div>
   )

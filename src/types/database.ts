@@ -967,6 +967,233 @@ export type Database = {
         }
         Relationships: []
       }
+      unit_square_credentials: {
+        Row: {
+          id: string
+          unit_id: string
+          merchant_id: string
+          location_id: string | null
+          access_token_encrypted: string
+          refresh_token_encrypted: string
+          token_expires_at: string
+          environment: 'sandbox' | 'production'
+          is_active: boolean
+          connected_at: string
+          last_sync_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          unit_id: string
+          merchant_id: string
+          location_id?: string | null
+          access_token_encrypted: string
+          refresh_token_encrypted: string
+          token_expires_at: string
+          environment?: 'sandbox' | 'production'
+          is_active?: boolean
+          connected_at?: string
+          last_sync_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          unit_id?: string
+          merchant_id?: string
+          location_id?: string | null
+          access_token_encrypted?: string
+          refresh_token_encrypted?: string
+          token_expires_at?: string
+          environment?: 'sandbox' | 'production'
+          is_active?: boolean
+          connected_at?: string
+          last_sync_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_square_credentials_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: true
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      square_transactions: {
+        Row: {
+          id: string
+          unit_id: string
+          square_payment_id: string
+          square_order_id: string | null
+          amount_money: number
+          fee_money: number
+          net_money: number
+          currency: string
+          status: string
+          source_type: string | null
+          card_brand: string | null
+          last_4: string | null
+          receipt_url: string | null
+          receipt_number: string | null
+          payment_id: string | null
+          scout_account_id: string | null
+          is_reconciled: boolean
+          square_created_at: string
+          synced_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          unit_id: string
+          square_payment_id: string
+          square_order_id?: string | null
+          amount_money: number
+          fee_money?: number
+          net_money: number
+          currency?: string
+          status: string
+          source_type?: string | null
+          card_brand?: string | null
+          last_4?: string | null
+          receipt_url?: string | null
+          receipt_number?: string | null
+          payment_id?: string | null
+          scout_account_id?: string | null
+          is_reconciled?: boolean
+          square_created_at: string
+          synced_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          unit_id?: string
+          square_payment_id?: string
+          square_order_id?: string | null
+          amount_money?: number
+          fee_money?: number
+          net_money?: number
+          currency?: string
+          status?: string
+          source_type?: string | null
+          card_brand?: string | null
+          last_4?: string | null
+          receipt_url?: string | null
+          receipt_number?: string | null
+          payment_id?: string | null
+          scout_account_id?: string | null
+          is_reconciled?: boolean
+          square_created_at?: string
+          synced_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "square_transactions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "square_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "square_transactions_scout_account_id_fkey"
+            columns: ["scout_account_id"]
+            isOneToOne: false
+            referencedRelation: "scout_accounts"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      payment_links: {
+        Row: {
+          id: string
+          unit_id: string
+          scout_account_id: string | null
+          billing_charge_id: string | null
+          amount: number
+          description: string | null
+          token: string
+          status: 'pending' | 'completed' | 'expired' | 'cancelled'
+          payment_id: string | null
+          expires_at: string
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          unit_id: string
+          scout_account_id?: string | null
+          billing_charge_id?: string | null
+          amount: number
+          description?: string | null
+          token: string
+          status?: 'pending' | 'completed' | 'expired' | 'cancelled'
+          payment_id?: string | null
+          expires_at: string
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          unit_id?: string
+          scout_account_id?: string | null
+          billing_charge_id?: string | null
+          amount?: number
+          description?: string | null
+          token?: string
+          status?: 'pending' | 'completed' | 'expired' | 'cancelled'
+          payment_id?: string | null
+          expires_at?: string
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_links_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_scout_account_id_fkey"
+            columns: ["scout_account_id"]
+            isOneToOne: false
+            referencedRelation: "scout_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_billing_charge_id_fkey"
+            columns: ["billing_charge_id"]
+            isOneToOne: false
+            referencedRelation: "billing_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

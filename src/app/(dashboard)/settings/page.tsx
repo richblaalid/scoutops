@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { ContactForm } from '@/components/settings/contact-form'
 import { DangerZone } from '@/components/settings/danger-zone'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -52,6 +55,20 @@ export default async function SettingsPage() {
             phone_secondary: profile.phone_secondary,
           }}
         />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Integrations</CardTitle>
+            <CardDescription>
+              Connect third-party services like Square for payments
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/settings/integrations">
+              <Button variant="outline">Manage Integrations</Button>
+            </Link>
+          </CardContent>
+        </Card>
 
         <DangerZone />
       </div>
