@@ -1,5 +1,5 @@
 -- ============================================
--- SCOUTOPS COMBINED MIGRATIONS
+-- CHUCKBOX COMBINED MIGRATIONS
 -- Run this file in the Supabase SQL Editor
 -- ============================================
 

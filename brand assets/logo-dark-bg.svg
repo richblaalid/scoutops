@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <!-- Icon Mark - White version for dark backgrounds -->
+  <g transform="translate(10, 10)">
+    <!-- Outer ring -->
+    <circle cx="40" cy="40" r="36" fill="none" stroke="white" stroke-width="3"/>
+    
+    <!-- Compass cardinal points -->
+    <path d="M40 8 L43 20 L40 17 L37 20 Z" fill="#D4A574"/>
+    <path d="M72 40 L60 43 L63 40 L60 37 Z" fill="white"/>
+    <path d="M40 72 L37 60 L40 63 L43 60 Z" fill="white"/>
+    <path d="M8 40 L20 37 L17 40 L20 43 Z" fill="white"/>
+    
+    <!-- Center operational crosshair -->
+    <circle cx="40" cy="40" r="8" fill="white"/>
+    <circle cx="40" cy="40" r="4" fill="#D4A574"/>
+    
+    <!-- Grid lines -->
+    <line x1="25" y1="40" x2="32" y2="40" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="48" y1="40" x2="55" y2="40" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="40" y1="25" x2="40" y2="32" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="40" y1="48" x2="40" y2="55" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Wordmark -->
+  <text x="105" y="62" font-family="'Outfit', 'Avenir Next', 'Helvetica Neue', sans-serif" font-size="42" font-weight="700" fill="white">Scout</text>
+  <text x="227" y="62" font-family="'Outfit', 'Avenir Next', 'Helvetica Neue', sans-serif" font-size="42" font-weight="700" fill="#D4A574">Ops</text>
+  
+  <!-- Tagline -->
+  <text x="105" y="82" font-family="'Outfit', 'Avenir Next', 'Helvetica Neue', sans-serif" font-size="12" font-weight="400" letter-spacing="2" fill="rgba(255,255,255,0.7)">UNIT OPERATIONS SIMPLIFIED</text>
+</svg>

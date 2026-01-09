@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B4332"/>
+      <stop offset="100%" style="stop-color:#2D6A4F"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="url(#faviconGradient)"/>
+  
+  <!-- Compass north point - gold/tan accent -->
+  <path d="M16 3 L18 10 L16 8 L14 10 Z" fill="#D4A574"/>
+  
+  <!-- Other cardinal points - white for contrast -->
+  <path d="M29 16 L22 18 L24 16 L22 14 Z" fill="rgba(255,255,255,0.8)"/>
+  <path d="M16 29 L14 22 L16 24 L18 22 Z" fill="rgba(255,255,255,0.6)"/>
+  <path d="M3 16 L10 14 L8 16 L10 18 Z" fill="rgba(255,255,255,0.6)"/>
+  
+  <!-- Center point -->
+  <circle cx="16" cy="16" r="4" fill="#D4A574"/>
+  <circle cx="16" cy="16" r="2" fill="#1B4332"/>
+</svg>

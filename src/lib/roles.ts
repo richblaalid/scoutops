@@ -1,4 +1,4 @@
-// Role-based access control utilities for ScoutOps
+// Role-based access control utilities for Chuckbox
 
 export type MemberRole = 'admin' | 'treasurer' | 'leader' | 'parent' | 'scout'
 

@@ -1,4 +1,4 @@
-# **Strategic Product Roadmap: "ScoutOps" â€“ A Next-Generation Unit Management Platform for Scouting America**
+# **Strategic Product Roadmap: "Chuckbox" â€“ A Next-Generation Unit Management Platform for Scouting America**
 
 **Version 2.2 â€” Revised January 2026**
 
@@ -8,13 +8,13 @@
 
 The ecosystem of unit management software for Scouting America (formerly Boy Scouts of America) is currently characterized by significant fragmentation, user friction, and a widening gap between official compliance tools and the operational realities of volunteer leaders. The incumbent platform, **Scoutbook**, serves as the mandatory database of record for advancement and membership data, yet it struggles to provide a cohesive or comprehensive user experience for day-to-day unit administration. As Scouting America transitions its digital infrastructure from legacy systems to the modern **Scoutbook Plus (Internet Advancement 2.0)** architecture, users are forced to navigate a bifurcated environment that splits essential functions across disparate interfaces. This transition periodâ€”marked by feature migration delays, permission management complexities, and persistent synchronization latencyâ€”has created a volatile market environment ripe for a sophisticated challenger platform.
 
-This report presents a comprehensive product plan for **ScoutOps**, a proposed third-party companion platform designed to displace existing competitors and relegate Scoutbook to a background compliance utility. The analysis draws upon an exhaustive review of current market offerings, including **TroopWebHost**, **TroopTrack**, **Scout Manager**, and **TroopMaster**, identifying critical unsatisfied requirements in financial fund accounting, offline mobile utility, and automated data synchronization.
+This report presents a comprehensive product plan for **Chuckbox**, a proposed third-party companion platform designed to displace existing competitors and relegate Scoutbook to a background compliance utility. The analysis draws upon an exhaustive review of current market offerings, including **TroopWebHost**, **TroopTrack**, **Scout Manager**, and **TroopMaster**, identifying critical unsatisfied requirements in financial fund accounting, offline mobile utility, and automated data synchronization.
 
 The central thesis of this product roadmap is that a competitor cannot succeed by attempting to replace Scoutbook's role as the official record, as this is mandated by national policy. Instead, the winning strategy lies in capturing the "Unit Operating System"â€”the financial, logistical, and communicative workflows that Scoutbook ignores or under-servesâ€”while utilizing browser-based automation to bridge the data silo, thereby eliminating the "double-entry" burden that currently plagues volunteer leaders.
 
 ### **1.1 Development Approach**
 
-ScoutOps will initially be developed for private use and testing with a single troop. This pilot phase will validate product-market fit and refine the feature set before broader distribution. Monetization decisions will follow successful validation, with a likely subscription model based on active Scouts per unit.
+Chuckbox will initially be developed for private use and testing with a single troop. This pilot phase will validate product-market fit and refine the feature set before broader distribution. Monetization decisions will follow successful validation, with a likely subscription model based on active Scouts per unit.
 
 ### **1.2 MVP Phasing Strategy**
 
@@ -24,7 +24,7 @@ To avoid scope creep and ship usable software quickly, development is organized 
 |-------|-------|----------|------------------|
 | **Phase 0: Financial Core** | Scout Accounts, Event Billing, Basic Reporting | 3-4 months | Pilot troop treasurer actively using for all financial tracking |
 | **Phase 1: Calendar & Sync** | Calendar + RSVP + Read-Only Sync Agent | +2-3 months | Leaders can see advancement data pulled from Scoutbook |
-| **Phase 2: Full Sync & Mobile** | Bi-directional Sync Agent + Offline Mobile App | +3-4 months | Leaders can mark requirements in ScoutOps and see them sync to Scoutbook |
+| **Phase 2: Full Sync & Mobile** | Bi-directional Sync Agent + Offline Mobile App | +3-4 months | Leaders can mark requirements in Chuckbox and see them sync to Scoutbook |
 | **Phase 3: Communication** | YP-Compliant Chat + SMS Broadcasting | Post-validation | Defer until core value proposition proven |
 
 **Phase 0 Deliverables (MVP):**
@@ -157,12 +157,12 @@ Scout Manager is a smaller player that has carved a niche by focusing on speed a
 
 **Key Differentiators:**
 
-* **Chrome Extension Sync:** This is Scout Manager's "killer feature." Instead of requiring manual CSV uploads, they offer a browser extension that automates the data transfer between the Scout Manager interface and Scoutbook. This bi-directional sync capability drastically reduces the administrative burden and is a model that ScoutOps should emulate and improve upon.
+* **Chrome Extension Sync:** This is Scout Manager's "killer feature." Instead of requiring manual CSV uploads, they offer a browser extension that automates the data transfer between the Scout Manager interface and Scoutbook. This bi-directional sync capability drastically reduces the administrative burden and is a model that Chuckbox should emulate and improve upon.
 * **Performance:** The platform emphasizes speed and a lightweight UI, contrasting with the slower load times often associated with Scoutbook.
 
 **Vulnerabilities:**
 
-* **Feature Depth:** It lacks the deep financial accounting features of TroopWebHost and is retiring its website builder capability. *Note: ScoutOps makes a similar strategic choiceâ€”this is intentional focus, not a gap (see Section 5.2).*
+* **Feature Depth:** It lacks the deep financial accounting features of TroopWebHost and is retiring its website builder capability. *Note: Chuckbox makes a similar strategic choiceâ€”this is intentional focus, not a gap (see Section 5.2).*
 
 ### **3.5 The Legacy Giant: TroopMaster**
 
@@ -182,7 +182,7 @@ TroopMaster is the legacy desktop software that has migrated to the web. It reta
 
 ## **4. Functional Domain Analysis and Gap Identification**
 
-The success of ScoutOps depends on identifying specific functional gaps where Scoutbook fails to meet user needs. This section categorizes these gaps by domain.
+The success of Chuckbox depends on identifying specific functional gaps where Scoutbook fails to meet user needs. This section categorizes these gaps by domain.
 
 ### **4.1 Domain A: Financial Management & Fundraising**
 
@@ -214,7 +214,7 @@ Scouting happens in the woods, often outside cellular range. The lack of a Leade
 **Unsatisfied Requirements:**
 Modern communication habits have shifted to instant messaging, yet Scoutbook remains tethered to email. Units need communication tools that enforce Youth Protection policies at the platform level.
 
-**Gap:** **Compliance-Enforced Chat.** A platform that offers Slack-like channels but enforces Youth Protection digital communication rules at the code level. Per BSA's digital communication policy, all electronic communications between adults and youth must include a parent/guardian in copy. This is distinct from the "Two-Deep Leadership" policy, which governs in-person supervision. ScoutOps will implement:
+**Gap:** **Compliance-Enforced Chat.** A platform that offers Slack-like channels but enforces Youth Protection digital communication rules at the code level. Per BSA's digital communication policy, all electronic communications between adults and youth must include a parent/guardian in copy. This is distinct from the "Two-Deep Leadership" policy, which governs in-person supervision. Chuckbox will implement:
 - Group channels where youth can participate (parents automatically receive copies)
 - Direct messages between adults and youth are prohibited unless a parent/guardian is automatically CC'd
 - Full audit logging of all communications
@@ -223,16 +223,16 @@ Modern communication habits have shifted to instant messaging, yet Scoutbook rem
 
 ---
 
-## **5. "ScoutOps" Product Plan: Strategic Roadmap**
+## **5. "Chuckbox" Product Plan: Strategic Roadmap**
 
-Based on the analysis above, **ScoutOps** is defined as the "Field Operating System" for Scouting units. It does not attempt to be the database of record. Instead, it wraps the operational chaos of the unit in a sleek, modern interface while automating the compliance link to Scoutbook.
+Based on the analysis above, **Chuckbox** is defined as the "Field Operating System" for Scouting units. It does not attempt to be the database of record. Instead, it wraps the operational chaos of the unit in a sleek, modern interface while automating the compliance link to Scoutbook.
 
 ### **5.1 Product Vision and Philosophy**
 
-* **Philosophy:** "Scoutbook is for the Council; ScoutOps is for the Unit."
+* **Philosophy:** "Scoutbook is for the Council; Chuckbox is for the Unit."
 * **Core Value Prop:** We save you time on the things you *have* to do (Financials, Logistics, Communication) so you can focus on the program. We handle the Scoutbook data entry for you.
 * **Architecture:** Mobile-First SaaS with a proprietary "Sync Agent" browser extension.
-* **Strategic Focus:** ScoutOps intentionally omits website building capabilities. This is a conscious "do fewer things better" decisionâ€”we focus on operational excellence rather than public web presence. Units needing public websites can use dedicated platforms or their chartered organization's web presence.
+* **Strategic Focus:** Chuckbox intentionally omits website building capabilities. This is a conscious "do fewer things better" decisionâ€”we focus on operational excellence rather than public web presence. Units needing public websites can use dedicated platforms or their chartered organization's web presence.
 
 ### **5.2 Functional Feature Specifications**
 
@@ -249,11 +249,11 @@ This module addresses the highest pain point and serves as the primary sales dri
 
 #### **Module 2: The "Sync-Link" Advancement Engine**
 
-This module solves the double-entry problem and enables the use of ScoutOps as the primary interface.
+This module solves the double-entry problem and enables the use of Chuckbox as the primary interface.
 
 * **Browser Extension Agent:** A lightweight extension for Chrome/Edge/Firefox built with the **Plasmo** framework (simplifies cross-browser development and Manifest V3 compliance).
-  * *Function:* It detects when the user is logged into Scoutbook. It runs a background sync that scrapes the official advancement data (Down-Sync) to populate ScoutOps.
-  * *Up-Sync:* When a leader approves a rank in ScoutOps, the extension queues this action and replays it into the Scoutbook interface using DOM manipulation or API calls (if available), verifying the success message.
+  * *Function:* It detects when the user is logged into Scoutbook. It runs a background sync that scrapes the official advancement data (Down-Sync) to populate Chuckbox.
+  * *Up-Sync:* When a leader approves a rank in Chuckbox, the extension queues this action and replays it into the Scoutbook interface using DOM manipulation or API calls (if available), verifying the success message.
   * *Fallback Mode:* When the Sync Agent fails, users receive human-readable error messages explaining the issue. Users can then either correct the issue or export a Scoutbook-compatible CSV file for manual upload as a backup.
   * *Architecture Note:* The sync logic should be implemented as a **separate, swappable module** to allow future migration to an official API (if BSA provides one) or alternative automation approach without rewriting the core application.
 * **Partials Wizard:** A bulk-import tool designed to ingest data from summer camp systems (Black Pug, Tentaroo). It maps the messy export data from camps into the structured requirement data needed for Scoutbook.
@@ -307,7 +307,7 @@ This module replaces fragmented email threads and risky text messages. **Deferre
 The stack is optimized for: speed to MVP, low operational overhead, cost efficiency, and future scalability.
 
 ```
-ScoutOps MVP Technical Stack
+Chuckbox MVP Technical Stack
 â”œâ”€â”€ Frontend
 â”‚   â””â”€â”€ Next.js (React) â€” Web dashboard, server-side rendering
 â”œâ”€â”€ Backend
@@ -389,7 +389,7 @@ Migration to a more complex architecture is always possible once there are payin
 * **Data Encryption:**
   - At rest: AES-256 (Supabase default)
   - In transit: TLS 1.3 (automatic with HTTPS)
-* **Financial Data:** Tokenized via Square; no credit card numbers stored in ScoutOps
+* **Financial Data:** Tokenized via Square; no credit card numbers stored in Chuckbox
 * **PII Protection:**
   - Row-level security (RLS) in Supabase to ensure users only see their own data
   - Medical information access logged
@@ -400,12 +400,12 @@ Migration to a more complex architecture is always possible once there are payin
 
 #### **5.4.1 The "Sync Agent" Mechanism**
 
-The core technological differentiator for ScoutOps is the browser-based Sync Agent. Unlike a traditional API integration (which BSA does not offer publicly), the Agent operates as a client-side automation tool.
+The core technological differentiator for Chuckbox is the browser-based Sync Agent. Unlike a traditional API integration (which BSA does not offer publicly), the Agent operates as a client-side automation tool.
 
 1. **Session Detection:** The extension monitors the scoutbook.scouting.org domain cookies to detect an active authenticated session.
 2. **DOM Scraping (Read):** To "Down-Sync" data, the Agent navigates to the Scout's advancement page in the background (using a hidden iframe or fetch requests with the user's cookies) and parses the HTML to extract completion dates, "Approved" flags, and partial requirements.
 3. **XHR Injection (Write):** To "Up-Sync" data (e.g., marking a merit badge as complete), the Agent replicates the exact XHR (XMLHttpRequest) or Fetch call that the Scoutbook frontend would make. It constructs the JSON payload with the requirement ID, date, and approver ID, and sends it to the Scoutbook endpoint.
-4. **Verification:** The Agent parses the response to ensure the write was successful and updates the ScoutOps database state to "Synced."
+4. **Verification:** The Agent parses the response to ensure the write was successful and updates the Chuckbox database state to "Synced."
 
 #### **5.4.2 Rate Limiting & Detection Avoidance**
 
@@ -415,7 +415,7 @@ To minimize risk of detection and account termination:
 |-----------|----------------|
 | Request Throttling | Max 1 request per second to Scoutbook |
 | Backoff on Errors | Exponential backoff on 429/5xx responses (1s â†’ 2s â†’ 4s â†’ 8s â†’ fail) |
-| User-Agent | Honest, distinctive: `ScoutOps-SyncAgent/1.0 (volunteer tool)` |
+| User-Agent | Honest, distinctive: `Chuckbox-SyncAgent/1.0 (volunteer tool)` |
 | Session Refresh | Detect session expiration gracefully; prompt user to re-login |
 | User-Initiated | Sync triggered by explicit user action, not automatic background polling |
 
@@ -456,10 +456,10 @@ When the Sync Agent encounters errors, the system provides:
 
 ### **5.5 Migration and Onboarding Strategy**
 
-The biggest barrier to entry is the "sunk cost" of existing data in TroopWebHost or TroopTrack. ScoutOps must offer a frictionless migration path.
+The biggest barrier to entry is the "sunk cost" of existing data in TroopWebHost or TroopTrack. Chuckbox must offer a frictionless migration path.
 
-* **"White Glove" Concierge:** For units over a certain size (e.g., 50+ Scouts), offer a service where the ScoutOps team performs the data migration manually. The unit sends their TWH export files, and the ScoutOps team cleans, maps, and imports them.
-* **The "Treasurer's Freemium":** Offer the Financial Module as a standalone, low-cost (or free for the first year) product. Once the Treasurer is using ScoutOps for money, the friction to move the rest of the unit (Advancement, Calendar) over is significantly reduced. This "land and expand" strategy targets the most painful problem first.
+* **"White Glove" Concierge:** For units over a certain size (e.g., 50+ Scouts), offer a service where the Chuckbox team performs the data migration manually. The unit sends their TWH export files, and the Chuckbox team cleans, maps, and imports them.
+* **The "Treasurer's Freemium":** Offer the Financial Module as a standalone, low-cost (or free for the first year) product. Once the Treasurer is using Chuckbox for money, the friction to move the rest of the unit (Advancement, Calendar) over is significantly reduced. This "land and expand" strategy targets the most painful problem first.
 * **Import Tools:** Build importers for:
   - TroopWebHost export format
   - TroopTrack export format
@@ -498,7 +498,7 @@ However, important nuances exist:
 
 1. **User-Initiated Action:** The Sync Agent operates on behalf of the authenticated user, using their own credentials and their own data. Courts have sometimes distinguished between scraping others' data vs. automating access to your own data (see *hiQ Labs v. LinkedIn*).
 
-2. **No Commercial Harm:** ScoutOps does not compete with BSA's revenue model (Scoutbook is free), which weakens any damages claim.
+2. **No Commercial Harm:** Chuckbox does not compete with BSA's revenue model (Scoutbook is free), which weakens any damages claim.
 
 3. **Enforcement Reality:** BSA has tolerated similar toolsâ€”Scout Manager's Chrome extension has operated for years, and the "Feature Assistant" extension is explicitly endorsed by some councils.
 
@@ -520,7 +520,7 @@ However, important nuances exist:
 
 **HIPAA Applicability:**
 
-HIPAA almost certainly does **not** apply to ScoutOps. HIPAA only covers "covered entities" (health plans, healthcare clearinghouses, healthcare providers who bill electronically) and their business associates. A Scout troop management app:
+HIPAA almost certainly does **not** apply to Chuckbox. HIPAA only covers "covered entities" (health plans, healthcare clearinghouses, healthcare providers who bill electronically) and their business associates. A Scout troop management app:
 
 - Is not a healthcare provider
 - Does not bill insurance
@@ -531,7 +531,7 @@ Nonprofit organizations collecting voluntary medical information for operational
 
 **Applicable Regulations:**
 
-Even without HIPAA, ScoutOps has obligations under:
+Even without HIPAA, Chuckbox has obligations under:
 
 1. **State Data Breach Notification Laws** â€” All 50 states require notification if data is compromised
 2. **COPPA (Children's Online Privacy Protection Act)** â€” Applies to children under 13; parental consent required
@@ -582,7 +582,7 @@ Create a straightforward privacy policy explaining:
 
 User reviews on forums like Reddit and Scoutbook.com consistently reveal a deep distrust regarding the BSA's visibility into unit finances. Users fear that if they track their money in Scoutbook, the National Council might attempt to levy fees or assert control over unit assets.
 
-* **Strategy:** ScoutOps should explicitly market itself as a "Unit-Controlled Data Silo." The marketing message should emphasize that financial data is *never* shared with the BSA or Council, providing a privacy guarantee that Scoutbook cannot match.
+* **Strategy:** Chuckbox should explicitly market itself as a "Unit-Controlled Data Silo." The marketing message should emphasize that financial data is *never* shared with the BSA or Council, providing a privacy guarantee that Scoutbook cannot match.
 
 ### **7.2 The "Sync Fatigue" Opportunity**
 
@@ -594,7 +594,7 @@ Reviews highlight the exhaustion of Advancement Chairs who spend hours manually 
 
 The ongoing confusion between Legacy Scoutbook and Scoutbook Plus is a major frustration point. Users don't know where to find features.
 
-* **Strategy:** ScoutOps provides a **Single Pane of Glass.** The user dashboard unifies all functions. The complexity of whether a data point belongs in Legacy or Plus is abstracted away by the software; the user just sees "Record Camping," and the Sync Agent handles the backend routing.
+* **Strategy:** Chuckbox provides a **Single Pane of Glass.** The user dashboard unifies all functions. The complexity of whether a data point belongs in Legacy or Plus is abstracted away by the software; the user just sees "Record Camping," and the Sync Agent handles the backend routing.
 
 ---
 
@@ -602,7 +602,7 @@ The ongoing confusion between Legacy Scoutbook and Scoutbook Plus is a major fru
 
 The landscape of Scouting software is currently defined by a forced transition that has alienated a significant portion of the user base. Scoutbook's pivot to "Plus" has improved some interfaces but created a disjointed experience that fails to address the core operational needs of high-functioning unitsâ€”specifically in finance, offline capability, and modern communication.
 
-**ScoutOps** has a clear path to market success by adopting a strategy of "Operational Excellence paired with Compliance Automation." By building the best financial and logistical tools in the market and bridging the compliance gap with a proprietary browser sync agent, ScoutOps can solve the "double-entry" problem that currently paralyzes competitors.
+**Chuckbox** has a clear path to market success by adopting a strategy of "Operational Excellence paired with Compliance Automation." By building the best financial and logistical tools in the market and bridging the compliance gap with a proprietary browser sync agent, Chuckbox can solve the "double-entry" problem that currently paralyzes competitors.
 
 The roadmap prioritizes the Financial Module as the market wedge, securing the unit's "wallet" before expanding into operations and advancement. This approach not only addresses the most acute user pain point but also establishes a sticky, high-value relationship with the unit's key decision-makers. In an ecosystem where volunteers are time-poor and compliance-weary, a platform that offers "Automated Compliance" is the ultimate value proposition.
 
@@ -610,9 +610,9 @@ The roadmap prioritizes the Financial Module as the market wedge, securing the u
 
 ## **9. Comparative Feature Matrix**
 
-The following table summarizes the proposed ScoutOps feature set against the current market leaders, highlighting the strategic gaps identified in this research.
+The following table summarizes the proposed Chuckbox feature set against the current market leaders, highlighting the strategic gaps identified in this research.
 
-| Feature Domain | Scoutbook (Official) | TroopWebHost | TroopTrack | Scout Manager | ScoutOps (Proposed) |
+| Feature Domain | Scoutbook (Official) | TroopWebHost | TroopTrack | Scout Manager | Chuckbox (Proposed) |
 |----------------|---------------------|--------------|------------|---------------|---------------------|
 | **Advancement Sync** | Source of Truth | Manual CSV Import | Manual CSV Import | Chrome Ext. (Sync) | **Chrome Ext. (Agent) + CSV Fallback** |
 | **Fund Accounting** | None | **Excellent** | Good | Moderate | **Excellent** |
@@ -668,7 +668,7 @@ The following table summarizes the proposed ScoutOps feature set against the cur
 - [ ] Implement secure medical info caching
 - [ ] Build QR sign-off feature
 - [ ] Implement conflict resolution (last-write-wins with audit log)
-- [ ] **Milestone: Leaders can mark requirements in ScoutOps and see them sync to Scoutbook**
+- [ ] **Milestone: Leaders can mark requirements in Chuckbox and see them sync to Scoutbook**
 
 ### **Phase 3: Communication (Post-Validation)**
 
@@ -679,7 +679,7 @@ The following table summarizes the proposed ScoutOps feature set against the cur
 - [ ] Build chat UI
 - [ ] Integrate SMS broadcasting (Twilio)
 - [ ] Build newsletter builder
-- [ ] **Milestone: Unit can use ScoutOps as primary communication tool**
+- [ ] **Milestone: Unit can use Chuckbox as primary communication tool**
 
 ---
 

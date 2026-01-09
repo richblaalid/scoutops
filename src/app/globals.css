@@ -6,7 +6,7 @@
 @config "../../tailwind.config.ts";
 
 /*
- * ScoutOps Brand Color System
+ * Chuckbox Brand Color System
  *
  * Primary: Forest greens (#1B4332 family)
  * Accent: Tan/gold (#D4A574 family)
@@ -56,7 +56,7 @@
     --input: 30 6% 90%;
     --ring: 152 43% 18%;                /* forest-800 for focus rings */
 
-    /* Chart colors - ScoutOps branded */
+    /* Chart colors - Chuckbox branded */
     --chart-1: 152 43% 18%;             /* forest-800 */
     --chart-2: 30 52% 64%;              /* tan-400 */
     --chart-3: 160 84% 39%;             /* success green */

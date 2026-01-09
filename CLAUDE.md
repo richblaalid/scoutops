@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ScoutOps is a financial management application for Scout units (troops, packs, crews). It handles scout accounts, billing, payments, and financial reporting with double-entry accounting.
+Chuckbox is a financial management application for Scout units (troops, packs, crews). It handles scout accounts, billing, payments, and financial reporting with double-entry accounting.
 
 ## Commands
 

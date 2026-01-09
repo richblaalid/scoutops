@@ -1,14 +1,14 @@
-# ScoutOps Development Plan for Claude Code
+# Chuckbox Development Plan for Claude Code
 
-> **Purpose:** This document provides step-by-step implementation guidance for building ScoutOps using Claude Code. Each phase includes specific tasks, file structures, database schemas, and code patterns.
+> **Purpose:** This document provides step-by-step implementation guidance for building Chuckbox using Claude Code. Each phase includes specific tasks, file structures, database schemas, and code patterns.
 
 ---
 
 ## Project Overview
 
-**ScoutOps** is a unit management platform for Scouting America troops. It provides financial tracking, event management, and advancement synchronization with Scoutbook.
+**Chuckbox** is a unit management platform for Scouting America troops. It provides financial tracking, event management, and advancement synchronization with Scoutbook.
 
-**Core Philosophy:** "Scoutbook is for the Council; ScoutOps is for the Unit."
+**Core Philosophy:** "Scoutbook is for the Council; Chuckbox is for the Unit."
 
 ---
 
@@ -856,7 +856,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">ScoutOps</CardTitle>
+          <CardTitle className="text-2xl font-bold">Chuckbox</CardTitle>
           <CardDescription>
             Sign in with your email to continue
           </CardDescription>
@@ -1220,7 +1220,7 @@ export async function POST(request: NextRequest) {
         amount: BigInt(amountInCents),
         currency: 'USD',
       },
-      note: note || 'ScoutOps Payment',
+      note: note || 'Chuckbox Payment',
     })
 
     if (result.payment) {

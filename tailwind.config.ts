@@ -49,7 +49,7 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
 
-        // ScoutOps Brand Colors - Direct use
+        // Chuckbox Brand Colors - Direct use
         forest: {
           50: '#E8F5EE',
           100: '#D1EBDD',

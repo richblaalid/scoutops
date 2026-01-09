@@ -1,5 +1,5 @@
 -- ============================================
--- SCOUTOPS SEED DATA
+-- CHUCKBOX SEED DATA
 -- Run this in Supabase SQL Editor after migrations
 -- ============================================
 

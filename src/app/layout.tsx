@@ -15,7 +15,7 @@ const sourceSerif = Source_Serif_4({
 })
 
 export const metadata: Metadata = {
-  title: 'ScoutOps',
+  title: 'Chuckbox',
   description: 'Unit management platform for Scouting America troops',
 }
 

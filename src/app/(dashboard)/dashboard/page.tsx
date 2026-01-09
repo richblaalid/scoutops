@@ -56,7 +56,7 @@ export default async function DashboardPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-stone-900">Welcome to ScoutOps</h1>
+        <h1 className="text-2xl font-bold text-stone-900">Welcome to Chuckbox</h1>
         <p className="mt-2 text-stone-600">
           You are not currently a member of any unit. Please contact your unit administrator.
         </p>
