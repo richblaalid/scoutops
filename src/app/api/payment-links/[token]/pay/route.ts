@@ -44,6 +44,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         `
         id,
         amount,
+        base_amount,
+        fee_amount,
+        fees_passed_to_payer,
         description,
         status,
         expires_at,
@@ -107,11 +110,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No Square location found' }, { status: 400 })
     }
 
-    const amountCents = paymentLink.amount
-    const feeCents = calculateFee(amountCents)
-    const netCents = amountCents - feeCents
-    const amountDollars = amountCents / 100
-    const feeDollars = feeCents / 100
+    // Total amount charged (includes fee if passed to payer)
+    const totalAmountCents = paymentLink.amount
+    // Base amount is what the scout actually owes (before any fee added)
+    const baseAmountCents = paymentLink.base_amount || paymentLink.amount
+    // Fee passed to payer (stored on the payment link)
+    const passedFeeCents = paymentLink.fee_amount || 0
+    const feesPassedToPayer = paymentLink.fees_passed_to_payer || false
+
+    // Square still charges their fee on the total transaction
+    const squareFeeCents = calculateFee(totalAmountCents)
+    const netCents = totalAmountCents - squareFeeCents
+
+    // Convert to dollars for accounting
+    const totalAmountDollars = totalAmountCents / 100
+    const baseAmountDollars = baseAmountCents / 100
+    const squareFeeDollars = squareFeeCents / 100
     const netDollars = netCents / 100
 
     // Create idempotency key
@@ -132,7 +146,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       sourceId,
       idempotencyKey,
       amountMoney: {
-        amount: BigInt(amountCents),
+        amount: BigInt(totalAmountCents),
         currency: 'USD',
       },
       locationId,
@@ -212,37 +226,93 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Create journal lines
-    const journalLines = [
-      // Debit bank account (net amount received)
-      {
-        journal_entry_id: journalEntry.id,
-        account_id: bankAccount.id,
-        scout_account_id: null,
-        debit: netDollars,
-        credit: 0,
-        memo: `Online payment from ${scoutName}`,
-      },
-      // Credit scout's receivable (full amount to reduce what they owe)
-      {
-        journal_entry_id: journalEntry.id,
-        account_id: receivableAccount.id,
-        scout_account_id: paymentLink.scout_account_id,
-        debit: 0,
-        credit: amountDollars,
-        memo: 'Payment received via payment link',
-      },
-    ]
+    // When fees are passed to payer:
+    // - Scout is credited only the base amount (what they owed)
+    // - Unit receives net after Square's fee, but fee is offset by payer's additional payment
+    // When fees are absorbed by unit:
+    // - Scout is credited the full amount they paid
+    // - Unit pays Square's fee from their proceeds
 
-    // Add fee expense if we have the fee account
-    if (feeAccount && feeDollars > 0) {
-      journalLines.push({
-        journal_entry_id: journalEntry.id,
-        account_id: feeAccount.id,
-        scout_account_id: null,
-        debit: feeDollars,
-        credit: 0,
-        memo: 'Square processing fee',
-      })
+    const journalLines: Array<{
+      journal_entry_id: string
+      account_id: string
+      scout_account_id: string | null
+      debit: number
+      credit: number
+      memo: string
+    }> = []
+
+    if (feesPassedToPayer && passedFeeCents > 0) {
+      // Fees passed to payer: Scout credited base amount only
+      // Bank receives net amount, fee expense balances the payer's fee contribution
+      journalLines.push(
+        // Debit bank account (net amount received from Square)
+        {
+          journal_entry_id: journalEntry.id,
+          account_id: bankAccount.id,
+          scout_account_id: null,
+          debit: netDollars,
+          credit: 0,
+          memo: `Online payment from ${scoutName}`,
+        },
+        // Credit scout's receivable (base amount only - what they actually owed)
+        {
+          journal_entry_id: journalEntry.id,
+          account_id: receivableAccount.id,
+          scout_account_id: paymentLink.scout_account_id,
+          debit: 0,
+          credit: baseAmountDollars,
+          memo: 'Payment received via payment link',
+        }
+      )
+
+      // If there's a fee account and Square's fee is less than what payer paid in fees,
+      // the difference would be income, but for simplicity we track Square fee as expense
+      // and the payer's fee contribution offsets the total
+      if (feeAccount && squareFeeDollars > 0) {
+        journalLines.push({
+          journal_entry_id: journalEntry.id,
+          account_id: feeAccount.id,
+          scout_account_id: null,
+          debit: squareFeeDollars,
+          credit: 0,
+          memo: 'Square processing fee (paid by payer)',
+        })
+      }
+    } else {
+      // Fees absorbed by unit: Standard flow
+      journalLines.push(
+        // Debit bank account (net amount received)
+        {
+          journal_entry_id: journalEntry.id,
+          account_id: bankAccount.id,
+          scout_account_id: null,
+          debit: netDollars,
+          credit: 0,
+          memo: `Online payment from ${scoutName}`,
+        },
+        // Credit scout's receivable (full amount they paid)
+        {
+          journal_entry_id: journalEntry.id,
+          account_id: receivableAccount.id,
+          scout_account_id: paymentLink.scout_account_id,
+          debit: 0,
+          credit: totalAmountDollars,
+          memo: 'Payment received via payment link',
+        }
+      )
+
+      // Add fee expense (unit pays this)
+      if (feeAccount && squareFeeDollars > 0) {
+        journalLines.push({
+          journal_entry_id: journalEntry.id,
+          account_id: feeAccount.id,
+          scout_account_id: null,
+          debit: squareFeeDollars,
+          credit: 0,
+          memo: 'Square processing fee',
+        })
+      }
     }
 
     const { error: linesError } = await supabase.from('journal_lines').insert(journalLines)
@@ -252,20 +322,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Create payment record
+    // Amount is what the scout was credited (base amount if fees passed to payer)
+    const creditedAmount = feesPassedToPayer ? baseAmountDollars : totalAmountDollars
     const { data: paymentRecord, error: paymentError } = await supabase
       .from('payments')
       .insert({
         unit_id: paymentLink.unit_id,
         scout_account_id: paymentLink.scout_account_id,
-        amount: amountDollars,
-        fee_amount: feeDollars,
+        amount: creditedAmount,
+        fee_amount: squareFeeDollars,
         net_amount: netDollars,
         payment_method: 'card',
         square_payment_id: squarePayment.id,
         square_receipt_url: squarePayment.receiptUrl,
         status: 'completed',
         journal_entry_id: journalEntry.id,
-        notes: `${paymentNote} (via payment link)`,
+        notes: feesPassedToPayer
+          ? `${paymentNote} (via payment link, fee paid by payer)`
+          : `${paymentNote} (via payment link)`,
       })
       .select()
       .single()
@@ -288,8 +362,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       unit_id: paymentLink.unit_id,
       square_payment_id: squarePayment.id!,
       square_order_id: squarePayment.orderId,
-      amount_money: amountCents,
-      fee_money: feeCents,
+      amount_money: totalAmountCents,
+      fee_money: squareFeeCents,
       net_money: netCents,
       currency: 'USD',
       status: squarePayment.status!,
@@ -319,9 +393,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       payment: {
         id: paymentRecord?.id,
         squarePaymentId: squarePayment.id,
-        amount: amountDollars,
-        feeAmount: feeDollars,
+        amount: totalAmountDollars,
+        creditedAmount: creditedAmount,
+        feeAmount: squareFeeDollars,
         netAmount: netDollars,
+        feesPassedToPayer,
         receiptUrl: squarePayment.receiptUrl,
         status: squarePayment.status,
       },

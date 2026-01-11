@@ -23,6 +23,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         `
         id,
         amount,
+        base_amount,
+        fee_amount,
+        fees_passed_to_payer,
         description,
         status,
         expires_at,
@@ -85,6 +88,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       id: paymentLink.id,
       amount: paymentLink.amount,
+      baseAmount: paymentLink.base_amount,
+      feeAmount: paymentLink.fee_amount,
+      feesPassedToPayer: paymentLink.fees_passed_to_payer,
       description: paymentLink.description,
       scoutName: scout ? `${scout.first_name} ${scout.last_name}` : 'Scout',
       unitName: unit?.name || 'Scout Unit',

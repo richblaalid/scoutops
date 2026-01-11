@@ -14,6 +14,11 @@ export interface PaymentRequestEmailData {
   ledgerEntries: LedgerEntry[]
   paymentUrl: string
   customMessage?: string
+  // Fee information
+  baseAmountCents?: number
+  feeAmountCents?: number
+  totalAmountCents?: number
+  feesPassedToPayer?: boolean
 }
 
 function formatCurrency(amount: number): string {
@@ -31,16 +36,35 @@ function formatDate(dateString: string): string {
   })
 }
 
+function formatCents(cents: number): string {
+  return formatCurrency(cents / 100)
+}
+
 export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
   html: string
   text: string
 } {
-  const { guardianName, scoutName, unitName, balance, ledgerEntries, paymentUrl, customMessage } =
-    data
+  const {
+    guardianName,
+    scoutName,
+    unitName,
+    balance,
+    ledgerEntries,
+    paymentUrl,
+    customMessage,
+    baseAmountCents,
+    feeAmountCents,
+    totalAmountCents,
+    feesPassedToPayer,
+  } = data
 
   const amountOwed = Math.abs(balance)
   const owesMoneyStyle = balance < 0 ? 'color: #dc2626;' : 'color: #16a34a;'
   const balanceLabel = balance < 0 ? 'Amount Due' : 'Credit Balance'
+
+  // Fee display values
+  const hasFees = feesPassedToPayer && feeAmountCents && feeAmountCents > 0
+  const displayTotal = totalAmountCents ? totalAmountCents / 100 : amountOwed
 
   // Generate ledger rows
   const ledgerRows = ledgerEntries
@@ -135,6 +159,35 @@ export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
                   : ''
               }
 
+              <!-- Fee Breakdown (if applicable) -->
+              ${
+                hasFees && baseAmountCents
+                  ? `
+              <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #fef3c7; border-radius: 8px; border: 1px solid #fbbf24;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0 0 8px; font-weight: 600; color: #92400e; font-size: 14px;">Payment Breakdown</p>
+                    <table role="presentation" style="width: 100%; font-size: 14px;">
+                      <tr>
+                        <td style="padding: 4px 0; color: #78350f;">Amount Due:</td>
+                        <td style="padding: 4px 0; text-align: right; color: #78350f;">${formatCents(baseAmountCents)}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 4px 0; color: #78350f;">Processing Fee:</td>
+                        <td style="padding: 4px 0; text-align: right; color: #78350f;">${formatCents(feeAmountCents!)}</td>
+                      </tr>
+                      <tr style="border-top: 1px solid #fbbf24;">
+                        <td style="padding: 8px 0 4px; font-weight: 700; color: #92400e;">Total:</td>
+                        <td style="padding: 8px 0 4px; text-align: right; font-weight: 700; color: #92400e;">${formatCents(totalAmountCents!)}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              `
+                  : ''
+              }
+
               <!-- CTA Button -->
               ${
                 balance < 0
@@ -143,7 +196,7 @@ export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
                 <tr>
                   <td align="center">
                     <a href="${paymentUrl}" style="display: inline-block; padding: 14px 32px; background-color: #2563eb; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px;">
-                      Pay ${formatCurrency(amountOwed)} Now
+                      Pay ${formatCurrency(displayTotal)} Now
                     </a>
                   </td>
                 </tr>
@@ -183,6 +236,12 @@ export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
     .map((e) => `${formatDate(e.date)} - ${e.description}: ${e.debit > 0 ? `-${formatCurrency(e.debit)}` : `+${formatCurrency(e.credit)}`}`)
     .join('\n')
 
+  // Fee breakdown for plain text
+  const feeBreakdownText =
+    hasFees && baseAmountCents
+      ? `\nPayment Breakdown:\n  Amount Due: ${formatCents(baseAmountCents)}\n  Processing Fee: ${formatCents(feeAmountCents!)}\n  Total: ${formatCents(totalAmountCents!)}\n`
+      : ''
+
   const text = `
 Payment Request from ${unitName}
 
@@ -193,8 +252,8 @@ ${customMessage ? customMessage + '\n\n' : ''}Here is the account summary for ${
 ${balanceLabel}: ${formatCurrency(amountOwed)}
 
 ${ledgerEntries.length > 0 ? `Account Activity:\n${textLedger}\n\nTotal Charges: ${formatCurrency(totalDebits)}\nTotal Payments: ${formatCurrency(totalCredits)}` : ''}
-
-${balance < 0 ? `Pay now: ${paymentUrl}` : 'No payment is required at this time.'}
+${feeBreakdownText}
+${balance < 0 ? `Pay now (${formatCurrency(displayTotal)}): ${paymentUrl}` : 'No payment is required at this time.'}
 
 ---
 This email was sent by ${unitName} via Chuckbox.

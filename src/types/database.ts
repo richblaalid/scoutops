@@ -942,6 +942,9 @@ export type Database = {
           unit_number: string
           unit_type: string
           updated_at: string | null
+          processing_fee_percent: number
+          processing_fee_fixed: number
+          pass_fees_to_payer: boolean
         }
         Insert: {
           chartered_org?: string | null
@@ -953,6 +956,9 @@ export type Database = {
           unit_number: string
           unit_type: string
           updated_at?: string | null
+          processing_fee_percent?: number
+          processing_fee_fixed?: number
+          pass_fees_to_payer?: boolean
         }
         Update: {
           chartered_org?: string | null
@@ -964,6 +970,9 @@ export type Database = {
           unit_number?: string
           unit_type?: string
           updated_at?: string | null
+          processing_fee_percent?: number
+          processing_fee_fixed?: number
+          pass_fees_to_payer?: boolean
         }
         Relationships: []
       }
@@ -1124,6 +1133,9 @@ export type Database = {
           scout_account_id: string | null
           billing_charge_id: string | null
           amount: number
+          base_amount: number | null
+          fee_amount: number
+          fees_passed_to_payer: boolean
           description: string | null
           token: string
           status: 'pending' | 'completed' | 'expired' | 'cancelled'
@@ -1139,6 +1151,9 @@ export type Database = {
           scout_account_id?: string | null
           billing_charge_id?: string | null
           amount: number
+          base_amount?: number | null
+          fee_amount?: number
+          fees_passed_to_payer?: boolean
           description?: string | null
           token: string
           status?: 'pending' | 'completed' | 'expired' | 'cancelled'
@@ -1154,6 +1169,9 @@ export type Database = {
           scout_account_id?: string | null
           billing_charge_id?: string | null
           amount?: number
+          base_amount?: number | null
+          fee_amount?: number
+          fees_passed_to_payer?: boolean
           description?: string | null
           token?: string
           status?: 'pending' | 'completed' | 'expired' | 'cancelled'

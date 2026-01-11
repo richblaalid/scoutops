@@ -112,10 +112,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Guardian profile not found or has no email' }, { status: 404 })
     }
 
-    // Get unit info
+    // Get unit info including fee settings
     const { data: unit } = await supabase
       .from('units')
-      .select('name')
+      .select('name, processing_fee_percent, processing_fee_fixed, pass_fees_to_payer')
       .eq('id', membership.unit_id)
       .single()
 
@@ -128,6 +128,22 @@ export async function POST(request: NextRequest) {
         { error: 'Minimum payment amount is $1.00' },
         { status: 400 }
       )
+    }
+
+    // Calculate processing fee if passing to payer
+    const feePercent = Number(unit?.processing_fee_percent) || 0.026 // Default 2.6%
+    const feeFixed = Number(unit?.processing_fee_fixed) || 0.10 // Default $0.10
+    const passFees = unit?.pass_fees_to_payer || false
+
+    let baseAmount = amountCents
+    let feeAmount = 0
+    let totalAmount = amountCents
+
+    if (passFees) {
+      // Calculate fee: (baseAmount * feePercent) + feeFixed
+      // Fee is in cents, feeFixed is in dollars so convert
+      feeAmount = Math.ceil((baseAmount * feePercent) + (feeFixed * 100))
+      totalAmount = baseAmount + feeAmount
     }
 
     // Get ledger entries for the email
@@ -185,7 +201,10 @@ export async function POST(request: NextRequest) {
       .insert({
         unit_id: membership.unit_id,
         scout_account_id: scoutAccountId,
-        amount: amountCents,
+        amount: totalAmount, // Total including fees if passed to payer
+        base_amount: baseAmount, // Original amount owed
+        fee_amount: feeAmount, // Processing fee amount
+        fees_passed_to_payer: passFees, // Whether fees are included
         description: description || `Payment for ${(scoutAccount.scouts as { first_name: string; last_name: string }).first_name} ${(scoutAccount.scouts as { first_name: string; last_name: string }).last_name}`,
         token,
         status: 'pending',
@@ -216,6 +235,11 @@ export async function POST(request: NextRequest) {
       ledgerEntries,
       paymentUrl,
       customMessage,
+      // Fee information
+      baseAmountCents: baseAmount,
+      feeAmountCents: feeAmount,
+      totalAmountCents: totalAmount,
+      feesPassedToPayer: passFees,
     }
 
     const { html, text } = generatePaymentRequestEmail(emailData)
@@ -239,7 +263,10 @@ export async function POST(request: NextRequest) {
         id: paymentLink.id,
         token,
         url: paymentUrl,
-        amount: amountCents,
+        amount: totalAmount,
+        baseAmount,
+        feeAmount,
+        feesPassedToPayer: passFees,
         expiresAt: expiresAt.toISOString(),
       },
     })

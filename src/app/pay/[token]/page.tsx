@@ -32,6 +32,9 @@ interface TokenResult {
 interface PaymentLinkData {
   id: string
   amount: number
+  baseAmount: number | null
+  feeAmount: number | null
+  feesPassedToPayer: boolean | null
   description: string
   scoutName: string
   unitName: string
@@ -350,6 +353,27 @@ export default function PaymentCheckoutPage() {
               )}
             </div>
           </div>
+
+          {/* Fee Breakdown (if fees are passed to payer) */}
+          {linkData.feesPassedToPayer && linkData.baseAmount && linkData.feeAmount && linkData.feeAmount > 0 && (
+            <div className="px-6 py-4 bg-amber-50 border-b border-amber-200">
+              <p className="text-sm font-medium text-amber-800 mb-2">Payment Breakdown</p>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-amber-700">Amount Due:</span>
+                  <span className="text-amber-900">{formatCurrency(linkData.baseAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-amber-700">Processing Fee:</span>
+                  <span className="text-amber-900">{formatCurrency(linkData.feeAmount)}</span>
+                </div>
+                <div className="flex justify-between pt-1 border-t border-amber-200">
+                  <span className="font-medium text-amber-800">Total:</span>
+                  <span className="font-medium text-amber-900">{formatCurrency(linkData.amount)}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Payment Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
