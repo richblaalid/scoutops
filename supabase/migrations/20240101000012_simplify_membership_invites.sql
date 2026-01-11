@@ -42,6 +42,7 @@ CREATE INDEX IF NOT EXISTS idx_unit_memberships_email ON unit_memberships(email)
 
 -- Drop existing policies that might conflict
 DROP POLICY IF EXISTS "Users can view memberships" ON unit_memberships;
+DROP POLICY IF EXISTS "Users can view memberships in their units" ON unit_memberships;
 DROP POLICY IF EXISTS "Users can create own membership via invite" ON unit_memberships;
 DROP POLICY IF EXISTS "Admins can view memberships" ON unit_memberships;
 DROP POLICY IF EXISTS "Admins can update memberships" ON unit_memberships;

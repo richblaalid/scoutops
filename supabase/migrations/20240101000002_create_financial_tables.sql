@@ -5,7 +5,7 @@
 -- CHART OF ACCOUNTS
 -- ============================================
 CREATE TABLE accounts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     code VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE accounts (
 -- SCOUT INDIVIDUAL ACCOUNTS (sub-ledger)
 -- ============================================
 CREATE TABLE scout_accounts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     scout_id UUID NOT NULL REFERENCES scouts(id) ON DELETE CASCADE,
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     balance DECIMAL(10,2) DEFAULT 0.00,
@@ -36,7 +36,7 @@ CREATE TABLE scout_accounts (
 -- JOURNAL ENTRIES (transaction headers)
 -- ============================================
 CREATE TABLE journal_entries (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     entry_date DATE NOT NULL,
     description TEXT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE journal_entries (
 -- JOURNAL ENTRY LINES (debits and credits)
 -- ============================================
 CREATE TABLE journal_lines (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     journal_entry_id UUID NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
     account_id UUID NOT NULL REFERENCES accounts(id),
     scout_account_id UUID REFERENCES scout_accounts(id),  -- Optional: tag to scout

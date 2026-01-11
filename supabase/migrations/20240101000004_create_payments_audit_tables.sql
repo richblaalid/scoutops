@@ -5,7 +5,7 @@
 -- PAYMENTS (Square Integration)
 -- ============================================
 CREATE TABLE payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     scout_account_id UUID REFERENCES scout_accounts(id),
     amount DECIMAL(10,2) NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE payments (
 -- INVENTORY ITEMS (Fundraising) - Phase 0 stub
 -- ============================================
 CREATE TABLE inventory_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     sku VARCHAR(50),
@@ -39,7 +39,7 @@ CREATE TABLE inventory_items (
 -- INVENTORY CHECKOUTS
 -- ============================================
 CREATE TABLE inventory_checkouts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     inventory_item_id UUID NOT NULL REFERENCES inventory_items(id),
     scout_id UUID NOT NULL REFERENCES scouts(id),
     quantity_out INTEGER NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE inventory_checkouts (
 -- AUDIT LOG
 -- ============================================
 CREATE TABLE audit_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
     table_name VARCHAR(100) NOT NULL,
     record_id UUID NOT NULL,

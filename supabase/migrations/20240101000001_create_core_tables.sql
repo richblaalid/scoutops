@@ -1,14 +1,11 @@
 -- Migration: Create Core Tables
 -- Description: Units, profiles, memberships, scouts, and guardians
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- ============================================
 -- UNITS (Troops/Packs)
 -- ============================================
 CREATE TABLE units (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     unit_number VARCHAR(20) NOT NULL,
     unit_type VARCHAR(20) NOT NULL CHECK (unit_type IN ('troop', 'pack', 'crew', 'ship')),
@@ -35,7 +32,7 @@ CREATE TABLE profiles (
 -- UNIT MEMBERSHIPS (links users to units with roles)
 -- ============================================
 CREATE TABLE unit_memberships (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     role VARCHAR(50) NOT NULL CHECK (role IN ('admin', 'treasurer', 'leader', 'parent', 'scout')),
@@ -48,7 +45,7 @@ CREATE TABLE unit_memberships (
 -- SCOUTS (youth members)
 -- ============================================
 CREATE TABLE scouts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -65,7 +62,7 @@ CREATE TABLE scouts (
 -- SCOUT-GUARDIAN RELATIONSHIPS
 -- ============================================
 CREATE TABLE scout_guardians (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     scout_id UUID NOT NULL REFERENCES scouts(id) ON DELETE CASCADE,
     profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     relationship VARCHAR(50) DEFAULT 'parent',

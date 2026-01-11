@@ -6,7 +6,7 @@
 -- OAuth tokens per unit (encrypted at rest)
 -- ============================================
 CREATE TABLE unit_square_credentials (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     merchant_id VARCHAR(255) NOT NULL,
     location_id VARCHAR(255),
@@ -27,7 +27,7 @@ CREATE TABLE unit_square_credentials (
 -- Synced from Square for reconciliation
 -- ============================================
 CREATE TABLE square_transactions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     square_payment_id VARCHAR(255) NOT NULL,
     square_order_id VARCHAR(255),
@@ -56,7 +56,7 @@ CREATE TABLE square_transactions (
 -- For shareable payment URLs
 -- ============================================
 CREATE TABLE payment_links (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     scout_account_id UUID REFERENCES scout_accounts(id),
     billing_charge_id UUID REFERENCES billing_charges(id),

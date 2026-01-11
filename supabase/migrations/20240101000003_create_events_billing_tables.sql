@@ -5,7 +5,7 @@
 -- EVENTS (campouts, meetings, etc.)
 -- ============================================
 CREATE TABLE events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -26,7 +26,7 @@ CREATE TABLE events (
 -- EVENT RSVPs
 -- ============================================
 CREATE TABLE event_rsvps (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     scout_id UUID REFERENCES scouts(id) ON DELETE CASCADE,
     profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,  -- For adults
@@ -42,7 +42,7 @@ CREATE TABLE event_rsvps (
 -- FAIR SHARE BILLING RECORDS
 -- ============================================
 CREATE TABLE billing_records (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id UUID REFERENCES events(id) ON DELETE SET NULL,
     unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE billing_records (
 -- INDIVIDUAL CHARGES FROM BILLING
 -- ============================================
 CREATE TABLE billing_charges (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     billing_record_id UUID NOT NULL REFERENCES billing_records(id) ON DELETE CASCADE,
     scout_account_id UUID NOT NULL REFERENCES scout_accounts(id),
     amount DECIMAL(10,2) NOT NULL,
