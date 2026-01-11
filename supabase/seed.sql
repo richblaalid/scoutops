@@ -2,6 +2,44 @@
 -- CHUCKBOX SEED DATA
 -- Run this in Supabase SQL Editor after migrations
 -- ============================================
+--
+-- STEP 1: First create test users in Supabase Dashboard:
+--   Go to Authentication > Users > Add user
+--   Create these users (all with password: use magic link):
+--     - richard.blaalid+admin@withcaldera.com
+--     - richard.blaalid+treasurer@withcaldera.com
+--     - richard.blaalid+parent@withcaldera.com
+--
+-- STEP 2: Run this entire file in SQL Editor
+-- ============================================
+
+-- ============================================
+-- CREATE PROFILES FROM AUTH USERS
+-- ============================================
+INSERT INTO profiles (id, email, full_name, first_name, last_name, phone_primary)
+SELECT
+  id,
+  email,
+  CASE
+    WHEN email = 'richard.blaalid+admin@withcaldera.com' THEN 'Admin User'
+    WHEN email = 'richard.blaalid+treasurer@withcaldera.com' THEN 'Treasurer User'
+    WHEN email = 'richard.blaalid+parent@withcaldera.com' THEN 'Parent User'
+    ELSE split_part(email, '@', 1)
+  END,
+  CASE
+    WHEN email = 'richard.blaalid+admin@withcaldera.com' THEN 'Admin'
+    WHEN email = 'richard.blaalid+treasurer@withcaldera.com' THEN 'Treasurer'
+    WHEN email = 'richard.blaalid+parent@withcaldera.com' THEN 'Parent'
+    ELSE split_part(email, '@', 1)
+  END,
+  'User',
+  '555-123-4567'
+FROM auth.users
+WHERE email IN ('richard.blaalid+admin@withcaldera.com', 'richard.blaalid+treasurer@withcaldera.com', 'richard.blaalid+parent@withcaldera.com')
+ON CONFLICT (id) DO UPDATE SET
+  full_name = EXCLUDED.full_name,
+  first_name = EXCLUDED.first_name,
+  last_name = EXCLUDED.last_name;
 
 -- ============================================
 -- 1. CREATE TEST UNIT
@@ -20,6 +58,27 @@ VALUES (
 -- Note: Default chart of accounts is auto-created by trigger
 
 -- ============================================
+-- 1b. CREATE UNIT MEMBERSHIPS
+-- ============================================
+-- Admin
+INSERT INTO unit_memberships (unit_id, profile_id, role, status)
+SELECT '10000000-0000-4000-a000-000000000001', id, 'admin', 'active'
+FROM auth.users WHERE email = 'richard.blaalid+admin@withcaldera.com'
+ON CONFLICT DO NOTHING;
+
+-- Treasurer
+INSERT INTO unit_memberships (unit_id, profile_id, role, status)
+SELECT '10000000-0000-4000-a000-000000000001', id, 'treasurer', 'active'
+FROM auth.users WHERE email = 'richard.blaalid+treasurer@withcaldera.com'
+ON CONFLICT DO NOTHING;
+
+-- Parent
+INSERT INTO unit_memberships (unit_id, profile_id, role, status)
+SELECT '10000000-0000-4000-a000-000000000001', id, 'parent', 'active'
+FROM auth.users WHERE email = 'richard.blaalid+parent@withcaldera.com'
+ON CONFLICT DO NOTHING;
+
+-- ============================================
 -- 2. CREATE TEST SCOUTS
 -- Scout accounts are auto-created by trigger
 -- ============================================
@@ -34,6 +93,19 @@ INSERT INTO scouts (id, unit_id, first_name, last_name, patrol, rank, is_active,
     ('20000000-0000-4000-a000-000000000008', '10000000-0000-4000-a000-000000000001', 'Henry', 'Harris', 'Bear', 'Star', true, '2010-08-14', '123456008'),
     ('20000000-0000-4000-a000-000000000009', '10000000-0000-4000-a000-000000000001', 'Isaac', 'Irwin', 'Bear', 'Life', true, '2010-02-28', '123456009'),
     ('20000000-0000-4000-a000-000000000010', '10000000-0000-4000-a000-000000000001', 'Jake', 'Johnson', 'Bear', 'Eagle', true, '2009-06-10', '123456010')
+ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- 2b. LINK PARENT TO SCOUTS (Guardian relationships)
+-- ============================================
+INSERT INTO scout_guardians (scout_id, profile_id, relationship, is_primary)
+SELECT '20000000-0000-4000-a000-000000000001', id, 'parent', true
+FROM auth.users WHERE email = 'richard.blaalid+parent@withcaldera.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO scout_guardians (scout_id, profile_id, relationship, is_primary)
+SELECT '20000000-0000-4000-a000-000000000002', id, 'parent', true
+FROM auth.users WHERE email = 'richard.blaalid+parent@withcaldera.com'
 ON CONFLICT DO NOTHING;
 
 -- ============================================
