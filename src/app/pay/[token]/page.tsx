@@ -3,31 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-
-// Square Web Payments SDK types
-declare global {
-  interface Window {
-    Square?: {
-      payments: (appId: string, locationId: string) => Promise<Payments>
-    }
-  }
-}
-
-interface Payments {
-  card: () => Promise<Card>
-}
-
-interface Card {
-  attach: (selector: string) => Promise<void>
-  tokenize: () => Promise<TokenResult>
-  destroy: () => Promise<void>
-}
-
-interface TokenResult {
-  status: 'OK' | 'ERROR'
-  token?: string
-  errors?: Array<{ message: string }>
-}
+import type { SquareCard, SquareTokenResult } from '@/types/square'
 
 interface PaymentLinkData {
   id: string
@@ -70,7 +46,7 @@ export default function PaymentCheckoutPage() {
   const [linkError, setLinkError] = useState<string | null>(null)
 
   const cardContainerRef = useRef<HTMLDivElement>(null)
-  const cardRef = useRef<Card | null>(null)
+  const cardRef = useRef<SquareCard | null>(null)
   const [sdkReady, setSdkReady] = useState(false)
   const [cardLoading, setCardLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)

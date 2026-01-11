@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ScoutForm } from './scout-form'
 import { Pencil } from 'lucide-react'
@@ -20,6 +21,7 @@ interface EditScoutButtonProps {
 }
 
 export function EditScoutButton({ unitId, scout }: EditScoutButtonProps) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -35,7 +37,7 @@ export function EditScoutButton({ unitId, scout }: EditScoutButtonProps) {
           onClose={() => setIsOpen(false)}
           onSuccess={() => {
             setIsOpen(false)
-            window.location.reload()
+            router.refresh()
           }}
         />
       )}

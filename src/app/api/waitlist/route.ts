@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 
 // Use service role for inserting without RLS issues
 const supabase = createClient(
@@ -7,17 +8,20 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-interface WaitlistSubmission {
-  email: string
-  name?: string
-  unit_type?: string
-  unit_size?: string
-  current_software?: string
-  current_payment_platform?: string
-  biggest_pain_point?: string
-  additional_info?: string
-  referral_source?: string
-}
+// Zod schema for waitlist submission validation
+const waitlistSchema = z.object({
+  email: z.string().email('Invalid email address').max(255, 'Email too long'),
+  name: z.string().max(100, 'Name too long').optional(),
+  unit_type: z.string().max(50, 'Unit type too long').optional(),
+  unit_size: z.string().max(20, 'Unit size too long').optional(),
+  current_software: z.string().max(100, 'Software name too long').optional(),
+  current_payment_platform: z.string().max(100, 'Payment platform name too long').optional(),
+  biggest_pain_point: z.string().max(1000, 'Pain point description too long').optional(),
+  additional_info: z.string().max(2000, 'Additional info too long').optional(),
+  referral_source: z.string().max(100, 'Referral source too long').optional(),
+})
+
+type WaitlistSubmission = z.infer<typeof waitlistSchema>
 
 async function sendSlackNotification(data: WaitlistSubmission) {
   const webhookUrl = process.env.SLACK_WAITLIST_WEBHOOK_URL
@@ -115,15 +119,19 @@ async function sendSlackNotification(data: WaitlistSubmission) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as WaitlistSubmission
+    // Parse and validate request body
+    const rawBody = await request.json()
+    const parseResult = waitlistSchema.safeParse(rawBody)
 
-    // Validate email
-    if (!body.email || !body.email.includes('@')) {
+    if (!parseResult.success) {
+      const firstError = parseResult.error.issues[0]
       return NextResponse.json(
-        { error: 'Valid email is required' },
+        { error: firstError?.message || 'Invalid request data' },
         { status: 400 }
       )
     }
+
+    const body = parseResult.data
 
     // Get IP and user agent for analytics
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'

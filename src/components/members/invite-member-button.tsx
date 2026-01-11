@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { InviteMemberForm } from './invite-member-form'
 
@@ -16,6 +17,7 @@ interface InviteMemberButtonProps {
 }
 
 export function InviteMemberButton({ unitId, scouts }: InviteMemberButtonProps) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -28,7 +30,7 @@ export function InviteMemberButton({ unitId, scouts }: InviteMemberButtonProps) 
           onClose={() => setIsOpen(false)}
           onSuccess={() => {
             setIsOpen(false)
-            window.location.reload()
+            router.refresh()
           }}
         />
       )}

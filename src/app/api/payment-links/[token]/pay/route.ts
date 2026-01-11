@@ -1,19 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSquareClientForUnitPublic } from '@/lib/square/client'
-import { randomUUID } from 'crypto'
+import { createHash } from 'crypto'
+import { z } from 'zod'
 
 interface RouteParams {
   params: Promise<{ token: string }>
 }
 
-interface ProcessPaymentRequest {
-  sourceId: string // Payment token from Square Web Payments SDK
-}
+// Zod schema for process payment request validation
+const processPaymentSchema = z.object({
+  sourceId: z.string().min(1, 'Payment source is required'),
+})
 
 // Square fee: 2.6% + $0.10 per transaction
 const SQUARE_FEE_PERCENT = 0.026
 const SQUARE_FEE_FIXED_CENTS = 10
+
+// Map Square error codes to user-friendly messages
+function sanitizeSquareError(error: unknown): string {
+  if (error && typeof error === 'object' && 'errors' in error) {
+    const squareErrors = (error as { errors: Array<{ code?: string; category?: string }> }).errors
+    const firstError = squareErrors?.[0]
+
+    // Map known error codes to friendly messages
+    const errorMap: Record<string, string> = {
+      'CARD_DECLINED': 'Your card was declined. Please try a different payment method.',
+      'CVV_FAILURE': 'The security code (CVV) is incorrect. Please check and try again.',
+      'ADDRESS_VERIFICATION_FAILURE': 'Address verification failed. Please check your billing address.',
+      'INVALID_EXPIRATION': 'The card expiration date is invalid.',
+      'EXPIRED_CARD': 'This card has expired. Please use a different card.',
+      'INSUFFICIENT_FUNDS': 'Insufficient funds. Please try a different payment method.',
+      'GENERIC_DECLINE': 'Your card was declined. Please try a different payment method.',
+      'CARD_NOT_SUPPORTED': 'This card type is not supported. Please try a different card.',
+      'INVALID_CARD': 'Invalid card number. Please check and try again.',
+      'INVALID_LOCATION': 'Payment processing is temporarily unavailable.',
+      'TRANSACTION_LIMIT': 'This payment exceeds your card\'s transaction limit.',
+    }
+
+    if (firstError?.code && errorMap[firstError.code]) {
+      return errorMap[firstError.code]
+    }
+
+    // For payment-related errors, give a generic decline message
+    if (firstError?.category === 'PAYMENT_METHOD_ERROR') {
+      return 'Payment was declined. Please check your card details or try a different payment method.'
+    }
+  }
+
+  // Default generic message - don't expose internal details
+  return 'Unable to process payment. Please try again or contact support.'
+}
 
 function calculateFee(amountCents: number): number {
   return Math.round(amountCents * SQUARE_FEE_PERCENT + SQUARE_FEE_FIXED_CENTS)
@@ -27,12 +64,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
     }
 
-    const body: ProcessPaymentRequest = await request.json()
-    const { sourceId } = body
+    // Parse and validate request body
+    const rawBody = await request.json()
+    const parseResult = processPaymentSchema.safeParse(rawBody)
 
-    if (!sourceId) {
-      return NextResponse.json({ error: 'Missing payment source' }, { status: 400 })
+    if (!parseResult.success) {
+      const firstError = parseResult.error.issues[0]
+      return NextResponse.json(
+        { error: firstError?.message || 'Invalid request data' },
+        { status: 400 }
+      )
     }
+
+    const { sourceId } = parseResult.data
 
     // Use service client to bypass RLS
     const supabase = await createServiceClient()
@@ -128,8 +172,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const squareFeeDollars = squareFeeCents / 100
     const netDollars = netCents / 100
 
-    // Create idempotency key
-    const idempotencyKey = randomUUID()
+    // Create a deterministic idempotency key to prevent duplicate payments on retry
+    // Based on: payment link ID, amount, and source token (unique per card submission)
+    const idempotencyKey = createHash('sha256')
+      .update(`${paymentLink.id}-${totalAmountCents}-${sourceId}`)
+      .digest('hex')
+      .slice(0, 45) // Square idempotency keys max 45 chars
 
     // Get scout name for description
     const scoutAccount = paymentLink.scout_accounts as {
@@ -403,15 +451,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     })
   } catch (error) {
+    // Log full error for debugging but return sanitized message to client
     console.error('Payment link payment error:', error)
 
-    // Check for Square-specific errors
-    if (error && typeof error === 'object' && 'errors' in error) {
-      const squareErrors = (error as { errors: Array<{ detail?: string; code?: string }> }).errors
-      const errorMessage = squareErrors?.[0]?.detail || 'Payment failed'
-      return NextResponse.json({ error: errorMessage }, { status: 400 })
-    }
-
-    return NextResponse.json({ error: 'Failed to process payment' }, { status: 500 })
+    const userMessage = sanitizeSquareError(error)
+    return NextResponse.json({ error: userMessage }, { status: 400 })
   }
 }
