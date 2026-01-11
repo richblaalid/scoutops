@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { SendPaymentRequestModal } from '@/components/accounts/send-payment-request-modal'
+import { isFinancialRole } from '@/lib/roles'
 
 interface AccountPageProps {
   params: Promise<{ id: string }>
@@ -33,6 +35,17 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
   } = await supabase.auth.getUser()
 
   if (!user) return null
+
+  // Get user's membership role
+  const { data: membership } = await supabase
+    .from('unit_memberships')
+    .select('role')
+    .eq('profile_id', user.id)
+    .eq('status', 'active')
+    .single()
+
+  const userRole = membership?.role || 'parent'
+  const canSendPaymentRequest = isFinancialRole(userRole)
 
   // Get account with scout info
   const { data: accountData } = await supabase
@@ -263,25 +276,37 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-4">
+        <CardContent className="flex flex-wrap gap-4">
           <Link
             href={`/scouts/${account.scouts?.id}`}
             className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
           >
             View Scout Profile
           </Link>
-          <Link
-            href="/billing"
-            className="rounded-md bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-800"
-          >
-            Create Billing
-          </Link>
-          <Link
-            href="/payments"
-            className="rounded-md bg-success px-4 py-2 text-sm font-medium text-white hover:bg-success/90"
-          >
-            Record Payment
-          </Link>
+          {canSendPaymentRequest && (
+            <>
+              <Link
+                href="/billing"
+                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
+              >
+                Create Billing
+              </Link>
+              <Link
+                href="/payments"
+                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
+              >
+                Record Payment
+              </Link>
+              {balance < 0 && account.scouts && (
+                <SendPaymentRequestModal
+                  scoutAccountId={account.id}
+                  scoutId={account.scouts.id}
+                  scoutName={`${account.scouts.first_name} ${account.scouts.last_name}`}
+                  balance={balance}
+                />
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,6 @@
 import { SquareClient, SquareEnvironment } from 'square'
 import { encrypt, decrypt } from '../encryption'
-import { createClient } from '../supabase/server'
+import { createClient, createServiceClient } from '../supabase/server'
 import type { Database } from '@/types/database'
 
 type SquareCredentials = Database['public']['Tables']['unit_square_credentials']['Row']
@@ -124,6 +124,26 @@ export async function getUnitSquareCredentials(
   return data
 }
 
+// Service client version for public routes (bypasses RLS)
+export async function getUnitSquareCredentialsPublic(
+  unitId: string
+): Promise<SquareCredentials | null> {
+  const supabase = await createServiceClient()
+
+  const { data, error } = await supabase
+    .from('unit_square_credentials')
+    .select('*')
+    .eq('unit_id', unitId)
+    .eq('is_active', true)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return data
+}
+
 async function getValidAccessToken(credentials: SquareCredentials): Promise<string> {
   const tokenExpiresAt = new Date(credentials.token_expires_at)
   const now = new Date()
@@ -154,6 +174,36 @@ async function getValidAccessToken(credentials: SquareCredentials): Promise<stri
   return newTokens.accessToken
 }
 
+// Service client version for public routes
+async function getValidAccessTokenPublic(credentials: SquareCredentials): Promise<string> {
+  const tokenExpiresAt = new Date(credentials.token_expires_at)
+  const now = new Date()
+  const bufferMinutes = 5
+
+  const expiresWithinBuffer = tokenExpiresAt.getTime() - now.getTime() < bufferMinutes * 60 * 1000
+
+  if (!expiresWithinBuffer) {
+    return decrypt(credentials.access_token_encrypted)
+  }
+
+  // Need to refresh the token
+  const currentRefreshToken = decrypt(credentials.refresh_token_encrypted)
+  const newTokens = await refreshAccessToken(currentRefreshToken)
+
+  // Update the stored credentials using service client
+  const supabase = await createServiceClient()
+  await supabase
+    .from('unit_square_credentials')
+    .update({
+      access_token_encrypted: encrypt(newTokens.accessToken),
+      refresh_token_encrypted: encrypt(newTokens.refreshToken),
+      token_expires_at: newTokens.expiresAt,
+    })
+    .eq('id', credentials.id)
+
+  return newTokens.accessToken
+}
+
 export async function getSquareClientForUnit(unitId: string): Promise<SquareClient | null> {
   const credentials = await getUnitSquareCredentials(unitId)
   if (!credentials) {
@@ -161,6 +211,21 @@ export async function getSquareClientForUnit(unitId: string): Promise<SquareClie
   }
 
   const accessToken = await getValidAccessToken(credentials)
+
+  return new SquareClient({
+    environment: getSquareEnvironment(),
+    token: accessToken,
+  })
+}
+
+// Public version for unauthenticated routes (bypasses RLS)
+export async function getSquareClientForUnitPublic(unitId: string): Promise<SquareClient | null> {
+  const credentials = await getUnitSquareCredentialsPublic(unitId)
+  if (!credentials) {
+    return null
+  }
+
+  const accessToken = await getValidAccessTokenPublic(credentials)
 
   return new SquareClient({
     environment: getSquareEnvironment(),
