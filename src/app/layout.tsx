@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Nunito, Source_Serif_4 } from 'next/font/google'
+import { PostHogProvider } from '@/components/providers/posthog-provider'
 import './globals.css'
 
 const nunito = Nunito({
@@ -26,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${nunito.variable} ${sourceSerif.variable} font-sans`}>{children}</body>
+      <body className={`${nunito.variable} ${sourceSerif.variable} font-sans`}>
+        <PostHogProvider>{children}</PostHogProvider>
+      </body>
     </html>
   )
 }

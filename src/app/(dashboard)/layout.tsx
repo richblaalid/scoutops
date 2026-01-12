@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardNav } from '@/components/dashboard/nav'
+import { PostHogIdentify } from '@/components/providers/posthog-identify'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -49,11 +50,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const membership = membershipData as {
     role: string
+    unit_id: string
     units: { name: string; unit_number: string } | null
   } | null
 
   return (
     <div className="flex min-h-screen flex-col">
+      <PostHogIdentify
+        userId={user.id}
+        email={user.email}
+        role={membership?.role}
+        unitId={membership?.unit_id}
+        unitName={membership?.units?.name}
+      />
       <DashboardNav user={user} userName={userName} membership={membership} />
       <main className="flex-1 bg-stone-50">
         <div className="container mx-auto px-4 py-8">{children}</div>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatCurrency } from '@/lib/utils'
+import { trackBillingCreated } from '@/lib/analytics'
 
 interface Scout {
   id: string
@@ -121,6 +122,14 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       if (!data?.success) {
         throw new Error('Failed to create billing record')
       }
+
+      // Track billing event
+      trackBillingCreated({
+        total: totalAmount,
+        scoutCount: selectedScouts.size,
+        perScout: perScoutAmount,
+        billingType,
+      })
 
       setSuccess(true)
       setAmount('')

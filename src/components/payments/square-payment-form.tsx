@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { formatCurrency } from '@/lib/utils'
 import { SQUARE_FEE_PERCENT, SQUARE_FEE_FIXED_DOLLARS } from '@/lib/billing'
+import { trackPaymentInitiated, trackPaymentCompleted, trackPaymentFailed } from '@/lib/analytics'
 import type { SquarePayments, SquareCard, SquareTokenResult } from '@/types/square'
 
 interface Scout {
@@ -145,6 +146,13 @@ export function SquarePaymentForm({
 
     setIsProcessing(true)
 
+    // Track payment initiated
+    trackPaymentInitiated({
+      amount: parsedAmount,
+      scoutAccountId: scoutAccount.id,
+      method: 'card',
+    })
+
     try {
       // Tokenize the card
       const tokenResult = await cardRef.current.tokenize()
@@ -176,6 +184,15 @@ export function SquarePaymentForm({
         throw new Error(result.error || 'Payment failed')
       }
 
+      // Track payment completed
+      trackPaymentCompleted({
+        amount: parsedAmount,
+        fee: feeAmount,
+        net: netAmount,
+        scoutAccountId: scoutAccount.id,
+        method: 'card',
+      })
+
       setSuccess(true)
       setAmount('')
       setSelectedScoutId('')
@@ -192,7 +209,15 @@ export function SquarePaymentForm({
         router.refresh()
       }, 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Payment failed')
+      const errorMessage = err instanceof Error ? err.message : 'Payment failed'
+      setError(errorMessage)
+
+      // Track payment failed
+      trackPaymentFailed({
+        amount: parsedAmount,
+        errorType: errorMessage,
+        scoutAccountId: scoutAccount?.id,
+      })
     } finally {
       setIsProcessing(false)
     }
