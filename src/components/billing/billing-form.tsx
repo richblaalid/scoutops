@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +25,7 @@ interface BillingFormProps {
 type BillingType = 'split' | 'fixed'
 
 export function BillingForm({ unitId, scouts }: BillingFormProps) {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -250,9 +252,9 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       setDescription('')
       setSelectedScouts(new Set())
 
-      // Reload to show new record
+      // Refresh server components to show new record
       setTimeout(() => {
-        window.location.reload()
+        router.refresh()
       }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

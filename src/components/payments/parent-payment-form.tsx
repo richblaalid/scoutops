@@ -1,34 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { formatCurrency } from '@/lib/utils'
-
-// Square Web Payments SDK types
-declare global {
-  interface Window {
-    Square?: {
-      payments: (appId: string, locationId: string) => Promise<Payments>
-    }
-  }
-}
-
-interface Payments {
-  card: () => Promise<Card>
-}
-
-interface Card {
-  attach: (selector: string) => Promise<void>
-  tokenize: () => Promise<TokenResult>
-  destroy: () => Promise<void>
-}
-
-interface TokenResult {
-  status: 'OK' | 'ERROR'
-  token?: string
-  errors?: Array<{ message: string }>
-}
+import { SQUARE_FEE_PERCENT, SQUARE_FEE_FIXED_DOLLARS } from '@/lib/billing'
+import type { SquareCard, SquareTokenResult } from '@/types/square'
 
 interface Scout {
   id: string
@@ -60,10 +38,6 @@ interface ParentPaymentFormProps {
   unpaidCharges: BillingCharge[]
 }
 
-// Square fee: 2.6% + $0.10 per transaction
-const SQUARE_FEE_PERCENT = 0.026
-const SQUARE_FEE_FIXED = 0.10
-
 interface PaymentResult {
   success: boolean
   payment?: {
@@ -82,8 +56,9 @@ export function ParentPaymentForm({
   scouts,
   unpaidCharges,
 }: ParentPaymentFormProps) {
+  const router = useRouter()
   const cardContainerRef = useRef<HTMLDivElement>(null)
-  const cardRef = useRef<Card | null>(null)
+  const cardRef = useRef<SquareCard | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -106,7 +81,7 @@ export function ParentPaymentForm({
   const parsedCustomAmount = parseFloat(customAmount) || 0
   const paymentAmount = paymentType === 'custom' ? parsedCustomAmount : chargesTotal
 
-  const feeAmount = paymentAmount > 0 ? paymentAmount * SQUARE_FEE_PERCENT + SQUARE_FEE_FIXED : 0
+  const feeAmount = paymentAmount > 0 ? paymentAmount * SQUARE_FEE_PERCENT + SQUARE_FEE_FIXED_DOLLARS : 0
   const netAmount = paymentAmount - feeAmount
 
   // Load Square Web Payments SDK
@@ -302,9 +277,9 @@ export function ParentPaymentForm({
       // Reinitialize card form
       await initializeCard()
 
-      // Reload page after delay to show updated balances
+      // Refresh server components after delay to show updated balances
       setTimeout(() => {
-        window.location.reload()
+        router.refresh()
       }, 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed')

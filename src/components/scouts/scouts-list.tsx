@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { ScoutForm } from './scout-form'
@@ -88,6 +89,7 @@ interface MultiSelectDropdownProps {
 function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const dropdownId = `dropdown-${label.toLowerCase().replace(/\s+/g, '-')}`
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -95,9 +97,18 @@ function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelect
         setIsOpen(false)
       }
     }
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false)
+      }
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('keydown', handleEscapeKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isOpen])
 
   const toggleOption = (option: string) => {
     const newSelected = new Set(selected)
@@ -120,6 +131,9 @@ function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelect
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={isOpen ? dropdownId : undefined}
         className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
           hasSelection
             ? 'border-forest-300 bg-forest-50 text-forest-700'
@@ -136,7 +150,13 @@ function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelect
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 z-10 mt-1 w-48 rounded-lg border border-stone-200 bg-white py-1 shadow-lg">
+        <div
+          id={dropdownId}
+          role="listbox"
+          aria-multiselectable="true"
+          aria-label={`${label} options`}
+          className="absolute left-0 z-10 mt-1 w-48 rounded-lg border border-stone-200 bg-white py-1 shadow-lg"
+        >
           {options.length === 0 ? (
             <div className="px-3 py-2 text-sm text-stone-500">No options</div>
           ) : (
@@ -152,6 +172,8 @@ function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelect
               {options.map((option) => (
                 <button
                   key={option}
+                  role="option"
+                  aria-selected={selected.has(option)}
                   onClick={() => toggleOption(option)}
                   className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-stone-50"
                 >
@@ -207,6 +229,7 @@ function StatusFilterButtons({ value, onChange }: StatusFilterProps) {
 }
 
 export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
+  const router = useRouter()
   const [editingScout, setEditingScout] = useState<Scout | null>(null)
   const [sortColumn, setSortColumn] = useState<SortColumn>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -324,7 +347,13 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
     )
   }
 
-  const headerClass = "pb-3 pr-4 cursor-pointer select-none hover:text-stone-700 transition-colors"
+  const headerClass = "pb-3 pr-4"
+  const headerButtonClass = "inline-flex items-center gap-1 cursor-pointer select-none hover:text-stone-700 transition-colors text-left font-medium"
+
+  const getAriaSort = (column: SortColumn): 'ascending' | 'descending' | 'none' => {
+    if (sortColumn !== column) return 'none'
+    return sortDirection === 'asc' ? 'ascending' : 'descending'
+  }
 
   return (
     <div className="space-y-4">
@@ -338,6 +367,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
           <input
             type="text"
             placeholder="Search by name..."
+            aria-label="Search scouts by name"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full rounded-lg border border-stone-300 bg-white py-2 pl-10 pr-10 text-sm placeholder-stone-500 focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
@@ -394,28 +424,38 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
       <div className="overflow-x-auto">
         <table className="w-full">
         <thead>
-          <tr className="border-b text-left text-sm font-medium text-stone-500">
-            <th className={headerClass} onClick={() => handleSort('name')}>
-              Name
-              <SortIcon direction={sortDirection} active={sortColumn === 'name'} />
+          <tr className="border-b text-left text-sm text-stone-500">
+            <th className={headerClass} aria-sort={getAriaSort('name')}>
+              <button type="button" onClick={() => handleSort('name')} className={headerButtonClass}>
+                Name
+                <SortIcon direction={sortDirection} active={sortColumn === 'name'} />
+              </button>
             </th>
-            <th className={headerClass} onClick={() => handleSort('patrol')}>
-              Patrol
-              <SortIcon direction={sortDirection} active={sortColumn === 'patrol'} />
+            <th className={headerClass} aria-sort={getAriaSort('patrol')}>
+              <button type="button" onClick={() => handleSort('patrol')} className={headerButtonClass}>
+                Patrol
+                <SortIcon direction={sortDirection} active={sortColumn === 'patrol'} />
+              </button>
             </th>
-            <th className={headerClass} onClick={() => handleSort('rank')}>
-              Rank
-              <SortIcon direction={sortDirection} active={sortColumn === 'rank'} />
+            <th className={headerClass} aria-sort={getAriaSort('rank')}>
+              <button type="button" onClick={() => handleSort('rank')} className={headerButtonClass}>
+                Rank
+                <SortIcon direction={sortDirection} active={sortColumn === 'rank'} />
+              </button>
             </th>
-            <th className={headerClass} onClick={() => handleSort('status')}>
-              Status
-              <SortIcon direction={sortDirection} active={sortColumn === 'status'} />
+            <th className={headerClass} aria-sort={getAriaSort('status')}>
+              <button type="button" onClick={() => handleSort('status')} className={headerButtonClass}>
+                Status
+                <SortIcon direction={sortDirection} active={sortColumn === 'status'} />
+              </button>
             </th>
-            <th className={`${headerClass} text-right`} onClick={() => handleSort('balance')}>
-              Balance
-              <SortIcon direction={sortDirection} active={sortColumn === 'balance'} />
+            <th className={`${headerClass} text-right`} aria-sort={getAriaSort('balance')}>
+              <button type="button" onClick={() => handleSort('balance')} className={`${headerButtonClass} justify-end w-full`}>
+                Balance
+                <SortIcon direction={sortDirection} active={sortColumn === 'balance'} />
+              </button>
             </th>
-            {canManage && <th className="pb-3">Actions</th>}
+            {canManage && <th className="pb-3 font-medium">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -514,7 +554,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
           onClose={() => setEditingScout(null)}
           onSuccess={() => {
             setEditingScout(null)
-            window.location.reload()
+            router.refresh()
           }}
         />
       )}

@@ -1,34 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { formatCurrency } from '@/lib/utils'
-
-// Square Web Payments SDK types
-declare global {
-  interface Window {
-    Square?: {
-      payments: (appId: string, locationId: string) => Promise<Payments>
-    }
-  }
-}
-
-interface Payments {
-  card: () => Promise<Card>
-}
-
-interface Card {
-  attach: (selector: string) => Promise<void>
-  tokenize: () => Promise<TokenResult>
-  destroy: () => Promise<void>
-}
-
-interface TokenResult {
-  status: 'OK' | 'ERROR'
-  token?: string
-  errors?: Array<{ message: string }>
-}
+import { SQUARE_FEE_PERCENT, SQUARE_FEE_FIXED_DOLLARS } from '@/lib/billing'
+import type { SquarePayments, SquareCard, SquareTokenResult } from '@/types/square'
 
 interface Scout {
   id: string
@@ -48,10 +26,6 @@ interface SquarePaymentFormProps {
   onPaymentComplete?: () => void
 }
 
-// Square fee: 2.6% + $0.10 per transaction
-const SQUARE_FEE_PERCENT = 0.026
-const SQUARE_FEE_FIXED = 0.10
-
 export function SquarePaymentForm({
   applicationId,
   locationId,
@@ -59,8 +33,9 @@ export function SquarePaymentForm({
   environment,
   onPaymentComplete,
 }: SquarePaymentFormProps) {
+  const router = useRouter()
   const cardContainerRef = useRef<HTMLDivElement>(null)
-  const cardRef = useRef<Card | null>(null)
+  const cardRef = useRef<SquareCard | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -70,7 +45,7 @@ export function SquarePaymentForm({
   const [sdkReady, setSdkReady] = useState(false)
 
   const parsedAmount = parseFloat(amount) || 0
-  const feeAmount = parsedAmount > 0 ? parsedAmount * SQUARE_FEE_PERCENT + SQUARE_FEE_FIXED : 0
+  const feeAmount = parsedAmount > 0 ? parsedAmount * SQUARE_FEE_PERCENT + SQUARE_FEE_FIXED_DOLLARS : 0
   const netAmount = parsedAmount - feeAmount
 
   const selectedScout = scouts.find((s) => s.id === selectedScoutId)
@@ -212,9 +187,9 @@ export function SquarePaymentForm({
         onPaymentComplete()
       }
 
-      // Reload after a delay to show updated balance
+      // Refresh server components after delay to show updated balance
       setTimeout(() => {
-        window.location.reload()
+        router.refresh()
       }, 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed')

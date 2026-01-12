@@ -94,45 +94,44 @@ export default async function PaymentsPage() {
     }
   }
 
-  // Get scouts with balances for payment form (only for financial roles)
-  let scouts: Scout[] = []
-  if (isFinancialRole(membership.role)) {
-    const { data: scoutsData } = await supabase
-      .from('scouts')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        scout_accounts (
-          id,
-          balance
-        )
-      `)
-      .eq('unit_id', membership.unit_id)
-      .eq('is_active', true)
-      .order('last_name')
-
-    scouts = (scoutsData as Scout[]) || []
-  }
-
-  // Check if Square is connected
+  // Get scouts with balances and Square credentials in parallel for financial roles
   interface SquareCredentialsData {
     merchant_id: string
     location_id: string | null
     environment: 'sandbox' | 'production'
   }
+  let scouts: Scout[] = []
   let squareCredentials: SquareCredentialsData | null = null
 
   if (isFinancialRole(membership.role)) {
-    const { data: credentials } = await supabase
-      .from('unit_square_credentials')
-      .select('merchant_id, location_id, environment')
-      .eq('unit_id', membership.unit_id)
-      .eq('is_active', true)
-      .single()
+    // Run scouts and credentials queries in parallel
+    const [scoutsResult, credentialsResult] = await Promise.all([
+      supabase
+        .from('scouts')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          scout_accounts (
+            id,
+            balance
+          )
+        `)
+        .eq('unit_id', membership.unit_id)
+        .eq('is_active', true)
+        .order('last_name'),
+      supabase
+        .from('unit_square_credentials')
+        .select('merchant_id, location_id, environment')
+        .eq('unit_id', membership.unit_id)
+        .eq('is_active', true)
+        .single(),
+    ])
 
-    if (credentials) {
-      squareCredentials = credentials as SquareCredentialsData
+    scouts = (scoutsResult.data as Scout[]) || []
+
+    if (credentialsResult.data) {
+      squareCredentials = credentialsResult.data as SquareCredentialsData
 
       // Get location ID if not cached
       if (!squareCredentials.location_id) {

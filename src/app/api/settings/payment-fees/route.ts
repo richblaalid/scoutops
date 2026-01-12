@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
 
-interface UpdateFeeSettingsRequest {
-  unitId: string
-  processingFeePercent: number
-  processingFeeFixed: number
-  passFeesToPayer: boolean
-}
+// Zod schema for fee settings validation
+const updateFeeSettingsSchema = z.object({
+  unitId: z.string().uuid('Invalid unit ID'),
+  processingFeePercent: z.number().min(0, 'Fee percentage cannot be negative').max(0.1, 'Fee percentage cannot exceed 10%'),
+  processingFeeFixed: z.number().min(0, 'Fixed fee cannot be negative').max(1, 'Fixed fee cannot exceed $1.00'),
+  passFeesToPayer: z.boolean(),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,36 +23,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body: UpdateFeeSettingsRequest = await request.json()
-    const { unitId, processingFeePercent, processingFeeFixed, passFeesToPayer } = body
+    // Parse and validate request body
+    const rawBody = await request.json()
+    const parseResult = updateFeeSettingsSchema.safeParse(rawBody)
 
-    // Validate required fields
-    if (!unitId) {
-      return NextResponse.json({ error: 'Missing unit ID' }, { status: 400 })
-    }
-
-    // Validate fee values
-    if (
-      typeof processingFeePercent !== 'number' ||
-      processingFeePercent < 0 ||
-      processingFeePercent > 0.1 // Max 10%
-    ) {
+    if (!parseResult.success) {
+      const firstError = parseResult.error.issues[0]
       return NextResponse.json(
-        { error: 'Fee percentage must be between 0 and 10%' },
+        { error: firstError?.message || 'Invalid request data' },
         { status: 400 }
       )
     }
 
-    if (
-      typeof processingFeeFixed !== 'number' ||
-      processingFeeFixed < 0 ||
-      processingFeeFixed > 1 // Max $1
-    ) {
-      return NextResponse.json(
-        { error: 'Fixed fee must be between $0 and $1' },
-        { status: 400 }
-      )
-    }
+    const { unitId, processingFeePercent, processingFeeFixed, passFeesToPayer } = parseResult.data
 
     // Check user has admin role for this unit
     const { data: membership } = await supabase

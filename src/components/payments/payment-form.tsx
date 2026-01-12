@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatCurrency } from '@/lib/utils'
+import { SQUARE_FEE_PERCENT, SQUARE_FEE_FIXED_DOLLARS } from '@/lib/billing'
 
 interface Scout {
   id: string
@@ -29,11 +31,8 @@ const PAYMENT_METHODS = [
   { value: 'transfer', label: 'Bank Transfer' },
 ]
 
-// Simulated Square fee: 2.6% + $0.10 per transaction
-const CARD_FEE_PERCENT = 0.026
-const CARD_FEE_FIXED = 0.10
-
 export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -45,7 +44,7 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
 
   const parsedAmount = parseFloat(amount) || 0
   const isCard = paymentMethod === 'card'
-  const feeAmount = isCard ? parsedAmount * CARD_FEE_PERCENT + CARD_FEE_FIXED : 0
+  const feeAmount = isCard ? parsedAmount * SQUARE_FEE_PERCENT + SQUARE_FEE_FIXED_DOLLARS : 0
   const netAmount = parsedAmount - feeAmount
 
   const selectedScout = scouts.find((s) => s.id === selectedScoutId)
@@ -214,8 +213,9 @@ export function PaymentForm({ unitId, scouts }: PaymentFormProps) {
       setReference('')
       setSelectedScoutId('')
 
+      // Refresh server components to show updated balance
       setTimeout(() => {
-        window.location.reload()
+        router.refresh()
       }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

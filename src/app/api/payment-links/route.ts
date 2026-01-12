@@ -6,14 +6,16 @@ import {
   type LedgerEntry,
 } from '@/lib/email/templates/payment-request'
 import { randomBytes } from 'crypto'
+import { z } from 'zod'
 
-interface CreatePaymentLinkRequest {
-  scoutAccountId: string
-  guardianProfileId: string
-  amount?: number // in cents, if not provided uses balance owed
-  description?: string
-  customMessage?: string
-}
+// Zod schema for payment link request validation
+const createPaymentLinkSchema = z.object({
+  scoutAccountId: z.string().uuid('Invalid scout account ID'),
+  guardianProfileId: z.string().uuid('Invalid guardian profile ID'),
+  amount: z.number().int().min(100, 'Minimum payment is $1.00').max(10000000, 'Maximum payment is $100,000').optional(),
+  description: z.string().max(500, 'Description must be under 500 characters').optional(),
+  customMessage: z.string().max(2000, 'Custom message must be under 2000 characters').optional(),
+})
 
 function generateSecureToken(): string {
   return randomBytes(32).toString('hex') // 64 characters
@@ -52,15 +54,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body: CreatePaymentLinkRequest = await request.json()
-    const { scoutAccountId, guardianProfileId, amount, description, customMessage } = body
+    // Parse and validate request body
+    const rawBody = await request.json()
+    const parseResult = createPaymentLinkSchema.safeParse(rawBody)
 
-    if (!scoutAccountId || !guardianProfileId) {
+    if (!parseResult.success) {
+      const firstError = parseResult.error.issues[0]
       return NextResponse.json(
-        { error: 'Missing required fields: scoutAccountId, guardianProfileId' },
+        { error: firstError?.message || 'Invalid request data' },
         { status: 400 }
       )
     }
+
+    const { scoutAccountId, guardianProfileId, amount, description, customMessage } = parseResult.data
 
     // Get scout account with scout info
     const { data: scoutAccount, error: scoutError } = await supabase
