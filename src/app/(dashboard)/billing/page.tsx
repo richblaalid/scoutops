@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessDenied } from '@/components/ui/access-denied'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import { canAccessPage, canPerformAction } from '@/lib/roles'
 import { BillingForm } from '@/components/billing/billing-form'
 import Link from 'next/link'
@@ -174,7 +174,7 @@ export default async function BillingPage() {
                         </p>
                       )}
                       <p className="mt-1 text-sm text-stone-500">
-                        {record.billing_date} • {record.billing_charges.length} scouts
+                        {formatDate(record.created_at || record.billing_date)} • {record.billing_charges.length} scouts
                       </p>
                     </div>
                     <div className="text-right">

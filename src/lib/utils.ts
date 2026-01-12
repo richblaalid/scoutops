@@ -16,7 +16,18 @@ export function formatCurrency(amount: number): string {
 }
 
 export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  let d: Date
+  if (typeof date === 'string') {
+    // For date-only strings (e.g., "2024-01-15"), append noon time
+    // to avoid UTC interpretation shifting the date
+    if (!date.includes('T')) {
+      d = new Date(date + 'T12:00:00')
+    } else {
+      d = new Date(date)
+    }
+  } else {
+    d = date
+  }
   const formatter = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',

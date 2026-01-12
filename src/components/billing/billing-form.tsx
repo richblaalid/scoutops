@@ -103,149 +103,24 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
 
       const billingDate = new Date().toISOString().split('T')[0]
 
-      // Create billing record
-      const { data: billingRecord, error: billingError } = await (supabase as unknown as {
-        from: (table: string) => {
-          insert: (data: {
-            unit_id: string
-            description: string
-            total_amount: number
-            billing_date: string
-          }) => {
-            select: () => {
-              single: () => Promise<{ data: { id: string } | null; error: Error | null }>
-            }
-          }
-        }
+      // Call the atomic billing function - all operations happen in a single transaction
+      const { data, error: rpcError } = await supabase.rpc('create_billing_with_journal', {
+        p_unit_id: unitId,
+        p_description: description,
+        p_total_amount: totalAmount,
+        p_billing_date: billingDate,
+        p_billing_type: billingType,
+        p_per_scout_amount: perScoutAmount,
+        p_scout_accounts: selectedScoutAccounts,
       })
-        .from('billing_records')
-        .insert({
-          unit_id: unitId,
-          description,
-          total_amount: totalAmount,
-          billing_date: billingDate,
-        })
-        .select()
-        .single()
 
-      if (billingError || !billingRecord) throw billingError || new Error('Failed to create billing record')
-
-      // Create billing charges for each scout
-      const charges = selectedScoutAccounts.map((s) => ({
-        billing_record_id: billingRecord.id,
-        scout_account_id: s.accountId,
-        amount: perScoutAmount,
-        is_paid: false,
-      }))
-
-      const { error: chargesError } = await (supabase as unknown as {
-        from: (table: string) => {
-          insert: (data: typeof charges) => Promise<{ error: Error | null }>
-        }
-      })
-        .from('billing_charges')
-        .insert(charges)
-
-      if (chargesError) throw chargesError
-
-      // Create journal entry for the billing
-      const entryDescription = billingType === 'split'
-        ? `Fair Share: ${description}`
-        : `Fixed Charge: ${description}`
-
-      const { data: journalEntry, error: journalError } = await (supabase as unknown as {
-        from: (table: string) => {
-          insert: (data: {
-            unit_id: string
-            entry_date: string
-            description: string
-            entry_type: string
-            is_posted: boolean
-          }) => {
-            select: () => {
-              single: () => Promise<{ data: { id: string } | null; error: Error | null }>
-            }
-          }
-        }
-      })
-        .from('journal_entries')
-        .insert({
-          unit_id: unitId,
-          entry_date: billingDate,
-          description: entryDescription,
-          entry_type: 'charge',
-          is_posted: true,
-        })
-        .select()
-        .single()
-
-      if (journalError || !journalEntry) throw journalError || new Error('Failed to create journal entry')
-
-      // Get accounts for journal lines
-      const { data: accountsData } = await (supabase as unknown as {
-        from: (table: string) => {
-          select: (cols: string) => {
-            eq: (col: string, val: string) => {
-              in: (col: string, vals: string[]) => Promise<{ data: { id: string; code: string }[] | null }>
-            }
-          }
-        }
-      })
-        .from('accounts')
-        .select('id, code')
-        .eq('unit_id', unitId)
-        .in('code', ['1200', '4100']) // Scout Accounts Receivable, Camping Fees
-
-      const accounts = accountsData || []
-      const receivableAccount = accounts.find((a) => a.code === '1200')
-      const incomeAccount = accounts.find((a) => a.code === '4100')
-
-      if (!receivableAccount || !incomeAccount) {
-        throw new Error('Required accounts not found. Please contact support.')
+      if (rpcError) {
+        throw new Error(rpcError.message)
       }
 
-      // Create journal lines
-      // Debit each scout's account (they owe money)
-      const journalLines = selectedScoutAccounts.map((s) => ({
-        journal_entry_id: journalEntry.id,
-        account_id: receivableAccount.id,
-        scout_account_id: s.accountId,
-        debit: perScoutAmount,
-        credit: 0,
-        memo: `${s.scoutName} - ${description}`,
-      }))
-
-      // Credit income account (we earned the revenue)
-      journalLines.push({
-        journal_entry_id: journalEntry.id,
-        account_id: incomeAccount.id,
-        scout_account_id: null as unknown as string,
-        debit: 0,
-        credit: totalAmount,
-        memo: description,
-      })
-
-      const { error: linesError } = await (supabase as unknown as {
-        from: (table: string) => {
-          insert: (data: typeof journalLines) => Promise<{ error: Error | null }>
-        }
-      })
-        .from('journal_lines')
-        .insert(journalLines)
-
-      if (linesError) throw linesError
-
-      // Update billing record with journal entry ID
-      await (supabase as unknown as {
-        from: (table: string) => {
-          update: (data: { journal_entry_id: string }) => {
-            eq: (col: string, val: string) => Promise<{ error: Error | null }>
-          }
-        }
-      })
-        .from('billing_records')
-        .update({ journal_entry_id: journalEntry.id })
-        .eq('id', billingRecord.id)
+      if (!data?.success) {
+        throw new Error('Failed to create billing record')
+      }
 
       setSuccess(true)
       setAmount('')

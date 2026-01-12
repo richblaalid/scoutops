@@ -1,9 +1,10 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { SendPaymentRequestModal } from '@/components/accounts/send-payment-request-modal'
+import { AccountActions } from '@/components/accounts/account-actions'
+import { AccountTransactions } from '@/components/accounts/account-transactions'
+import { RecordPaymentForm } from '@/components/accounts/record-payment-form'
 import { isFinancialRole } from '@/lib/roles'
 
 interface AccountPageProps {
@@ -18,6 +19,7 @@ interface JournalLine {
   journal_entries: {
     id: string
     entry_date: string
+    created_at: string | null
     description: string
     entry_type: string | null
     reference: string | null
@@ -36,19 +38,28 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
 
   if (!user) return null
 
-  // Get user's membership role
+  // Get user's membership role and unit info
   const { data: membership } = await supabase
     .from('unit_memberships')
-    .select('role')
+    .select('role, unit_id')
     .eq('profile_id', user.id)
     .eq('status', 'active')
     .single()
 
   const userRole = membership?.role || 'parent'
-  const canSendPaymentRequest = isFinancialRole(userRole)
+  const unitId = membership?.unit_id
+  const canRecordPayment = isFinancialRole(userRole)
+
+  // Check if user is a parent (guardian of this scout)
+  const { data: guardianCheck } = await supabase
+    .from('scout_guardians')
+    .select('id')
+    .eq('profile_id', user.id)
+    .limit(1)
+
+  const isParent = (guardianCheck?.length ?? 0) > 0 && !canRecordPayment
 
   // Get account with scout info - this RLS check verifies user can access this account
-  // Parents can only see accounts for scouts they are guardians of
   const { data: accountData } = await supabase
     .from('scout_accounts')
     .select(`
@@ -68,7 +79,6 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
     .eq('id', id)
     .single()
 
-  // If user can't see this account, they don't have access
   if (!accountData) {
     notFound()
   }
@@ -90,6 +100,7 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
 
   const account = accountData as ScoutAccount
   const balance = account.balance || 0
+  const scoutName = `${account.scouts?.first_name} ${account.scouts?.last_name}`
 
   // Use service client to fetch transactions - access already verified above
   const serviceClient = await createServiceClient()
@@ -103,6 +114,7 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
       journal_entries (
         id,
         entry_date,
+        created_at,
         description,
         entry_type,
         reference,
@@ -112,16 +124,32 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
     `)
     .eq('scout_account_id', id)
 
-  // Sort by entry_date descending (most recent first)
+  // Sort by created_at descending (most recent first), fallback to entry_date
   const transactions = ((transactionsData as JournalLine[]) || []).sort((a, b) => {
-    const dateA = a.journal_entries?.entry_date || ''
-    const dateB = b.journal_entries?.entry_date || ''
+    const dateA = a.journal_entries?.created_at || a.journal_entries?.entry_date || ''
+    const dateB = b.journal_entries?.created_at || b.journal_entries?.entry_date || ''
     return dateB.localeCompare(dateA)
   })
 
-  // Calculate running totals
-  const totalDebits = transactions.reduce((sum, tx) => sum + (tx.debit || 0), 0)
-  const totalCredits = transactions.reduce((sum, tx) => sum + (tx.credit || 0), 0)
+  // Get Square configuration for parent payments
+  let squareConfig: { applicationId: string; locationId: string; environment: 'sandbox' | 'production' } | null = null
+
+  if (isParent && balance < 0 && unitId) {
+    const { data: credentials } = await serviceClient
+      .from('unit_square_credentials')
+      .select('location_id, environment')
+      .eq('unit_id', unitId)
+      .eq('is_active', true)
+      .single()
+
+    if (credentials?.location_id) {
+      squareConfig = {
+        applicationId: process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID || '',
+        locationId: credentials.location_id,
+        environment: (credentials.environment as 'sandbox' | 'production') || 'sandbox',
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -131,192 +159,59 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
           Accounts
         </Link>
         <span className="text-stone-400">/</span>
-        <span className="text-sm text-stone-900">
-          {account.scouts?.first_name} {account.scouts?.last_name}
-        </span>
+        <span className="text-sm text-stone-900">{scoutName}</span>
       </div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header with Balance and Actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-stone-900">
-            {account.scouts?.first_name} {account.scouts?.last_name}
-          </h1>
+          <h1 className="text-3xl font-bold text-stone-900">{scoutName}</h1>
           <p className="mt-1 text-stone-600">
             {account.scouts?.patrol && `${account.scouts.patrol} Patrol`}
             {account.scouts?.patrol && account.scouts?.rank && ' • '}
             {account.scouts?.rank}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-stone-500">Current Balance</p>
-          <p
-            className={`text-3xl font-bold ${
-              balance < 0 ? 'text-error' : balance > 0 ? 'text-success' : 'text-stone-900'
-            }`}
-          >
-            {formatCurrency(balance)}
-          </p>
-          <p className="text-sm text-stone-500">
-            {balance < 0 ? 'Owes' : balance > 0 ? 'Credit' : 'Zero Balance'}
-          </p>
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <div className="text-right">
+            <p className="text-sm text-stone-500">Current Balance</p>
+            <p
+              className={`text-3xl font-bold ${
+                balance < 0 ? 'text-error' : balance > 0 ? 'text-success' : 'text-stone-900'
+              }`}
+            >
+              {formatCurrency(balance)}
+            </p>
+            <p className="text-sm text-stone-500">
+              {balance < 0 ? 'Owes' : balance > 0 ? 'Credit' : 'Zero Balance'}
+            </p>
+          </div>
+          {account.scouts && (
+            <AccountActions
+              scoutId={account.scouts.id}
+              scoutAccountId={account.id}
+              scoutName={scoutName}
+              balance={balance}
+              userRole={userRole}
+              isParent={isParent}
+              squareConfig={squareConfig}
+            />
+          )}
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          <Link
-            href={`/scouts/${account.scouts?.id}`}
-            className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
-          >
-            View Scout Profile
-          </Link>
-          {canSendPaymentRequest && (
-            <>
-              <Link
-                href="/billing"
-                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
-              >
-                Create Billing
-              </Link>
-              <Link
-                href="/payments"
-                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
-              >
-                Record Payment
-              </Link>
-              {balance < 0 && account.scouts && (
-                <SendPaymentRequestModal
-                  scoutAccountId={account.id}
-                  scoutId={account.scouts.id}
-                  scoutName={`${account.scouts.first_name} ${account.scouts.last_name}`}
-                  balance={balance}
-                />
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+      {/* Transaction History with Filters */}
+      <AccountTransactions transactions={transactions} />
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Charges (Debits)</CardDescription>
-            <CardTitle className="text-xl text-error">
-              {formatCurrency(totalDebits)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Payments (Credits)</CardDescription>
-            <CardTitle className="text-xl text-success">
-              {formatCurrency(totalCredits)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Net (Credits - Debits)</CardDescription>
-            <CardTitle
-              className={`text-xl ${balance < 0 ? 'text-error' : 'text-success'}`}
-            >
-              {formatCurrency(balance)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* Transaction History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-          <CardDescription>
-            {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {transactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b text-left text-sm font-medium text-stone-500">
-                    <th className="pb-3 pr-4">Date</th>
-                    <th className="pb-3 pr-4">Description</th>
-                    <th className="pb-3 pr-4">Type</th>
-                    <th className="pb-3 pr-4">Reference</th>
-                    <th className="pb-3 pr-4 text-right">Debit</th>
-                    <th className="pb-3 text-right">Credit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => {
-                    const isVoid = tx.journal_entries?.is_void
-                    return (
-                      <tr
-                        key={tx.id}
-                        className={`border-b last:border-0 ${isVoid ? 'opacity-50' : ''}`}
-                      >
-                        <td className="py-3 pr-4 text-stone-600">
-                          {tx.journal_entries?.entry_date || '—'}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <p className="font-medium text-stone-900">
-                            {tx.journal_entries?.description || tx.memo || '—'}
-                          </p>
-                          {tx.memo && tx.journal_entries?.description && (
-                            <p className="text-xs text-stone-500">{tx.memo}</p>
-                          )}
-                          {isVoid && (
-                            <span className="text-xs text-error">(VOID)</span>
-                          )}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span className="rounded bg-stone-100 px-2 py-1 text-xs capitalize">
-                            {tx.journal_entries?.entry_type || 'entry'}
-                          </span>
-                        </td>
-                        <td className="py-3 pr-4 text-sm text-stone-500">
-                          {tx.journal_entries?.reference || '—'}
-                        </td>
-                        <td className="py-3 pr-4 text-right text-error">
-                          {tx.debit && tx.debit > 0 ? formatCurrency(tx.debit) : '—'}
-                        </td>
-                        <td className="py-3 text-right text-success">
-                          {tx.credit && tx.credit > 0 ? formatCurrency(tx.credit) : '—'}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 font-medium">
-                    <td colSpan={4} className="py-3 pr-4 text-right">
-                      Totals:
-                    </td>
-                    <td className="py-3 pr-4 text-right text-error">
-                      {formatCurrency(totalDebits)}
-                    </td>
-                    <td className="py-3 text-right text-success">
-                      {formatCurrency(totalCredits)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          ) : (
-            <p className="text-stone-500">No transactions yet</p>
-          )}
-        </CardContent>
-      </Card>
-
+      {/* Record Payment Form - Financial Roles Only */}
+      {canRecordPayment && unitId && account.scouts && (
+        <RecordPaymentForm
+          unitId={unitId}
+          scoutAccountId={account.id}
+          scoutName={scoutName}
+          currentBalance={balance}
+        />
+      )}
     </div>
   )
 }
