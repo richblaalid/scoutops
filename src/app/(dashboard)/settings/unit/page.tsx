@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
+import { UnitInfoForm } from '@/components/settings/unit-info-form'
 import { PatrolList } from '@/components/settings/patrol-list'
 import { LogoUpload } from '@/components/settings/logo-upload'
 
@@ -25,6 +24,9 @@ export default async function UnitSettingsPage() {
         name,
         unit_number,
         unit_type,
+        council,
+        district,
+        chartered_org,
         logo_url
       )`
     )
@@ -46,6 +48,9 @@ export default async function UnitSettingsPage() {
     name: string
     unit_number: string
     unit_type: string
+    council: string | null
+    district: string | null
+    chartered_org: string | null
     logo_url: string | null
   } | null
 
@@ -63,19 +68,24 @@ export default async function UnitSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Unit Settings</h1>
-          <p className="text-stone-600">
-            Configure {unit.unit_type.charAt(0).toUpperCase() + unit.unit_type.slice(1)} {unit.unit_number} settings
-          </p>
-        </div>
-        <Link href="/settings">
-          <Button variant="outline">Back to Settings</Button>
-        </Link>
+      <div>
+        <h1 className="text-2xl font-bold">Unit Settings</h1>
+        <p className="text-stone-600">
+          Configure settings for {unit.unit_type.charAt(0).toUpperCase() + unit.unit_type.slice(1)} {unit.unit_number}
+        </p>
       </div>
 
       <div className="grid gap-6">
+        <UnitInfoForm
+          unitId={unit.id}
+          name={unit.name}
+          unitNumber={unit.unit_number}
+          unitType={unit.unit_type}
+          council={unit.council}
+          district={unit.district}
+          charteredOrg={unit.chartered_org}
+        />
+
         <PatrolList
           unitId={membership.unit_id}
           patrols={patrols || []}
