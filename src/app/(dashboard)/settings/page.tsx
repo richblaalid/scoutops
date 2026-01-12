@@ -6,6 +6,7 @@ import { ContactForm } from '@/components/settings/contact-form'
 import { DangerZone } from '@/components/settings/danger-zone'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { isFinancialRole } from '@/lib/roles'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -15,11 +16,14 @@ export default async function SettingsPage() {
     redirect('/login')
   }
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  // Get profile and membership in parallel
+  const [profileResult, membershipResult] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('unit_memberships').select('role').eq('profile_id', user.id).eq('status', 'active').single(),
+  ])
+
+  const { data: profile, error } = profileResult
+  const userRole = membershipResult.data?.role || 'parent'
 
   if (error || !profile) {
     redirect('/login')
@@ -56,19 +60,21 @@ export default async function SettingsPage() {
           }}
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Integrations</CardTitle>
-            <CardDescription>
-              Connect third-party services like Square for payments
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/settings/integrations">
-              <Button variant="outline">Manage Integrations</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        {isFinancialRole(userRole) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Integrations</CardTitle>
+              <CardDescription>
+                Connect third-party services like Square for payments
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/settings/integrations">
+                <Button variant="outline">Manage Integrations</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
         <DangerZone />
       </div>

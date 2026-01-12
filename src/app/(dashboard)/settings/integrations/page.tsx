@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { SquareConnectionCard } from '@/components/settings/square-connection-card'
 import { PaymentFeeSettingsCard } from '@/components/settings/payment-fee-settings-card'
+import { isFinancialRole } from '@/lib/roles'
 
 export default async function IntegrationsPage({
   searchParams,
@@ -39,6 +40,11 @@ export default async function IntegrationsPage({
 
   if (!membership) {
     redirect('/login')
+  }
+
+  // Only admin and treasurer can access integrations
+  if (!isFinancialRole(membership.role)) {
+    redirect('/settings')
   }
 
   const isAdmin = membership.role === 'admin'
