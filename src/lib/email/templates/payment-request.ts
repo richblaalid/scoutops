@@ -10,6 +10,7 @@ export interface PaymentRequestEmailData {
   guardianName: string
   scoutName: string
   unitName: string
+  unitLogoUrl?: string | null
   balance: number // negative = owes money
   ledgerEntries: LedgerEntry[]
   paymentUrl: string
@@ -48,6 +49,7 @@ export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
     guardianName,
     scoutName,
     unitName,
+    unitLogoUrl,
     balance,
     ledgerEntries,
     paymentUrl,
@@ -104,6 +106,7 @@ export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
           <!-- Header -->
           <tr>
             <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+              ${unitLogoUrl ? `<img src="${unitLogoUrl}" alt="${unitName}" style="max-height: 60px; max-width: 200px; margin-bottom: 16px;">` : ''}
               <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 600; color: #111827;">Payment Request</h1>
               <p style="margin: 0; color: #6b7280; font-size: 14px;">${unitName}</p>
             </td>

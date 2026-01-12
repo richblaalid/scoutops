@@ -622,6 +622,44 @@ export type Database = {
           },
         ]
       }
+      patrols: {
+        Row: {
+          id: string
+          unit_id: string
+          name: string
+          display_order: number
+          is_active: boolean
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          unit_id: string
+          name: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          unit_id?: string
+          name?: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patrols_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -767,6 +805,7 @@ export type Database = {
           is_active: boolean | null
           last_name: string
           patrol: string | null
+          patrol_id: string | null
           rank: string | null
           unit_id: string
           updated_at: string | null
@@ -780,6 +819,7 @@ export type Database = {
           is_active?: boolean | null
           last_name: string
           patrol?: string | null
+          patrol_id?: string | null
           rank?: string | null
           unit_id: string
           updated_at?: string | null
@@ -793,11 +833,19 @@ export type Database = {
           is_active?: boolean | null
           last_name?: string
           patrol?: string | null
+          patrol_id?: string | null
           rank?: string | null
           unit_id?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "scouts_patrol_id_fkey"
+            columns: ["patrol_id"]
+            isOneToOne: false
+            referencedRelation: "patrols"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "scouts_unit_id_fkey"
             columns: ["unit_id"]
@@ -938,6 +986,7 @@ export type Database = {
           created_at: string | null
           district: string | null
           id: string
+          logo_url: string | null
           name: string
           unit_number: string
           unit_type: string
@@ -952,6 +1001,7 @@ export type Database = {
           created_at?: string | null
           district?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           unit_number: string
           unit_type: string
@@ -966,6 +1016,7 @@ export type Database = {
           created_at?: string | null
           district?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           unit_number?: string
           unit_type?: string

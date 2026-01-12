@@ -45,6 +45,7 @@ export default async function ScoutsPage() {
     first_name: string
     last_name: string
     patrol: string | null
+    patrol_id: string | null
     rank: string | null
     is_active: boolean | null
     date_of_birth: string | null
@@ -74,6 +75,7 @@ export default async function ScoutsPage() {
           first_name,
           last_name,
           patrol,
+          patrol_id,
           rank,
           is_active,
           date_of_birth,
@@ -98,6 +100,7 @@ export default async function ScoutsPage() {
         first_name,
         last_name,
         patrol,
+        patrol_id,
         rank,
         is_active,
         date_of_birth,

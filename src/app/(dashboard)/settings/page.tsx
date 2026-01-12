@@ -60,6 +60,22 @@ export default async function SettingsPage() {
           }}
         />
 
+        {userRole === 'admin' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Unit Settings</CardTitle>
+              <CardDescription>
+                Configure patrols, branding, and other unit-wide settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/settings/unit">
+                <Button variant="outline">Manage Unit Settings</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
         {isFinancialRole(userRole) && (
           <Card>
             <CardHeader>

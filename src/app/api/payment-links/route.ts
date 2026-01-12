@@ -118,10 +118,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Guardian profile not found or has no email' }, { status: 404 })
     }
 
-    // Get unit info including fee settings
+    // Get unit info including fee settings and logo
     const { data: unit } = await supabase
       .from('units')
-      .select('name, processing_fee_percent, processing_fee_fixed, pass_fees_to_payer')
+      .select('name, processing_fee_percent, processing_fee_fixed, pass_fees_to_payer, logo_url')
       .eq('id', membership.unit_id)
       .single()
 
@@ -237,6 +237,7 @@ export async function POST(request: NextRequest) {
       guardianName: guardian.first_name || guardian.full_name || 'Parent',
       scoutName: `${scout.first_name} ${scout.last_name}`,
       unitName: unit?.name || 'Scout Unit',
+      unitLogoUrl: unit?.logo_url,
       balance: balance, // negative = owes
       ledgerEntries,
       paymentUrl,

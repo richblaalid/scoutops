@@ -1,10 +1,15 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
+interface Patrol {
+  id: string
+  name: string
+}
 
 const MONTHS = [
   { value: '01', label: 'January' },
@@ -28,6 +33,7 @@ interface ScoutFormProps {
     first_name: string
     last_name: string
     patrol: string | null
+    patrol_id: string | null
     rank: string | null
     date_of_birth: string | null
     bsa_member_id: string | null
@@ -56,11 +62,32 @@ function parseDateParts(dateStr: string | null | undefined) {
 export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [patrols, setPatrols] = useState<Patrol[]>([])
+  const [selectedPatrolId, setSelectedPatrolId] = useState<string>(scout?.patrol_id || '')
 
   const initialDate = parseDateParts(scout?.date_of_birth)
   const [birthYear, setBirthYear] = useState(initialDate.year)
   const [birthMonth, setBirthMonth] = useState(initialDate.month)
   const [birthDay, setBirthDay] = useState(initialDate.day)
+
+  // Fetch patrols for the unit
+  useEffect(() => {
+    async function fetchPatrols() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('patrols')
+        .select('id, name')
+        .eq('unit_id', unitId)
+        .eq('is_active', true)
+        .order('display_order')
+        .order('name')
+
+      if (data) {
+        setPatrols(data)
+      }
+    }
+    fetchPatrols()
+  }, [unitId])
 
   // Generate years from current year going back 50 years (descending order)
   const years = useMemo(() => {
@@ -90,10 +117,14 @@ export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps)
     const formData = new FormData(e.currentTarget)
     const supabase = createClient()
 
+    // Get patrol name for the selected patrol (for backwards compatibility)
+    const selectedPatrol = patrols.find(p => p.id === selectedPatrolId)
+
     const scoutData = {
       first_name: formData.get('first_name') as string,
       last_name: formData.get('last_name') as string,
-      patrol: (formData.get('patrol') as string) || null,
+      patrol_id: selectedPatrolId || null,
+      patrol: selectedPatrol?.name || null, // Keep text field in sync for backwards compatibility
       rank: (formData.get('rank') as string) || null,
       date_of_birth: dateOfBirth || null,
       bsa_member_id: (formData.get('bsa_member_id') as string) || null,
@@ -166,12 +197,20 @@ export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps)
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="patrol">Patrol</Label>
-              <Input
+              <select
                 id="patrol"
-                name="patrol"
-                defaultValue={scout?.patrol || ''}
-                placeholder="e.g., Eagle, Wolf"
-              />
+                name="patrol_id"
+                value={selectedPatrolId}
+                onChange={(e) => setSelectedPatrolId(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">No patrol</option>
+                {patrols.map((patrol) => (
+                  <option key={patrol.id} value={patrol.id}>
+                    {patrol.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="rank">Rank</Label>

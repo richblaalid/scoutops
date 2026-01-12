@@ -99,10 +99,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Amount owed in cents (positive number)
     const currentBalanceCents = Math.round(Math.abs(currentBalance) * 100)
 
-    // Get unit fee settings for dynamic fee calculation
+    // Get unit fee settings and logo for dynamic fee calculation
     const { data: unitSettings } = await supabase
       .from('units')
-      .select('processing_fee_percent, processing_fee_fixed, pass_fees_to_payer')
+      .select('processing_fee_percent, processing_fee_fixed, pass_fees_to_payer, logo_url')
       .eq('id', paymentLink.unit_id)
       .single()
 
@@ -123,6 +123,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       scoutName: scout ? `${scout.first_name} ${scout.last_name}` : 'Scout',
       scoutAccountId: paymentLink.scout_account_id,
       unitName: unit?.name || 'Scout Unit',
+      unitLogoUrl: unitSettings?.logo_url || null,
       expiresAt: paymentLink.expires_at,
       squareEnabled: !!squareCredentials,
       squareLocationId: squareCredentials?.location_id || null,

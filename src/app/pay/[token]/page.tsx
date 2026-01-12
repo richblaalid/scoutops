@@ -15,6 +15,7 @@ interface PaymentLinkData {
   scoutName: string
   scoutAccountId: string
   unitName: string
+  unitLogoUrl: string | null
   expiresAt: string
   squareEnabled: boolean
   squareLocationId: string | null
@@ -433,6 +434,13 @@ export default function PaymentCheckoutPage() {
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
+          {linkData.unitLogoUrl && (
+            <img
+              src={linkData.unitLogoUrl}
+              alt={`${linkData.unitName} logo`}
+              className="h-20 w-auto mx-auto mb-4 object-contain"
+            />
+          )}
           <h1 className="text-2xl font-bold text-stone-900">{linkData.unitName}</h1>
           <p className="text-stone-600">Secure Payment</p>
         </div>
