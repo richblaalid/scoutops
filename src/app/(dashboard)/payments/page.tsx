@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessDenied } from '@/components/ui/access-denied'
-import { formatCurrency } from '@/lib/utils'
-import { canAccessPage, canPerformAction, isFinancialRole } from '@/lib/roles'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { canAccessPage, canPerformAction } from '@/lib/roles'
 import { PaymentForm } from '@/components/payments/payment-form'
 import { SquarePaymentForm } from '@/components/payments/square-payment-form'
 import { getDefaultLocationId } from '@/lib/square/client'
@@ -72,73 +72,49 @@ export default async function PaymentsPage() {
   }
 
   const canRecordPayment = canPerformAction(membership.role, 'record_payments')
-  const isParent = membership.role === 'parent'
 
-  // For parents, get their linked scout IDs
-  let linkedScoutAccountIds: string[] = []
-  if (isParent) {
-    const { data: guardianData } = await supabase
-      .from('scout_guardians')
-      .select('scout_id')
-      .eq('profile_id', user.id)
-
-    if (guardianData && guardianData.length > 0) {
-      const scoutIds = guardianData.map((g) => g.scout_id)
-      // Get the account IDs for these scouts
-      const { data: accountData } = await supabase
-        .from('scout_accounts')
-        .select('id')
-        .in('scout_id', scoutIds)
-
-      linkedScoutAccountIds = (accountData || []).map((a) => a.id)
-    }
-  }
-
-  // Get scouts with balances and Square credentials in parallel for financial roles
+  // Get scouts with balances and Square credentials in parallel
   interface SquareCredentialsData {
     merchant_id: string
     location_id: string | null
     environment: 'sandbox' | 'production'
   }
-  let scouts: Scout[] = []
+
+  // Run scouts and credentials queries in parallel
+  const [scoutsResult, credentialsResult] = await Promise.all([
+    supabase
+      .from('scouts')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        scout_accounts (
+          id,
+          balance
+        )
+      `)
+      .eq('unit_id', membership.unit_id)
+      .eq('is_active', true)
+      .order('last_name'),
+    supabase
+      .from('unit_square_credentials')
+      .select('merchant_id, location_id, environment')
+      .eq('unit_id', membership.unit_id)
+      .eq('is_active', true)
+      .single(),
+  ])
+
+  const scouts = (scoutsResult.data as Scout[]) || []
   let squareCredentials: SquareCredentialsData | null = null
 
-  if (isFinancialRole(membership.role)) {
-    // Run scouts and credentials queries in parallel
-    const [scoutsResult, credentialsResult] = await Promise.all([
-      supabase
-        .from('scouts')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          scout_accounts (
-            id,
-            balance
-          )
-        `)
-        .eq('unit_id', membership.unit_id)
-        .eq('is_active', true)
-        .order('last_name'),
-      supabase
-        .from('unit_square_credentials')
-        .select('merchant_id, location_id, environment')
-        .eq('unit_id', membership.unit_id)
-        .eq('is_active', true)
-        .single(),
-    ])
+  if (credentialsResult.data) {
+    squareCredentials = credentialsResult.data as SquareCredentialsData
 
-    scouts = (scoutsResult.data as Scout[]) || []
-
-    if (credentialsResult.data) {
-      squareCredentials = credentialsResult.data as SquareCredentialsData
-
-      // Get location ID if not cached
-      if (!squareCredentials.location_id) {
-        const locationId = await getDefaultLocationId(membership.unit_id)
-        if (locationId) {
-          squareCredentials = { ...squareCredentials, location_id: locationId }
-        }
+    // Get location ID if not cached
+    if (!squareCredentials.location_id) {
+      const locationId = await getDefaultLocationId(membership.unit_id)
+      if (locationId) {
+        squareCredentials = { ...squareCredentials, location_id: locationId }
       }
     }
   }
@@ -146,8 +122,8 @@ export default async function PaymentsPage() {
   const squareApplicationId = process.env.SQUARE_APPLICATION_ID || ''
   const isSquareConnected = !!squareCredentials && !!squareCredentials.location_id
 
-  // Get recent payments (filtered for parents)
-  let paymentsQuery = supabase
+  // Get recent payments
+  const { data: paymentsData } = await supabase
     .from('payments')
     .select(`
       id,
@@ -170,16 +146,6 @@ export default async function PaymentsPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
-  // Filter for parent's linked scouts
-  if (isParent && linkedScoutAccountIds.length > 0) {
-    paymentsQuery = paymentsQuery.in('scout_account_id', linkedScoutAccountIds)
-  } else if (isParent) {
-    // Parent with no linked scouts sees no payments
-    paymentsQuery = paymentsQuery.eq('id', 'none')
-  }
-
-  const { data: paymentsData } = await paymentsQuery
-
   const payments = (paymentsData as Payment[]) || []
 
   // Calculate totals
@@ -190,19 +156,14 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-stone-900">
-          {isParent ? 'Payment History' : 'Payments'}
-        </h1>
+        <h1 className="text-3xl font-bold text-stone-900">Payments</h1>
         <p className="mt-1 text-stone-600">
-          {isParent
-            ? 'View payments made for your scouts'
-            : 'Record and track payments from scouts'}
+          Record and track payments from scouts
         </p>
       </div>
 
-      {/* Summary Cards (only for financial roles) */}
-      {isFinancialRole(membership.role) && (
-        <div className="grid gap-4 md:grid-cols-3">
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Collected</CardDescription>
@@ -245,7 +206,6 @@ export default async function PaymentsPage() {
             </CardContent>
           </Card>
         </div>
-      )}
 
       {/* Record Payment */}
       {canRecordPayment && (
@@ -288,9 +248,7 @@ export default async function PaymentsPage() {
                   {payments.map((payment) => (
                     <tr key={payment.id} className="border-b border-stone-100 last:border-0">
                       <td className="py-3 pr-4 text-stone-600">
-                        {payment.created_at
-                          ? new Date(payment.created_at).toLocaleDateString()
-                          : '—'}
+                        {payment.created_at ? formatDate(payment.created_at) : '—'}
                       </td>
                       <td className="py-3 pr-4">
                         <p className="font-medium text-stone-900">
@@ -328,43 +286,41 @@ export default async function PaymentsPage() {
         </CardContent>
       </Card>
 
-      {/* Square Online Payments (only for financial roles) */}
-      {isFinancialRole(membership.role) && (
-        isSquareConnected ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Online Card Payment</CardTitle>
-              <CardDescription>
-                Accept card payments via Square
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SquarePaymentForm
-                applicationId={squareApplicationId}
-                locationId={squareCredentials!.location_id!}
-                scouts={scouts}
-                environment={squareCredentials!.environment}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="border-dashed border-stone-300">
-            <CardHeader>
-              <CardTitle className="text-stone-500">Online Payments</CardTitle>
-            </CardHeader>
-            <CardContent className="text-stone-500">
-              <p>
-                Connect your Square account to accept online card payments from scouts and parents.
-              </p>
-              <Link
-                href="/settings/integrations"
-                className="mt-3 inline-flex items-center text-sm font-medium text-forest-600 hover:text-forest-700"
-              >
-                Connect Square &rarr;
-              </Link>
-            </CardContent>
-          </Card>
-        )
+      {/* Square Online Payments */}
+      {isSquareConnected ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Online Card Payment</CardTitle>
+            <CardDescription>
+              Accept card payments via Square
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SquarePaymentForm
+              applicationId={squareApplicationId}
+              locationId={squareCredentials!.location_id!}
+              scouts={scouts}
+              environment={squareCredentials!.environment}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-dashed border-stone-300">
+          <CardHeader>
+            <CardTitle className="text-stone-500">Online Payments</CardTitle>
+          </CardHeader>
+          <CardContent className="text-stone-500">
+            <p>
+              Connect your Square account to accept online card payments from scouts and parents.
+            </p>
+            <Link
+              href="/settings/integrations"
+              className="mt-3 inline-flex items-center text-sm font-medium text-forest-600 hover:text-forest-700"
+            >
+              Connect Square &rarr;
+            </Link>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

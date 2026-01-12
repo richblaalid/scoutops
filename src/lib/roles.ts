@@ -9,7 +9,6 @@ export type AppPage =
   | 'accounts'
   | 'billing'
   | 'payments'
-  | 'pay'
   | 'reports'
   | 'members'
 
@@ -32,8 +31,7 @@ const PAGE_ACCESS: Record<AppPage, MemberRole[]> = {
   scouts: ['admin', 'treasurer', 'leader', 'parent'], // Parent sees filtered view
   accounts: ['admin', 'treasurer', 'leader', 'parent', 'scout'], // Parent/Scout see filtered view
   billing: ['admin', 'treasurer'],
-  payments: ['admin', 'treasurer', 'parent'], // Parent sees filtered view
-  pay: ['parent'], // Parent payment portal
+  payments: ['admin', 'treasurer'],
   reports: ['admin', 'treasurer', 'leader'],
   members: ['admin'],
 }
@@ -59,7 +57,6 @@ const NAV_ITEMS = [
   { href: '/accounts', label: 'Accounts', page: 'accounts' as AppPage },
   { href: '/billing', label: 'Billing', page: 'billing' as AppPage },
   { href: '/payments', label: 'Payments', page: 'payments' as AppPage },
-  { href: '/pay', label: 'Make Payment', page: 'pay' as AppPage },
   { href: '/reports', label: 'Reports', page: 'reports' as AppPage },
   { href: '/members', label: 'Members', page: 'members' as AppPage },
 ]
