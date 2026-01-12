@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 // Pages that support section filtering
-const SECTION_FILTER_PATHS = ['/scouts', '/billing', '/reports', '/payments']
+const SECTION_FILTER_PATHS = ['/scouts', '/billing', '/reports', '/payments', '/accounts']
 
 export async function middleware(request: NextRequest) {
   // First, handle Supabase session

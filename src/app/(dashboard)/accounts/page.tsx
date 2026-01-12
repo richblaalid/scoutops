@@ -14,10 +14,16 @@ interface ScoutAccount {
     last_name: string
     patrol: string | null
     is_active: boolean | null
+    unit_id: string
   } | null
 }
 
-export default async function AccountsPage() {
+interface PageProps {
+  searchParams: Promise<{ section?: string }>
+}
+
+export default async function AccountsPage({ searchParams }: PageProps) {
+  const { section: sectionFilter } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -51,6 +57,37 @@ export default async function AccountsPage() {
   const isParent = role === 'parent'
   const isScout = role === 'scout'
 
+  // Get sections (sub-units) for section filtering
+  const { data: sectionsData } = await supabase
+    .from('units')
+    .select('id, name, unit_number, unit_gender')
+    .eq('parent_unit_id', membership.unit_id)
+
+  interface SectionInfo {
+    id: string
+    name: string
+    unit_number: string
+    unit_gender: 'boys' | 'girls' | null
+  }
+
+  const sections = (sectionsData || []) as SectionInfo[]
+  const hasSections = sections.length > 0
+
+  // Determine which unit IDs to filter by based on sections
+  let sectionUnitIds: string[] | null = null
+  if (hasSections) {
+    if (sectionFilter === 'boys') {
+      const boysSection = sections.find(s => s.unit_gender === 'boys')
+      sectionUnitIds = boysSection ? [boysSection.id] : []
+    } else if (sectionFilter === 'girls') {
+      const girlsSection = sections.find(s => s.unit_gender === 'girls')
+      sectionUnitIds = girlsSection ? [girlsSection.id] : []
+    } else {
+      // 'all' or no filter - include all sections plus parent
+      sectionUnitIds = [...sections.map(s => s.id), membership.unit_id]
+    }
+  }
+
   // For parents/scouts, get their linked scout IDs
   let linkedScoutIds: string[] = []
 
@@ -74,7 +111,10 @@ export default async function AccountsPage() {
     }
   }
 
-  // Get scout accounts (filtered for parents/scouts)
+  // Get scout accounts (filtered for parents/scouts and by section)
+  // Determine which unit IDs to query - sections or parent unit
+  const unitIdsToQuery = sectionUnitIds || [membership.unit_id]
+
   let accountsQuery = supabase
     .from('scout_accounts')
     .select(`
@@ -86,10 +126,11 @@ export default async function AccountsPage() {
         first_name,
         last_name,
         patrol,
-        is_active
+        is_active,
+        unit_id
       )
     `)
-    .eq('unit_id', membership.unit_id)
+    .in('unit_id', unitIdsToQuery)
     .order('balance', { ascending: true })
 
   if (hasFilteredView(role) && linkedScoutIds.length > 0) {
@@ -112,6 +153,13 @@ export default async function AccountsPage() {
     .reduce((sum, a) => sum + (a.balance || 0), 0)
 
   const netBalance = accounts.reduce((sum, a) => sum + (a.balance || 0), 0)
+
+  // Section label for display
+  const sectionLabel = hasSections && sectionFilter
+    ? sectionFilter === 'boys' ? 'Boys section'
+    : sectionFilter === 'girls' ? 'Girls section'
+    : 'all sections'
+    : null
 
   return (
     <div className="space-y-6">
@@ -185,6 +233,7 @@ export default async function AccountsPage() {
           </CardTitle>
           <CardDescription>
             {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+            {sectionLabel ? ` in ${sectionLabel}` : ''}
           </CardDescription>
         </CardHeader>
         <CardContent>
