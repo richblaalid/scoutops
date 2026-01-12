@@ -66,7 +66,7 @@ function IconMark({ iconSize, colors }: { iconSize: number; colors: typeof brand
 function Wordmark({ wordmarkClass, colors }: { wordmarkClass: string; colors: typeof brandColors.light }) {
   return (
     <span className={cn('font-bold tracking-tight whitespace-nowrap', wordmarkClass)}>
-      <span style={{ color: colors.wordPrimary }}>Chuck </span>
+      <span style={{ color: colors.wordPrimary }}>Chuck</span>
       <span style={{ color: colors.wordAccent }}>Box</span>
     </span>
   )

@@ -19,8 +19,8 @@
     <path d="M36 11V40" stroke="#52a07e" stroke-width="2.53846"/>
   </g>
   
-  <!-- Wordmark: "Chuck Box" (for dark backgrounds) -->
+  <!-- Wordmark: "ChuckBox" (for dark backgrounds) -->
   <text x="84" y="44" font-family="Nunito, Arial, sans-serif" font-weight="800" font-size="32">
-    <tspan fill="#FFFFFF">Chuck </tspan><tspan fill="#F48C06">Box</tspan>
+    <tspan fill="#FFFFFF">Chuck</tspan><tspan fill="#F48C06">Box</tspan>
   </text>
 </svg>

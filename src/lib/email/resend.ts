@@ -27,7 +27,7 @@ export interface SendEmailOptions {
 export async function sendEmail(options: SendEmailOptions) {
   const resend = getResendClient()
 
-  const fromEmail = process.env.EMAIL_FROM || 'Chuck Box <noreply@chuckbox.app>'
+  const fromEmail = process.env.EMAIL_FROM || 'ChuckBox <noreply@chuckbox.app>'
 
   const { data, error } = await resend.emails.send({
     from: fromEmail,

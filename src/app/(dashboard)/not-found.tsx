@@ -57,7 +57,7 @@ export default function NotFound() {
         </h1>
 
         <p className="mt-3 text-lg text-stone-600">
-          We searched the whole Chuck Box, but couldn&apos;t find what you&apos;re looking for.
+          We searched the whole ChuckBox, but couldn&apos;t find what you&apos;re looking for.
         </p>
 
         <p className="mt-4 text-sm text-stone-500">

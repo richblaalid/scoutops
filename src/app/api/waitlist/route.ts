@@ -37,7 +37,7 @@ async function sendSlackNotification(data: WaitlistSubmission) {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: '🎉 New Chuck Box Waitlist Signup!',
+          text: '🎉 New ChuckBox Waitlist Signup!',
           emoji: true
         }
       },

@@ -55,7 +55,7 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="text-center">
             <Logo variant="icon" size="lg" className="mx-auto mb-6" />
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
-              <span className="text-forest-800">Chuck </span>
+              <span className="text-forest-800">Chuck</span>
               <span className="text-tan-500">Box</span>
             </h1>
             <p className="mt-3 text-xl font-medium text-forest-600 italic">
@@ -83,7 +83,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 Request Early Access
               </Link>
               <p className="mt-3 text-sm text-stone-500">
-                Interested in Chuck Box for your unit? Tell us about your needs.
+                Interested in ChuckBox for your unit? Tell us about your needs.
               </p>
             </div>
           </div>
@@ -121,7 +121,7 @@ export default async function Home({ searchParams }: HomeProps) {
       <div className="bg-forest-800 py-12">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <blockquote className="text-xl font-medium text-white italic">
-            &ldquo;Scoutbook is for the Council. Chuck Box is for the Unit.&rdquo;
+            &ldquo;Scoutbook is for the Council. ChuckBox is for the Unit.&rdquo;
           </blockquote>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default async function Home({ searchParams }: HomeProps) {
         <div className="mx-auto max-w-5xl px-6 text-center">
           <Logo variant="full" size="sm" className="mx-auto mb-4" />
           <p className="text-sm text-stone-500">
-            &copy; {new Date().getFullYear()} Chuck Box. Built for Scouting America units.
+            &copy; {new Date().getFullYear()} ChuckBox. Built for Scouting America units.
           </p>
         </div>
       </footer>

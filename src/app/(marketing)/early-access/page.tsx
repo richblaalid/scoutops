@@ -92,7 +92,7 @@ export default function EarlyAccessPage() {
             <div className="text-5xl mb-4">🎉</div>
             <h1 className="text-2xl font-bold text-forest-800 mb-2">You&apos;re on the list!</h1>
             <p className="text-stone-600 mb-6">
-              Thanks for your interest in Chuck Box. We&apos;ll be in touch soon with early access details.
+              Thanks for your interest in ChuckBox. We&apos;ll be in touch soon with early access details.
             </p>
             <Link
               href="/"
@@ -270,7 +270,7 @@ export default function EarlyAccessPage() {
                   onChange={handleChange}
                   rows={3}
                   className="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-stone-900 placeholder:text-stone-400 focus:border-forest-600 focus:outline-none focus:ring-2 focus:ring-forest-600/20"
-                  placeholder="Features you'd love to see, questions about Chuck Box..."
+                  placeholder="Features you'd love to see, questions about ChuckBox..."
                 />
               </div>
             </div>

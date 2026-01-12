@@ -75,7 +75,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
             <SheetTitle>Navigation Menu</SheetTitle>
           </VisuallyHidden>
           <div className="flex h-full flex-col">
-            {/* Header Section: Chuck Box Logo - scaled to fit sidebar width */}
+            {/* Header Section: ChuckBox Logo - scaled to fit sidebar width */}
             <div className="flex items-center justify-center border-b border-sidebar-border px-4 py-4">
               <Link href="/" className="flex w-full items-center justify-center">
                 <div className="origin-center scale-[0.95]">

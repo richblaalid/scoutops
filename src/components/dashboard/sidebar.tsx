@@ -92,7 +92,7 @@ export function Sidebar({ user, userName, className }: SidebarProps) {
         isCollapsed ? "w-16" : "w-60",
         className
       )}>
-        {/* Header Section: Chuck Box Logo */}
+        {/* Header Section: ChuckBox Logo */}
         <div className={cn(
           "flex items-center border-b border-sidebar-border",
           isCollapsed ? "justify-center px-2 py-4" : "justify-center px-4 py-4"
