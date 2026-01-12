@@ -25,6 +25,11 @@ interface Section {
   unit_gender: 'boys' | 'girls' | null
 }
 
+interface ExistingDataCounts {
+  scouts: number
+  patrols: number
+}
+
 interface TroopStructureFormProps {
   unitId: string
   unitName: string
@@ -32,6 +37,7 @@ interface TroopStructureFormProps {
   unitType: string
   unitGender: 'boys' | 'girls' | 'coed' | null
   sections: Section[]
+  existingDataCounts?: ExistingDataCounts
 }
 
 export function TroopStructureForm({
@@ -41,6 +47,7 @@ export function TroopStructureForm({
   unitType,
   unitGender,
   sections,
+  existingDataCounts,
 }: TroopStructureFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -231,6 +238,29 @@ export function TroopStructureForm({
               <div className="rounded-md bg-stone-50 p-3">
                 <p className="text-sm text-muted-foreground">
                   Base troop number: <span className="font-medium text-stone-900">{calculateBaseNumber()}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Migration info when switching to coed */}
+            {!hasSections && existingDataCounts && (existingDataCounts.scouts > 0 || existingDataCounts.patrols > 0) && (
+              <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
+                <p className="text-sm font-medium text-amber-800 mb-1">
+                  Existing data will be migrated
+                </p>
+                <p className="text-sm text-amber-700">
+                  {existingDataCounts.scouts > 0 && (
+                    <span>{existingDataCounts.scouts} scout{existingDataCounts.scouts !== 1 ? 's' : ''}</span>
+                  )}
+                  {existingDataCounts.scouts > 0 && existingDataCounts.patrols > 0 && ' and '}
+                  {existingDataCounts.patrols > 0 && (
+                    <span>{existingDataCounts.patrols} patrol{existingDataCounts.patrols !== 1 ? 's' : ''}</span>
+                  )}
+                  {' '}will be assigned to the{' '}
+                  <span className="font-medium">
+                    {unitGender === 'girls' ? 'Girls' : 'Boys'}
+                  </span>
+                  {' '}section. You can reassign them individually after setup.
                 </p>
               </div>
             )}

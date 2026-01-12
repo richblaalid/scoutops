@@ -33,7 +33,12 @@ interface JournalLine {
   } | null
 }
 
-export default async function DashboardPage() {
+interface PageProps {
+  searchParams: Promise<{ section?: string }>
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const { section: sectionFilter } = await searchParams
   const supabase = await createClient()
 
   // Get current user
@@ -43,20 +48,20 @@ export default async function DashboardPage() {
 
   if (!user) return null
 
-  // Get user's unit membership
+  // Get user's unit membership (include section_unit_id for leaders)
   const { data: membershipData } = await supabase
     .from('unit_memberships')
-    .select('unit_id, role')
+    .select('unit_id, role, section_unit_id')
     .eq('profile_id', user.id)
     .eq('status', 'active')
     .single()
 
-  const membership = membershipData as { unit_id: string; role: string } | null
+  const membership = membershipData as { unit_id: string; role: string; section_unit_id: string | null } | null
 
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-stone-900">Welcome to Chuckbox</h1>
+        <h1 className="text-2xl font-bold text-stone-900">Welcome to Chuck Box</h1>
         <p className="mt-2 text-stone-600">
           You are not currently a member of any unit. Please contact your unit administrator.
         </p>
@@ -67,6 +72,43 @@ export default async function DashboardPage() {
   const role = membership.role
   const isParent = role === 'parent'
   const isScout = role === 'scout'
+
+  // Get sections (sub-units) for section filtering
+  const { data: sectionsData } = await supabase
+    .from('units')
+    .select('id, name, unit_number, unit_gender')
+    .eq('parent_unit_id', membership.unit_id)
+
+  interface SectionInfo {
+    id: string
+    name: string
+    unit_number: string
+    unit_gender: 'boys' | 'girls' | null
+  }
+
+  const sections = (sectionsData || []) as SectionInfo[]
+  const hasSections = sections.length > 0
+
+  // Leaders with assigned sections can only view their section
+  const isLeaderWithSection = membership.role === 'leader' && membership.section_unit_id && hasSections
+
+  // Determine which unit IDs to query based on sections
+  let unitIdsToQuery: string[] = [membership.unit_id]
+  if (hasSections) {
+    if (isLeaderWithSection) {
+      // Leaders can only see their assigned section
+      unitIdsToQuery = [membership.section_unit_id!]
+    } else if (sectionFilter === 'boys') {
+      const boysSection = sections.find(s => s.unit_gender === 'boys')
+      unitIdsToQuery = boysSection ? [boysSection.id] : []
+    } else if (sectionFilter === 'girls') {
+      const girlsSection = sections.find(s => s.unit_gender === 'girls')
+      unitIdsToQuery = girlsSection ? [girlsSection.id] : []
+    } else {
+      // 'all' or no filter - query all sections plus parent (for unassigned scouts)
+      unitIdsToQuery = [...sections.map(s => s.id), membership.unit_id]
+    }
+  }
 
   // For parents/scouts, get their linked scout accounts
   let linkedScoutIds: string[] = []
@@ -94,7 +136,7 @@ export default async function DashboardPage() {
     }
   }
 
-  // Get scout accounts with balances (filtered for parents/scouts)
+  // Get scout accounts with balances (filtered for parents/scouts and by section)
   let scoutAccountsQuery = supabase
     .from('scout_accounts')
     .select(
@@ -110,7 +152,7 @@ export default async function DashboardPage() {
       )
     `
     )
-    .eq('unit_id', membership.unit_id)
+    .in('unit_id', unitIdsToQuery)
 
   if (hasFilteredView(role) && linkedScoutIds.length > 0) {
     scoutAccountsQuery = scoutAccountsQuery.in('scout_id', linkedScoutIds)
@@ -129,12 +171,16 @@ export default async function DashboardPage() {
   const scoutsWithCredit = scoutAccounts?.filter((acc) => (acc.balance || 0) > 0).length || 0
 
   // Get recent journal entries (for management roles)
+  // Include parent unit since transactions may be at troop level
+  const journalUnitIds = hasSections
+    ? [...new Set([...unitIdsToQuery, membership.unit_id])]
+    : unitIdsToQuery
   let recentTransactions: JournalEntry[] | null = null
   if (isManagementRole(role)) {
     const { data: recentTransactionsData } = await supabase
       .from('journal_entries')
       .select('id, entry_date, description, entry_type')
-      .eq('unit_id', membership.unit_id)
+      .in('unit_id', journalUnitIds)
       .eq('is_posted', true)
       .order('entry_date', { ascending: false })
       .limit(5)

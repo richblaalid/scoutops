@@ -34,6 +34,7 @@ export default async function SettingsPage() {
           profile={{
             first_name: profile.first_name,
             last_name: profile.last_name,
+            gender: profile.gender,
             address_street: profile.address_street,
             address_city: profile.address_city,
             address_state: profile.address_state,

@@ -12,6 +12,7 @@ interface InviteMemberParams {
   email: string
   role: MemberRole
   scoutIds?: string[]
+  sectionUnitId?: string
 }
 
 interface ActionResult {
@@ -21,7 +22,7 @@ interface ActionResult {
 
 // Invite a new member to the unit
 // Creates a membership record with status='invited'
-export async function inviteMember({ unitId, email, role, scoutIds }: InviteMemberParams): Promise<ActionResult> {
+export async function inviteMember({ unitId, email, role, scoutIds, sectionUnitId }: InviteMemberParams): Promise<ActionResult> {
   const supabase = await createClient()
 
   // Get current user
@@ -78,6 +79,7 @@ export async function inviteMember({ unitId, email, role, scoutIds }: InviteMemb
       role,
       status: 'invited',
       scout_ids: role === 'parent' && scoutIds?.length ? scoutIds : null,
+      section_unit_id: role === 'leader' && sectionUnitId ? sectionUnitId : null,
       invited_by: user.id,
       invited_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -203,7 +205,8 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
 export async function updateMemberRole(
   unitId: string,
   memberId: string,
-  newRole: MemberRole
+  newRole: MemberRole,
+  sectionUnitId?: string | null
 ): Promise<ActionResult> {
   const supabase = await createClient()
 
@@ -247,10 +250,18 @@ export async function updateMemberRole(
     }
   }
 
-  // Update the role
+  // Update the role (and section if provided, or clear it if role is not leader)
+  const updateData: { role: MemberRole; section_unit_id?: string | null } = { role: newRole }
+  if (newRole === 'leader' && sectionUnitId !== undefined) {
+    updateData.section_unit_id = sectionUnitId
+  } else if (newRole !== 'leader') {
+    // Clear section assignment when changing away from leader role
+    updateData.section_unit_id = null
+  }
+
   const { error } = await supabase
     .from('unit_memberships')
-    .update({ role: newRole })
+    .update(updateData)
     .eq('id', memberId)
 
   if (error) {
@@ -418,6 +429,7 @@ export async function updateMemberProfile(
   data: {
     first_name: string | null
     last_name: string | null
+    gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
     phone_primary: string | null
     phone_secondary: string | null
     email_secondary: string | null
@@ -463,20 +475,27 @@ export async function updateMemberProfile(
   // Update the profile using admin client to bypass RLS
   const adminSupabase = createAdminClient()
 
+  const updateData: Record<string, unknown> = {
+    first_name: data.first_name,
+    last_name: data.last_name,
+    full_name: [data.first_name, data.last_name].filter(Boolean).join(' ') || null,
+    phone_primary: data.phone_primary,
+    phone_secondary: data.phone_secondary,
+    email_secondary: data.email_secondary,
+    address_street: data.address_street,
+    address_city: data.address_city,
+    address_state: data.address_state,
+    address_zip: data.address_zip,
+  }
+
+  // Only include gender if explicitly provided
+  if ('gender' in data) {
+    updateData.gender = data.gender
+  }
+
   const { error } = await adminSupabase
     .from('profiles')
-    .update({
-      first_name: data.first_name,
-      last_name: data.last_name,
-      full_name: [data.first_name, data.last_name].filter(Boolean).join(' ') || null,
-      phone_primary: data.phone_primary,
-      phone_secondary: data.phone_secondary,
-      email_secondary: data.email_secondary,
-      address_street: data.address_street,
-      address_city: data.address_city,
-      address_state: data.address_state,
-      address_zip: data.address_zip,
-    })
+    .update(updateData)
     .eq('id', profileId)
 
   if (error) {

@@ -18,7 +18,7 @@ interface DashboardNavProps {
 
 export function DashboardNav({ user, userName }: DashboardNavProps) {
   const pathname = usePathname()
-  const { currentUnit, currentRole, units, hasSections } = useUnit()
+  const { currentUnit, currentRole, units, hasSections, isLeaderWithSection, leaderSection } = useUnit()
   const navItems = currentRole ? getVisibleNavItems(currentRole) : []
 
   return (
@@ -31,16 +31,25 @@ export function DashboardNav({ user, userName }: DashboardNavProps) {
 
           {/* Unit name/switcher and section filter */}
           <div className="flex items-center gap-3">
-            {units.length > 1 ? (
-              <UnitSwitcher />
-            ) : currentUnit && (
+            {/* Leaders with assigned section see only their section indicator */}
+            {isLeaderWithSection && leaderSection ? (
               <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
-                {currentUnit.name}
+                Troop {leaderSection.unit_number}
               </span>
-            )}
+            ) : (
+              <>
+                {units.length > 1 ? (
+                  <UnitSwitcher />
+                ) : currentUnit && (
+                  <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
+                    {currentUnit.name}
+                  </span>
+                )}
 
-            {/* Section filter for linked troops */}
-            {hasSections && <SectionFilter />}
+                {/* Section filter for linked troops (admins/treasurers only) */}
+                {hasSections && <SectionFilter />}
+              </>
+            )}
           </div>
 
           <nav className="hidden items-center gap-1 md:flex">

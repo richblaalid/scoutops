@@ -7,10 +7,13 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { updateProfile } from '@/app/actions/profile'
 
+type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
+
 interface ProfileFormProps {
   profile: {
     first_name: string | null
     last_name: string | null
+    gender: Gender | null
     address_street: string | null
     address_city: string | null
     address_state: string | null
@@ -32,9 +35,11 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
     const formData = new FormData(e.currentTarget)
 
+    const genderValue = formData.get('gender') as string
     const result = await updateProfile({
       first_name: formData.get('first_name') as string || null,
       last_name: formData.get('last_name') as string || null,
+      gender: genderValue && genderValue !== '' ? genderValue as Gender : null,
       address_street: formData.get('address_street') as string || null,
       address_city: formData.get('address_city') as string || null,
       address_state: formData.get('address_state') as string || null,
@@ -81,6 +86,26 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 placeholder="Enter last name"
               />
             </div>
+          </div>
+
+          {/* Gender Field */}
+          <div className="space-y-2">
+            <Label htmlFor="gender">Gender</Label>
+            <select
+              id="gender"
+              name="gender"
+              defaultValue={profile.gender || ''}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-xs"
+            >
+              <option value="">Select gender...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+            <p className="text-xs text-stone-500">
+              Used for assigning you to the appropriate section in coed troops
+            </p>
           </div>
 
           {/* Address Fields */}

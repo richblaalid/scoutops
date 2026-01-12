@@ -22,8 +22,8 @@ export function SectionFilter() {
 
   const filters: { value: SectionFilterType; label: string }[] = [
     { value: 'all', label: 'All' },
-    ...(boysSection ? [{ value: 'boys' as const, label: `Boys ${boysSection.unit_number}` }] : []),
-    ...(girlsSection ? [{ value: 'girls' as const, label: `Girls ${girlsSection.unit_number}` }] : []),
+    ...(boysSection ? [{ value: 'boys' as const, label: `Troop ${boysSection.unit_number}` }] : []),
+    ...(girlsSection ? [{ value: 'girls' as const, label: `Troop ${girlsSection.unit_number}` }] : []),
   ]
 
   return (

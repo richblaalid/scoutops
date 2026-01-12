@@ -32,15 +32,15 @@ export default async function AccountsPage({ searchParams }: PageProps) {
 
   if (!user) return null
 
-  // Get user's unit membership
+  // Get user's unit membership (include section_unit_id for leaders)
   const { data: membershipData } = await supabase
     .from('unit_memberships')
-    .select('unit_id, role')
+    .select('unit_id, role, section_unit_id')
     .eq('profile_id', user.id)
     .eq('status', 'active')
     .single()
 
-  const membership = membershipData as { unit_id: string; role: string } | null
+  const membership = membershipData as { unit_id: string; role: string; section_unit_id: string | null } | null
 
   if (!membership) {
     return (
@@ -73,10 +73,16 @@ export default async function AccountsPage({ searchParams }: PageProps) {
   const sections = (sectionsData || []) as SectionInfo[]
   const hasSections = sections.length > 0
 
+  // Leaders with assigned sections can only view their section
+  const isLeaderWithSection = membership.role === 'leader' && membership.section_unit_id && hasSections
+
   // Determine which unit IDs to filter by based on sections
   let sectionUnitIds: string[] | null = null
   if (hasSections) {
-    if (sectionFilter === 'boys') {
+    if (isLeaderWithSection) {
+      // Leaders can only see their assigned section
+      sectionUnitIds = [membership.section_unit_id!]
+    } else if (sectionFilter === 'boys') {
       const boysSection = sections.find(s => s.unit_gender === 'boys')
       sectionUnitIds = boysSection ? [boysSection.id] : []
     } else if (sectionFilter === 'girls') {
@@ -155,11 +161,19 @@ export default async function AccountsPage({ searchParams }: PageProps) {
   const netBalance = accounts.reduce((sum, a) => sum + (a.balance || 0), 0)
 
   // Section label for display
-  const sectionLabel = hasSections && sectionFilter
-    ? sectionFilter === 'boys' ? 'Boys section'
-    : sectionFilter === 'girls' ? 'Girls section'
-    : 'all sections'
-    : null
+  const getSectionLabel = () => {
+    if (!hasSections || !sectionFilter) return null
+    if (sectionFilter === 'boys') {
+      const section = sections.find(s => s.unit_gender === 'boys')
+      return section ? `Troop ${section.unit_number}` : 'Boys section'
+    }
+    if (sectionFilter === 'girls') {
+      const section = sections.find(s => s.unit_gender === 'girls')
+      return section ? `Troop ${section.unit_number}` : 'Girls section'
+    }
+    return 'all sections'
+  }
+  const sectionLabel = getSectionLabel()
 
   return (
     <div className="space-y-6">

@@ -587,7 +587,7 @@ export default function PaymentCheckoutPage() {
 
           {/* Footer */}
           <div className="bg-stone-50 px-6 py-4 text-center text-xs text-stone-500">
-            Powered by Chuckbox
+            Powered by Chuck Box
           </div>
         </div>
 

@@ -26,6 +26,7 @@ export type SectionFilter = 'all' | 'boys' | 'girls'
 export interface UnitMembership {
   role: string
   unit_id: string
+  section_unit_id?: string | null
   units: UnitInfo | null
 }
 
@@ -62,6 +63,11 @@ interface UnitContextValue {
   sectionFilter: SectionFilter
   setSectionFilter: (filter: SectionFilter) => void
 
+  // Leader section assignment
+  leaderSectionId: string | null
+  leaderSection: SectionInfo | null
+  isLeaderWithSection: boolean
+
   // Get unit IDs to query based on current filter
   getFilteredUnitIds: () => string[]
 }
@@ -85,6 +91,7 @@ interface UnitProviderProps {
   }[]
   sections?: SectionInfo[]
   initialUnitId?: string
+  leaderSectionId?: string | null
 }
 
 export function UnitProvider({
@@ -92,7 +99,8 @@ export function UnitProvider({
   memberships,
   groupMemberships = [],
   sections: providedSections = [],
-  initialUnitId
+  initialUnitId,
+  leaderSectionId: providedLeaderSectionId = null
 }: UnitProviderProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -167,6 +175,13 @@ export function UnitProvider({
   const sections = providedSections
   const hasSections = sections.length > 0
 
+  // Leader section assignment
+  const leaderSectionId = providedLeaderSectionId
+  const leaderSection = leaderSectionId
+    ? sections.find(s => s.id === leaderSectionId) || null
+    : null
+  const isLeaderWithSection = currentRole === 'leader' && !!leaderSectionId && hasSections
+
   // Persist unit selection and clean up invalid stored values
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -224,6 +239,11 @@ export function UnitProvider({
       return [currentUnit.id]
     }
 
+    // Leaders with assigned sections can only see their section
+    if (isLeaderWithSection && leaderSectionId) {
+      return [leaderSectionId]
+    }
+
     // If filter is 'all', return all section IDs
     if (sectionFilter === 'all') {
       return sections.map(s => s.id)
@@ -250,6 +270,10 @@ export function UnitProvider({
       hasSections,
       sectionFilter,
       setSectionFilter,
+      // Leader section assignment
+      leaderSectionId,
+      leaderSection,
+      isLeaderWithSection,
       getFilteredUnitIds
     }}>
       {children}

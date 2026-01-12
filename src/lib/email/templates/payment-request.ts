@@ -221,7 +221,7 @@ export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
           <tr>
             <td style="padding: 24px 32px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
               <p style="margin: 0; color: #6b7280; font-size: 12px; text-align: center;">
-                This email was sent by ${unitName} via Chuckbox.<br>
+                This email was sent by ${unitName} via Chuck Box.<br>
                 If you have questions, please contact your unit leader directly.
               </p>
             </td>
@@ -259,7 +259,7 @@ ${feeBreakdownText}
 ${balance < 0 ? `Pay now: ${paymentUrl}` : 'No payment is required at this time.'}
 
 ---
-This email was sent by ${unitName} via Chuckbox.
+This email was sent by ${unitName} via Chuck Box.
 If you have questions, please contact your unit leader directly.
 `.trim()
 

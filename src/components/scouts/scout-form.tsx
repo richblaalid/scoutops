@@ -234,7 +234,7 @@ export function ScoutForm({ unitId, sections = [], scout, onClose, onSuccess }: 
               >
                 {sections.map((section) => (
                   <option key={section.id} value={section.id}>
-                    {section.unit_gender === 'boys' ? 'Boys' : 'Girls'} - {section.unit_number}
+                    Troop {section.unit_number} ({section.unit_gender === 'boys' ? 'Boys' : 'Girls'})
                   </option>
                 ))}
               </select>

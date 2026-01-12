@@ -54,12 +54,14 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
       status,
       joined_at,
       profile_id,
+      section_unit_id,
       profiles!unit_memberships_profile_id_fkey (
         id,
         email,
         full_name,
         first_name,
         last_name,
+        gender,
         phone_primary,
         phone_secondary,
         email_secondary,
@@ -73,6 +75,21 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
     .eq('unit_id', currentMembership.unit_id)
     .single()
 
+  // Get sections (sub-units) for this unit
+  const { data: sectionsData } = await supabase
+    .from('units')
+    .select('id, name, unit_number, unit_gender')
+    .eq('parent_unit_id', currentMembership.unit_id)
+
+  interface Section {
+    id: string
+    name: string
+    unit_number: string
+    unit_gender: 'boys' | 'girls' | null
+  }
+
+  const sections = (sectionsData || []) as Section[]
+
   if (!memberMembership || !memberMembership.profiles) {
     notFound()
   }
@@ -83,6 +100,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
     full_name: string | null
     first_name: string | null
     last_name: string | null
+    gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
     phone_primary: string | null
     phone_secondary: string | null
     email_secondary: string | null
@@ -167,6 +185,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           email: profile.email,
           first_name: profile.first_name,
           last_name: profile.last_name,
+          gender: profile.gender,
           phone_primary: profile.phone_primary,
           phone_secondary: profile.phone_secondary,
           email_secondary: profile.email_secondary,
@@ -202,6 +221,8 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
                   membershipId={memberMembership.id}
                   unitId={currentMembership.unit_id}
                   currentRole={memberMembership.role}
+                  currentSectionId={memberMembership.section_unit_id as string | null}
+                  sections={sections}
                   isCurrentUser={isCurrentUser}
                 />
               </dd>

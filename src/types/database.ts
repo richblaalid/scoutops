@@ -667,6 +667,7 @@ export type Database = {
           email_secondary: string | null
           first_name: string | null
           full_name: string | null
+          gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
           id: string
           is_active: boolean | null
           last_name: string | null
@@ -684,6 +685,7 @@ export type Database = {
           email_secondary?: string | null
           first_name?: string | null
           full_name?: string | null
+          gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
           id: string
           is_active?: boolean | null
           last_name?: string | null
@@ -701,6 +703,7 @@ export type Database = {
           email_secondary?: string | null
           first_name?: string | null
           full_name?: string | null
+          gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
           id?: string
           is_active?: boolean | null
           last_name?: string | null

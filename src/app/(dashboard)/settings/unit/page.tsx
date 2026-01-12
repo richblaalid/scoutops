@@ -88,6 +88,23 @@ export default async function UnitSettingsPage() {
     .order('display_order', { ascending: true })
     .order('name', { ascending: true })
 
+  // Get counts of existing data on parent unit (for migration warning)
+  const [scoutCountResult, patrolCountResult] = await Promise.all([
+    supabase
+      .from('scouts')
+      .select('*', { count: 'exact', head: true })
+      .eq('unit_id', unit.id),
+    supabase
+      .from('patrols')
+      .select('*', { count: 'exact', head: true })
+      .eq('unit_id', unit.id),
+  ])
+
+  const existingDataCounts = {
+    scouts: scoutCountResult.count || 0,
+    patrols: patrolCountResult.count || 0,
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -115,6 +132,7 @@ export default async function UnitSettingsPage() {
           unitType={unit.unit_type}
           unitGender={unit.unit_gender}
           sections={sectionsList}
+          existingDataCounts={existingDataCounts}
         />
 
         <PatrolList

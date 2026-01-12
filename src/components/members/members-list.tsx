@@ -10,6 +10,7 @@ interface Member {
   status: string
   email: string | null
   joined_at: string | null
+  section_unit_id: string | null
   profiles: {
     id: string
     email: string
@@ -17,11 +18,19 @@ interface Member {
   } | null
 }
 
+interface Section {
+  id: string
+  name: string
+  unit_number: string
+  unit_gender: 'boys' | 'girls' | null
+}
+
 interface MembersListProps {
   members: Member[]
   isAdmin: boolean
   currentUserId: string
   unitId: string
+  sections?: Section[]
 }
 
 const ROLES: { value: MemberRole; label: string }[] = [
@@ -32,21 +41,55 @@ const ROLES: { value: MemberRole; label: string }[] = [
   { value: 'scout', label: 'Scout' },
 ]
 
-export function MembersList({ members, isAdmin, currentUserId, unitId }: MembersListProps) {
+export function MembersList({ members, isAdmin, currentUserId, unitId, sections = [] }: MembersListProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Track pending role changes that need section selection
+  const [pendingLeaderChange, setPendingLeaderChange] = useState<{ memberId: string; sectionId: string } | null>(null)
 
-  const handleRoleChange = async (memberId: string, newRole: MemberRole) => {
+  const hasSections = sections.length > 0
+
+  const handleRoleChange = async (memberId: string, newRole: MemberRole, sectionUnitId?: string | null) => {
+    // If changing to leader and sections exist, require section selection
+    if (newRole === 'leader' && hasSections && !sectionUnitId) {
+      setPendingLeaderChange({ memberId, sectionId: '' })
+      return
+    }
+
     setLoadingId(memberId)
     setError(null)
+    setPendingLeaderChange(null)
 
-    const result = await updateMemberRole(unitId, memberId, newRole)
+    const result = await updateMemberRole(unitId, memberId, newRole, sectionUnitId)
 
     if (!result.success) {
       setError(result.error || 'Failed to update role')
     }
 
     setLoadingId(null)
+  }
+
+  const handleSectionConfirm = async () => {
+    if (!pendingLeaderChange || !pendingLeaderChange.sectionId) {
+      setError('Please select a section for this leader')
+      return
+    }
+
+    setLoadingId(pendingLeaderChange.memberId)
+    setError(null)
+
+    const result = await updateMemberRole(unitId, pendingLeaderChange.memberId, 'leader', pendingLeaderChange.sectionId)
+
+    if (!result.success) {
+      setError(result.error || 'Failed to update role')
+    }
+
+    setPendingLeaderChange(null)
+    setLoadingId(null)
+  }
+
+  const handleSectionCancel = () => {
+    setPendingLeaderChange(null)
   }
 
   const handleRemove = async (memberId: string, memberName: string) => {
@@ -117,22 +160,37 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
                   </td>
                   <td className="py-3 pr-4">
                     {isAdmin && !isCurrentUser ? (
-                      <select
-                        value={member.role}
-                        onChange={(e) => handleRoleChange(member.id, e.target.value as MemberRole)}
-                        disabled={loadingId === member.id}
-                        className="rounded-md border border-stone-300 bg-white px-2 py-1 text-sm capitalize focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
-                      >
-                        {ROLES.map((role) => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex flex-col gap-1">
+                        <select
+                          value={member.role}
+                          onChange={(e) => handleRoleChange(member.id, e.target.value as MemberRole)}
+                          disabled={loadingId === member.id || pendingLeaderChange?.memberId === member.id}
+                          className="rounded-md border border-stone-300 bg-white px-2 py-1 text-sm capitalize focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
+                        >
+                          {ROLES.map((role) => (
+                            <option key={role.value} value={role.value}>
+                              {role.label}
+                            </option>
+                          ))}
+                        </select>
+                        {/* Show current section assignment for leaders */}
+                        {member.role === 'leader' && hasSections && member.section_unit_id && (
+                          <span className="text-xs text-stone-500">
+                            Troop {sections.find(s => s.id === member.section_unit_id)?.unit_number} ({sections.find(s => s.id === member.section_unit_id)?.unit_gender === 'boys' ? 'Boys' : 'Girls'})
+                          </span>
+                        )}
+                      </div>
                     ) : (
-                      <span className="inline-flex rounded-full bg-stone-100 px-2 py-1 text-xs font-medium capitalize text-stone-700">
-                        {member.role}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="inline-flex rounded-full bg-stone-100 px-2 py-1 text-xs font-medium capitalize text-stone-700">
+                          {member.role}
+                        </span>
+                        {member.role === 'leader' && hasSections && member.section_unit_id && (
+                          <span className="text-xs text-stone-500">
+                            Troop {sections.find(s => s.id === member.section_unit_id)?.unit_number} ({sections.find(s => s.id === member.section_unit_id)?.unit_gender === 'boys' ? 'Boys' : 'Girls'})
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="py-3 pr-4 text-stone-600">
@@ -167,6 +225,47 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
           </tbody>
         </table>
       </div>
+
+      {/* Section Selection Modal */}
+      {pendingLeaderChange && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="mb-2 text-lg font-semibold text-stone-900">Assign Leader to Section</h3>
+            <p className="mb-4 text-sm text-stone-600">
+              Leaders must be assigned to a specific section (boys or girls troop).
+            </p>
+            <div className="space-y-4">
+              <select
+                value={pendingLeaderChange.sectionId}
+                onChange={(e) => setPendingLeaderChange({ ...pendingLeaderChange, sectionId: e.target.value })}
+                className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
+              >
+                <option value="">Select a section...</option>
+                {sections.map((section) => (
+                  <option key={section.id} value={section.id}>
+                    Troop {section.unit_number} ({section.unit_gender === 'boys' ? 'Boys' : 'Girls'})
+                  </option>
+                ))}
+              </select>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleSectionCancel}
+                  className="rounded-md px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSectionConfirm}
+                  disabled={!pendingLeaderChange.sectionId || loadingId !== null}
+                  className="rounded-md bg-forest-600 px-4 py-2 text-sm font-medium text-white hover:bg-forest-700 disabled:opacity-50"
+                >
+                  {loadingId ? 'Saving...' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

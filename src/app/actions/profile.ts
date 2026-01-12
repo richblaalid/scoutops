@@ -8,9 +8,12 @@ interface ActionResult {
   error?: string
 }
 
+type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
+
 interface ProfileData {
   first_name?: string | null
   last_name?: string | null
+  gender?: Gender | null
   email_secondary?: string | null
   phone_primary?: string | null
   phone_secondary?: string | null
@@ -59,6 +62,7 @@ export async function updateProfile(data: ProfileData): Promise<ActionResult> {
   // Only include fields that are explicitly provided in data
   if ('first_name' in data) updateData.first_name = data.first_name
   if ('last_name' in data) updateData.last_name = data.last_name
+  if ('gender' in data) updateData.gender = data.gender
   if ('email_secondary' in data) updateData.email_secondary = data.email_secondary
   if ('phone_primary' in data) updateData.phone_primary = data.phone_primary
   if ('phone_secondary' in data) updateData.phone_secondary = data.phone_secondary

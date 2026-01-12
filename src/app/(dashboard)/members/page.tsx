@@ -14,6 +14,7 @@ interface Member {
   invited_at: string | null
   expires_at: string | null
   scout_ids: string[] | null
+  section_unit_id: string | null
   profiles: {
     id: string
     email: string
@@ -28,6 +29,13 @@ interface Scout {
   id: string
   first_name: string
   last_name: string
+}
+
+interface Section {
+  id: string
+  name: string
+  unit_number: string
+  unit_gender: 'boys' | 'girls' | null
 }
 
 export default async function MembersPage() {
@@ -79,6 +87,7 @@ export default async function MembersPage() {
       invited_at,
       expires_at,
       scout_ids,
+      section_unit_id,
       profiles!unit_memberships_profile_id_fkey (
         id,
         email,
@@ -100,10 +109,24 @@ export default async function MembersPage() {
   const pendingInvites = allMembers.filter(m => m.status === 'invited')
 
   // Get all active scouts for this unit (for invite form)
+  // Include scouts from sections as well
+  const { data: sectionsData } = await supabase
+    .from('units')
+    .select('id, name, unit_number, unit_gender')
+    .eq('parent_unit_id', membership.unit_id)
+
+  const sections = (sectionsData || []) as Section[]
+  const hasSections = sections.length > 0
+
+  // Query scouts from all relevant unit IDs
+  const scoutUnitIds = hasSections
+    ? [...sections.map(s => s.id), membership.unit_id]
+    : [membership.unit_id]
+
   const { data: scoutsData } = await supabase
     .from('scouts')
     .select('id, first_name, last_name')
-    .eq('unit_id', membership.unit_id)
+    .in('unit_id', scoutUnitIds)
     .eq('is_active', true)
     .order('last_name', { ascending: true })
 
@@ -127,7 +150,7 @@ export default async function MembersPage() {
             Manage members of {unit?.name || 'your unit'}
           </p>
         </div>
-        {userIsAdmin && <InviteMemberButton unitId={membership.unit_id} scouts={scouts} />}
+        {userIsAdmin && <InviteMemberButton unitId={membership.unit_id} scouts={scouts} sections={sections} />}
       </div>
 
       {/* Pending Invites (Admin only) */}
@@ -217,6 +240,7 @@ export default async function MembersPage() {
             isAdmin={userIsAdmin}
             currentUserId={user.id}
             unitId={membership.unit_id}
+            sections={sections}
           />
         </CardContent>
       </Card>
