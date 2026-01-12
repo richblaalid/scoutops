@@ -152,48 +152,52 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-cream-300 px-4 py-12">
-      {/* Hero branding section */}
-      <div className="mb-8 flex flex-col items-center text-center">
-        <Logo variant="icon" size="lg" className="mb-4" />
-        <h1 className="text-3xl font-bold tracking-tight">
-          <span className="text-forest-800">Chuck </span>
-          <span className="text-tan-500">Box</span>
-        </h1>
-        <p className="mt-2 text-lg font-medium text-forest-600 italic">
-          Your unit, organized.
-        </p>
-        <p className="mt-4 max-w-sm text-sm text-stone-500">
-          The all-in-one platform for Scout unit finances, billing, and operations.
-        </p>
-        <div className="mt-4">
-          <span className="inline-flex items-center rounded-full bg-tan-500/10 px-3 py-1 text-xs font-medium text-tan-600">
-            Private Beta — Invited Users Only
-          </span>
+    <div className="flex min-h-screen flex-col bg-cream-300 px-4 py-12">
+      {/* Main content - centered */}
+      <div className="flex flex-1 flex-col items-center justify-center">
+        {/* Hero branding section */}
+        <div className="mb-10 flex flex-col items-center text-center">
+          <Logo variant="full" size="lg" className="mb-4 scale-125" />
+          <p className="text-2xl font-medium text-forest-600 italic">
+            Your unit, organized.
+          </p>
+          <p className="mt-6 max-w-md text-lg text-stone-600">
+            The all-in-one platform for Scout unit finances, billing, and operations.
+          </p>
+          <div className="mt-5">
+            <span className="inline-flex items-center rounded-full bg-forest-800/10 px-4 py-1.5 text-sm font-medium text-forest-800">
+              Private Beta — Invited Users Only
+            </span>
+          </div>
+        </div>
+
+        <div className="w-full max-w-md">
+          <Suspense fallback={
+            <div className="rounded-xl border border-stone-200 bg-white px-8 py-10 shadow-md">
+              <div className="flex flex-col items-center text-center">
+                <p className="text-sm text-stone-500">Loading...</p>
+              </div>
+            </div>
+          }>
+            <LoginForm />
+          </Suspense>
+        </div>
+
+        {/* Request access link */}
+        <div className="mt-8 text-center">
+          <p className="text-base text-stone-600">
+            Don&apos;t have access?{' '}
+            <a href="/early-access" className="font-semibold text-forest-600 hover:text-forest-700">
+              Request an invite
+            </a>
+          </p>
         </div>
       </div>
 
-      <div className="w-full max-w-md">
-        <Suspense fallback={
-          <div className="rounded-xl border border-stone-200 bg-white px-8 py-10 shadow-md">
-            <div className="flex flex-col items-center text-center">
-              <p className="text-sm text-stone-500">Loading...</p>
-            </div>
-          </div>
-        }>
-          <LoginForm />
-        </Suspense>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-8 text-center">
+      {/* Footer - pushed to bottom */}
+      <div className="text-center pt-8">
+        <Logo variant="full" size="sm" className="mx-auto mb-3" />
         <p className="text-sm text-stone-500">
-          Don&apos;t have access?{' '}
-          <a href="/" className="font-medium text-forest-600 hover:text-forest-700">
-            Request an invite
-          </a>
-        </p>
-        <p className="mt-2 text-xs text-stone-400">
           chuckbox.app
         </p>
       </div>

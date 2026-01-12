@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/ui/logo'
+import { Wallet, Receipt, CreditCard, BarChart3 } from 'lucide-react'
 
 interface HomeProps {
   searchParams: Promise<{ code?: string; error?: string; error_description?: string }>
@@ -10,23 +11,23 @@ interface HomeProps {
 const features = [
   {
     title: 'Scout Accounts',
-    description: 'Track individual scout balances with double-entry accounting. Know exactly where every dollar goes.',
-    icon: '💰',
+    description: 'Track individual balances with double-entry accounting.',
+    icon: Wallet,
   },
   {
     title: 'Fair Share Billing',
-    description: 'Automatically calculate and distribute costs across your unit. No more spreadsheet headaches.',
-    icon: '📊',
+    description: 'Automatically calculate and distribute costs.',
+    icon: Receipt,
   },
   {
     title: 'Payment Collection',
-    description: 'Accept payments online with Square integration. Parents pay easily, you reconcile automatically.',
-    icon: '💳',
+    description: 'Accept online payments with Square integration.',
+    icon: CreditCard,
   },
   {
     title: 'Financial Reports',
-    description: 'Generate treasurer reports, account statements, and audit trails with one click.',
-    icon: '📋',
+    description: 'Generate reports and audit trails with one click.',
+    icon: BarChart3,
   },
 ]
 
@@ -48,77 +49,71 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   return (
-    <main className="min-h-screen bg-cream-300">
+    <main className="min-h-screen bg-cream-300 flex flex-col">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24 lg:px-8">
+      <div className="flex-1 flex flex-col justify-center mx-auto max-w-6xl px-6 py-12 lg:py-16">
+        {/* Logo & Tagline - Full Width Header */}
+        <div className="text-center mb-12">
+          <Logo variant="full" size="lg" className="mx-auto mb-4 scale-125" />
+          <p className="text-2xl font-medium text-forest-600 italic">
+            Your unit, organized.
+          </p>
+        </div>
+
+        {/* 2 Column Layout */}
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-start">
+          {/* Left Column - Value Prop & CTA */}
           <div className="text-center">
-            <Logo variant="icon" size="lg" className="mx-auto mb-6" />
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
-              <span className="text-forest-800">Chuck</span>
-              <span className="text-tan-500">Box</span>
-            </h1>
-            <p className="mt-3 text-xl font-medium text-forest-600 italic">
-              Your unit, organized.
-            </p>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-stone-600">
-              The all-in-one financial management platform built for Scout units.
-              Track accounts, collect payments, manage billing, and generate reports—so
-              you can focus on the program, not the paperwork.
+            <h2 className="text-2xl lg:text-3xl font-bold text-forest-800 leading-tight">
+              Financial management built for Scout units
+            </h2>
+            <p className="mt-4 text-lg text-stone-600">
+              Stop wrestling with spreadsheets. Track accounts, collect payments,
+              and generate reports—so you can focus on the program, not the paperwork.
             </p>
 
-            {/* Coming Soon Badge */}
-            <div className="mt-10">
-              <span className="inline-flex items-center rounded-full bg-forest-800 px-4 py-2 text-sm font-semibold text-white">
-                Coming Soon — Currently in Private Beta
-              </span>
-            </div>
-
-            {/* Waitlist CTA */}
+            {/* CTA Section */}
             <div className="mt-8">
-              <Link
-                href="/early-access"
-                className="inline-flex items-center rounded-lg bg-tan-500 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-tan-400 hover:shadow-tan hover:-translate-y-0.5"
-              >
-                Request Early Access
-              </Link>
+              <span className="inline-flex items-center rounded-full bg-forest-800/10 px-4 py-1.5 text-sm font-medium text-forest-800 mb-4">
+                Currently in Private Beta
+              </span>
+              <div>
+                <Link
+                  href="/early-access"
+                  className="inline-flex items-center rounded-lg bg-tan-500 px-8 py-3.5 text-lg font-semibold text-white shadow-sm transition-all hover:bg-tan-400 hover:shadow-tan hover:-translate-y-0.5"
+                >
+                  Request Early Access
+                </Link>
+              </div>
               <p className="mt-3 text-sm text-stone-500">
-                Interested in ChuckBox for your unit? Tell us about your needs.
+                Join the waitlist for your unit.
               </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Features Section */}
-      <div className="bg-white py-16">
-        <div className="mx-auto max-w-5xl px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-forest-800">
-              Everything your unit treasurer needs
-            </h2>
-            <p className="mt-2 text-stone-600">
-              Built by Scout volunteers, for Scout volunteers.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="rounded-xl border border-cream-400 bg-cream-100 p-6 transition-shadow hover:shadow-md"
-              >
-                <div className="text-3xl mb-3">{feature.icon}</div>
-                <h3 className="text-lg font-semibold text-forest-800">{feature.title}</h3>
-                <p className="mt-2 text-sm text-stone-600">{feature.description}</p>
-              </div>
-            ))}
+          {/* Right Column - Features */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {features.map((feature) => {
+              const Icon = feature.icon
+              return (
+                <div
+                  key={feature.title}
+                  className="rounded-xl border border-cream-400 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-forest-800/10 mb-3">
+                    <Icon className="h-5 w-5 text-forest-800" />
+                  </div>
+                  <h3 className="text-base font-semibold text-forest-800">{feature.title}</h3>
+                  <p className="mt-1 text-sm text-stone-600">{feature.description}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
 
-      {/* Quote Section */}
-      <div className="bg-forest-800 py-12">
+      {/* Quote Section - Full Width */}
+      <div className="bg-forest-800 py-10">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <blockquote className="text-xl font-medium text-white italic">
             &ldquo;Scoutbook is for the Council. ChuckBox is for the Unit.&rdquo;
@@ -126,9 +121,9 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - Full Width */}
       <footer className="bg-cream-300 py-8">
-        <div className="mx-auto max-w-5xl px-6 text-center">
+        <div className="mx-auto max-w-6xl px-6 text-center">
           <Logo variant="full" size="sm" className="mx-auto mb-4" />
           <p className="text-sm text-stone-500">
             &copy; {new Date().getFullYear()} ChuckBox. Built for Scouting America units.
