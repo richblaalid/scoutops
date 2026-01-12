@@ -197,7 +197,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
 
       {/* Logo in mobile header */}
       <Link href="/" className="flex items-center gap-2">
-        <Logo variant="icon" size="sm" />
+        <Logo variant="full" size="sm" />
       </Link>
 
       {/* Unit indicator in mobile header */}

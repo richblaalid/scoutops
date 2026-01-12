@@ -359,7 +359,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </div>
 
       {/* Stats Cards */}
-      <div className={`grid gap-4 md:grid-cols-2 ${isFinancialRole(role) ? 'lg:grid-cols-4' : 'lg:grid-cols-2'}`}>
+      <div className={`grid grid-cols-2 gap-4 ${isFinancialRole(role) ? 'lg:grid-cols-4' : ''}`}>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Scouts</CardDescription>
