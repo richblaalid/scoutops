@@ -82,17 +82,46 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .eq('is_active', true)
       .single()
 
+    // Validate scout account ID exists
+    if (!paymentLink.scout_account_id) {
+      return NextResponse.json({ error: 'Payment link is not associated with a scout account' }, { status: 400 })
+    }
+
+    // Get current balance from scout_accounts for live balance display
+    const { data: scoutAccount } = await supabase
+      .from('scout_accounts')
+      .select('balance')
+      .eq('id', paymentLink.scout_account_id)
+      .single()
+
+    // Current balance (negative = owes money)
+    const currentBalance = scoutAccount?.balance || 0
+    // Amount owed in cents (positive number)
+    const currentBalanceCents = Math.round(Math.abs(currentBalance) * 100)
+
+    // Get unit fee settings for dynamic fee calculation
+    const { data: unitSettings } = await supabase
+      .from('units')
+      .select('processing_fee_percent, processing_fee_fixed, pass_fees_to_payer')
+      .eq('id', paymentLink.unit_id)
+      .single()
+
     const scout = (paymentLink.scout_accounts as { scouts: { first_name: string; last_name: string } })?.scouts
     const unit = paymentLink.units as { name: string }
 
     return NextResponse.json({
       id: paymentLink.id,
-      amount: paymentLink.amount,
-      baseAmount: paymentLink.base_amount,
-      feeAmount: paymentLink.fee_amount,
-      feesPassedToPayer: paymentLink.fees_passed_to_payer,
+      // Original link amount (for reference)
+      originalAmount: paymentLink.amount,
+      // Live balance in cents
+      currentBalanceCents,
+      // Fee settings for client-side calculation
+      feePercent: Number(unitSettings?.processing_fee_percent) || 0.026,
+      feeFixedCents: Math.round((Number(unitSettings?.processing_fee_fixed) || 0.10) * 100),
+      feesPassedToPayer: unitSettings?.pass_fees_to_payer || false,
       description: paymentLink.description,
       scoutName: scout ? `${scout.first_name} ${scout.last_name}` : 'Scout',
+      scoutAccountId: paymentLink.scout_account_id,
       unitName: unit?.name || 'Scout Unit',
       expiresAt: paymentLink.expires_at,
       squareEnabled: !!squareCredentials,

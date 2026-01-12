@@ -11,6 +11,7 @@ interface RouteParams {
 // Zod schema for process payment request validation
 const processPaymentSchema = z.object({
   sourceId: z.string().min(1, 'Payment source is required'),
+  amountCents: z.number().int().min(100, 'Minimum payment is $1.00').max(10000000, 'Maximum payment is $100,000').optional(),
 })
 
 // Square fee: 2.6% + $0.10 per transaction
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const { sourceId } = parseResult.data
+    const { sourceId, amountCents: requestedAmountCents } = parseResult.data
 
     // Use service client to bypass RLS
     const supabase = await createServiceClient()
@@ -154,13 +155,54 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No Square location found' }, { status: 400 })
     }
 
-    // Total amount charged (includes fee if passed to payer)
-    const totalAmountCents = paymentLink.amount
-    // Base amount is what the scout actually owes (before any fee added)
-    const baseAmountCents = paymentLink.base_amount || paymentLink.amount
-    // Fee passed to payer (stored on the payment link)
-    const passedFeeCents = paymentLink.fee_amount || 0
-    const feesPassedToPayer = paymentLink.fees_passed_to_payer || false
+    // Validate scout account ID exists
+    if (!paymentLink.scout_account_id) {
+      return NextResponse.json({ error: 'Payment link is not associated with a scout account' }, { status: 400 })
+    }
+
+    // Get current balance from scout account
+    const { data: scoutAccountBalance } = await supabase
+      .from('scout_accounts')
+      .select('balance')
+      .eq('id', paymentLink.scout_account_id)
+      .single()
+
+    const currentBalance = scoutAccountBalance?.balance || 0
+    const currentBalanceCents = Math.round(Math.abs(currentBalance) * 100)
+
+    // Get unit fee settings
+    const { data: unitSettings } = await supabase
+      .from('units')
+      .select('processing_fee_percent, processing_fee_fixed, pass_fees_to_payer')
+      .eq('id', paymentLink.unit_id)
+      .single()
+
+    const feePercent = Number(unitSettings?.processing_fee_percent) || SQUARE_FEE_PERCENT
+    const feeFixedCents = Math.round((Number(unitSettings?.processing_fee_fixed) || 0.10) * 100)
+    const feesPassedToPayer = unitSettings?.pass_fees_to_payer || false
+
+    // Use requested amount or fall back to current balance
+    const baseAmountCents = requestedAmountCents || currentBalanceCents
+
+    // Validate amount is within allowed range
+    if (baseAmountCents < 100) {
+      return NextResponse.json({ error: 'Minimum payment is $1.00' }, { status: 400 })
+    }
+    if (baseAmountCents > currentBalanceCents) {
+      return NextResponse.json(
+        { error: `Payment amount cannot exceed current balance of $${(currentBalanceCents / 100).toFixed(2)}` },
+        { status: 400 }
+      )
+    }
+
+    // Calculate fee if passed to payer
+    let feeAmountCents = 0
+    let totalAmountCents = baseAmountCents
+
+    if (feesPassedToPayer) {
+      feeAmountCents = Math.ceil((baseAmountCents * feePercent) + feeFixedCents)
+      totalAmountCents = baseAmountCents + feeAmountCents
+    }
 
     // Square still charges their fee on the total transaction
     const squareFeeCents = calculateFee(totalAmountCents)
@@ -290,7 +332,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       memo: string
     }> = []
 
-    if (feesPassedToPayer && passedFeeCents > 0) {
+    if (feesPassedToPayer && feeAmountCents > 0) {
       // Fees passed to payer: Scout credited base amount only
       // Bank receives net amount, fee expense balances the payer's fee contribution
       journalLines.push(
@@ -426,15 +468,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       square_created_at: squarePayment.createdAt!,
     })
 
-    // Mark payment link as completed
-    await supabase
-      .from('payment_links')
-      .update({
-        status: 'completed',
-        payment_id: paymentRecord?.id,
-        completed_at: new Date().toISOString(),
-      })
-      .eq('id', paymentLink.id)
+    // Calculate remaining balance after this payment
+    const remainingBalanceCents = currentBalanceCents - baseAmountCents
+    const remainingBalanceDollars = remainingBalanceCents / 100
+
+    // Only mark payment link as completed if full balance is paid
+    if (remainingBalanceCents <= 0) {
+      await supabase
+        .from('payment_links')
+        .update({
+          status: 'completed',
+          payment_id: paymentRecord?.id,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', paymentLink.id)
+    }
+    // Otherwise, keep the link active for additional payments
 
     return NextResponse.json({
       success: true,
@@ -448,6 +497,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         feesPassedToPayer,
         receiptUrl: squarePayment.receiptUrl,
         status: squarePayment.status,
+        remainingBalance: remainingBalanceDollars,
       },
     })
   } catch (error) {

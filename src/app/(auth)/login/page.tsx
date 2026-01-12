@@ -36,10 +36,17 @@ function LoginForm() {
 
     const supabase = createClient()
 
+    // Check for redirect parameter to pass through auth flow
+    const redirectTo = searchParams.get('redirect')
+    const callbackUrl = new URL('/auth/callback', window.location.origin)
+    if (redirectTo) {
+      callbackUrl.searchParams.set('next', redirectTo)
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl.toString(),
         shouldCreateUser: true,
       },
     })

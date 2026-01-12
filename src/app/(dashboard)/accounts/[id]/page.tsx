@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
@@ -47,7 +47,8 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
   const userRole = membership?.role || 'parent'
   const canSendPaymentRequest = isFinancialRole(userRole)
 
-  // Get account with scout info
+  // Get account with scout info - this RLS check verifies user can access this account
+  // Parents can only see accounts for scouts they are guardians of
   const { data: accountData } = await supabase
     .from('scout_accounts')
     .select(`
@@ -67,6 +68,7 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
     .eq('id', id)
     .single()
 
+  // If user can't see this account, they don't have access
   if (!accountData) {
     notFound()
   }
@@ -89,8 +91,9 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
   const account = accountData as ScoutAccount
   const balance = account.balance || 0
 
-  // Get all transactions for this account
-  const { data: transactionsData } = await supabase
+  // Use service client to fetch transactions - access already verified above
+  const serviceClient = await createServiceClient()
+  const { data: transactionsData } = await serviceClient
     .from('journal_lines')
     .select(`
       id,
@@ -108,9 +111,13 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
       )
     `)
     .eq('scout_account_id', id)
-    .order('id', { ascending: false })
 
-  const transactions = (transactionsData as JournalLine[]) || []
+  // Sort by entry_date descending (most recent first)
+  const transactions = ((transactionsData as JournalLine[]) || []).sort((a, b) => {
+    const dateA = a.journal_entries?.entry_date || ''
+    const dateB = b.journal_entries?.entry_date || ''
+    return dateB.localeCompare(dateA)
+  })
 
   // Calculate running totals
   const totalDebits = transactions.reduce((sum, tx) => sum + (tx.debit || 0), 0)
@@ -155,6 +162,45 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
           </p>
         </div>
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-4">
+          <Link
+            href={`/scouts/${account.scouts?.id}`}
+            className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
+          >
+            View Scout Profile
+          </Link>
+          {canSendPaymentRequest && (
+            <>
+              <Link
+                href="/billing"
+                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
+              >
+                Create Billing
+              </Link>
+              <Link
+                href="/payments"
+                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
+              >
+                Record Payment
+              </Link>
+              {balance < 0 && account.scouts && (
+                <SendPaymentRequestModal
+                  scoutAccountId={account.id}
+                  scoutId={account.scouts.id}
+                  scoutName={`${account.scouts.first_name} ${account.scouts.last_name}`}
+                  balance={balance}
+                />
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -271,44 +317,6 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          <Link
-            href={`/scouts/${account.scouts?.id}`}
-            className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
-          >
-            View Scout Profile
-          </Link>
-          {canSendPaymentRequest && (
-            <>
-              <Link
-                href="/billing"
-                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
-              >
-                Create Billing
-              </Link>
-              <Link
-                href="/payments"
-                className="rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
-              >
-                Record Payment
-              </Link>
-              {balance < 0 && account.scouts && (
-                <SendPaymentRequestModal
-                  scoutAccountId={account.id}
-                  scoutId={account.scouts.id}
-                  scoutName={`${account.scouts.first_name} ${account.scouts.last_name}`}
-                  balance={balance}
-                />
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

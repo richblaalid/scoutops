@@ -44,7 +44,6 @@ export function SendPaymentRequestModal({
   const [success, setSuccess] = useState<string | null>(null)
 
   const [selectedGuardianId, setSelectedGuardianId] = useState('')
-  const [amount, setAmount] = useState('')
   const [customMessage, setCustomMessage] = useState('')
 
   const amountOwed = Math.abs(balance)
@@ -54,12 +53,8 @@ export function SendPaymentRequestModal({
   useEffect(() => {
     if (open) {
       fetchGuardians()
-      // Pre-fill amount if scout owes money
-      if (owesAmount) {
-        setAmount(amountOwed.toFixed(2))
-      }
     }
-  }, [open, owesAmount, amountOwed])
+  }, [open])
 
   async function fetchGuardians() {
     setLoading(true)
@@ -123,12 +118,6 @@ export function SendPaymentRequestModal({
       return
     }
 
-    const parsedAmount = parseFloat(amount)
-    if (isNaN(parsedAmount) || parsedAmount < 1) {
-      setError('Minimum amount is $1.00')
-      return
-    }
-
     setSending(true)
 
     try {
@@ -140,7 +129,7 @@ export function SendPaymentRequestModal({
         body: JSON.stringify({
           scoutAccountId,
           guardianProfileId: selectedGuardianId,
-          amount: Math.round(parsedAmount * 100), // Convert to cents
+          // No amount specified - payment page will show live balance
           description: `Payment for ${scoutName}`,
           customMessage: customMessage || undefined,
         }),
@@ -159,7 +148,6 @@ export function SendPaymentRequestModal({
       setTimeout(() => {
         setOpen(false)
         setSelectedGuardianId('')
-        setAmount('')
         setCustomMessage('')
         setSuccess(null)
       }, 2000)
@@ -225,30 +213,17 @@ export function SendPaymentRequestModal({
               </select>
             </div>
 
-            {/* Amount */}
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">$</span>
-                <input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="1"
-                  required
-                  disabled={sending}
-                  className="flex h-10 w-full rounded-md border border-stone-300 bg-white pl-7 pr-3 py-2 text-sm text-stone-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2 disabled:opacity-50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </div>
-              {owesAmount && (
-                <p className="text-xs text-stone-500">
-                  Current balance owed: {formatCurrency(amountOwed)}
+            {/* Balance Info */}
+            {owesAmount && (
+              <div className="rounded-lg bg-stone-50 border border-stone-200 p-3">
+                <p className="text-sm text-stone-600">
+                  Current balance: <span className="font-semibold text-stone-900">{formatCurrency(amountOwed)}</span>
                 </p>
-              )}
-            </div>
+                <p className="text-xs text-stone-500 mt-1">
+                  The parent can choose how much to pay when they open the link.
+                </p>
+              </div>
+            )}
 
             {/* Custom Message */}
             <div className="space-y-2">

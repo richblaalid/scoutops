@@ -196,7 +196,7 @@ export function generatePaymentRequestEmail(data: PaymentRequestEmailData): {
                 <tr>
                   <td align="center">
                     <a href="${paymentUrl}" style="display: inline-block; padding: 14px 32px; background-color: #2563eb; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px;">
-                      Pay ${formatCurrency(displayTotal)} Now
+                      Pay Now
                     </a>
                   </td>
                 </tr>
@@ -253,7 +253,7 @@ ${balanceLabel}: ${formatCurrency(amountOwed)}
 
 ${ledgerEntries.length > 0 ? `Account Activity:\n${textLedger}\n\nTotal Charges: ${formatCurrency(totalDebits)}\nTotal Payments: ${formatCurrency(totalCredits)}` : ''}
 ${feeBreakdownText}
-${balance < 0 ? `Pay now (${formatCurrency(displayTotal)}): ${paymentUrl}` : 'No payment is required at this time.'}
+${balance < 0 ? `Pay now: ${paymentUrl}` : 'No payment is required at this time.'}
 
 ---
 This email was sent by ${unitName} via Chuckbox.

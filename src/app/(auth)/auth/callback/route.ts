@@ -10,5 +10,11 @@ export async function GET(request: Request) {
     confirmUrl.searchParams.set(key, value)
   })
 
+  // Preserve the 'next' param for post-login redirect
+  const next = searchParams.get('next')
+  if (next) {
+    confirmUrl.searchParams.set('next', next)
+  }
+
   return NextResponse.redirect(confirmUrl)
 }
