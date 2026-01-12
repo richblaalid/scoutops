@@ -27,7 +27,7 @@ export default async function IntegrationsPage({
   const { data: membership } = await supabase
     .from('unit_memberships')
     .select(
-      `unit_id, role, units(
+      `unit_id, role, units:units!unit_memberships_unit_id_fkey(
         name,
         processing_fee_percent,
         processing_fee_fixed,

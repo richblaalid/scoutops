@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { UnitInfoForm } from '@/components/settings/unit-info-form'
 import { PatrolList } from '@/components/settings/patrol-list'
 import { LogoUpload } from '@/components/settings/logo-upload'
+import { TroopStructureForm } from '@/components/settings/troop-structure-form'
 
 export default async function UnitSettingsPage() {
   const supabase = await createClient()
@@ -15,15 +16,18 @@ export default async function UnitSettingsPage() {
     redirect('/login')
   }
 
-  // Get user's membership and unit info
+  // Get user's membership and unit info (including linked troop fields)
+  // Note: Must specify the foreign key since section_unit_id also references units
   const { data: membership } = await supabase
     .from('unit_memberships')
     .select(
-      `unit_id, role, units(
+      `unit_id, role, units:units!unit_memberships_unit_id_fkey(
         id,
         name,
         unit_number,
         unit_type,
+        unit_gender,
+        unit_group_id,
         council,
         district,
         chartered_org,
@@ -48,6 +52,8 @@ export default async function UnitSettingsPage() {
     name: string
     unit_number: string
     unit_type: string
+    unit_gender: 'boys' | 'girls' | 'coed' | null
+    unit_group_id: string | null
     council: string | null
     district: string | null
     chartered_org: string | null
@@ -58,11 +64,27 @@ export default async function UnitSettingsPage() {
     redirect('/settings')
   }
 
-  // Get patrols for this unit
+  // Get sections (sub-units) if this is a linked troop
+  const { data: sections } = await supabase
+    .from('units')
+    .select('id, name, unit_number, unit_gender')
+    .eq('parent_unit_id', unit.id)
+    .order('unit_gender')
+
+  const sectionsList = (sections || []) as Array<{
+    id: string
+    name: string
+    unit_number: string
+    unit_gender: 'boys' | 'girls' | null
+  }>
+
+  // Get patrols - from parent unit AND all sections
+  const unitIdsForPatrols = [membership.unit_id, ...sectionsList.map(s => s.id)]
   const { data: patrols } = await supabase
     .from('patrols')
-    .select('*')
-    .eq('unit_id', membership.unit_id)
+    .select('id, name, display_order, is_active, unit_id')
+    .in('unit_id', unitIdsForPatrols)
+    .order('unit_id')
     .order('display_order', { ascending: true })
     .order('name', { ascending: true })
 
@@ -86,9 +108,19 @@ export default async function UnitSettingsPage() {
           charteredOrg={unit.chartered_org}
         />
 
+        <TroopStructureForm
+          unitId={unit.id}
+          unitName={unit.name}
+          unitNumber={unit.unit_number}
+          unitType={unit.unit_type}
+          unitGender={unit.unit_gender}
+          sections={sectionsList}
+        />
+
         <PatrolList
           unitId={membership.unit_id}
           patrols={patrols || []}
+          sections={sectionsList}
         />
 
         <LogoUpload

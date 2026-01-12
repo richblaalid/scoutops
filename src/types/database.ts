@@ -924,6 +924,7 @@ export type Database = {
           accepted_at: string | null
           expires_at: string | null
           joined_at: string | null
+          section_unit_id: string | null
         }
         Insert: {
           id?: string
@@ -939,6 +940,7 @@ export type Database = {
           accepted_at?: string | null
           expires_at?: string | null
           joined_at?: string | null
+          section_unit_id?: string | null
         }
         Update: {
           id?: string
@@ -954,6 +956,7 @@ export type Database = {
           accepted_at?: string | null
           expires_at?: string | null
           joined_at?: string | null
+          section_unit_id?: string | null
         }
         Relationships: [
           {
@@ -977,6 +980,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "unit_memberships_section_unit_id_fkey"
+            columns: ["section_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
         ]
       }
       units: {
@@ -990,6 +1000,10 @@ export type Database = {
           name: string
           unit_number: string
           unit_type: string
+          unit_gender: 'boys' | 'girls' | 'coed' | null
+          unit_group_id: string | null
+          parent_unit_id: string | null
+          is_section: boolean
           updated_at: string | null
           processing_fee_percent: number
           processing_fee_fixed: number
@@ -1005,6 +1019,10 @@ export type Database = {
           name: string
           unit_number: string
           unit_type: string
+          unit_gender?: 'boys' | 'girls' | 'coed' | null
+          unit_group_id?: string | null
+          parent_unit_id?: string | null
+          is_section?: boolean
           updated_at?: string | null
           processing_fee_percent?: number
           processing_fee_fixed?: number
@@ -1020,12 +1038,106 @@ export type Database = {
           name?: string
           unit_number?: string
           unit_type?: string
+          unit_gender?: 'boys' | 'girls' | 'coed' | null
+          unit_group_id?: string | null
+          parent_unit_id?: string | null
+          is_section?: boolean
           updated_at?: string | null
           processing_fee_percent?: number
           processing_fee_fixed?: number
           pass_fees_to_payer?: boolean
         }
+        Relationships: [
+          {
+            foreignKeyName: "units_unit_group_id_fkey"
+            columns: ["unit_group_id"]
+            isOneToOne: false
+            referencedRelation: "unit_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "units_parent_unit_id_fkey"
+            columns: ["parent_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      unit_groups: {
+        Row: {
+          id: string
+          name: string
+          base_unit_number: string | null
+          council: string | null
+          district: string | null
+          chartered_org: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          base_unit_number?: string | null
+          council?: string | null
+          district?: string | null
+          chartered_org?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          base_unit_number?: string | null
+          council?: string | null
+          district?: string | null
+          chartered_org?: string | null
+          created_at?: string
+          updated_at?: string
+        }
         Relationships: []
+      }
+      group_memberships: {
+        Row: {
+          id: string
+          unit_group_id: string
+          profile_id: string
+          role: 'admin' | 'treasurer' | 'leader'
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          unit_group_id: string
+          profile_id: string
+          role: 'admin' | 'treasurer' | 'leader'
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          unit_group_id?: string
+          profile_id?: string
+          role?: 'admin' | 'treasurer' | 'leader'
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_memberships_unit_group_id_fkey"
+            columns: ["unit_group_id"]
+            isOneToOne: false
+            referencedRelation: "unit_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       unit_square_credentials: {
         Row: {
@@ -1292,6 +1404,39 @@ export type Database = {
       validate_journal_entry_balance: {
         Args: { entry_id: string }
         Returns: boolean
+      }
+      create_linked_troop_group: {
+        Args: {
+          p_group_name: string
+          p_base_unit_number: string
+          p_unit_id: string
+          p_unit_gender: string
+        }
+        Returns: string
+      }
+      get_linked_unit_ids: {
+        Args: { target_unit_id: string }
+        Returns: string[]
+      }
+      get_user_unit_groups: {
+        Args: Record<string, never>
+        Returns: string[]
+      }
+      get_unit_sections: {
+        Args: { p_unit_id: string }
+        Returns: string[]
+      }
+      get_parent_unit: {
+        Args: { p_unit_id: string }
+        Returns: string
+      }
+      create_unit_sections: {
+        Args: {
+          p_parent_unit_id: string
+          p_boys_number?: string
+          p_girls_number?: string
+        }
+        Returns: { boys_section_id: string | null; girls_section_id: string | null }[]
       }
     }
     Enums: {

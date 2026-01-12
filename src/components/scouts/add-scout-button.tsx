@@ -5,11 +5,19 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ScoutForm } from './scout-form'
 
-interface AddScoutButtonProps {
-  unitId: string
+interface Section {
+  id: string
+  name: string
+  unit_number: string
+  unit_gender: 'boys' | 'girls' | null
 }
 
-export function AddScoutButton({ unitId }: AddScoutButtonProps) {
+interface AddScoutButtonProps {
+  unitId: string
+  sections?: Section[]
+}
+
+export function AddScoutButton({ unitId, sections = [] }: AddScoutButtonProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -19,6 +27,7 @@ export function AddScoutButton({ unitId }: AddScoutButtonProps) {
       {isOpen && (
         <ScoutForm
           unitId={unitId}
+          sections={sections}
           onClose={() => setIsOpen(false)}
           onSuccess={() => {
             setIsOpen(false)

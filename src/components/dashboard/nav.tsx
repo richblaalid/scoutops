@@ -6,23 +6,20 @@ import { cn } from '@/lib/utils'
 import { getVisibleNavItems } from '@/lib/roles'
 import { UserMenu } from './user-menu'
 import { Logo } from '@/components/ui/logo'
+import { UnitSwitcher } from './unit-switcher'
+import { SectionFilter } from './section-filter'
+import { useUnit } from '@/components/providers/unit-context'
 import type { User } from '@supabase/supabase-js'
 
 interface DashboardNavProps {
   user: User
   userName?: string | null
-  membership: {
-    role: string
-    units: {
-      name: string
-      unit_number: string
-    } | null
-  } | null
 }
 
-export function DashboardNav({ user, userName, membership }: DashboardNavProps) {
+export function DashboardNav({ user, userName }: DashboardNavProps) {
   const pathname = usePathname()
-  const navItems = membership ? getVisibleNavItems(membership.role) : []
+  const { currentUnit, currentRole, units, hasSections } = useUnit()
+  const navItems = currentRole ? getVisibleNavItems(currentRole) : []
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-white shadow-sm">
@@ -30,12 +27,21 @@ export function DashboardNav({ user, userName, membership }: DashboardNavProps) 
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-3">
             <Logo variant="full" size="sm" />
-            {membership?.units && (
+          </Link>
+
+          {/* Unit name/switcher and section filter */}
+          <div className="flex items-center gap-3">
+            {units.length > 1 ? (
+              <UnitSwitcher />
+            ) : currentUnit && (
               <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
-                {membership.units.name}
+                {currentUnit.name}
               </span>
             )}
-          </Link>
+
+            {/* Section filter for linked troops */}
+            {hasSections && <SectionFilter />}
+          </div>
 
           <nav className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => (
@@ -58,7 +64,7 @@ export function DashboardNav({ user, userName, membership }: DashboardNavProps) 
         <UserMenu
           email={user.email || ''}
           name={userName}
-          role={membership?.role}
+          role={currentRole ?? undefined}
         />
       </div>
     </header>

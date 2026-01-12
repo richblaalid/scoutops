@@ -42,7 +42,7 @@ export default async function ReportsPage() {
   // Get user's unit membership
   const { data: membershipData } = await supabase
     .from('unit_memberships')
-    .select('unit_id, role, units(name, unit_number)')
+    .select('unit_id, role, units:units!unit_memberships_unit_id_fkey(name, unit_number)')
     .eq('profile_id', user.id)
     .eq('status', 'active')
     .single()

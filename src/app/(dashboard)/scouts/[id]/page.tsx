@@ -52,6 +52,31 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
   const membership = membershipData as { unit_id: string; role: string } | null
   const canEditScout = membership && ['admin', 'treasurer', 'leader'].includes(membership.role)
 
+  // Get sections for the parent unit (to allow changing scout's section)
+  // First check if the scout's unit is a section (has parent_unit_id)
+  const { data: scoutUnitData } = await supabase
+    .from('units')
+    .select('parent_unit_id')
+    .eq('id', scoutData.unit_id)
+    .single()
+
+  const parentUnitId = scoutUnitData?.parent_unit_id || membership?.unit_id
+
+  // Get sections
+  const { data: sectionsData } = await supabase
+    .from('units')
+    .select('id, name, unit_number, unit_gender')
+    .eq('parent_unit_id', parentUnitId || '')
+
+  interface SectionInfo {
+    id: string
+    name: string
+    unit_number: string
+    unit_gender: 'boys' | 'girls' | null
+  }
+
+  const sections = (sectionsData || []) as SectionInfo[]
+
   interface Scout {
     id: string
     first_name: string
@@ -133,6 +158,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
           {canEditScout && (
             <EditScoutButton
               unitId={scout.unit_id}
+              sections={sections}
               scout={{
                 id: scout.id,
                 first_name: scout.first_name,
@@ -143,6 +169,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
                 date_of_birth: scout.date_of_birth,
                 bsa_member_id: scout.bsa_member_id,
                 is_active: scout.is_active,
+                unit_id: scout.unit_id,
               }}
             />
           )}
