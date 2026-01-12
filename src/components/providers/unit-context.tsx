@@ -137,7 +137,7 @@ export function UnitProvider({
   const [currentUnitId, setCurrentUnitId] = useState<string | null>(defaultUnitId || null)
   const [combinedView, setCombinedView] = useState(false)
 
-  // New: Section filter state
+  // New: Section filter state - read from URL (middleware handles cookie -> URL redirect)
   const urlSection = searchParams.get('section') as SectionFilter | null
   const [sectionFilter, setSectionFilterState] = useState<SectionFilter>(
     urlSection && ['all', 'boys', 'girls'].includes(urlSection) ? urlSection : 'all'
@@ -190,10 +190,20 @@ export function UnitProvider({
     router.replace(`?${params.toString()}`, { scroll: false })
   }
 
-  // New: Set section filter with URL persistence
-  // Uses router.push to ensure server component re-renders with new searchParams
+  // New: Set section filter with URL and cookie persistence
+  // Cookie is read by middleware to redirect on page load
   const setSectionFilter = (filter: SectionFilter) => {
     setSectionFilterState(filter)
+    // Persist to cookie (read by middleware on navigation)
+    if (typeof window !== 'undefined') {
+      if (filter === 'all') {
+        // Delete cookie when 'all' is selected
+        document.cookie = 'chuckbox_section_filter=; path=/; max-age=0'
+      } else {
+        // Set cookie with 1 year expiry
+        document.cookie = `chuckbox_section_filter=${filter}; path=/; max-age=31536000`
+      }
+    }
     const params = new URLSearchParams(searchParams.toString())
     if (filter === 'all') {
       params.delete('section')
