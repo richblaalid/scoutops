@@ -36,7 +36,12 @@ interface Scout {
   } | null
 }
 
-export default async function PaymentsPage() {
+interface PageProps {
+  searchParams: Promise<{ section?: string }>
+}
+
+export default async function PaymentsPage({ searchParams }: PageProps) {
+  const { section: sectionFilter } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -73,6 +78,37 @@ export default async function PaymentsPage() {
 
   const canRecordPayment = canPerformAction(membership.role, 'record_payments')
 
+  // Get sections (sub-units) for section filtering
+  const { data: sectionsData } = await supabase
+    .from('units')
+    .select('id, name, unit_number, unit_gender')
+    .eq('parent_unit_id', membership.unit_id)
+
+  interface SectionInfo {
+    id: string
+    name: string
+    unit_number: string
+    unit_gender: 'boys' | 'girls' | null
+  }
+
+  const sections = (sectionsData || []) as SectionInfo[]
+  const hasSections = sections.length > 0
+
+  // Determine which unit IDs to query based on sections
+  let unitIdsToQuery: string[] = [membership.unit_id]
+  if (hasSections) {
+    if (sectionFilter === 'boys') {
+      const boysSection = sections.find(s => s.unit_gender === 'boys')
+      unitIdsToQuery = boysSection ? [boysSection.id] : []
+    } else if (sectionFilter === 'girls') {
+      const girlsSection = sections.find(s => s.unit_gender === 'girls')
+      unitIdsToQuery = girlsSection ? [girlsSection.id] : []
+    } else {
+      // 'all' or no filter - query all sections plus parent (for unassigned scouts)
+      unitIdsToQuery = [...sections.map(s => s.id), membership.unit_id]
+    }
+  }
+
   // Get scouts with balances and Square credentials in parallel
   interface SquareCredentialsData {
     merchant_id: string
@@ -93,7 +129,7 @@ export default async function PaymentsPage() {
           balance
         )
       `)
-      .eq('unit_id', membership.unit_id)
+      .in('unit_id', unitIdsToQuery)
       .eq('is_active', true)
       .order('last_name'),
     supabase
@@ -142,11 +178,18 @@ export default async function PaymentsPage() {
         )
       )
     `)
-    .eq('unit_id', membership.unit_id)
+    .in('unit_id', unitIdsToQuery)
     .order('created_at', { ascending: false })
     .limit(20)
 
   const payments = (paymentsData as Payment[]) || []
+
+  // Section label for display
+  const sectionLabel = hasSections && sectionFilter
+    ? sectionFilter === 'boys' ? 'Boys section'
+    : sectionFilter === 'girls' ? 'Girls section'
+    : 'all sections'
+    : null
 
   // Calculate totals
   const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0)
