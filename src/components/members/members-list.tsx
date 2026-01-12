@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { updateMemberRole, removeMember, type MemberRole } from '@/app/actions/members'
 
 interface Member {
@@ -139,15 +140,25 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
                   </td>
                   {isAdmin && (
                     <td className="py-3">
-                      {!isCurrentUser && (
-                        <button
-                          onClick={() => handleRemove(member.id, displayName)}
-                          disabled={loadingId === member.id}
-                          className="text-sm text-error hover:text-error/80 disabled:opacity-50"
-                        >
-                          {loadingId === member.id ? 'Removing...' : 'Remove'}
-                        </button>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {member.profiles && (
+                          <Link
+                            href={`/members/${member.id}`}
+                            className="text-sm text-forest-600 hover:text-forest-800"
+                          >
+                            View
+                          </Link>
+                        )}
+                        {!isCurrentUser && (
+                          <button
+                            onClick={() => handleRemove(member.id, displayName)}
+                            disabled={loadingId === member.id}
+                            className="text-sm text-error hover:text-error/80 disabled:opacity-50"
+                          >
+                            {loadingId === member.id ? 'Removing...' : 'Remove'}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

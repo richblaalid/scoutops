@@ -411,3 +411,189 @@ export async function resendInvite(memberId: string): Promise<ActionResult> {
   revalidatePath('/members')
   return { success: true }
 }
+
+// Update a member's profile (admin only)
+export async function updateMemberProfile(
+  profileId: string,
+  data: {
+    first_name: string | null
+    last_name: string | null
+    phone_primary: string | null
+    phone_secondary: string | null
+    email_secondary: string | null
+    address_street: string | null
+    address_city: string | null
+    address_state: string | null
+    address_zip: string | null
+  }
+): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  // Check if user is admin of any unit that the target profile belongs to
+  const { data: currentMembership } = await supabase
+    .from('unit_memberships')
+    .select('unit_id, role')
+    .eq('profile_id', user.id)
+    .eq('status', 'active')
+    .single()
+
+  if (!currentMembership || currentMembership.role !== 'admin') {
+    return { success: false, error: 'Only admins can update member profiles' }
+  }
+
+  // Verify the target profile is a member of the same unit
+  const { data: targetMembership } = await supabase
+    .from('unit_memberships')
+    .select('id')
+    .eq('profile_id', profileId)
+    .eq('unit_id', currentMembership.unit_id)
+    .eq('status', 'active')
+    .single()
+
+  if (!targetMembership) {
+    return { success: false, error: 'Member not found in your unit' }
+  }
+
+  // Update the profile using admin client to bypass RLS
+  const adminSupabase = createAdminClient()
+
+  const { error } = await adminSupabase
+    .from('profiles')
+    .update({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      full_name: [data.first_name, data.last_name].filter(Boolean).join(' ') || null,
+      phone_primary: data.phone_primary,
+      phone_secondary: data.phone_secondary,
+      email_secondary: data.email_secondary,
+      address_street: data.address_street,
+      address_city: data.address_city,
+      address_state: data.address_state,
+      address_zip: data.address_zip,
+    })
+    .eq('id', profileId)
+
+  if (error) {
+    console.error('Update profile error:', error)
+    return { success: false, error: 'Failed to update profile' }
+  }
+
+  revalidatePath(`/members`)
+  return { success: true }
+}
+
+// Add a scout guardian association (admin only)
+export async function addScoutGuardian(
+  profileId: string,
+  scoutId: string,
+  relationship: string
+): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  // Check if user is admin
+  const { data: currentMembership } = await supabase
+    .from('unit_memberships')
+    .select('unit_id, role')
+    .eq('profile_id', user.id)
+    .eq('status', 'active')
+    .single()
+
+  if (!currentMembership || currentMembership.role !== 'admin') {
+    return { success: false, error: 'Only admins can manage scout associations' }
+  }
+
+  // Verify the scout belongs to the same unit
+  const { data: scout } = await supabase
+    .from('scouts')
+    .select('id')
+    .eq('id', scoutId)
+    .eq('unit_id', currentMembership.unit_id)
+    .single()
+
+  if (!scout) {
+    return { success: false, error: 'Scout not found in your unit' }
+  }
+
+  // Check if association already exists
+  const { data: existing } = await supabase
+    .from('scout_guardians')
+    .select('id')
+    .eq('profile_id', profileId)
+    .eq('scout_id', scoutId)
+    .single()
+
+  if (existing) {
+    return { success: false, error: 'This association already exists' }
+  }
+
+  // Create the guardian association using admin client
+  const adminSupabase = createAdminClient()
+
+  const { error } = await adminSupabase
+    .from('scout_guardians')
+    .insert({
+      profile_id: profileId,
+      scout_id: scoutId,
+      relationship,
+      is_primary: false,
+    })
+
+  if (error) {
+    console.error('Add guardian error:', error)
+    return { success: false, error: 'Failed to add scout association' }
+  }
+
+  revalidatePath(`/members`)
+  return { success: true }
+}
+
+// Remove a scout guardian association (admin only)
+export async function removeScoutGuardian(guardianshipId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  // Check if user is admin
+  const { data: currentMembership } = await supabase
+    .from('unit_memberships')
+    .select('unit_id, role')
+    .eq('profile_id', user.id)
+    .eq('status', 'active')
+    .single()
+
+  if (!currentMembership || currentMembership.role !== 'admin') {
+    return { success: false, error: 'Only admins can manage scout associations' }
+  }
+
+  // Delete the guardian association using admin client
+  const adminSupabase = createAdminClient()
+
+  const { error } = await adminSupabase
+    .from('scout_guardians')
+    .delete()
+    .eq('id', guardianshipId)
+
+  if (error) {
+    console.error('Remove guardian error:', error)
+    return { success: false, error: 'Failed to remove scout association' }
+  }
+
+  revalidatePath(`/members`)
+  return { success: true }
+}
