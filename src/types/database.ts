@@ -1268,6 +1268,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_billing_with_journal: {
+        Args: {
+          p_unit_id: string
+          p_description: string
+          p_total_amount: number
+          p_billing_date: string
+          p_billing_type: string
+          p_per_scout_amount: number
+          p_scout_accounts: Json
+        }
+        Returns: Json
+      }
       create_default_accounts: {
         Args: { p_unit_id: string }
         Returns: undefined

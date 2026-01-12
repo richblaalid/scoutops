@@ -119,7 +119,8 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
         throw new Error(rpcError.message)
       }
 
-      if (!data?.success) {
+      const result = data as { success: boolean; billing_record_id: string; journal_entry_id: string } | null
+      if (!result?.success) {
         throw new Error('Failed to create billing record')
       }
 

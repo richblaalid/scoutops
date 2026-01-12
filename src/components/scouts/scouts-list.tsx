@@ -547,6 +547,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
             first_name: editingScout.first_name,
             last_name: editingScout.last_name,
             patrol: editingScout.patrol,
+            patrol_id: editingScout.patrol_id,
             rank: editingScout.rank,
             date_of_birth: editingScout.date_of_birth,
             bsa_member_id: editingScout.bsa_member_id,
