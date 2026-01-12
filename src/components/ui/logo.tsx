@@ -7,10 +7,14 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg'
 }
 
+// Text sizes are calibrated to match icon height (icon uses 66/72 aspect ratio)
+// sm: 32px icon → ~29px height → text-2xl (24px) + leading
+// md: 40px icon → ~37px height → text-3xl (30px) + leading
+// lg: 64px icon → ~59px height → text-5xl (48px) + leading
 const sizes = {
-  sm: { icon: 32, wordmark: 'text-lg' },
-  md: { icon: 40, wordmark: 'text-xl' },
-  lg: { icon: 64, wordmark: 'text-3xl' },
+  sm: { icon: 32, wordmark: 'text-2xl leading-none' },
+  md: { icon: 40, wordmark: 'text-3xl leading-none' },
+  lg: { icon: 64, wordmark: 'text-5xl leading-none' },
 }
 
 // Chuckbox brand colors
@@ -61,7 +65,7 @@ function IconMark({ iconSize, colors }: { iconSize: number; colors: typeof brand
 
 function Wordmark({ wordmarkClass, colors }: { wordmarkClass: string; colors: typeof brandColors.light }) {
   return (
-    <span className={cn('font-bold tracking-tight', wordmarkClass)}>
+    <span className={cn('font-bold tracking-tight whitespace-nowrap', wordmarkClass)}>
       <span style={{ color: colors.wordPrimary }}>Chuck </span>
       <span style={{ color: colors.wordAccent }}>Box</span>
     </span>

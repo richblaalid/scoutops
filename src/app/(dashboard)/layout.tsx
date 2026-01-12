@@ -1,9 +1,12 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { DashboardNav } from '@/components/dashboard/nav'
+import { Sidebar } from '@/components/dashboard/sidebar'
+import { MobileNav } from '@/components/dashboard/mobile-nav'
+import { MainContent } from '@/components/dashboard/main-content'
 import { PostHogIdentify } from '@/components/providers/posthog-identify'
 import { UnitProvider, UnitMembership, UnitGroup, SectionInfo } from '@/components/providers/unit-context'
+import { SidebarProvider } from '@/components/providers/sidebar-context'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -46,7 +49,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Note: Must specify the foreign key since section_unit_id also references units
   const { data: membershipsData } = await supabase
     .from('unit_memberships')
-    .select('role, unit_id, section_unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type, unit_gender, unit_group_id)')
+    .select('role, unit_id, section_unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type, unit_gender, unit_group_id, logo_url)')
     .eq('profile_id', user.id)
     .eq('status', 'active')
 
@@ -99,7 +102,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen">
       <PostHogIdentify
         userId={user.id}
         email={user.email}
@@ -108,18 +111,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
         unitName={primaryUnit?.name}
       />
       <Suspense fallback={null}>
-        <UnitProvider
-          memberships={memberships}
-          groupMemberships={groupMemberships}
-          sections={sections}
-          initialUnitId={primaryUnit?.id}
-          leaderSectionId={leaderSectionId}
-        >
-          <DashboardNav user={user} userName={userName} />
-          <main className="flex-1 bg-stone-50">
-            <div className="container mx-auto px-4 py-8">{children}</div>
-          </main>
-        </UnitProvider>
+        <SidebarProvider>
+          <UnitProvider
+            memberships={memberships}
+            groupMemberships={groupMemberships}
+            sections={sections}
+            initialUnitId={primaryUnit?.id}
+            leaderSectionId={leaderSectionId}
+          >
+            {/* Desktop Sidebar - hidden on mobile */}
+            <Sidebar user={user} userName={userName} className="hidden md:flex" />
+
+            {/* Mobile Header - hidden on desktop */}
+            <MobileNav user={user} userName={userName} className="md:hidden" />
+
+            {/* Main Content - offset on desktop for sidebar */}
+            <MainContent>{children}</MainContent>
+          </UnitProvider>
+        </SidebarProvider>
       </Suspense>
     </div>
   )

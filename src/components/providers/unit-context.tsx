@@ -12,6 +12,7 @@ export interface UnitInfo {
   unit_group_id: string | null
   parent_unit_id?: string | null
   is_section?: boolean
+  logo_url?: string | null
 }
 
 export interface SectionInfo {

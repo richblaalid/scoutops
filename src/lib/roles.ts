@@ -1,5 +1,16 @@
 // Role-based access control utilities for Chuckbox
 
+import {
+  LayoutDashboard,
+  Users,
+  Wallet,
+  Receipt,
+  CreditCard,
+  BarChart3,
+  UserCog,
+  type LucideIcon,
+} from 'lucide-react'
+
 export type MemberRole = 'admin' | 'treasurer' | 'leader' | 'parent' | 'scout'
 
 // Pages in the application
@@ -50,15 +61,23 @@ const ACTION_ACCESS: Record<AppAction, MemberRole[]> = {
   export_reports: ['admin', 'treasurer', 'leader'],
 }
 
-// Navigation items with their required pages
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', page: 'dashboard' as AppPage },
-  { href: '/scouts', label: 'Scouts', page: 'scouts' as AppPage },
-  { href: '/accounts', label: 'Accounts', page: 'accounts' as AppPage },
-  { href: '/billing', label: 'Billing', page: 'billing' as AppPage },
-  { href: '/payments', label: 'Payments', page: 'payments' as AppPage },
-  { href: '/reports', label: 'Reports', page: 'reports' as AppPage },
-  { href: '/members', label: 'Members', page: 'members' as AppPage },
+// Navigation item type
+export interface NavItem {
+  href: string
+  label: string
+  page: AppPage
+  icon: LucideIcon
+}
+
+// Navigation items with their required pages and icons
+const NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard', label: 'Dashboard', page: 'dashboard', icon: LayoutDashboard },
+  { href: '/scouts', label: 'Scouts', page: 'scouts', icon: Users },
+  { href: '/accounts', label: 'Accounts', page: 'accounts', icon: Wallet },
+  { href: '/billing', label: 'Billing', page: 'billing', icon: Receipt },
+  { href: '/payments', label: 'Payments', page: 'payments', icon: CreditCard },
+  { href: '/reports', label: 'Reports', page: 'reports', icon: BarChart3 },
+  { href: '/members', label: 'Members', page: 'members', icon: UserCog },
 ]
 
 /**
@@ -80,7 +99,7 @@ export function canPerformAction(role: MemberRole | string, action: AppAction): 
 /**
  * Get navigation items visible to a specific role
  */
-export function getVisibleNavItems(role: MemberRole | string) {
+export function getVisibleNavItems(role: MemberRole | string): NavItem[] {
   return NAV_ITEMS.filter(item => canAccessPage(role, item.page))
 }
 

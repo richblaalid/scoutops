@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { getVisibleNavItems } from '@/lib/roles'
@@ -29,21 +30,41 @@ export function DashboardNav({ user, userName }: DashboardNavProps) {
             <Logo variant="full" size="sm" />
           </Link>
 
-          {/* Unit name/switcher and section filter */}
+          {/* Unit logo/name and section filter */}
           <div className="flex items-center gap-3">
             {/* Leaders with assigned section see only their section indicator */}
             {isLeaderWithSection && leaderSection ? (
-              <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
-                Troop {leaderSection.unit_number}
-              </span>
+              currentUnit?.logo_url ? (
+                <Image
+                  src={currentUnit.logo_url}
+                  alt={`Troop ${leaderSection.unit_number}`}
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded object-contain"
+                />
+              ) : (
+                <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
+                  Troop {leaderSection.unit_number}
+                </span>
+              )
             ) : (
               <>
                 {units.length > 1 ? (
                   <UnitSwitcher />
                 ) : currentUnit && (
-                  <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
-                    {currentUnit.name}
-                  </span>
+                  currentUnit.logo_url ? (
+                    <Image
+                      src={currentUnit.logo_url}
+                      alt={currentUnit.name}
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 rounded object-contain"
+                    />
+                  ) : (
+                    <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
+                      {currentUnit.name}
+                    </span>
+                  )
                 )}
 
                 {/* Section filter for linked troops (admins/treasurers only) */}

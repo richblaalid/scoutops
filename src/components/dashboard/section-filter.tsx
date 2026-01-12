@@ -27,13 +27,13 @@ export function SectionFilter() {
   ]
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-stone-100 p-1">
+    <div className="flex items-stretch gap-1 rounded-lg bg-stone-100 p-1">
       {filters.map(filter => (
         <button
           key={filter.value}
           onClick={() => setSectionFilter(filter.value)}
           className={cn(
-            'px-3 py-1 text-sm font-medium rounded-md transition-colors',
+            'flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
             sectionFilter === filter.value
               ? 'bg-white text-stone-900 shadow-sm'
               : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
