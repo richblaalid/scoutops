@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/logo'
+import { trackLoginAttempted } from '@/lib/analytics'
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -42,6 +43,10 @@ function LoginForm() {
     if (redirectTo) {
       callbackUrl.searchParams.set('next', redirectTo)
     }
+
+    // Track login attempt (email domain only for privacy)
+    const emailDomain = email.split('@')[1]
+    trackLoginAttempted(emailDomain)
 
     const { error } = await supabase.auth.signInWithOtp({
       email,

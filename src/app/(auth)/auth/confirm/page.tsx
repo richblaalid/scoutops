@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { acceptPendingInvites } from '@/app/actions/members'
+import { trackLoginCompleted } from '@/lib/analytics'
 
 // Helper to safely check for pending invites (non-blocking)
 async function tryAcceptInvites(): Promise<number> {
@@ -50,6 +51,9 @@ function AuthConfirmContent() {
       console.log('Auth state change:', event, !!session)
 
       if (event === 'SIGNED_IN' && session) {
+        // Track successful login
+        trackLoginCompleted({ userId: session.user.id })
+
         setStatus('Completing sign in...')
         const accepted = await tryAcceptInvites()
         if (accepted > 0) {
