@@ -4,6 +4,8 @@ import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { canAccessPage, canPerformAction } from '@/lib/roles'
 import { PaymentEntry } from '@/components/payments/payment-entry'
+import { PaymentsTabs } from '@/components/payments/payments-tabs'
+import { SquareHistoryTab } from '@/components/payments/square-history-tab'
 import { getDefaultLocationId } from '@/lib/square/client'
 import Link from 'next/link'
 
@@ -152,59 +154,53 @@ export default async function PaymentsPage() {
   const totalFees = payments.reduce((sum, p) => sum + (p.fee_amount || 0), 0)
   const netCollected = payments.reduce((sum, p) => sum + p.net_amount, 0)
 
-  return (
+  // Content for Record Payments tab
+  const recordPaymentsContent = (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-stone-900">Payments</h1>
-        <p className="mt-1 text-stone-600">
-          Record and track payments from scouts
-        </p>
-      </div>
-
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Collected</CardDescription>
-              <CardTitle className="text-2xl text-success">
-                {formatCurrency(totalCollected)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-stone-500">
-                From {payments.length} payment{payments.length !== 1 ? 's' : ''}
-              </p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Total Collected</CardDescription>
+            <CardTitle className="text-2xl text-success">
+              {formatCurrency(totalCollected)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-stone-500">
+              From {payments.length} payment{payments.length !== 1 ? 's' : ''}
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Processing Fees</CardDescription>
-              <CardTitle className="text-2xl text-error">
-                {formatCurrency(totalFees)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-stone-500">
-                Card payment fees
-              </p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Processing Fees</CardDescription>
+            <CardTitle className="text-2xl text-error">
+              {formatCurrency(totalFees)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-stone-500">
+              Card payment fees
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Net Received</CardDescription>
-              <CardTitle className="text-2xl text-info">
-                {formatCurrency(netCollected)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-stone-500">
-                After fees
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Net Received</CardDescription>
+            <CardTitle className="text-2xl text-info">
+              {formatCurrency(netCollected)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-stone-500">
+              After fees
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Record Payment */}
       {canRecordPayment && (
@@ -312,6 +308,28 @@ export default async function PaymentsPage() {
           </CardContent>
         </Card>
       )}
+    </div>
+  )
+
+  // Content for Square History tab
+  const squareHistoryContent = (
+    <SquareHistoryTab unitId={membership.unit_id} />
+  )
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-stone-900">Payments</h1>
+        <p className="mt-1 text-stone-600">
+          Record and track payments from scouts
+        </p>
+      </div>
+
+      <PaymentsTabs
+        recordPaymentsContent={recordPaymentsContent}
+        squareHistoryContent={squareHistoryContent}
+        showSquareTab={isSquareConnected}
+      />
     </div>
   )
 }
