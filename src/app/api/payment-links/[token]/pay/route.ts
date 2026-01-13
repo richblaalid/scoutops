@@ -160,15 +160,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Payment link is not associated with a scout account' }, { status: 400 })
     }
 
-    // Get current balance from scout account
+    // Get current billing balance from scout account
     const { data: scoutAccountBalance } = await supabase
       .from('scout_accounts')
-      .select('balance')
+      .select('billing_balance')
       .eq('id', paymentLink.scout_account_id)
       .single()
 
-    const currentBalance = scoutAccountBalance?.balance || 0
-    const currentBalanceCents = Math.round(Math.abs(currentBalance) * 100)
+    const currentBillingBalance = scoutAccountBalance?.billing_balance || 0
+    const currentBalanceCents = Math.round(Math.abs(currentBillingBalance) * 100)
 
     // Get unit fee settings
     const { data: unitSettings } = await supabase
@@ -330,6 +330,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       debit: number
       credit: number
       memo: string
+      target_balance: string | null
     }> = []
 
     if (feesPassedToPayer && feeAmountCents > 0) {
@@ -344,8 +345,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           debit: netDollars,
           credit: 0,
           memo: `Online payment from ${scoutName}`,
+          target_balance: null,
         },
-        // Credit scout's receivable (base amount only - what they actually owed)
+        // Credit scout's billing balance (base amount only - what they actually owed)
         {
           journal_entry_id: journalEntry.id,
           account_id: receivableAccount.id,
@@ -353,6 +355,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           debit: 0,
           credit: baseAmountDollars,
           memo: 'Payment received via payment link',
+          target_balance: 'billing',
         }
       )
 
@@ -367,6 +370,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           debit: squareFeeDollars,
           credit: 0,
           memo: 'Square processing fee (paid by payer)',
+          target_balance: null,
         })
       }
     } else {
@@ -380,8 +384,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           debit: netDollars,
           credit: 0,
           memo: `Online payment from ${scoutName}`,
+          target_balance: null,
         },
-        // Credit scout's receivable (full amount they paid)
+        // Credit scout's billing balance (full amount they paid)
         {
           journal_entry_id: journalEntry.id,
           account_id: receivableAccount.id,
@@ -389,6 +394,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           debit: 0,
           credit: totalAmountDollars,
           memo: 'Payment received via payment link',
+          target_balance: 'billing',
         }
       )
 
@@ -401,6 +407,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           debit: squareFeeDollars,
           credit: 0,
           memo: 'Square processing fee',
+          target_balance: null,
         })
       }
     }
@@ -484,6 +491,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .eq('id', paymentLink.id)
     }
     // Otherwise, keep the link active for additional payments
+
+    // Check for overpayment and transfer excess to Scout Funds
+    const { data: updatedAccount } = await supabase
+      .from('scout_accounts')
+      .select('billing_balance')
+      .eq('id', paymentLink.scout_account_id)
+      .single()
+
+    // If billing went positive (overpayment), auto-transfer to funds
+    if (updatedAccount && (updatedAccount.billing_balance || 0) > 0) {
+      const overpaymentAmount = updatedAccount.billing_balance || 0
+      const { error: transferError } = await supabase.rpc('auto_transfer_overpayment', {
+        p_scout_account_id: paymentLink.scout_account_id,
+        p_amount: overpaymentAmount,
+      })
+
+      if (transferError) {
+        console.error('Failed to transfer overpayment:', transferError)
+        // Don't fail the payment, just log the error
+      }
+    }
 
     return NextResponse.json({
       success: true,

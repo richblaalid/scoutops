@@ -6,7 +6,8 @@ import Link from 'next/link'
 
 interface ScoutAccount {
   id: string
-  balance: number | null
+  billing_balance: number | null
+  funds_balance: number
   scout_id: string
   scouts: {
     id: string
@@ -22,10 +23,10 @@ interface AccountsListProps {
   showPatrolFilter?: boolean
 }
 
-type SortColumn = 'name' | 'patrol' | 'status' | 'balance'
+type SortColumn = 'name' | 'patrol' | 'status' | 'billing' | 'funds'
 type SortDirection = 'asc' | 'desc'
 type StatusFilter = 'all' | 'active' | 'inactive'
-type BalanceFilter = 'all' | 'owes' | 'credit' | 'zero'
+type BalanceFilter = 'all' | 'owes' | 'has_funds' | 'settled'
 
 function SearchIcon() {
   return (
@@ -215,8 +216,8 @@ function BalanceFilterButtons({ value, onChange }: BalanceFilterProps) {
   const options: { key: BalanceFilter; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'owes', label: 'Owes' },
-    { key: 'credit', label: 'Credit' },
-    { key: 'zero', label: 'Zero' },
+    { key: 'has_funds', label: 'Has Funds' },
+    { key: 'settled', label: 'Settled' },
   ]
 
   return (
@@ -239,7 +240,7 @@ function BalanceFilterButtons({ value, onChange }: BalanceFilterProps) {
 }
 
 export function AccountsList({ accounts, showPatrolFilter = true }: AccountsListProps) {
-  const [sortColumn, setSortColumn] = useState<SortColumn>('balance')
+  const [sortColumn, setSortColumn] = useState<SortColumn>('billing')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPatrols, setSelectedPatrols] = useState<Set<string>>(new Set())
@@ -304,11 +305,13 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
 
     // Filter by balance
     if (balanceFilter === 'owes') {
-      filtered = filtered.filter((account) => (account.balance || 0) < 0)
-    } else if (balanceFilter === 'credit') {
-      filtered = filtered.filter((account) => (account.balance || 0) > 0)
-    } else if (balanceFilter === 'zero') {
-      filtered = filtered.filter((account) => (account.balance || 0) === 0)
+      filtered = filtered.filter((account) => (account.billing_balance || 0) < 0)
+    } else if (balanceFilter === 'has_funds') {
+      filtered = filtered.filter((account) => (account.funds_balance || 0) > 0)
+    } else if (balanceFilter === 'settled') {
+      filtered = filtered.filter((account) =>
+        (account.billing_balance || 0) === 0 && (account.funds_balance || 0) === 0
+      )
     }
 
     // Sort the filtered results
@@ -329,8 +332,11 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
           const statusB = b.scouts?.is_active ? 1 : 0
           comparison = statusB - statusA
           break
-        case 'balance':
-          comparison = (a.balance || 0) - (b.balance || 0)
+        case 'billing':
+          comparison = (a.billing_balance || 0) - (b.billing_balance || 0)
+          break
+        case 'funds':
+          comparison = (a.funds_balance || 0) - (b.funds_balance || 0)
           break
       }
 
@@ -419,42 +425,51 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                 Scout
                 <SortIcon direction={sortDirection} active={sortColumn === 'name'} />
               </th>
-              <th className={headerClass} onClick={() => handleSort('patrol')}>
+              <th className={`${headerClass} hidden sm:table-cell`} onClick={() => handleSort('patrol')}>
                 Patrol
                 <SortIcon direction={sortDirection} active={sortColumn === 'patrol'} />
               </th>
-              <th className={headerClass} onClick={() => handleSort('status')}>
+              <th className={`${headerClass} hidden md:table-cell`} onClick={() => handleSort('status')}>
                 Status
                 <SortIcon direction={sortDirection} active={sortColumn === 'status'} />
               </th>
-              <th className={`${headerClass} text-right`} onClick={() => handleSort('balance')}>
-                Balance
-                <SortIcon direction={sortDirection} active={sortColumn === 'balance'} />
+              <th className={`${headerClass} text-right whitespace-nowrap`} onClick={() => handleSort('billing')}>
+                Billing
+                <SortIcon direction={sortDirection} active={sortColumn === 'billing'} />
               </th>
-              <th className="pb-3">Actions</th>
+              <th className={`${headerClass} text-right whitespace-nowrap`} onClick={() => handleSort('funds')}>
+                Funds
+                <SortIcon direction={sortDirection} active={sortColumn === 'funds'} />
+              </th>
+              <th className="pb-3 pl-4 sm:pl-6 whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredAndSortedAccounts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-stone-500">
+                <td colSpan={6} className="py-8 text-center text-stone-500">
                   No accounts match your filters
                 </td>
               </tr>
             ) : (
               filteredAndSortedAccounts.map((account) => {
-                const balance = account.balance || 0
+                const billingBalance = account.billing_balance || 0
+                const fundsBalance = account.funds_balance || 0
                 return (
                   <tr key={account.id} className="border-b last:border-0">
                     <td className="py-3 pr-4">
                       <p className="font-medium text-stone-900">
                         {account.scouts?.first_name} {account.scouts?.last_name}
                       </p>
+                      {/* Show patrol on mobile under name */}
+                      {account.scouts?.patrol && (
+                        <p className="text-xs text-stone-500 sm:hidden">{account.scouts.patrol}</p>
+                      )}
                     </td>
-                    <td className="py-3 pr-4 text-stone-600">
+                    <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">
                       {account.scouts?.patrol || '—'}
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="hidden py-3 pr-4 md:table-cell">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                           account.scouts?.is_active
@@ -465,25 +480,32 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                         {account.scouts?.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-right">
+                    <td className="py-3 pr-2 text-right whitespace-nowrap">
                       <span
                         className={`font-medium ${
-                          balance < 0
-                            ? 'text-error'
-                            : balance > 0
-                              ? 'text-success'
-                              : 'text-stone-600'
+                          billingBalance < 0 ? 'text-error' : 'text-stone-900'
                         }`}
                       >
-                        {formatCurrency(balance)}
+                        {billingBalance < 0
+                          ? formatCurrency(Math.abs(billingBalance))
+                          : '$0.00'}
                       </span>
                     </td>
-                    <td className="py-3">
+                    <td className="py-3 pr-2 text-right whitespace-nowrap">
+                      <span
+                        className={`font-medium ${
+                          fundsBalance > 0 ? 'text-success' : 'text-stone-900'
+                        }`}
+                      >
+                        {fundsBalance > 0 ? formatCurrency(fundsBalance) : '$0.00'}
+                      </span>
+                    </td>
+                    <td className="py-3 pl-4 sm:pl-6 whitespace-nowrap">
                       <Link
                         href={`/accounts/${account.id}`}
                         className="text-sm text-forest-600 hover:text-forest-800"
                       >
-                        View Details
+                        View
                       </Link>
                     </td>
                   </tr>

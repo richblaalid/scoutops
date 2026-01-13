@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MoreHorizontal, Pencil, Ban } from 'lucide-react'
+import { MoreHorizontal, Pencil, Ban, Mail } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { VoidBillingDialog } from './void-billing-dialog'
 import { EditBillingDialog } from './edit-billing-dialog'
+import { SendChargeNotificationDialog } from './send-charge-notification-dialog'
 
 interface BillingRecordActionsProps {
   billingRecordId: string
@@ -101,6 +102,7 @@ interface BillingChargeActionsProps {
   billingDescription: string
   amount: number
   scoutName: string
+  scoutId: string
   isVoid: boolean
   isPaid: boolean
   canVoid: boolean
@@ -111,13 +113,22 @@ export function BillingChargeActions({
   billingDescription,
   amount,
   scoutName,
+  scoutId,
   isVoid,
   isPaid,
   canVoid,
 }: BillingChargeActionsProps) {
   const [showVoidDialog, setShowVoidDialog] = useState(false)
+  const [showNotifyDialog, setShowNotifyDialog] = useState(false)
 
-  if (isVoid || !canVoid) {
+  if (isVoid) {
+    return null
+  }
+
+  // Show menu if user can void OR if charge is unpaid (for notification)
+  const showMenu = canVoid || !isPaid
+
+  if (!showMenu) {
     return null
   }
 
@@ -131,19 +142,28 @@ export function BillingChargeActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {isPaid ? (
-            <DropdownMenuItem disabled className="text-stone-400">
-              <Ban className="mr-2 h-4 w-4" />
-              Cannot void (paid)
+          {!isPaid && (
+            <DropdownMenuItem onClick={() => setShowNotifyDialog(true)}>
+              <Mail className="mr-2 h-4 w-4" />
+              Send Notification
             </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem
-              onClick={() => setShowVoidDialog(true)}
-              className="text-error focus:text-error focus:bg-error-light"
-            >
-              <Ban className="mr-2 h-4 w-4" />
-              Void Charge
-            </DropdownMenuItem>
+          )}
+          {canVoid && !isPaid && <DropdownMenuSeparator />}
+          {canVoid && (
+            isPaid ? (
+              <DropdownMenuItem disabled className="text-stone-400">
+                <Ban className="mr-2 h-4 w-4" />
+                Cannot void (paid)
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                onClick={() => setShowVoidDialog(true)}
+                className="text-error focus:text-error focus:bg-error-light"
+              >
+                <Ban className="mr-2 h-4 w-4" />
+                Void Charge
+              </DropdownMenuItem>
+            )
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -156,6 +176,16 @@ export function BillingChargeActions({
         amount={amount}
         scoutName={scoutName}
         type="charge"
+      />
+
+      <SendChargeNotificationDialog
+        open={showNotifyDialog}
+        onOpenChange={setShowNotifyDialog}
+        billingChargeId={billingChargeId}
+        scoutId={scoutId}
+        amount={amount}
+        description={billingDescription}
+        scoutName={scoutName}
       />
     </>
   )

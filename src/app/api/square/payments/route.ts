@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     // Verify the scout account belongs to this unit
     const { data: scoutAccount } = await supabase
       .from('scout_accounts')
-      .select('id, scout_id, unit_id, balance, scouts(first_name, last_name)')
+      .select('id, scout_id, unit_id, billing_balance, funds_balance, scouts(first_name, last_name)')
       .eq('id', scoutAccountId)
       .eq('unit_id', membership.unit_id)
       .single()
@@ -238,8 +238,9 @@ export async function POST(request: NextRequest) {
         debit: netDollars,
         credit: 0,
         memo: `Square payment from ${scoutName}`,
+        target_balance: null,
       },
-      // Credit scout's receivable (full amount to reduce what they owe)
+      // Credit scout's billing balance (full amount to reduce what they owe)
       {
         journal_entry_id: journalEntry.id,
         account_id: receivableAccount.id,
@@ -247,6 +248,7 @@ export async function POST(request: NextRequest) {
         debit: 0,
         credit: amountDollars,
         memo: 'Payment received via Square',
+        target_balance: 'billing',
       },
     ]
 
@@ -259,6 +261,7 @@ export async function POST(request: NextRequest) {
         debit: feeDollars,
         credit: 0,
         memo: 'Square processing fee',
+        target_balance: null,
       })
     }
 
@@ -323,6 +326,27 @@ export async function POST(request: NextRequest) {
       is_reconciled: true,
       square_created_at: squarePayment.createdAt!,
     })
+
+    // Check for overpayment and transfer excess to Scout Funds
+    const { data: updatedAccount } = await supabase
+      .from('scout_accounts')
+      .select('billing_balance')
+      .eq('id', scoutAccountId)
+      .single()
+
+    // If billing went positive (overpayment), auto-transfer to funds
+    if (updatedAccount && (updatedAccount.billing_balance || 0) > 0) {
+      const overpaymentAmount = updatedAccount.billing_balance || 0
+      const { error: transferError } = await supabase.rpc('auto_transfer_overpayment', {
+        p_scout_account_id: scoutAccountId,
+        p_amount: overpaymentAmount,
+      })
+
+      if (transferError) {
+        console.error('Failed to transfer overpayment:', transferError)
+        // Don't fail the payment, just log the error
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 interface ScoutAccount {
   id: string
-  balance: number | null
+  billing_balance: number | null
   scout_id: string
   scouts: {
     id: string
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
     .select(
       `
       id,
-      balance,
+      billing_balance,
       scout_id,
       scouts (
         id,
@@ -124,9 +124,9 @@ export default async function DashboardPage() {
 
   // Calculate summary stats (for management roles)
   const totalScouts = scoutAccounts?.length || 0
-  const totalBalance = scoutAccounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0
-  const scoutsOwing = scoutAccounts?.filter((acc) => (acc.balance || 0) < 0).length || 0
-  const scoutsWithCredit = scoutAccounts?.filter((acc) => (acc.balance || 0) > 0).length || 0
+  const totalBalance = scoutAccounts?.reduce((sum, acc) => sum + (acc.billing_balance || 0), 0) || 0
+  const scoutsOwing = scoutAccounts?.filter((acc) => (acc.billing_balance || 0) < 0).length || 0
+  const scoutsWithCredit = scoutAccounts?.filter((acc) => (acc.billing_balance || 0) > 0).length || 0
 
   // Get recent journal entries (for management roles)
   let recentTransactions: JournalEntry[] | null = null
@@ -177,14 +177,14 @@ export default async function DashboardPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Current Balance</CardDescription>
                 <CardTitle
-                  className={`text-4xl ${(myAccount.balance || 0) < 0 ? 'text-error' : 'text-success'}`}
+                  className={`text-4xl ${(myAccount.billing_balance || 0) < 0 ? 'text-error' : 'text-success'}`}
                 >
-                  {formatCurrency(myAccount.balance || 0)}
+                  {formatCurrency(myAccount.billing_balance || 0)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {(myAccount.balance || 0) < 0 ? 'Amount owed' : 'Credit balance'}
+                  {(myAccount.billing_balance || 0) < 0 ? 'Amount owed' : 'Credit balance'}
                 </p>
               </CardContent>
             </Card>
@@ -282,10 +282,10 @@ export default async function DashboardPage() {
                       </div>
                       <span
                         className={`text-lg font-bold ${
-                          (account.balance || 0) < 0 ? 'text-error' : 'text-success'
+                          (account.billing_balance || 0) < 0 ? 'text-error' : 'text-success'
                         }`}
                       >
-                        {formatCurrency(account.balance || 0)}
+                        {formatCurrency(account.billing_balance || 0)}
                       </span>
                     </Link>
                   ))}
@@ -430,10 +430,10 @@ export default async function DashboardPage() {
                     </div>
                     <span
                       className={`font-medium ${
-                        (account.balance || 0) < 0 ? 'text-error' : 'text-success'
+                        (account.billing_balance || 0) < 0 ? 'text-error' : 'text-success'
                       }`}
                     >
-                      {formatCurrency(account.balance || 0)}
+                      {formatCurrency(account.billing_balance || 0)}
                     </span>
                   </div>
                 ))}

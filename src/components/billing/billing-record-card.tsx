@@ -11,6 +11,7 @@ interface BillingCharge {
   is_paid: boolean | null
   is_void: boolean | null
   scout_accounts: {
+    scout_id: string
     scouts: {
       first_name: string
       last_name: string
@@ -175,12 +176,13 @@ export function BillingRecordCard({
 
                   {/* Actions */}
                   <div className="w-8 flex-shrink-0 flex justify-end">
-                    {!chargeIsVoid && !charge.is_paid && canVoid && (
+                    {!chargeIsVoid && (
                       <BillingChargeActions
                         billingChargeId={charge.id}
                         billingDescription={description}
                         amount={charge.amount}
                         scoutName={scoutName}
+                        scoutId={charge.scout_accounts?.scout_id || ''}
                         isVoid={chargeIsVoid}
                         isPaid={!!charge.is_paid}
                         canVoid={canVoid}

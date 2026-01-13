@@ -36,7 +36,7 @@ export function MemberRoleEditor({
     setError(null)
     setSuccess(false)
 
-    const result = await updateMemberRole(unitId, membershipId, newRole, null)
+    const result = await updateMemberRole(unitId, membershipId, newRole)
 
     if (result.success) {
       setRole(newRole)

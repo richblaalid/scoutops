@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         id,
         scout_id,
         unit_id,
-        balance,
+        billing_balance,
         scouts (
           id,
           first_name,
@@ -125,9 +125,9 @@ export async function POST(request: NextRequest) {
       .eq('id', membership.unit_id)
       .single()
 
-    // Calculate amount - use provided amount or balance owed
-    const balance = scoutAccount.balance || 0
-    const amountCents = amount || Math.round(Math.abs(balance) * 100)
+    // Calculate amount - use provided amount or billing balance owed
+    const billingBalance = scoutAccount.billing_balance || 0
+    const amountCents = amount || Math.round(Math.abs(billingBalance) * 100)
 
     if (amountCents < 100) {
       return NextResponse.json(
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
       scoutName: `${scout.first_name} ${scout.last_name}`,
       unitName: unit?.name || 'Scout Unit',
       unitLogoUrl: unit?.logo_url,
-      balance: balance, // negative = owes
+      balance: billingBalance, // negative = owes
       ledgerEntries,
       paymentUrl,
       customMessage,

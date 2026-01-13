@@ -64,7 +64,8 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
     .from('scout_accounts')
     .select(`
       id,
-      balance,
+      billing_balance,
+      funds_balance,
       created_at,
       updated_at,
       scouts (
@@ -85,7 +86,8 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
 
   interface ScoutAccount {
     id: string
-    balance: number | null
+    billing_balance: number | null
+    funds_balance: number
     created_at: string | null
     updated_at: string | null
     scouts: {
@@ -99,7 +101,8 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
   }
 
   const account = accountData as ScoutAccount
-  const balance = account.balance || 0
+  const billingBalance = account.billing_balance || 0
+  const fundsBalance = account.funds_balance || 0
   const scoutName = `${account.scouts?.first_name} ${account.scouts?.last_name}`
 
   // Use service client to fetch transactions - access already verified above
@@ -136,7 +139,7 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
   let squareLocationId: string | null = null
   let squareEnvironment: 'sandbox' | 'production' = 'sandbox'
 
-  if (unitId && (canRecordPayment || (isParent && balance < 0))) {
+  if (unitId && (canRecordPayment || (isParent && billingBalance < 0))) {
     const { data: credentials } = await serviceClient
       .from('unit_square_credentials')
       .select('location_id, environment')
@@ -180,25 +183,37 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
           </p>
         </div>
         <div className="flex flex-col items-start gap-3 sm:items-end">
-          <div className="text-right">
-            <p className="text-sm text-stone-500">Current Balance</p>
-            <p
-              className={`text-3xl font-bold ${
-                balance < 0 ? 'text-error' : balance > 0 ? 'text-success' : 'text-stone-900'
-              }`}
-            >
-              {formatCurrency(balance)}
-            </p>
-            <p className="text-sm text-stone-500">
-              {balance < 0 ? 'Owes' : balance > 0 ? 'Credit' : 'Zero Balance'}
-            </p>
+          {/* Billing Balance */}
+          <div className="flex gap-6">
+            <div className="text-right">
+              <p className="text-sm text-stone-500">Amount Owed</p>
+              <p
+                className={`text-2xl font-bold ${
+                  billingBalance < 0 ? 'text-error' : 'text-stone-900'
+                }`}
+              >
+                {billingBalance < 0 ? formatCurrency(Math.abs(billingBalance)) : '$0.00'}
+              </p>
+            </div>
+            {/* Scout Funds */}
+            <div className="text-right">
+              <p className="text-sm text-stone-500">Scout Funds</p>
+              <p
+                className={`text-2xl font-bold ${
+                  fundsBalance > 0 ? 'text-success' : 'text-stone-900'
+                }`}
+              >
+                {formatCurrency(fundsBalance)}
+              </p>
+            </div>
           </div>
           {account.scouts && (
             <AccountActions
               scoutId={account.scouts.id}
               scoutAccountId={account.id}
               scoutName={scoutName}
-              balance={balance}
+              billingBalance={billingBalance}
+              fundsBalance={fundsBalance}
               userRole={userRole}
               isParent={isParent}
               squareConfig={squareConfigForActions}

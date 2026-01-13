@@ -34,6 +34,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [billingType, setBillingType] = useState<BillingType>('split')
+  const [sendNotifications, setSendNotifications] = useState(false)
 
   const parsedAmount = parseFloat(amount) || 0
 
@@ -132,10 +133,25 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
         billingType,
       })
 
+      // Send notifications if checkbox was checked
+      if (sendNotifications && result.billing_record_id) {
+        try {
+          await fetch(`/api/billing-records/${result.billing_record_id}/notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          })
+        } catch (notifyError) {
+          console.error('Failed to send notifications:', notifyError)
+          // Don't fail the whole operation if notifications fail
+        }
+      }
+
       setSuccess(true)
       setAmount('')
       setDescription('')
       setSelectedScouts(new Set())
+      setSendNotifications(false)
 
       // Refresh server components to show new record
       setTimeout(() => {
@@ -340,6 +356,26 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       {success && (
         <div className="rounded-lg bg-success-light p-3 text-sm font-medium text-success-dark">
           Billing created successfully! Refreshing...
+        </div>
+      )}
+
+      {/* Notification Option */}
+      {selectedScouts.size > 0 && parsedAmount > 0 && (
+        <div className="rounded-lg border border-stone-200 p-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sendNotifications}
+              onChange={(e) => setSendNotifications(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
+            />
+            <div>
+              <span className="font-medium text-stone-900">Send payment notifications to parents</span>
+              <p className="text-sm text-stone-500 mt-0.5">
+                Each parent will receive an email with the charge details and a payment link
+              </p>
+            </div>
+          </label>
         </div>
       )}
 

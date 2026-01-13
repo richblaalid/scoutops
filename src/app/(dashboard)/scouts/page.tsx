@@ -50,7 +50,7 @@ export default async function ScoutsPage() {
     is_active: boolean | null
     date_of_birth: string | null
     bsa_member_id: string | null
-    scout_accounts: { id: string; balance: number | null } | null
+    scout_accounts: { id: string; billing_balance: number | null } | null
   }
 
   const canManageScouts = canPerformAction(membership.role, 'manage_scouts')
@@ -82,7 +82,7 @@ export default async function ScoutsPage() {
           bsa_member_id,
           scout_accounts (
             id,
-            balance
+            billing_balance
           )
         `)
         .in('id', scoutIds)
@@ -107,7 +107,7 @@ export default async function ScoutsPage() {
         bsa_member_id,
         scout_accounts (
           id,
-          balance
+          billing_balance
         )
       `)
       .eq('unit_id', membership.unit_id)

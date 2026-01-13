@@ -14,7 +14,7 @@ interface Scout {
   last_name: string
   scout_accounts: {
     id: string
-    balance: number | null
+    billing_balance: number | null
   } | null
 }
 
@@ -366,12 +366,11 @@ export function ParentPaymentForm({
             >
               <option value="">Select a scout...</option>
               {scouts.map((scout) => {
-                const balance = scout.scout_accounts?.balance || 0
-                const owes = balance < 0
+                const balance = scout.scout_accounts?.billing_balance || 0
                 return (
                   <option key={scout.id} value={scout.id}>
                     {scout.first_name} {scout.last_name}{' '}
-                    ({owes ? `owes ${formatCurrency(Math.abs(balance))}` : formatCurrency(balance)})
+                    ({balance < 0 ? `owes ${formatCurrency(Math.abs(balance))}` : 'paid up'})
                   </option>
                 )
               })}
@@ -399,7 +398,7 @@ export function ParentPaymentForm({
             {selectedScout && (
               <div className="flex gap-2">
                 {(() => {
-                  const balance = scoutAccount?.balance || 0
+                  const balance = scoutAccount?.billing_balance || 0
                   if (balance < 0) {
                     return (
                       <button

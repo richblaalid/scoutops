@@ -31,6 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         expires_at,
         unit_id,
         scout_account_id,
+        billing_charge_id,
         units (
           name
         ),
@@ -87,17 +88,57 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Payment link is not associated with a scout account' }, { status: 400 })
     }
 
-    // Get current balance from scout_accounts for live balance display
+    // Get current balances from scout_accounts for live balance display
     const { data: scoutAccount } = await supabase
       .from('scout_accounts')
-      .select('balance')
+      .select('billing_balance, funds_balance')
       .eq('id', paymentLink.scout_account_id)
       .single()
 
-    // Current balance (negative = owes money)
-    const currentBalance = scoutAccount?.balance || 0
-    // Amount owed in cents (positive number)
-    const currentBalanceCents = Math.round(Math.abs(currentBalance) * 100)
+    // Billing balance (negative = owes money, 0 = paid up)
+    const billingBalance = scoutAccount?.billing_balance || 0
+    // Funds balance (scout's available funds from fundraising/overpayments)
+    const fundsBalance = scoutAccount?.funds_balance || 0
+    // Amount owed in cents (positive number) - only if billing balance is negative
+    const currentBillingCents = billingBalance < 0 ? Math.round(Math.abs(billingBalance) * 100) : 0
+    // Available scout funds in cents
+    const availableFundsCents = Math.round(fundsBalance * 100)
+
+    // Get billing charge details if this is a charge-specific link
+    let chargeInfo: { id: string; amount: number; description: string; isPaid: boolean } | null = null
+    if (paymentLink.billing_charge_id) {
+      const { data: chargeData } = await supabase
+        .from('billing_charges')
+        .select(`
+          id,
+          amount,
+          is_paid,
+          is_void,
+          billing_records (
+            description
+          )
+        `)
+        .eq('id', paymentLink.billing_charge_id)
+        .single()
+
+      // Type assertion for migration-added columns
+      const charge = chargeData as unknown as {
+        id: string
+        amount: number
+        is_paid: boolean | null
+        is_void: boolean | null
+        billing_records: { description: string } | null
+      } | null
+
+      if (charge && !charge.is_void) {
+        chargeInfo = {
+          id: charge.id,
+          amount: Math.round(Number(charge.amount) * 100),
+          description: charge.billing_records?.description || paymentLink.description || 'Charge',
+          isPaid: charge.is_paid === true,
+        }
+      }
+    }
 
     // Get unit fee settings and logo for dynamic fee calculation
     const { data: unitSettings } = await supabase
@@ -113,8 +154,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       id: paymentLink.id,
       // Original link amount (for reference)
       originalAmount: paymentLink.amount,
-      // Live balance in cents
-      currentBalanceCents,
+      // Live billing balance in cents (amount owed)
+      currentBillingCents,
+      // Available scout funds in cents (from fundraising/overpayments)
+      availableFundsCents,
+      // Billing charge info if this is a charge-specific link
+      billingChargeId: paymentLink.billing_charge_id || null,
+      chargeInfo,
       // Fee settings for client-side calculation
       feePercent: Number(unitSettings?.processing_fee_percent) || 0.026,
       feeFixedCents: Math.round((Number(unitSettings?.processing_fee_fixed) || 0.10) * 100),

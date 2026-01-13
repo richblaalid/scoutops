@@ -5,15 +5,17 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { PaymentModal } from './payment-modal'
 import { SendPaymentRequestModal } from './send-payment-request-modal'
+import { UseFundsModal } from './use-funds-modal'
 import { PaymentEntry } from '@/components/payments/payment-entry'
 import { Card, CardContent } from '@/components/ui/card'
-import { ChevronDown, ChevronUp, CreditCard } from 'lucide-react'
+import { ChevronDown, ChevronUp, CreditCard, Wallet } from 'lucide-react'
 
 interface AccountActionsProps {
   scoutId: string
   scoutAccountId: string
   scoutName: string
-  balance: number
+  billingBalance: number
+  fundsBalance: number
   userRole: string
   isParent: boolean
   squareConfig: {
@@ -32,7 +34,8 @@ export function AccountActions({
   scoutId,
   scoutAccountId,
   scoutName,
-  balance,
+  billingBalance,
+  fundsBalance,
   userRole,
   isParent,
   squareConfig,
@@ -43,8 +46,11 @@ export function AccountActions({
 }: AccountActionsProps) {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false)
+  const [isUseFundsModalOpen, setIsUseFundsModalOpen] = useState(false)
   const isFinancialRole = userRole === 'admin' || userRole === 'treasurer'
-  const owesBalance = balance < 0
+  const owesBalance = billingBalance < 0
+  const hasFunds = fundsBalance > 0
+  const canUseFunds = hasFunds && owesBalance
   const canRecordPayment = isFinancialRole && unitId
 
   return (
@@ -68,6 +74,28 @@ export function AccountActions({
           </Button>
         )}
 
+        {/* Use Funds button - for parents when funds available and owes money */}
+        {isParent && canUseFunds && (
+          <>
+            <Button
+              onClick={() => setIsUseFundsModalOpen(true)}
+              variant="outline"
+              className="gap-2 border-success text-success hover:bg-success-light"
+            >
+              <Wallet className="h-4 w-4" />
+              Use Scout Funds
+            </Button>
+            <UseFundsModal
+              isOpen={isUseFundsModalOpen}
+              onClose={() => setIsUseFundsModalOpen(false)}
+              scoutAccountId={scoutAccountId}
+              scoutName={scoutName}
+              billingBalance={billingBalance}
+              fundsBalance={fundsBalance}
+            />
+          </>
+        )}
+
         {/* Parent actions */}
         {isParent && owesBalance && squareConfig && (
           <>
@@ -77,7 +105,7 @@ export function AccountActions({
               onClose={() => setIsPaymentModalOpen(false)}
               scoutAccountId={scoutAccountId}
               scoutName={scoutName}
-              currentBalance={balance}
+              currentBalance={billingBalance}
               applicationId={squareConfig.applicationId}
               locationId={squareConfig.locationId}
               environment={squareConfig.environment}
@@ -91,7 +119,7 @@ export function AccountActions({
             scoutAccountId={scoutAccountId}
             scoutId={scoutId}
             scoutName={scoutName}
-            balance={balance}
+            balance={billingBalance}
           />
         )}
 
@@ -115,7 +143,7 @@ export function AccountActions({
               environment={squareEnvironment}
               scoutAccountId={scoutAccountId}
               scoutName={scoutName}
-              currentBalance={balance}
+              currentBalance={billingBalance}
               onPaymentComplete={() => setIsPaymentFormOpen(false)}
             />
           </CardContent>

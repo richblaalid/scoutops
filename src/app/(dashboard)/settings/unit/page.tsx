@@ -16,7 +16,6 @@ export default async function UnitSettingsPage() {
   }
 
   // Get user's membership and unit info
-  // Note: Must specify the foreign key since section_unit_id also references units
   const { data: membership } = await supabase
     .from('unit_memberships')
     .select(

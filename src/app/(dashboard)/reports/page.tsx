@@ -7,7 +7,8 @@ import Link from 'next/link'
 
 interface ScoutAccount {
   id: string
-  balance: number | null
+  billing_balance: number | null
+  funds_balance: number
   scouts: {
     id: string
     first_name: string
@@ -76,7 +77,8 @@ export default async function ReportsPage() {
     .from('scout_accounts')
     .select(`
       id,
-      balance,
+      billing_balance,
+      funds_balance,
       scouts (
         id,
         first_name,
@@ -86,7 +88,7 @@ export default async function ReportsPage() {
       )
     `)
     .eq('unit_id', membership.unit_id)
-    .order('balance', { ascending: true })
+    .order('billing_balance', { ascending: true })
 
   const accounts = (accountsData as ScoutAccount[]) || []
 
@@ -114,30 +116,30 @@ export default async function ReportsPage() {
 
   // Calculate totals
   const totalOwed = accounts
-    .filter((a) => (a.balance || 0) < 0)
-    .reduce((sum, a) => sum + Math.abs(a.balance || 0), 0)
+    .filter((a) => (a.billing_balance || 0) < 0)
+    .reduce((sum, a) => sum + Math.abs(a.billing_balance || 0), 0)
 
-  const totalCredit = accounts
-    .filter((a) => (a.balance || 0) > 0)
-    .reduce((sum, a) => sum + (a.balance || 0), 0)
+  const totalFunds = accounts
+    .reduce((sum, a) => sum + (a.funds_balance || 0), 0)
 
-  const netBalance = accounts.reduce((sum, a) => sum + (a.balance || 0), 0)
+  const netBilling = accounts.reduce((sum, a) => sum + (a.billing_balance || 0), 0)
 
   // Group by patrol
   const patrolBalances = accounts.reduce(
     (groups, account) => {
       const patrol = account.scouts?.patrol || 'No Patrol'
       if (!groups[patrol]) {
-        groups[patrol] = { total: 0, count: 0, owing: 0 }
+        groups[patrol] = { billing: 0, funds: 0, count: 0, owing: 0 }
       }
-      groups[patrol].total += account.balance || 0
+      groups[patrol].billing += account.billing_balance || 0
+      groups[patrol].funds += account.funds_balance || 0
       groups[patrol].count += 1
-      if ((account.balance || 0) < 0) {
-        groups[patrol].owing += Math.abs(account.balance || 0)
+      if ((account.billing_balance || 0) < 0) {
+        groups[patrol].owing += Math.abs(account.billing_balance || 0)
       }
       return groups
     },
-    {} as Record<string, { total: number; count: number; owing: number }>
+    {} as Record<string, { billing: number; funds: number; count: number; owing: number }>
   )
 
   return (
@@ -169,20 +171,20 @@ export default async function ReportsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total Credit</CardDescription>
+            <CardDescription>Scout Funds Held</CardDescription>
             <CardTitle className="text-2xl text-success">
-              {formatCurrency(totalCredit)}
+              {formatCurrency(totalFunds)}
             </CardTitle>
           </CardHeader>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Net Balance</CardDescription>
+            <CardDescription>Net Billing</CardDescription>
             <CardTitle
-              className={`text-2xl ${netBalance < 0 ? 'text-error' : 'text-success'}`}
+              className={`text-2xl ${netBilling < 0 ? 'text-error' : 'text-success'}`}
             >
-              {formatCurrency(netBalance)}
+              {formatCurrency(netBilling)}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -221,10 +223,10 @@ export default async function ReportsPage() {
                       </td>
                       <td
                         className={`py-3 text-right font-medium ${
-                          data.total < 0 ? 'text-error' : 'text-success'
+                          data.billing < 0 ? 'text-error' : 'text-success'
                         }`}
                       >
-                        {formatCurrency(data.total)}
+                        {formatCurrency(data.billing)}
                       </td>
                     </tr>
                   ))}
@@ -238,10 +240,10 @@ export default async function ReportsPage() {
                   </td>
                   <td
                     className={`py-3 text-right ${
-                      netBalance < 0 ? 'text-error' : 'text-success'
+                      netBilling < 0 ? 'text-error' : 'text-success'
                     }`}
                   >
-                    {formatCurrency(netBalance)}
+                    {formatCurrency(netBilling)}
                   </td>
                 </tr>
               </tfoot>
@@ -255,12 +257,12 @@ export default async function ReportsPage() {
         <CardHeader>
           <CardTitle>Scouts Owing</CardTitle>
           <CardDescription>
-            {accounts.filter((a) => (a.balance || 0) < 0).length} scouts with
-            negative balance
+            {accounts.filter((a) => (a.billing_balance || 0) < 0).length} scouts with
+            outstanding balance
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {accounts.filter((a) => (a.balance || 0) < 0).length > 0 ? (
+          {accounts.filter((a) => (a.billing_balance || 0) < 0).length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -272,7 +274,7 @@ export default async function ReportsPage() {
                 </thead>
                 <tbody>
                   {accounts
-                    .filter((a) => (a.balance || 0) < 0)
+                    .filter((a) => (a.billing_balance || 0) < 0)
                     .map((account) => (
                       <tr key={account.id} className="border-b last:border-0">
                         <td className="py-3 pr-4">
@@ -287,7 +289,7 @@ export default async function ReportsPage() {
                           {account.scouts?.patrol || '—'}
                         </td>
                         <td className="py-3 text-right font-medium text-error">
-                          {formatCurrency(Math.abs(account.balance || 0))}
+                          {formatCurrency(Math.abs(account.billing_balance || 0))}
                         </td>
                       </tr>
                     ))}

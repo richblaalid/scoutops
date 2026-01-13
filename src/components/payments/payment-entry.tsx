@@ -19,7 +19,7 @@ interface Scout {
   last_name: string
   scout_accounts: {
     id: string
-    balance: number | null
+    billing_balance: number | null
   } | null
 }
 
@@ -88,14 +88,14 @@ export function PaymentEntry({
 
   // Get selected scout info
   const selectedScout = isSingleScoutMode
-    ? { id: '', first_name: scoutName?.split(' ')[0] || '', last_name: scoutName?.split(' ').slice(1).join(' ') || '', scout_accounts: { id: scoutAccountId!, balance: initialBalance || 0 } }
+    ? { id: '', first_name: scoutName?.split(' ')[0] || '', last_name: scoutName?.split(' ').slice(1).join(' ') || '', scout_accounts: { id: scoutAccountId!, billing_balance: initialBalance || 0 } }
     : scouts?.find((s) => s.id === selectedScoutId)
 
   const scoutAccount = isSingleScoutMode
-    ? { id: scoutAccountId!, balance: initialBalance || 0 }
+    ? { id: scoutAccountId!, billing_balance: initialBalance || 0 }
     : selectedScout?.scout_accounts
 
-  const currentBalance = scoutAccount?.balance || 0
+  const currentBalance = scoutAccount?.billing_balance || 0
 
   // Calculate amounts
   const parsedAmount = parseFloat(amount) || 0
@@ -560,10 +560,10 @@ export function PaymentEntry({
           >
             <option value="">Select a scout...</option>
             {scouts.map((scout) => {
-              const balance = scout.scout_accounts?.balance || 0
+              const balance = scout.scout_accounts?.billing_balance || 0
               return (
                 <option key={scout.id} value={scout.id}>
-                  {scout.first_name} {scout.last_name} ({formatCurrency(balance)})
+                  {scout.first_name} {scout.last_name} ({balance < 0 ? `owes ${formatCurrency(Math.abs(balance))}` : 'paid up'})
                 </option>
               )
             })}

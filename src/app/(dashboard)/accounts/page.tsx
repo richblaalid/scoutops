@@ -6,7 +6,8 @@ import { AccountsList } from '@/components/accounts/accounts-list'
 
 interface ScoutAccount {
   id: string
-  balance: number | null
+  billing_balance: number | null
+  funds_balance: number
   scout_id: string
   scouts: {
     id: string
@@ -80,7 +81,8 @@ export default async function AccountsPage() {
     .from('scout_accounts')
     .select(`
       id,
-      balance,
+      billing_balance,
+      funds_balance,
       scout_id,
       scouts (
         id,
@@ -92,7 +94,7 @@ export default async function AccountsPage() {
       )
     `)
     .eq('unit_id', membership.unit_id)
-    .order('balance', { ascending: true })
+    .order('billing_balance', { ascending: true })
 
   if (hasFilteredView(role) && linkedScoutIds.length > 0) {
     accountsQuery = accountsQuery.in('scout_id', linkedScoutIds)
@@ -104,16 +106,16 @@ export default async function AccountsPage() {
   const { data: accountsData } = await accountsQuery
   const accounts = (accountsData as ScoutAccount[]) || []
 
-  // Calculate totals
+  // Calculate totals - now using separate billing and funds balances
   const totalOwed = accounts
-    .filter((a) => (a.balance || 0) < 0)
-    .reduce((sum, a) => sum + Math.abs(a.balance || 0), 0)
+    .filter((a) => (a.billing_balance || 0) < 0)
+    .reduce((sum, a) => sum + Math.abs(a.billing_balance || 0), 0)
 
-  const totalCredit = accounts
-    .filter((a) => (a.balance || 0) > 0)
-    .reduce((sum, a) => sum + (a.balance || 0), 0)
+  const totalFunds = accounts
+    .reduce((sum, a) => sum + (a.funds_balance || 0), 0)
 
-  const netBalance = accounts.reduce((sum, a) => sum + (a.balance || 0), 0)
+  const scoutsWithDebt = accounts.filter((a) => (a.billing_balance || 0) < 0).length
+  const scoutsWithFunds = accounts.filter((a) => (a.funds_balance || 0) > 0).length
 
   return (
     <div className="space-y-6">
@@ -142,37 +144,35 @@ export default async function AccountsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                From {accounts.filter((a) => (a.balance || 0) < 0).length} scouts
+                From {scoutsWithDebt} scout{scoutsWithDebt !== 1 ? 's' : ''}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Total Credit Balance</CardDescription>
+              <CardDescription>Scout Funds Held</CardDescription>
               <CardTitle className="text-2xl text-success">
-                {formatCurrency(totalCredit)}
+                {formatCurrency(totalFunds)}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                From {accounts.filter((a) => (a.balance || 0) > 0).length} scouts
+                For {scoutsWithFunds} scout{scoutsWithFunds !== 1 ? 's' : ''}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Net Balance</CardDescription>
-              <CardTitle
-                className={`text-2xl ${netBalance < 0 ? 'text-error' : 'text-success'}`}
-              >
-                {formatCurrency(netBalance)}
+              <CardDescription>Total Accounts</CardDescription>
+              <CardTitle className="text-2xl text-stone-900">
+                {accounts.length}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                {netBalance < 0 ? 'Net owed to unit' : 'Net credit available'}
+                Active scout accounts
               </p>
             </CardContent>
           </Card>

@@ -12,7 +12,6 @@ interface InviteMemberParams {
   email: string
   role: MemberRole
   scoutIds?: string[]
-  sectionUnitId?: string
 }
 
 interface ActionResult {
@@ -22,7 +21,7 @@ interface ActionResult {
 
 // Invite a new member to the unit
 // Creates a membership record with status='invited'
-export async function inviteMember({ unitId, email, role, scoutIds, sectionUnitId }: InviteMemberParams): Promise<ActionResult> {
+export async function inviteMember({ unitId, email, role, scoutIds }: InviteMemberParams): Promise<ActionResult> {
   const supabase = await createClient()
 
   // Get current user
@@ -79,7 +78,6 @@ export async function inviteMember({ unitId, email, role, scoutIds, sectionUnitI
       role,
       status: 'invited',
       scout_ids: role === 'parent' && scoutIds?.length ? scoutIds : null,
-      section_unit_id: role === 'leader' && sectionUnitId ? sectionUnitId : null,
       invited_by: user.id,
       invited_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -205,8 +203,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
 export async function updateMemberRole(
   unitId: string,
   memberId: string,
-  newRole: MemberRole,
-  sectionUnitId?: string | null
+  newRole: MemberRole
 ): Promise<ActionResult> {
   const supabase = await createClient()
 
@@ -250,18 +247,10 @@ export async function updateMemberRole(
     }
   }
 
-  // Update the role (and section if provided, or clear it if role is not leader)
-  const updateData: { role: MemberRole; section_unit_id?: string | null } = { role: newRole }
-  if (newRole === 'leader' && sectionUnitId !== undefined) {
-    updateData.section_unit_id = sectionUnitId
-  } else if (newRole !== 'leader') {
-    // Clear section assignment when changing away from leader role
-    updateData.section_unit_id = null
-  }
-
+  // Update the role
   const { error } = await supabase
     .from('unit_memberships')
-    .update(updateData)
+    .update({ role: newRole })
     .eq('id', memberId)
 
   if (error) {

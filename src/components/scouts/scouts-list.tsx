@@ -16,7 +16,7 @@ interface Scout {
   is_active: boolean | null
   date_of_birth: string | null
   bsa_member_id: string | null
-  scout_accounts: { id: string; balance: number | null } | null
+  scout_accounts: { id: string; billing_balance: number | null } | null
 }
 
 interface ScoutsListProps {
@@ -25,7 +25,7 @@ interface ScoutsListProps {
   unitId: string
 }
 
-type SortColumn = 'name' | 'patrol' | 'rank' | 'status' | 'balance'
+type SortColumn = 'name' | 'patrol' | 'rank' | 'status' | 'billing'
 type SortDirection = 'asc' | 'desc'
 type StatusFilter = 'all' | 'active' | 'inactive'
 
@@ -324,9 +324,9 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
         case 'status':
           comparison = (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1
           break
-        case 'balance':
-          const balanceA = a.scout_accounts?.balance ?? 0
-          const balanceB = b.scout_accounts?.balance ?? 0
+        case 'billing':
+          const balanceA = a.scout_accounts?.billing_balance ?? 0
+          const balanceB = b.scout_accounts?.billing_balance ?? 0
           comparison = balanceA - balanceB
           break
       }
@@ -432,31 +432,31 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                 <SortIcon direction={sortDirection} active={sortColumn === 'name'} />
               </button>
             </th>
-            <th className={headerClass} aria-sort={getAriaSort('patrol')}>
+            <th className={`${headerClass} hidden sm:table-cell`} aria-sort={getAriaSort('patrol')}>
               <button type="button" onClick={() => handleSort('patrol')} className={headerButtonClass}>
                 Patrol
                 <SortIcon direction={sortDirection} active={sortColumn === 'patrol'} />
               </button>
             </th>
-            <th className={headerClass} aria-sort={getAriaSort('rank')}>
+            <th className={`${headerClass} hidden md:table-cell`} aria-sort={getAriaSort('rank')}>
               <button type="button" onClick={() => handleSort('rank')} className={headerButtonClass}>
                 Rank
                 <SortIcon direction={sortDirection} active={sortColumn === 'rank'} />
               </button>
             </th>
-            <th className={headerClass} aria-sort={getAriaSort('status')}>
+            <th className={`${headerClass} hidden lg:table-cell`} aria-sort={getAriaSort('status')}>
               <button type="button" onClick={() => handleSort('status')} className={headerButtonClass}>
                 Status
                 <SortIcon direction={sortDirection} active={sortColumn === 'status'} />
               </button>
             </th>
-            <th className={`${headerClass} text-right`} aria-sort={getAriaSort('balance')}>
-              <button type="button" onClick={() => handleSort('balance')} className={`${headerButtonClass} justify-end w-full`}>
-                Balance
-                <SortIcon direction={sortDirection} active={sortColumn === 'balance'} />
+            <th className={`${headerClass} text-right whitespace-nowrap`} aria-sort={getAriaSort('billing')}>
+              <button type="button" onClick={() => handleSort('billing')} className={`${headerButtonClass} justify-end w-full`}>
+                Billing
+                <SortIcon direction={sortDirection} active={sortColumn === 'billing'} />
               </button>
             </th>
-            {canManage && <th className="pb-3 font-medium">Actions</th>}
+            {canManage && <th className="pb-3 pl-4 sm:pl-6 font-medium whitespace-nowrap">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -468,7 +468,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
             </tr>
           ) : (
             filteredAndSortedScouts.map((scout) => {
-            const balance = scout.scout_accounts?.balance ?? 0
+            const balance = scout.scout_accounts?.billing_balance ?? 0
             const accountId = scout.scout_accounts?.id
 
             return (
@@ -481,11 +481,15 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                     {scout.bsa_member_id && (
                       <p className="text-xs text-stone-500">BSA# {scout.bsa_member_id}</p>
                     )}
+                    {/* Show patrol on mobile under name */}
+                    {scout.patrol && (
+                      <p className="text-xs text-stone-500 sm:hidden">{scout.patrol}</p>
+                    )}
                   </div>
                 </td>
-                <td className="py-3 pr-4 text-stone-600">{scout.patrol || '—'}</td>
-                <td className="py-3 pr-4 text-stone-600">{scout.rank || '—'}</td>
-                <td className="py-3 pr-4">
+                <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">{scout.patrol || '—'}</td>
+                <td className="hidden py-3 pr-4 text-stone-600 md:table-cell">{scout.rank || '—'}</td>
+                <td className="hidden py-3 pr-4 lg:table-cell">
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                       scout.is_active
@@ -496,17 +500,17 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                     {scout.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="py-3 pr-4 text-right">
+                <td className="py-3 pr-2 text-right whitespace-nowrap">
                   <span
                     className={`font-medium ${
-                      balance < 0 ? 'text-error' : balance > 0 ? 'text-success' : 'text-stone-600'
+                      balance < 0 ? 'text-error' : 'text-stone-900'
                     }`}
                   >
-                    {formatCurrency(balance)}
+                    {balance < 0 ? formatCurrency(Math.abs(balance)) : '$0.00'}
                   </span>
                 </td>
                 {canManage && (
-                  <td className="py-3">
+                  <td className="py-3 pl-4 sm:pl-6 whitespace-nowrap">
                     <div className="flex gap-2">
                       <Link
                         href={`/scouts/${scout.id}`}
@@ -523,7 +527,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                       {accountId && (
                         <Link
                           href={`/accounts/${accountId}`}
-                          className="text-sm text-forest-600 hover:text-forest-800"
+                          className="text-sm text-forest-600 hover:text-forest-800 hidden sm:inline"
                         >
                           Account
                         </Link>

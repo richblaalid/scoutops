@@ -25,6 +25,7 @@ interface BillingRecord {
     is_paid: boolean | null
     is_void: boolean | null
     scout_accounts: {
+      scout_id: string
       scouts: {
         first_name: string
         last_name: string
@@ -119,6 +120,7 @@ export default async function BillingPage() {
         is_paid,
         is_void,
         scout_accounts (
+          scout_id,
           scouts (
             first_name,
             last_name

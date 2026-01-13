@@ -31,7 +31,7 @@ interface Scout {
   last_name: string
   scout_accounts: {
     id: string
-    balance: number | null
+    billing_balance: number | null
   } | null
 }
 
@@ -89,7 +89,7 @@ export default async function PaymentsPage() {
         last_name,
         scout_accounts (
           id,
-          balance
+          billing_balance
         )
       `)
       .eq('unit_id', membership.unit_id)

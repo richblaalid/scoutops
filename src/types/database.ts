@@ -509,6 +509,7 @@ export type Database = {
           journal_entry_id: string
           memo: string | null
           scout_account_id: string | null
+          target_balance: string | null
         }
         Insert: {
           account_id: string
@@ -518,6 +519,7 @@ export type Database = {
           journal_entry_id: string
           memo?: string | null
           scout_account_id?: string | null
+          target_balance?: string | null
         }
         Update: {
           account_id?: string
@@ -527,6 +529,7 @@ export type Database = {
           journal_entry_id?: string
           memo?: string | null
           scout_account_id?: string | null
+          target_balance?: string | null
         }
         Relationships: [
           {
@@ -719,7 +722,8 @@ export type Database = {
       }
       scout_accounts: {
         Row: {
-          balance: number | null
+          billing_balance: number | null
+          funds_balance: number
           created_at: string | null
           id: string
           scout_id: string
@@ -727,7 +731,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          balance?: number | null
+          billing_balance?: number | null
+          funds_balance?: number
           created_at?: string | null
           id?: string
           scout_id: string
@@ -735,7 +740,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          balance?: number | null
+          billing_balance?: number | null
+          funds_balance?: number
           created_at?: string | null
           id?: string
           scout_id?: string
@@ -1407,6 +1413,30 @@ export type Database = {
       validate_journal_entry_balance: {
         Args: { entry_id: string }
         Returns: boolean
+      }
+      transfer_funds_to_billing: {
+        Args: {
+          p_scout_account_id: string
+          p_amount: number
+          p_description?: string
+        }
+        Returns: Json
+      }
+      auto_transfer_overpayment: {
+        Args: {
+          p_scout_account_id: string
+          p_amount: number
+        }
+        Returns: undefined
+      }
+      credit_fundraising_to_scout: {
+        Args: {
+          p_scout_account_id: string
+          p_amount: number
+          p_description: string
+          p_fundraiser_type?: string
+        }
+        Returns: Json
       }
       create_linked_troop_group: {
         Args: {

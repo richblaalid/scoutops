@@ -26,7 +26,8 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
       *,
       scout_accounts (
         id,
-        balance
+        billing_balance,
+        funds_balance
       ),
       units (
         id,
@@ -65,13 +66,14 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     created_at: string | null
     updated_at: string | null
     unit_id: string
-    scout_accounts: { id: string; balance: number | null } | null
+    scout_accounts: { id: string; billing_balance: number | null; funds_balance: number } | null
     units: { id: string; name: string; unit_number: string } | null
   }
 
   const scout = scoutData as Scout
   const scoutAccount = scout.scout_accounts
-  const balance = scoutAccount?.balance ?? 0
+  const billingBalance = scoutAccount?.billing_balance ?? 0
+  const fundsBalance = scoutAccount?.funds_balance ?? 0
 
   // Get recent transactions for this scout
   const { data: transactionsData } = await supabase
@@ -195,22 +197,37 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
             <CardDescription>Current financial status</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span
-                className={`text-4xl font-bold ${
-                  balance < 0 ? 'text-error' : balance > 0 ? 'text-success' : 'text-stone-900'
-                }`}
-              >
-                {formatCurrency(balance)}
-              </span>
-              <span className="text-stone-500">
-                {balance < 0 ? '(owes)' : balance > 0 ? '(credit)' : '(zero balance)'}
-              </span>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {/* Scout Funds */}
+              <div>
+                <p className="text-sm font-medium text-stone-500">Scout Funds</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className={`text-3xl font-bold ${fundsBalance > 0 ? 'text-success' : 'text-stone-900'}`}>
+                    {formatCurrency(fundsBalance)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-stone-500">
+                  Available savings from fundraising
+                </p>
+              </div>
+
+              {/* Money Owed */}
+              <div>
+                <p className="text-sm font-medium text-stone-500">Money Owed</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className={`text-3xl font-bold ${billingBalance < 0 ? 'text-error' : 'text-stone-900'}`}>
+                    {billingBalance < 0 ? formatCurrency(Math.abs(billingBalance)) : '$0.00'}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-stone-500">
+                  {billingBalance < 0 ? 'Outstanding charges' : 'All paid up'}
+                </p>
+              </div>
             </div>
             {scoutAccount && (
               <Link
                 href={`/accounts/${scoutAccount.id}`}
-                className="mt-4 inline-block text-sm text-forest-600 hover:text-forest-800"
+                className="mt-6 inline-block text-sm text-forest-600 hover:text-forest-800"
               >
                 View full account details
               </Link>
