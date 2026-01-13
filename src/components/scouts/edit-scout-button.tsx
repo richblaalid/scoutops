@@ -6,6 +6,26 @@ import { Button } from '@/components/ui/button'
 import { ScoutForm } from './scout-form'
 import { Pencil } from 'lucide-react'
 
+interface Guardian {
+  id: string
+  relationship: string | null
+  is_primary: boolean | null
+  profiles: {
+    id: string
+    first_name: string | null
+    last_name: string | null
+    email: string
+    phone_primary: string | null
+  }
+}
+
+interface AvailableMember {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  email: string
+}
+
 interface EditScoutButtonProps {
   unitId: string
   scout: {
@@ -19,9 +39,11 @@ interface EditScoutButtonProps {
     bsa_member_id: string | null
     is_active: boolean | null
   }
+  guardians?: Guardian[]
+  availableMembers?: AvailableMember[]
 }
 
-export function EditScoutButton({ unitId, scout }: EditScoutButtonProps) {
+export function EditScoutButton({ unitId, scout, guardians = [], availableMembers = [] }: EditScoutButtonProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -35,6 +57,8 @@ export function EditScoutButton({ unitId, scout }: EditScoutButtonProps) {
         <ScoutForm
           unitId={unitId}
           scout={scout}
+          guardians={guardians}
+          availableMembers={availableMembers}
           onClose={() => setIsOpen(false)}
           onSuccess={() => {
             setIsOpen(false)

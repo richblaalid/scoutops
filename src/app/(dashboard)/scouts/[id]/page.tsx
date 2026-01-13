@@ -4,6 +4,7 @@ import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { EditScoutButton } from '@/components/scouts/edit-scout-button'
+import { ScoutGuardianAssociations } from '@/components/scouts/scout-guardian-associations'
 
 interface ScoutPageProps {
   params: Promise<{ id: string }>
@@ -52,6 +53,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
 
   const membership = membershipData as { unit_id: string; role: string } | null
   const canEditScout = membership && ['admin', 'treasurer', 'leader'].includes(membership.role)
+  const canEditGuardians = membership && ['admin', 'treasurer'].includes(membership.role)
 
   interface Scout {
     id: string
@@ -111,6 +113,62 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
 
   const transactions = (transactionsData as Transaction[]) || []
 
+  // Get linked guardians for this scout
+  const { data: guardiansData } = await supabase
+    .from('scout_guardians')
+    .select(`
+      id,
+      relationship,
+      is_primary,
+      profiles (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone_primary
+      )
+    `)
+    .eq('scout_id', id)
+    .order('is_primary', { ascending: false })
+
+  interface Guardian {
+    id: string
+    relationship: string | null
+    is_primary: boolean | null
+    profiles: {
+      id: string
+      first_name: string | null
+      last_name: string | null
+      email: string
+      phone_primary: string | null
+    }
+  }
+
+  const guardians = (guardiansData as Guardian[]) || []
+
+  // Get available members (profiles with active unit memberships) for adding guardians
+  let availableMembers: { id: string; first_name: string | null; last_name: string | null; email: string }[] = []
+  if (canEditGuardians && membership) {
+    const { data: membersData } = await supabase
+      .from('unit_memberships')
+      .select('profile_id')
+      .eq('unit_id', membership.unit_id)
+      .eq('status', 'active')
+
+    const profileIds = (membersData || [])
+      .map(m => m.profile_id)
+      .filter((id): id is string => id !== null)
+
+    if (profileIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .in('id', profileIds)
+
+      availableMembers = (profilesData || []) as { id: string; first_name: string | null; last_name: string | null; email: string }[]
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -146,6 +204,8 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
                 bsa_member_id: scout.bsa_member_id,
                 is_active: scout.is_active,
               }}
+              guardians={canEditGuardians ? guardians : []}
+              availableMembers={canEditGuardians ? availableMembers : []}
             />
           )}
           <span
@@ -235,6 +295,15 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Guardians Section */}
+      <ScoutGuardianAssociations
+        scoutId={scout.id}
+        scoutName={`${scout.first_name} ${scout.last_name}`}
+        guardians={guardians}
+        availableMembers={availableMembers}
+        canEdit={canEditGuardians || false}
+      />
 
       {/* Recent Transactions */}
       <Card>

@@ -5,10 +5,32 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
+import { Mail, Phone, Star } from 'lucide-react'
 
 interface Patrol {
   id: string
   name: string
+}
+
+interface Guardian {
+  id: string
+  relationship: string | null
+  is_primary: boolean | null
+  profiles: {
+    id: string
+    first_name: string | null
+    last_name: string | null
+    email: string
+    phone_primary: string | null
+  }
+}
+
+interface AvailableMember {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  email: string
 }
 
 const MONTHS = [
@@ -39,6 +61,8 @@ interface ScoutFormProps {
     bsa_member_id: string | null
     is_active: boolean | null
   }
+  guardians?: Guardian[]
+  availableMembers?: AvailableMember[]
   onClose: () => void
   onSuccess: () => void
 }
@@ -60,11 +84,19 @@ function parseDateParts(dateStr: string | null | undefined) {
   return { year: year || '', month: month || '', day: day || '' }
 }
 
-export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps) {
+export function ScoutForm({ unitId, scout, guardians = [], availableMembers = [], onClose, onSuccess }: ScoutFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [patrols, setPatrols] = useState<Patrol[]>([])
   const [selectedPatrolId, setSelectedPatrolId] = useState<string>(scout?.patrol_id || '')
+
+  // Guardian management state
+  const [isAddingGuardian, setIsAddingGuardian] = useState(false)
+  const [selectedProfileId, setSelectedProfileId] = useState('')
+  const [relationship, setRelationship] = useState('parent')
+  const [guardianLoadingId, setGuardianLoadingId] = useState<string | null>(null)
+  const [guardianError, setGuardianError] = useState<string | null>(null)
+  const [guardianSuccess, setGuardianSuccess] = useState<string | null>(null)
 
   const initialDate = parseDateParts(scout?.date_of_birth)
   const [birthYear, setBirthYear] = useState(initialDate.year)
@@ -109,6 +141,62 @@ export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps)
   const dateOfBirth = birthYear && birthMonth && birthDay
     ? `${birthYear}-${birthMonth}-${birthDay.padStart(2, '0')}`
     : ''
+
+  // Filter out already-linked guardians from available members
+  const linkedProfileIds = new Set(guardians.map(g => g.profiles.id))
+  const filteredAvailableMembers = availableMembers.filter(m => !linkedProfileIds.has(m.id))
+
+  const getGuardianName = (guardian: Guardian) => {
+    const { first_name, last_name, email } = guardian.profiles
+    if (first_name || last_name) {
+      return `${first_name || ''} ${last_name || ''}`.trim()
+    }
+    return email
+  }
+
+  const handleAddGuardian = async () => {
+    if (!selectedProfileId || !scout) return
+
+    setGuardianLoadingId('add')
+    setGuardianError(null)
+    setGuardianSuccess(null)
+
+    const result = await addScoutGuardian(selectedProfileId, scout.id, relationship)
+
+    if (result.success) {
+      setGuardianSuccess('Guardian added successfully')
+      setSelectedProfileId('')
+      setIsAddingGuardian(false)
+      // Refresh the page to get updated guardians
+      onSuccess()
+    } else {
+      setGuardianError(result.error || 'Failed to add guardian')
+    }
+
+    setGuardianLoadingId(null)
+  }
+
+  const handleRemoveGuardian = async (guardianshipId: string, guardianName: string) => {
+    if (!confirm(`Remove ${guardianName} as a guardian?`)) {
+      return
+    }
+
+    setGuardianLoadingId(guardianshipId)
+    setGuardianError(null)
+    setGuardianSuccess(null)
+
+    const result = await removeScoutGuardian(guardianshipId)
+
+    if (result.success) {
+      setGuardianSuccess('Guardian removed successfully')
+      // Refresh the page to get updated guardians
+      onSuccess()
+    } else {
+      setGuardianError(result.error || 'Failed to remove guardian')
+    }
+
+    setGuardianLoadingId(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -167,8 +255,8 @@ export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-bold">
           {scout ? 'Edit Scout' : 'Add New Scout'}
         </h2>
@@ -293,6 +381,135 @@ export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps)
             />
             <Label htmlFor="is_active">Active Scout</Label>
           </div>
+
+          {/* Guardian Management - only shown when editing */}
+          {scout && (
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <Label>Guardians</Label>
+                {filteredAvailableMembers.length > 0 && !isAddingGuardian && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingGuardian(true)}
+                    className="text-sm text-forest-600 hover:text-forest-800"
+                  >
+                    Add Guardian
+                  </button>
+                )}
+              </div>
+
+              {guardianError && (
+                <div className="rounded-md bg-error-light p-2 text-sm text-error">
+                  {guardianError}
+                </div>
+              )}
+
+              {guardianSuccess && (
+                <div className="rounded-md bg-success-light p-2 text-sm text-success">
+                  {guardianSuccess}
+                </div>
+              )}
+
+              {/* Add Guardian Form */}
+              {isAddingGuardian && (
+                <div className="rounded-lg border border-dashed border-stone-300 p-3">
+                  <div className="flex flex-wrap gap-2">
+                    <select
+                      value={selectedProfileId}
+                      onChange={(e) => setSelectedProfileId(e.target.value)}
+                      className="flex-1 min-w-0 rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
+                    >
+                      <option value="">Select member...</option>
+                      {filteredAvailableMembers.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.first_name || member.last_name
+                            ? `${member.first_name || ''} ${member.last_name || ''}`.trim()
+                            : member.email}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={relationship}
+                      onChange={(e) => setRelationship(e.target.value)}
+                      className="rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
+                    >
+                      <option value="parent">Parent</option>
+                      <option value="guardian">Guardian</option>
+                      <option value="grandparent">Grandparent</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddGuardian}
+                      disabled={!selectedProfileId || guardianLoadingId === 'add'}
+                    >
+                      {guardianLoadingId === 'add' ? 'Adding...' : 'Add'}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddingGuardian(false)
+                        setSelectedProfileId('')
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Guardian List */}
+              {guardians.length > 0 ? (
+                <div className="space-y-2">
+                  {guardians.map((guardian) => {
+                    const guardianName = getGuardianName(guardian)
+                    return (
+                      <div
+                        key={guardian.id}
+                        className="flex items-center justify-between rounded-lg border p-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-stone-900 text-sm truncate">
+                              {guardianName}
+                            </span>
+                            {guardian.is_primary && (
+                              <Star className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-stone-500">
+                            <span className="capitalize">{guardian.relationship || 'Guardian'}</span>
+                            {guardian.profiles.email && (
+                              <>
+                                <span>·</span>
+                                <Mail className="h-3 w-3" />
+                                <span className="truncate">{guardian.profiles.email}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGuardian(guardian.id, guardianName)}
+                          disabled={guardianLoadingId === guardian.id}
+                          className="ml-2 text-xs text-error hover:text-error/80 disabled:opacity-50"
+                        >
+                          {guardianLoadingId === guardian.id ? '...' : 'Remove'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-stone-500">No guardians linked</p>
+              )}
+            </div>
+          )}
 
           {error && (
             <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
