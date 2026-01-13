@@ -11,20 +11,12 @@ interface Scout {
   last_name: string
 }
 
-interface Section {
-  id: string
-  name: string
-  unit_number: string
-  unit_gender: 'boys' | 'girls' | null
-}
-
 interface InviteMemberButtonProps {
   unitId: string
   scouts: Scout[]
-  sections?: Section[]
 }
 
-export function InviteMemberButton({ unitId, scouts, sections = [] }: InviteMemberButtonProps) {
+export function InviteMemberButton({ unitId, scouts }: InviteMemberButtonProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -35,7 +27,6 @@ export function InviteMemberButton({ unitId, scouts, sections = [] }: InviteMemb
         <InviteMemberForm
           unitId={unitId}
           scouts={scouts}
-          sections={sections}
           onClose={() => setIsOpen(false)}
           onSuccess={() => {
             setIsOpen(false)

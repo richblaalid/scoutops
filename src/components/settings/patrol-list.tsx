@@ -25,50 +25,25 @@ interface Patrol {
   unit_id: string
 }
 
-interface Section {
-  id: string
-  name: string
-  unit_number: string
-  unit_gender: 'boys' | 'girls' | null
-}
-
 interface PatrolListProps {
   unitId: string
   patrols: Patrol[]
-  sections?: Section[]
 }
 
-export function PatrolList({ unitId, patrols, sections = [] }: PatrolListProps) {
+export function PatrolList({ unitId, patrols }: PatrolListProps) {
   const router = useRouter()
   const [isAdding, setIsAdding] = useState(false)
   const [newPatrolName, setNewPatrolName] = useState('')
-  const [newPatrolSectionId, setNewPatrolSectionId] = useState<string>(
-    sections.length > 0 ? sections[0].id : unitId
-  )
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
-  const [editingSectionId, setEditingSectionId] = useState<string>('')
   const [deletingPatrol, setDeletingPatrol] = useState<Patrol | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const hasSections = sections.length > 0
-
-  // Group patrols by section
-  const groupedPatrols = hasSections
-    ? sections.map(section => ({
-        section,
-        patrols: patrols
-          .filter(p => p.unit_id === section.id)
-          .sort((a, b) => {
-            if (a.display_order !== b.display_order) return a.display_order - b.display_order
-            return a.name.localeCompare(b.name)
-          })
-      }))
-    : [{ section: null, patrols: patrols.sort((a, b) => {
-        if (a.display_order !== b.display_order) return a.display_order - b.display_order
-        return a.name.localeCompare(b.name)
-      }) }]
+  const sortedPatrols = patrols.sort((a, b) => {
+    if (a.display_order !== b.display_order) return a.display_order - b.display_order
+    return a.name.localeCompare(b.name)
+  })
 
   const handleAddPatrol = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,12 +53,10 @@ export function PatrolList({ unitId, patrols, sections = [] }: PatrolListProps) 
     setError(null)
 
     const supabase = createClient()
-    // Use section ID if sections exist, otherwise use parent unit ID
-    const targetUnitId = hasSections ? newPatrolSectionId : unitId
     const { error: insertError } = await supabase.from('patrols').insert({
-      unit_id: targetUnitId,
+      unit_id: unitId,
       name: newPatrolName.trim(),
-      display_order: patrols.filter(p => p.unit_id === targetUnitId).length,
+      display_order: patrols.length,
     })
 
     if (insertError) {
@@ -110,21 +83,14 @@ export function PatrolList({ unitId, patrols, sections = [] }: PatrolListProps) 
     setError(null)
 
     const supabase = createClient()
-    const updateData: { name: string; unit_id?: string } = { name: editingName.trim() }
-
-    // Include unit_id change if sections exist
-    if (hasSections && editingSectionId) {
-      updateData.unit_id = editingSectionId
-    }
-
     const { error: updateError } = await supabase
       .from('patrols')
-      .update(updateData)
+      .update({ name: editingName.trim() })
       .eq('id', editingId)
 
     if (updateError) {
       if (updateError.code === '23505') {
-        setError('A patrol with this name already exists in that section')
+        setError('A patrol with this name already exists')
       } else {
         setError(updateError.message)
       }
@@ -134,7 +100,6 @@ export function PatrolList({ unitId, patrols, sections = [] }: PatrolListProps) 
 
     setEditingId(null)
     setEditingName('')
-    setEditingSectionId('')
     setIsLoading(false)
     router.refresh()
   }
@@ -174,14 +139,12 @@ export function PatrolList({ unitId, patrols, sections = [] }: PatrolListProps) 
   const startEdit = (patrol: Patrol) => {
     setEditingId(patrol.id)
     setEditingName(patrol.name)
-    setEditingSectionId(patrol.unit_id)
     setError(null)
   }
 
   const cancelEdit = () => {
     setEditingId(null)
     setEditingName('')
-    setEditingSectionId('')
     setError(null)
   }
 
@@ -206,120 +169,70 @@ export function PatrolList({ unitId, patrols, sections = [] }: PatrolListProps) 
               No patrols configured yet. Add your first patrol to get started.
             </p>
           ) : (
-            <div className="space-y-4">
-              {groupedPatrols.map((group, groupIndex) => (
-                <div key={group.section?.id || 'default'}>
-                  {/* Section header */}
-                  {hasSections && group.section && (
-                    <h4 className="mb-2 text-sm font-semibold text-stone-700">
-                      Troop {group.section.unit_number}
-                    </h4>
-                  )}
-
-                  {group.patrols.length === 0 ? (
-                    <p className="text-sm text-stone-400 italic ml-2">
-                      No patrols in this section
-                    </p>
+            <ul className="divide-y divide-stone-200 rounded-lg border border-stone-200">
+              {sortedPatrols.map((patrol) => (
+                <li key={patrol.id} className="flex items-center justify-between p-3">
+                  {editingId === patrol.id ? (
+                    <form onSubmit={handleEditPatrol} className="flex flex-1 items-center gap-2">
+                      <Input
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        placeholder="Patrol name"
+                        className="flex-1"
+                        autoFocus
+                        disabled={isLoading}
+                      />
+                      <Button type="submit" size="sm" disabled={isLoading || !editingName.trim()}>
+                        Save
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={cancelEdit}
+                        disabled={isLoading}
+                      >
+                        Cancel
+                      </Button>
+                    </form>
                   ) : (
-                    <ul className="divide-y divide-stone-200 rounded-lg border border-stone-200">
-                      {group.patrols.map((patrol) => (
-                        <li key={patrol.id} className="flex items-center justify-between p-3">
-                          {editingId === patrol.id ? (
-                            <form onSubmit={handleEditPatrol} className="flex flex-1 items-center gap-2">
-                              <Input
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
-                                placeholder="Patrol name"
-                                className="flex-1"
-                                autoFocus
-                                disabled={isLoading}
-                              />
-                              {hasSections && (
-                                <select
-                                  value={editingSectionId}
-                                  onChange={(e) => setEditingSectionId(e.target.value)}
-                                  className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                  disabled={isLoading}
-                                >
-                                  {sections.map((section) => (
-                                    <option key={section.id} value={section.id}>
-                                      Troop {section.unit_number}
-                                    </option>
-                                  ))}
-                                </select>
-                              )}
-                              <Button type="submit" size="sm" disabled={isLoading || !editingName.trim()}>
-                                Save
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={cancelEdit}
-                                disabled={isLoading}
-                              >
-                                Cancel
-                              </Button>
-                            </form>
-                          ) : (
-                            <>
-                              <span className="font-medium text-stone-900">{patrol.name}</span>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => startEdit(patrol)}
-                                  disabled={isLoading}
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-error hover:text-error hover:bg-error-light"
-                                  onClick={() => setDeletingPatrol(patrol)}
-                                  disabled={isLoading}
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+                    <>
+                      <span className="font-medium text-stone-900">{patrol.name}</span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEdit(patrol)}
+                          disabled={isLoading}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-error hover:text-error hover:bg-error-light"
+                          onClick={() => setDeletingPatrol(patrol)}
+                          disabled={isLoading}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </>
                   )}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
 
           {isAdding ? (
             <form onSubmit={handleAddPatrol} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newPatrolName}
-                  onChange={(e) => setNewPatrolName(e.target.value)}
-                  placeholder="Enter patrol name (e.g., Eagle, Wolf)"
-                  className="flex-1"
-                  autoFocus
-                  disabled={isLoading}
-                />
-                {hasSections && (
-                  <select
-                    value={newPatrolSectionId}
-                    onChange={(e) => setNewPatrolSectionId(e.target.value)}
-                    className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    disabled={isLoading}
-                  >
-                    {sections.map((section) => (
-                      <option key={section.id} value={section.id}>
-                        Troop {section.unit_number}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+              <Input
+                value={newPatrolName}
+                onChange={(e) => setNewPatrolName(e.target.value)}
+                placeholder="Enter patrol name (e.g., Eagle, Wolf)"
+                autoFocus
+                disabled={isLoading}
+              />
               <div className="flex items-center gap-2">
                 <Button type="submit" disabled={isLoading || !newPatrolName.trim()}>
                   Add Patrol

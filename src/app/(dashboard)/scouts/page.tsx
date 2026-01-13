@@ -5,12 +5,7 @@ import { canAccessPage, canPerformAction } from '@/lib/roles'
 import { ScoutsList } from '@/components/scouts/scouts-list'
 import { AddScoutButton } from '@/components/scouts/add-scout-button'
 
-interface PageProps {
-  searchParams: Promise<{ section?: string }>
-}
-
-export default async function ScoutsPage({ searchParams }: PageProps) {
-  const { section: sectionFilter } = await searchParams
+export default async function ScoutsPage() {
   const supabase = await createClient()
 
   const {
@@ -19,15 +14,15 @@ export default async function ScoutsPage({ searchParams }: PageProps) {
 
   if (!user) return null
 
-  // Get user's unit membership (include section_unit_id for leaders)
+  // Get user's unit membership
   const { data: membershipData } = await supabase
     .from('unit_memberships')
-    .select('unit_id, role, section_unit_id')
+    .select('unit_id, role')
     .eq('profile_id', user.id)
     .eq('status', 'active')
     .single()
 
-  const membership = membershipData as { unit_id: string; role: string; section_unit_id: string | null } | null
+  const membership = membershipData as { unit_id: string; role: string } | null
 
   if (!membership) {
     return (
@@ -43,44 +38,6 @@ export default async function ScoutsPage({ searchParams }: PageProps) {
   // Check role-based access
   if (!canAccessPage(membership.role, 'scouts')) {
     return <AccessDenied message="You don't have permission to view the scouts roster." />
-  }
-
-  // Get sections (sub-units) for section filtering and form
-  const { data: sectionsData } = await supabase
-    .from('units')
-    .select('id, name, unit_number, unit_gender')
-    .eq('parent_unit_id', membership.unit_id)
-
-  interface SectionInfo {
-    id: string
-    name: string
-    unit_number: string
-    unit_gender: 'boys' | 'girls' | null
-  }
-
-  const sections = (sectionsData || []) as SectionInfo[]
-  const hasSections = sections.length > 0
-
-  // Leaders with assigned sections can only view their section
-  const isLeaderWithSection = membership.role === 'leader' && membership.section_unit_id && hasSections
-
-  // Determine which unit IDs to query based on sections and filter
-  // Scouts are assigned to section units (boys/girls), not the parent
-  let unitIdsToQuery: string[] = [membership.unit_id]
-  if (hasSections) {
-    if (isLeaderWithSection) {
-      // Leaders can only see their assigned section
-      unitIdsToQuery = [membership.section_unit_id!]
-    } else if (sectionFilter === 'boys') {
-      const boysSection = sections.find(s => s.unit_gender === 'boys')
-      unitIdsToQuery = boysSection ? [boysSection.id] : []
-    } else if (sectionFilter === 'girls') {
-      const girlsSection = sections.find(s => s.unit_gender === 'girls')
-      unitIdsToQuery = girlsSection ? [girlsSection.id] : []
-    } else {
-      // 'all' or no filter - query all sections plus parent (for unassigned scouts)
-      unitIdsToQuery = [...sections.map(s => s.id), membership.unit_id]
-    }
   }
 
   interface ScoutWithAccount {
@@ -101,10 +58,7 @@ export default async function ScoutsPage({ searchParams }: PageProps) {
 
   let scouts: ScoutWithAccount[] = []
 
-  if (unitIdsToQuery.length === 0) {
-    // No sections to query (shouldn't happen normally)
-    scouts = []
-  } else if (isParent) {
+  if (isParent) {
     // Parents only see scouts they are guardians of
     const { data: guardianData } = await supabase
       .from('scout_guardians')
@@ -132,7 +86,7 @@ export default async function ScoutsPage({ searchParams }: PageProps) {
           )
         `)
         .in('id', scoutIds)
-        .in('unit_id', unitIdsToQuery)
+        .eq('unit_id', membership.unit_id)
         .order('last_name', { ascending: true })
 
       scouts = (scoutsData as ScoutWithAccount[]) || []
@@ -156,52 +110,11 @@ export default async function ScoutsPage({ searchParams }: PageProps) {
           balance
         )
       `)
-      .in('unit_id', unitIdsToQuery)
+      .eq('unit_id', membership.unit_id)
       .order('last_name', { ascending: true })
 
     scouts = (scoutsData as ScoutWithAccount[]) || []
   }
-
-  // Get section info for display
-  const getSectionLabel = () => {
-    if (!hasSections || !sectionFilter) return null
-    if (sectionFilter === 'boys') {
-      const section = sections.find(s => s.unit_gender === 'boys')
-      return section ? `Troop ${section.unit_number}` : 'Boys section'
-    }
-    if (sectionFilter === 'girls') {
-      const section = sections.find(s => s.unit_gender === 'girls')
-      return section ? `Troop ${section.unit_number}` : 'Girls section'
-    }
-    return 'all sections'
-  }
-  const sectionLabel = getSectionLabel()
-
-  // When adding a scout with sections, determine which unit to use
-  // - Leaders with assigned sections can only add to their section
-  // - If filtered to a specific section, use that section
-  // - Otherwise use the parent unit (form can handle section selection if needed)
-  const getAddScoutUnitId = () => {
-    if (!hasSections) return membership.unit_id
-    // Leaders can only add scouts to their assigned section
-    if (isLeaderWithSection) {
-      return membership.section_unit_id!
-    }
-    if (sectionFilter === 'boys') {
-      const boysSection = sections.find(s => s.unit_gender === 'boys')
-      return boysSection?.id || membership.unit_id
-    }
-    if (sectionFilter === 'girls') {
-      const girlsSection = sections.find(s => s.unit_gender === 'girls')
-      return girlsSection?.id || membership.unit_id
-    }
-    // For "all" view, use parent unit - scouts can be assigned to sections later
-    return membership.unit_id
-  }
-  const addScoutUnitId = getAddScoutUnitId()
-
-  // Leaders with assigned sections shouldn't see section selector in form
-  const sectionsForForm = isLeaderWithSection ? [] : sections
 
   return (
     <div className="space-y-6">
@@ -212,15 +125,14 @@ export default async function ScoutsPage({ searchParams }: PageProps) {
             {isParent ? 'Your linked scouts' : 'Manage your unit\'s scout roster'}
           </p>
         </div>
-        {canManageScouts && <AddScoutButton unitId={addScoutUnitId} sections={sectionsForForm} />}
+        {canManageScouts && <AddScoutButton unitId={membership.unit_id} />}
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Scout Roster</CardTitle>
           <CardDescription>
-            {scouts.length} scout{scouts.length !== 1 ? 's' : ''}
-            {sectionLabel ? ` in ${sectionLabel}` : ' in your unit'}
+            {scouts.length} scout{scouts.length !== 1 ? 's' : ''} in your unit
           </CardDescription>
         </CardHeader>
         <CardContent>

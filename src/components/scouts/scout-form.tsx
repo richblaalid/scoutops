@@ -11,13 +11,6 @@ interface Patrol {
   name: string
 }
 
-interface Section {
-  id: string
-  name: string
-  unit_number: string
-  unit_gender: 'boys' | 'girls' | null
-}
-
 const MONTHS = [
   { value: '01', label: 'January' },
   { value: '02', label: 'February' },
@@ -35,7 +28,6 @@ const MONTHS = [
 
 interface ScoutFormProps {
   unitId: string
-  sections?: Section[]
   scout?: {
     id: string
     first_name: string
@@ -46,7 +38,6 @@ interface ScoutFormProps {
     date_of_birth: string | null
     bsa_member_id: string | null
     is_active: boolean | null
-    unit_id?: string
   }
   onClose: () => void
   onSuccess: () => void
@@ -69,51 +60,35 @@ function parseDateParts(dateStr: string | null | undefined) {
   return { year: year || '', month: month || '', day: day || '' }
 }
 
-export function ScoutForm({ unitId, sections = [], scout, onClose, onSuccess }: ScoutFormProps) {
+export function ScoutForm({ unitId, scout, onClose, onSuccess }: ScoutFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [patrols, setPatrols] = useState<Patrol[]>([])
   const [selectedPatrolId, setSelectedPatrolId] = useState<string>(scout?.patrol_id || '')
-
-  // Section selection - default to scout's current unit or first section if available
-  const hasSections = sections.length > 0
-  const [selectedSectionId, setSelectedSectionId] = useState<string>(
-    scout?.unit_id || (hasSections ? sections[0]?.id : unitId) || unitId
-  )
-
-  // The effective unit_id to use for this scout
-  const effectiveUnitId = hasSections ? selectedSectionId : unitId
 
   const initialDate = parseDateParts(scout?.date_of_birth)
   const [birthYear, setBirthYear] = useState(initialDate.year)
   const [birthMonth, setBirthMonth] = useState(initialDate.month)
   const [birthDay, setBirthDay] = useState(initialDate.day)
 
-  // Fetch patrols for the selected section/unit
+  // Fetch patrols for the unit
   useEffect(() => {
     async function fetchPatrols() {
       const supabase = createClient()
-      // If we have sections, fetch patrols for the selected section
-      // Otherwise fetch for the main unit
-      const queryUnitId = effectiveUnitId
       const { data } = await supabase
         .from('patrols')
         .select('id, name')
-        .eq('unit_id', queryUnitId)
+        .eq('unit_id', unitId)
         .eq('is_active', true)
         .order('display_order')
         .order('name')
 
       if (data) {
         setPatrols(data)
-        // Reset patrol selection if switching sections
-        if (!data.find(p => p.id === selectedPatrolId)) {
-          setSelectedPatrolId('')
-        }
       }
     }
     fetchPatrols()
-  }, [effectiveUnitId, selectedPatrolId])
+  }, [unitId])
 
   // Generate years from current year going back 50 years (descending order)
   const years = useMemo(() => {
@@ -155,8 +130,6 @@ export function ScoutForm({ unitId, sections = [], scout, onClose, onSuccess }: 
       date_of_birth: dateOfBirth || null,
       bsa_member_id: (formData.get('bsa_member_id') as string) || null,
       is_active: formData.get('is_active') === 'on',
-      // Include unit_id if sections exist (allows changing section)
-      ...(hasSections && { unit_id: effectiveUnitId }),
     }
 
     try {
@@ -180,7 +153,7 @@ export function ScoutForm({ unitId, sections = [], scout, onClose, onSuccess }: 
           }
         })
           .from('scouts')
-          .insert({ ...scoutData, unit_id: effectiveUnitId })
+          .insert({ ...scoutData, unit_id: unitId })
 
         if (insertError) throw insertError
       }
@@ -221,25 +194,6 @@ export function ScoutForm({ unitId, sections = [], scout, onClose, onSuccess }: 
               />
             </div>
           </div>
-
-          {/* Section selector - only shown when unit has sections */}
-          {hasSections && (
-            <div className="space-y-2">
-              <Label htmlFor="section">Section *</Label>
-              <select
-                id="section"
-                value={selectedSectionId}
-                onChange={(e) => setSelectedSectionId(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    Troop {section.unit_number} ({section.unit_gender === 'boys' ? 'Boys' : 'Girls'})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

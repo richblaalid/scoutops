@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessDenied } from '@/components/ui/access-denied'
 import { isAdmin } from '@/lib/roles'
 import { formatDate } from '@/lib/utils'
@@ -54,7 +54,6 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
       status,
       joined_at,
       profile_id,
-      section_unit_id,
       profiles!unit_memberships_profile_id_fkey (
         id,
         email,
@@ -74,21 +73,6 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
     .eq('id', id)
     .eq('unit_id', currentMembership.unit_id)
     .single()
-
-  // Get sections (sub-units) for this unit
-  const { data: sectionsData } = await supabase
-    .from('units')
-    .select('id, name, unit_number, unit_gender')
-    .eq('parent_unit_id', currentMembership.unit_id)
-
-  interface Section {
-    id: string
-    name: string
-    unit_number: string
-    unit_gender: 'boys' | 'girls' | null
-  }
-
-  const sections = (sectionsData || []) as Section[]
 
   if (!memberMembership || !memberMembership.profiles) {
     notFound()
@@ -111,13 +95,11 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   }
 
   // Get scouts associated with this member (via scout_guardians)
-  // Use service client to bypass RLS for viewing other profiles' guardianships
   const { data: guardianships } = await serviceClient
     .from('scout_guardians')
     .select(`
       id,
       relationship,
-      is_primary,
       scouts (
         id,
         first_name,
@@ -130,7 +112,6 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   const linkedScouts = (guardianships || []).map(g => ({
     guardianshipId: g.id,
     relationship: g.relationship,
-    isPrimary: g.is_primary,
     scout: g.scouts as { id: string; first_name: string; last_name: string; is_active: boolean | null }
   }))
 
@@ -150,7 +131,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   const isCurrentUser = profile.id === user.id
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-stone-500">
         <Link href="/members" className="hover:text-stone-900">
@@ -160,20 +141,28 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
         <span className="text-stone-900">{displayName}</span>
       </div>
 
-      {/* Header */}
-      <div className="flex items-start justify-between">
+      {/* Header with Role Editor */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-stone-900">{displayName}</h1>
-          <p className="mt-1 text-stone-600">
-            <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-1 text-xs font-medium capitalize text-stone-700">
-              {memberMembership.role}
-            </span>
+          <h1 className="text-2xl font-bold text-stone-900">{displayName}</h1>
+          <div className="mt-1 flex items-center gap-3 text-sm text-stone-600">
+            <span className="capitalize">{memberMembership.status}</span>
             {memberMembership.joined_at && (
-              <span className="ml-2 text-sm">
-                Member since {formatDate(memberMembership.joined_at)}
-              </span>
+              <>
+                <span className="text-stone-300">|</span>
+                <span>Joined {formatDate(memberMembership.joined_at)}</span>
+              </>
             )}
-          </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-stone-500">Role:</span>
+          <MemberRoleEditor
+            membershipId={memberMembership.id}
+            unitId={currentMembership.unit_id}
+            currentRole={memberMembership.role}
+            isCurrentUser={isCurrentUser}
+          />
         </div>
       </div>
 
@@ -202,44 +191,6 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
         linkedScouts={linkedScouts}
         availableScouts={availableScouts}
       />
-
-      {/* Member Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Membership Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm font-medium text-stone-500">Status</dt>
-              <dd className="mt-1 capitalize text-stone-900">{memberMembership.status}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-stone-500">Role</dt>
-              <dd className="mt-1">
-                <MemberRoleEditor
-                  membershipId={memberMembership.id}
-                  unitId={currentMembership.unit_id}
-                  currentRole={memberMembership.role}
-                  currentSectionId={memberMembership.section_unit_id as string | null}
-                  sections={sections}
-                  isCurrentUser={isCurrentUser}
-                />
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-stone-500">Primary Email</dt>
-              <dd className="mt-1 text-stone-900">{profile.email}</dd>
-            </div>
-            {memberMembership.joined_at && (
-              <div>
-                <dt className="text-sm font-medium text-stone-500">Joined</dt>
-                <dd className="mt-1 text-stone-900">{formatDate(memberMembership.joined_at)}</dd>
-              </div>
-            )}
-          </dl>
-        </CardContent>
-      </Card>
     </div>
   )
 }

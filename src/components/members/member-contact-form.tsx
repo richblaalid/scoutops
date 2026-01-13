@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { updateMemberProfile } from '@/app/actions/members'
 
 type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
@@ -55,7 +55,8 @@ export function MemberContactForm({ membershipId, profile }: MemberContactFormPr
     setIsLoading(false)
 
     if (result.success) {
-      setMessage({ type: 'success', text: 'Contact information updated successfully!' })
+      setMessage({ type: 'success', text: 'Contact information updated!' })
+      setTimeout(() => setMessage(null), 3000)
     } else {
       setMessage({ type: 'error', text: result.error || 'Failed to update contact information' })
     }
@@ -63,57 +64,66 @@ export function MemberContactForm({ membershipId, profile }: MemberContactFormPr
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle>Contact Information</CardTitle>
-        <CardDescription>Update this member&apos;s contact details</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name Fields */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name and Gender Row */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <div className="space-y-1.5">
               <Label htmlFor="first_name">First Name</Label>
               <Input
                 id="first_name"
                 name="first_name"
                 defaultValue={profile.first_name || ''}
-                placeholder="Enter first name"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="last_name">Last Name</Label>
               <Input
                 id="last_name"
                 name="last_name"
                 defaultValue={profile.last_name || ''}
-                placeholder="Enter last name"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="gender">Gender</Label>
+              <select
+                id="gender"
+                name="gender"
+                defaultValue={profile.gender || ''}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">-</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
             </div>
           </div>
 
-          {/* Gender Field */}
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gender</Label>
-            <select
-              id="gender"
-              name="gender"
-              defaultValue={profile.gender || ''}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-xs"
-            >
-              <option value="">Select gender...</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
-            <p className="text-xs text-stone-500">
-              Used for assigning to the appropriate section in coed troops
-            </p>
-          </div>
-
-          {/* Contact Fields */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
+          {/* Email and Phone Row */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <div className="space-y-1.5">
+              <Label>Primary Email</Label>
+              <Input
+                value={profile.email}
+                disabled
+                className="bg-stone-50 text-stone-600"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email_secondary">Secondary Email</Label>
+              <Input
+                id="email_secondary"
+                name="email_secondary"
+                type="email"
+                defaultValue={profile.email_secondary || ''}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="phone_primary">Primary Phone</Label>
               <Input
                 id="phone_primary"
@@ -123,7 +133,7 @@ export function MemberContactForm({ membershipId, profile }: MemberContactFormPr
                 placeholder="(555) 123-4567"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="phone_secondary">Secondary Phone</Label>
               <Input
                 id="phone_secondary"
@@ -135,80 +145,60 @@ export function MemberContactForm({ membershipId, profile }: MemberContactFormPr
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email_secondary">Secondary Email</Label>
-            <Input
-              id="email_secondary"
-              name="email_secondary"
-              type="email"
-              defaultValue={profile.email_secondary || ''}
-              placeholder="alternate@email.com"
-            />
-            <p className="text-xs text-stone-500">
-              Primary email ({profile.email}) cannot be changed here
-            </p>
-          </div>
-
-          {/* Address Fields */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-stone-700">Address</h4>
-            <div className="space-y-2">
+          {/* Address Row */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="address_street">Street Address</Label>
               <Input
                 id="address_street"
                 name="address_street"
                 defaultValue={profile.address_street || ''}
-                placeholder="Enter street address"
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="address_city">City</Label>
-                <Input
-                  id="address_city"
-                  name="address_city"
-                  defaultValue={profile.address_city || ''}
-                  placeholder="City"
-                />
-              </div>
-              <div className="space-y-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="address_city">City</Label>
+              <Input
+                id="address_city"
+                name="address_city"
+                defaultValue={profile.address_city || ''}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="address_state">State</Label>
                 <Input
                   id="address_state"
                   name="address_state"
                   defaultValue={profile.address_state || ''}
-                  placeholder="State"
                   maxLength={2}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_zip">ZIP Code</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="address_zip">ZIP</Label>
                 <Input
                   id="address_zip"
                   name="address_zip"
                   defaultValue={profile.address_zip || ''}
-                  placeholder="ZIP"
                   maxLength={10}
                 />
               </div>
             </div>
           </div>
 
-          {message && (
-            <div
-              className={`rounded-md p-3 text-sm ${
-                message.type === 'success'
-                  ? 'bg-success-light text-success'
-                  : 'bg-error-light text-error'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
-
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
+          <div className="flex items-center gap-3 pt-2">
+            <Button type="submit" disabled={isLoading} size="sm">
+              {isLoading ? 'Saving...' : 'Save Changes'}
+            </Button>
+            {message && (
+              <span
+                className={`text-sm ${
+                  message.type === 'success' ? 'text-success' : 'text-error'
+                }`}
+              >
+                {message.text}
+              </span>
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>

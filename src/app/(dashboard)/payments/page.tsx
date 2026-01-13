@@ -35,12 +35,7 @@ interface Scout {
   } | null
 }
 
-interface PageProps {
-  searchParams: Promise<{ section?: string }>
-}
-
-export default async function PaymentsPage({ searchParams }: PageProps) {
-  const { section: sectionFilter } = await searchParams
+export default async function PaymentsPage() {
   const supabase = await createClient()
 
   const {
@@ -49,15 +44,15 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
 
   if (!user) return null
 
-  // Get user's unit membership (include section_unit_id for leaders)
+  // Get user's unit membership
   const { data: membershipData } = await supabase
     .from('unit_memberships')
-    .select('unit_id, role, section_unit_id')
+    .select('unit_id, role')
     .eq('profile_id', user.id)
     .eq('status', 'active')
     .single()
 
-  const membership = membershipData as { unit_id: string; role: string; section_unit_id: string | null } | null
+  const membership = membershipData as { unit_id: string; role: string } | null
 
   if (!membership) {
     return (
@@ -76,43 +71,6 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
   }
 
   const canRecordPayment = canPerformAction(membership.role, 'record_payments')
-
-  // Get sections (sub-units) for section filtering
-  const { data: sectionsData } = await supabase
-    .from('units')
-    .select('id, name, unit_number, unit_gender')
-    .eq('parent_unit_id', membership.unit_id)
-
-  interface SectionInfo {
-    id: string
-    name: string
-    unit_number: string
-    unit_gender: 'boys' | 'girls' | null
-  }
-
-  const sections = (sectionsData || []) as SectionInfo[]
-  const hasSections = sections.length > 0
-
-  // Leaders with assigned sections can only view their section (for consistency)
-  const isLeaderWithSection = membership.role === 'leader' && membership.section_unit_id && hasSections
-
-  // Determine which unit IDs to query based on sections
-  let unitIdsToQuery: string[] = [membership.unit_id]
-  if (hasSections) {
-    if (isLeaderWithSection) {
-      // Leaders can only see their assigned section
-      unitIdsToQuery = [membership.section_unit_id!]
-    } else if (sectionFilter === 'boys') {
-      const boysSection = sections.find(s => s.unit_gender === 'boys')
-      unitIdsToQuery = boysSection ? [boysSection.id] : []
-    } else if (sectionFilter === 'girls') {
-      const girlsSection = sections.find(s => s.unit_gender === 'girls')
-      unitIdsToQuery = girlsSection ? [girlsSection.id] : []
-    } else {
-      // 'all' or no filter - query all sections plus parent (for unassigned scouts)
-      unitIdsToQuery = [...sections.map(s => s.id), membership.unit_id]
-    }
-  }
 
   // Get scouts with balances and Square credentials in parallel
   interface SquareCredentialsData {
@@ -134,7 +92,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
           balance
         )
       `)
-      .in('unit_id', unitIdsToQuery)
+      .eq('unit_id', membership.unit_id)
       .eq('is_active', true)
       .order('last_name'),
     supabase
@@ -183,26 +141,11 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
         )
       )
     `)
-    .in('unit_id', unitIdsToQuery)
+    .eq('unit_id', membership.unit_id)
     .order('created_at', { ascending: false })
     .limit(20)
 
   const payments = (paymentsData as Payment[]) || []
-
-  // Section label for display
-  const getSectionLabel = () => {
-    if (!hasSections || !sectionFilter) return null
-    if (sectionFilter === 'boys') {
-      const section = sections.find(s => s.unit_gender === 'boys')
-      return section ? `Troop ${section.unit_number}` : 'Boys section'
-    }
-    if (sectionFilter === 'girls') {
-      const section = sections.find(s => s.unit_gender === 'girls')
-      return section ? `Troop ${section.unit_number}` : 'Girls section'
-    }
-    return 'all sections'
-  }
-  const sectionLabel = getSectionLabel()
 
   // Calculate totals
   const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0)

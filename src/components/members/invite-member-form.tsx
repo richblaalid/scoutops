@@ -12,17 +12,9 @@ interface Scout {
   last_name: string
 }
 
-interface Section {
-  id: string
-  name: string
-  unit_number: string
-  unit_gender: 'boys' | 'girls' | null
-}
-
 interface InviteMemberFormProps {
   unitId: string
   scouts: Scout[]
-  sections?: Section[]
   onClose: () => void
   onSuccess: () => void
 }
@@ -35,15 +27,12 @@ const ROLES: { value: MemberRole; label: string; description: string }[] = [
   { value: 'scout', label: 'Scout', description: 'View events and own account' },
 ]
 
-export function InviteMemberForm({ unitId, scouts, sections = [], onClose, onSuccess }: InviteMemberFormProps) {
+export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteMemberFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<MemberRole>('parent')
   const [selectedScoutIds, setSelectedScoutIds] = useState<string[]>([])
-  const [selectedSectionId, setSelectedSectionId] = useState<string>('')
-
-  const hasSections = sections.length > 0
 
   const handleScoutToggle = (scoutId: string) => {
     setSelectedScoutIds(prev =>
@@ -65,19 +54,11 @@ export function InviteMemberForm({ unitId, scouts, sections = [], onClose, onSuc
       return
     }
 
-    // Validate leader has a section selected when troop has sections
-    if (role === 'leader' && hasSections && !selectedSectionId) {
-      setError('Please select a section for this leader')
-      setIsLoading(false)
-      return
-    }
-
     const result = await inviteMember({
       unitId,
       email: email.trim(),
       role,
       scoutIds: role === 'parent' ? selectedScoutIds : undefined,
-      sectionUnitId: role === 'leader' && hasSections ? selectedSectionId : undefined,
     })
 
     if (!result.success) {
@@ -121,10 +102,6 @@ export function InviteMemberForm({ unitId, scouts, sections = [], onClose, onSuc
                 if (e.target.value !== 'parent') {
                   setSelectedScoutIds([])
                 }
-                // Clear section selection when changing away from leader
-                if (e.target.value !== 'leader') {
-                  setSelectedSectionId('')
-                }
               }}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -138,28 +115,6 @@ export function InviteMemberForm({ unitId, scouts, sections = [], onClose, onSuc
               {ROLES.find((r) => r.value === role)?.description}
             </p>
           </div>
-
-          {role === 'leader' && hasSections && (
-            <div className="space-y-2">
-              <Label htmlFor="section">Assign to Section *</Label>
-              <select
-                id="section"
-                value={selectedSectionId}
-                onChange={(e) => setSelectedSectionId(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="">Select a section...</option>
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    Troop {section.unit_number} ({section.unit_gender === 'boys' ? 'Boys' : 'Girls'})
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-stone-500">
-                Leaders must be assigned to a specific section (boys or girls troop)
-              </p>
-            </div>
-          )}
 
           {role === 'parent' && (
             <div className="space-y-2">

@@ -5,7 +5,7 @@ import { Sidebar } from '@/components/dashboard/sidebar'
 import { MobileNav } from '@/components/dashboard/mobile-nav'
 import { MainContent } from '@/components/dashboard/main-content'
 import { PostHogIdentify } from '@/components/providers/posthog-identify'
-import { UnitProvider, UnitMembership, UnitGroup, SectionInfo } from '@/components/providers/unit-context'
+import { UnitProvider, UnitMembership, UnitGroup } from '@/components/providers/unit-context'
 import { SidebarProvider } from '@/components/providers/sidebar-context'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -49,14 +49,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Note: Must specify the foreign key since section_unit_id also references units
   const { data: membershipsData } = await supabase
     .from('unit_memberships')
-    .select('role, unit_id, section_unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type, unit_gender, unit_group_id, logo_url)')
+    .select('role, unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type, unit_gender, unit_group_id, logo_url)')
     .eq('profile_id', user.id)
     .eq('status', 'active')
 
   const memberships: UnitMembership[] = (membershipsData || []).map(m => ({
     role: m.role,
     unit_id: m.unit_id,
-    section_unit_id: m.section_unit_id,
     units: m.units as UnitMembership['units']
   }))
 
@@ -84,23 +83,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const primaryMembership = memberships[0]
   const primaryUnit = primaryMembership?.units || groupMemberships[0]?.unit_groups?.units?.[0]
 
-  // Get leader's section assignment (if they are a leader assigned to a specific section)
-  const leaderSectionId = primaryMembership?.role === 'leader'
-    ? (membershipsData?.find(m => m.unit_id === primaryMembership.unit_id)?.section_unit_id || null)
-    : null
-
-  // Fetch sections (sub-units) for the primary unit if it has any
-  let sections: SectionInfo[] = []
-  if (primaryUnit?.id) {
-    const { data: sectionsData } = await supabase
-      .from('units')
-      .select('id, name, unit_number, unit_gender')
-      .eq('parent_unit_id', primaryUnit.id)
-      .order('unit_gender')
-
-    sections = (sectionsData || []) as SectionInfo[]
-  }
-
   return (
     <div className="min-h-screen">
       <PostHogIdentify
@@ -115,9 +97,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <UnitProvider
             memberships={memberships}
             groupMemberships={groupMemberships}
-            sections={sections}
             initialUnitId={primaryUnit?.id}
-            leaderSectionId={leaderSectionId}
           >
             {/* Desktop Sidebar - hidden on mobile */}
             <Sidebar user={user} userName={userName} className="hidden md:flex" />

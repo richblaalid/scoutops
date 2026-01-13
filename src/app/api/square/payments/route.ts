@@ -95,20 +95,12 @@ export async function POST(request: NextRequest) {
 
     const { scoutAccountId, amountCents, sourceId, description, billingChargeId } = parseResult.data
 
-    // Get section unit IDs (sub-units of the user's unit)
-    const { data: sections } = await supabase
-      .from('units')
-      .select('id')
-      .eq('parent_unit_id', membership.unit_id)
-
-    const allowedUnitIds = [membership.unit_id, ...(sections || []).map(s => s.id)]
-
-    // Verify the scout account belongs to this unit or its sections
+    // Verify the scout account belongs to this unit
     const { data: scoutAccount } = await supabase
       .from('scout_accounts')
       .select('id, scout_id, unit_id, balance, scouts(first_name, last_name)')
       .eq('id', scoutAccountId)
-      .in('unit_id', allowedUnitIds)
+      .eq('unit_id', membership.unit_id)
       .single()
 
     if (!scoutAccount) {

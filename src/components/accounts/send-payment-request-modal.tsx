@@ -20,7 +20,6 @@ interface Guardian {
   email: string | null
   full_name: string | null
   first_name: string | null
-  is_primary: boolean
 }
 
 interface SendPaymentRequestModalProps {
@@ -62,7 +61,6 @@ export function SendPaymentRequestModal({
         .select(
           `
           profile_id,
-          is_primary,
           profiles (
             id,
             email,
@@ -82,16 +80,12 @@ export function SendPaymentRequestModal({
           email: (g.profiles as { email: string | null }).email,
           full_name: (g.profiles as { full_name: string | null }).full_name,
           first_name: (g.profiles as { first_name: string | null }).first_name,
-          is_primary: g.is_primary || false,
         }))
 
       setGuardians(guardianList)
 
-      // Auto-select primary guardian if available
-      const primary = guardianList.find((g) => g.is_primary)
-      if (primary) {
-        setSelectedGuardianId(primary.id)
-      } else if (guardianList.length === 1) {
+      // Auto-select if only one guardian
+      if (guardianList.length === 1) {
         setSelectedGuardianId(guardianList[0].id)
       }
     } catch (err) {
@@ -208,7 +202,6 @@ export function SendPaymentRequestModal({
                 {guardians.map((guardian) => (
                   <option key={guardian.id} value={guardian.id}>
                     {guardian.full_name || guardian.first_name || 'Guardian'} ({guardian.email})
-                    {guardian.is_primary ? ' - Primary' : ''}
                   </option>
                 ))}
               </select>

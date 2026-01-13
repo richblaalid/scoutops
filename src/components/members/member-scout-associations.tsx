@@ -8,7 +8,6 @@ import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
 interface LinkedScout {
   guardianshipId: string
   relationship: string | null
-  isPrimary: boolean | null
   scout: {
     id: string
     first_name: string
@@ -174,17 +173,8 @@ export function MemberScoutAssociations({
                       <span className="ml-2 text-xs text-stone-500">(Inactive)</span>
                     )}
                   </p>
-                  <p className="text-sm text-stone-500">
-                    {ls.relationship ? (
-                      <span className="capitalize">{ls.relationship}</span>
-                    ) : (
-                      'Guardian'
-                    )}
-                    {ls.isPrimary && (
-                      <span className="ml-2 rounded-full bg-forest-100 px-2 py-0.5 text-xs text-forest-700">
-                        Primary
-                      </span>
-                    )}
+                  <p className="text-sm text-stone-500 capitalize">
+                    {ls.relationship || 'Guardian'}
                   </p>
                 </div>
                 <button

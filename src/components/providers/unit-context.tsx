@@ -10,24 +10,12 @@ export interface UnitInfo {
   unit_type: string
   unit_gender: 'boys' | 'girls' | 'coed' | null
   unit_group_id: string | null
-  parent_unit_id?: string | null
-  is_section?: boolean
   logo_url?: string | null
 }
-
-export interface SectionInfo {
-  id: string
-  name: string
-  unit_number: string
-  unit_gender: 'boys' | 'girls' | null
-}
-
-export type SectionFilter = 'all' | 'boys' | 'girls'
 
 export interface UnitMembership {
   role: string
   unit_id: string
-  section_unit_id?: string | null
   units: UnitInfo | null
 }
 
@@ -57,20 +45,6 @@ interface UnitContextValue {
 
   // Switch to a different unit - legacy support
   switchUnit: (unitId: string) => void
-
-  // New sub-units model: sections
-  sections: SectionInfo[]
-  hasSections: boolean
-  sectionFilter: SectionFilter
-  setSectionFilter: (filter: SectionFilter) => void
-
-  // Leader section assignment
-  leaderSectionId: string | null
-  leaderSection: SectionInfo | null
-  isLeaderWithSection: boolean
-
-  // Get unit IDs to query based on current filter
-  getFilteredUnitIds: () => string[]
 }
 
 const UnitContext = createContext<UnitContextValue | null>(null)
@@ -90,18 +64,14 @@ interface UnitProviderProps {
     role: string
     unit_groups: UnitGroup | null
   }[]
-  sections?: SectionInfo[]
   initialUnitId?: string
-  leaderSectionId?: string | null
 }
 
 export function UnitProvider({
   children,
   memberships,
   groupMemberships = [],
-  sections: providedSections = [],
-  initialUnitId,
-  leaderSectionId: providedLeaderSectionId = null
+  initialUnitId
 }: UnitProviderProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -150,12 +120,6 @@ export function UnitProvider({
   const [currentUnitId, setCurrentUnitId] = useState<string | null>(defaultUnitId || null)
   const [combinedView, setCombinedView] = useState(false)
 
-  // New: Section filter state - read from URL (middleware handles cookie -> URL redirect)
-  const urlSection = searchParams.get('section') as SectionFilter | null
-  const [sectionFilter, setSectionFilterState] = useState<SectionFilter>(
-    urlSection && ['all', 'boys', 'girls'].includes(urlSection) ? urlSection : 'all'
-  )
-
   // Find current unit and its membership
   const currentUnit = allUnits.find(u => u.id === currentUnitId) || null
   const currentMembership = memberships.find(m => m.unit_id === currentUnitId)
@@ -175,17 +139,6 @@ export function UnitProvider({
     : null
 
   const linkedUnits = linkedGroup?.units || (currentUnit ? [currentUnit] : [])
-
-  // New: Sections from sub-units model
-  const sections = providedSections
-  const hasSections = sections.length > 0
-
-  // Leader section assignment
-  const leaderSectionId = providedLeaderSectionId
-  const leaderSection = leaderSectionId
-    ? sections.find(s => s.id === leaderSectionId) || null
-    : null
-  const isLeaderWithSection = currentRole === 'leader' && !!leaderSectionId && hasSections
 
   // Persist unit selection and clean up invalid stored values
   useEffect(() => {
@@ -210,55 +163,6 @@ export function UnitProvider({
     router.replace(`?${params.toString()}`, { scroll: false })
   }
 
-  // New: Set section filter with URL and cookie persistence
-  // Cookie is read by middleware to redirect on page load
-  const setSectionFilter = (filter: SectionFilter) => {
-    setSectionFilterState(filter)
-    // Persist to cookie (read by middleware on navigation)
-    if (typeof window !== 'undefined') {
-      if (filter === 'all') {
-        // Delete cookie when 'all' is selected
-        document.cookie = 'chuckbox_section_filter=; path=/; max-age=0'
-      } else {
-        // Set cookie with 1 year expiry
-        document.cookie = `chuckbox_section_filter=${filter}; path=/; max-age=31536000`
-      }
-    }
-    const params = new URLSearchParams(searchParams.toString())
-    if (filter === 'all') {
-      params.delete('section')
-    } else {
-      params.set('section', filter)
-    }
-    // Get current pathname and navigate with new params
-    const newUrl = `${window.location.pathname}?${params.toString()}`
-    router.push(newUrl)
-  }
-
-  // New: Get unit IDs to query based on current filter
-  const getFilteredUnitIds = (): string[] => {
-    if (!currentUnit) return []
-
-    // If no sections, just return current unit
-    if (!hasSections) {
-      return [currentUnit.id]
-    }
-
-    // Leaders with assigned sections can only see their section
-    if (isLeaderWithSection && leaderSectionId) {
-      return [leaderSectionId]
-    }
-
-    // If filter is 'all', return all section IDs
-    if (sectionFilter === 'all') {
-      return sections.map(s => s.id)
-    }
-
-    // Return the specific section ID
-    const section = sections.find(s => s.unit_gender === sectionFilter)
-    return section ? [section.id] : sections.map(s => s.id)
-  }
-
   return (
     <UnitContext.Provider value={{
       currentUnit,
@@ -269,17 +173,7 @@ export function UnitProvider({
       linkedUnits,
       combinedView,
       setCombinedView,
-      switchUnit,
-      // New section support
-      sections,
-      hasSections,
-      sectionFilter,
-      setSectionFilter,
-      // Leader section assignment
-      leaderSectionId,
-      leaderSection,
-      isLeaderWithSection,
-      getFilteredUnitIds
+      switchUnit
     }}>
       {children}
     </UnitContext.Provider>

@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { UnitInfoForm } from '@/components/settings/unit-info-form'
 import { PatrolList } from '@/components/settings/patrol-list'
 import { LogoUpload } from '@/components/settings/logo-upload'
-import { TroopStructureForm } from '@/components/settings/troop-structure-form'
 
 export default async function UnitSettingsPage() {
   const supabase = await createClient()
@@ -16,7 +15,7 @@ export default async function UnitSettingsPage() {
     redirect('/login')
   }
 
-  // Get user's membership and unit info (including linked troop fields)
+  // Get user's membership and unit info
   // Note: Must specify the foreign key since section_unit_id also references units
   const { data: membership } = await supabase
     .from('unit_memberships')
@@ -64,46 +63,13 @@ export default async function UnitSettingsPage() {
     redirect('/settings')
   }
 
-  // Get sections (sub-units) if this is a linked troop
-  const { data: sections } = await supabase
-    .from('units')
-    .select('id, name, unit_number, unit_gender')
-    .eq('parent_unit_id', unit.id)
-    .order('unit_gender')
-
-  const sectionsList = (sections || []) as Array<{
-    id: string
-    name: string
-    unit_number: string
-    unit_gender: 'boys' | 'girls' | null
-  }>
-
-  // Get patrols - from parent unit AND all sections
-  const unitIdsForPatrols = [membership.unit_id, ...sectionsList.map(s => s.id)]
+  // Get patrols for this unit
   const { data: patrols } = await supabase
     .from('patrols')
     .select('id, name, display_order, is_active, unit_id')
-    .in('unit_id', unitIdsForPatrols)
-    .order('unit_id')
+    .eq('unit_id', membership.unit_id)
     .order('display_order', { ascending: true })
     .order('name', { ascending: true })
-
-  // Get counts of existing data on parent unit (for migration warning)
-  const [scoutCountResult, patrolCountResult] = await Promise.all([
-    supabase
-      .from('scouts')
-      .select('*', { count: 'exact', head: true })
-      .eq('unit_id', unit.id),
-    supabase
-      .from('patrols')
-      .select('*', { count: 'exact', head: true })
-      .eq('unit_id', unit.id),
-  ])
-
-  const existingDataCounts = {
-    scouts: scoutCountResult.count || 0,
-    patrols: patrolCountResult.count || 0,
-  }
 
   return (
     <div className="space-y-6">
@@ -125,20 +91,9 @@ export default async function UnitSettingsPage() {
           charteredOrg={unit.chartered_org}
         />
 
-        <TroopStructureForm
-          unitId={unit.id}
-          unitName={unit.name}
-          unitNumber={unit.unit_number}
-          unitType={unit.unit_type}
-          unitGender={unit.unit_gender}
-          sections={sectionsList}
-          existingDataCounts={existingDataCounts}
-        />
-
         <PatrolList
           unitId={membership.unit_id}
           patrols={patrols || []}
-          sections={sectionsList}
         />
 
         <LogoUpload

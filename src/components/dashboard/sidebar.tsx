@@ -8,7 +8,6 @@ import { getVisibleNavItems, isAdmin, isFinancialRole } from '@/lib/roles'
 import { Logo } from '@/components/ui/logo'
 import { UnitSwitcher } from './unit-switcher'
 import { UnitLogo } from './unit-logo'
-import { SectionFilter } from './section-filter'
 import { useUnit } from '@/components/providers/unit-context'
 import { useSidebar } from '@/components/providers/sidebar-context'
 import { Button } from '@/components/ui/button'
@@ -76,7 +75,7 @@ function NavTooltip({
 
 export function Sidebar({ user, userName, className }: SidebarProps) {
   const pathname = usePathname()
-  const { currentRole, units, hasSections, isLeaderWithSection } = useUnit()
+  const { currentRole, units } = useUnit()
   const { isCollapsed, toggleCollapsed } = useSidebar()
   const navItems = currentRole ? getVisibleNavItems(currentRole) : []
   const initials = getInitials(user.email || '', userName)
@@ -113,14 +112,11 @@ export function Sidebar({ user, userName, className }: SidebarProps) {
           <div className="border-b border-sidebar-border px-4 py-4">
             <div className="flex flex-col items-center gap-3">
               {/* Unit switcher for multi-unit users, otherwise show logo */}
-              {units.length > 1 && !isLeaderWithSection ? (
+              {units.length > 1 ? (
                 <UnitSwitcher />
               ) : (
                 <UnitLogo size="md" />
               )}
-
-              {/* Section filter for linked troops (admins/treasurers only) */}
-              {hasSections && !isLeaderWithSection && <SectionFilter />}
             </div>
           </div>
         )}

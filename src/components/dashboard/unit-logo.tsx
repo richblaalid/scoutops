@@ -15,20 +15,13 @@ const sizes = {
 }
 
 export function UnitLogo({ size = 'md' }: UnitLogoProps) {
-  const { currentUnit, isLeaderWithSection, leaderSection } = useUnit()
+  const { currentUnit } = useUnit()
 
   const { width, height, className } = sizes[size]
 
-  // Determine what to display
   const logoUrl = currentUnit?.logo_url
-  const altText = isLeaderWithSection && leaderSection
-    ? `Troop ${leaderSection.unit_number}`
-    : currentUnit?.name || 'Unit logo'
-
-  // Fallback text when no logo
-  const fallbackText = isLeaderWithSection && leaderSection
-    ? { primary: `Troop ${leaderSection.unit_number}`, secondary: leaderSection.unit_gender }
-    : { primary: currentUnit?.name || '', secondary: null }
+  const altText = currentUnit?.name || 'Unit logo'
+  const fallbackText = currentUnit?.name || ''
 
   if (logoUrl) {
     return (
@@ -46,7 +39,7 @@ export function UnitLogo({ size = 'md' }: UnitLogoProps) {
   if (size === 'sm') {
     return (
       <span className="text-sm font-medium text-muted-foreground">
-        {fallbackText.primary}
+        {fallbackText}
       </span>
     )
   }
@@ -54,13 +47,8 @@ export function UnitLogo({ size = 'md' }: UnitLogoProps) {
   return (
     <div className="flex flex-col items-center">
       <span className="text-base font-medium text-sidebar-foreground text-center">
-        {fallbackText.primary}
+        {fallbackText}
       </span>
-      {fallbackText.secondary && (
-        <span className="text-sm text-muted-foreground capitalize">
-          {fallbackText.secondary}
-        </span>
-      )}
     </div>
   )
 }
