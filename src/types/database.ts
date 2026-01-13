@@ -1227,6 +1227,10 @@ export type Database = {
           synced_at: string
           created_at: string
           updated_at: string
+          buyer_email_address: string | null
+          cardholder_name: string | null
+          note: string | null
+          order_line_items: { name: string; quantity: number; amount: number }[] | null
         }
         Insert: {
           id?: string
@@ -1250,6 +1254,10 @@ export type Database = {
           synced_at?: string
           created_at?: string
           updated_at?: string
+          buyer_email_address?: string | null
+          cardholder_name?: string | null
+          note?: string | null
+          order_line_items?: { name: string; quantity: number; amount: number }[] | null
         }
         Update: {
           id?: string
@@ -1273,6 +1281,10 @@ export type Database = {
           synced_at?: string
           created_at?: string
           updated_at?: string
+          buyer_email_address?: string | null
+          cardholder_name?: string | null
+          note?: string | null
+          order_line_items?: { name: string; quantity: number; amount: number }[] | null
         }
         Relationships: [
           {

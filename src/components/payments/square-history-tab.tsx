@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { RefreshCw, ExternalLink } from 'lucide-react'
 
+interface OrderLineItem {
+  name: string
+  quantity: number
+  amount: number
+}
+
 interface SquareTransaction {
   id: string
   square_payment_id: string
@@ -19,6 +25,10 @@ interface SquareTransaction {
   receipt_url: string | null
   receipt_number: string | null
   square_created_at: string
+  buyer_email_address: string | null
+  cardholder_name: string | null
+  note: string | null
+  order_line_items: OrderLineItem[] | null
 }
 
 interface SquareHistoryTabProps {
@@ -118,6 +128,22 @@ export function SquareHistoryTab({ unitId }: SquareHistoryTabProps) {
     const brandStr = brand || 'Card'
     const last4Str = last4 ? `•••• ${last4}` : ''
     return `${brandStr} ${last4Str}`.trim()
+  }
+
+  const formatItems = (items: OrderLineItem[] | null) => {
+    if (!items || items.length === 0) return null
+    return items.map((item, idx) => (
+      <div key={idx} className="text-xs">
+        {item.quantity > 1 ? `${item.quantity}× ` : ''}{item.name}
+      </div>
+    ))
+  }
+
+  const formatCustomer = (txn: SquareTransaction) => {
+    const name = txn.cardholder_name
+    const email = txn.buyer_email_address
+    if (!name && !email) return null
+    return { name, email }
   }
 
   // Calculate summary stats
@@ -252,7 +278,8 @@ export function SquareHistoryTab({ unitId }: SquareHistoryTabProps) {
                 <thead>
                   <tr className="border-b border-stone-200 text-left text-sm font-medium text-stone-500">
                     <th className="pb-3 pr-4">Date</th>
-                    <th className="pb-3 pr-4">Receipt #</th>
+                    <th className="pb-3 pr-4">Customer</th>
+                    <th className="pb-3 pr-4">Details</th>
                     <th className="pb-3 pr-4">Card</th>
                     <th className="pb-3 pr-4 text-right">Amount</th>
                     <th className="pb-3 pr-4 text-right">Fee</th>
@@ -261,49 +288,66 @@ export function SquareHistoryTab({ unitId }: SquareHistoryTabProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((txn) => (
-                    <tr key={txn.id} className="border-b border-stone-100 last:border-0">
-                      <td className="py-3 pr-4 text-sm text-stone-600">
-                        {formatDate(txn.square_created_at)}
-                      </td>
-                      <td className="py-3 pr-4">
-                        {txn.receipt_url ? (
-                          <a
-                            href={txn.receipt_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-forest-600 hover:text-forest-800"
+                  {transactions.map((txn) => {
+                    const customer = formatCustomer(txn)
+                    const items = formatItems(txn.order_line_items)
+                    return (
+                      <tr key={txn.id} className="border-b border-stone-100 last:border-0">
+                        <td className="py-3 pr-4 text-sm text-stone-600">
+                          {formatDate(txn.square_created_at)}
+                        </td>
+                        <td className="py-3 pr-4">
+                          {customer ? (
+                            <div>
+                              {customer.name && (
+                                <p className="text-sm font-medium text-stone-900">{customer.name}</p>
+                              )}
+                              {customer.email && (
+                                <p className="text-xs text-stone-500">{customer.email}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-stone-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-3 pr-4 max-w-[200px]">
+                          {txn.note || items ? (
+                            <div className="text-stone-700">
+                              {txn.note && (
+                                <p className="text-sm font-medium">{txn.note}</p>
+                              )}
+                              {items && (
+                                <div className={txn.note ? 'mt-1 text-stone-500' : ''}>
+                                  {items}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-stone-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-3 pr-4 text-sm text-stone-700">
+                          {formatCard(txn.card_brand, txn.last_4)}
+                        </td>
+                        <td className="py-3 pr-4 text-right text-sm font-medium text-stone-900">
+                          {formatCurrency(txn.amount_money / 100)}
+                        </td>
+                        <td className="py-3 pr-4 text-right text-sm text-error">
+                          {txn.fee_money > 0 ? formatCurrency(txn.fee_money / 100) : '—'}
+                        </td>
+                        <td className="py-3 pr-4 text-right text-sm font-medium text-stone-900">
+                          {formatCurrency(txn.net_money / 100)}
+                        </td>
+                        <td className="py-3">
+                          <span
+                            className={`rounded-md px-2 py-1 text-xs font-medium capitalize ${getStatusBadgeClass(txn.status)}`}
                           >
-                            {txn.receipt_number || 'View'}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <span className="text-sm text-stone-400">
-                            {txn.receipt_number || '—'}
+                            {txn.status.toLowerCase()}
                           </span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4 text-sm text-stone-700">
-                        {formatCard(txn.card_brand, txn.last_4)}
-                      </td>
-                      <td className="py-3 pr-4 text-right text-sm font-medium text-stone-900">
-                        {formatCurrency(txn.amount_money / 100)}
-                      </td>
-                      <td className="py-3 pr-4 text-right text-sm text-error">
-                        {txn.fee_money > 0 ? formatCurrency(txn.fee_money / 100) : '—'}
-                      </td>
-                      <td className="py-3 pr-4 text-right text-sm font-medium text-stone-900">
-                        {formatCurrency(txn.net_money / 100)}
-                      </td>
-                      <td className="py-3">
-                        <span
-                          className={`rounded-md px-2 py-1 text-xs font-medium capitalize ${getStatusBadgeClass(txn.status)}`}
-                        >
-                          {txn.status.toLowerCase()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

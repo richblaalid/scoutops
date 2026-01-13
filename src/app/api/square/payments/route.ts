@@ -81,6 +81,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No active membership found' }, { status: 403 })
     }
 
+    // Get user profile for email to pass to Square
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', user.id)
+      .single()
+
     // Parse and validate request body
     const rawBody = await request.json()
     const parseResult = createPaymentSchema.safeParse(rawBody)
@@ -155,6 +162,7 @@ export async function POST(request: NextRequest) {
       locationId,
       note: paymentNote,
       referenceId: scoutAccountId,
+      buyerEmailAddress: userProfile?.email || undefined,
     })
 
     if (!squareResponse.payment) {
@@ -325,6 +333,9 @@ export async function POST(request: NextRequest) {
       scout_account_id: scoutAccountId,
       is_reconciled: true,
       square_created_at: squarePayment.createdAt!,
+      buyer_email_address: squarePayment.buyerEmailAddress || userProfile?.email || null,
+      cardholder_name: cardDetails?.card?.cardholderName || null,
+      note: paymentNote,
     })
 
     // Check for overpayment and transfer excess to Scout Funds

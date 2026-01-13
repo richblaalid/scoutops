@@ -473,6 +473,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       scout_account_id: paymentLink.scout_account_id,
       is_reconciled: true,
       square_created_at: squarePayment.createdAt!,
+      buyer_email_address: squarePayment.buyerEmailAddress || null,
+      cardholder_name: cardDetails?.card?.cardholderName || null,
+      note: paymentNote,
     })
 
     // Calculate remaining balance after this payment

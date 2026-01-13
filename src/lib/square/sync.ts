@@ -3,6 +3,7 @@ import { createClient } from '../supabase/server'
 import type { Database } from '@/types/database'
 
 type SquareTransaction = Database['public']['Tables']['square_transactions']['Insert']
+type OrderLineItem = { name: string; quantity: number; amount: number }
 
 interface SyncResult {
   success: boolean
@@ -71,6 +72,40 @@ export async function syncSquareTransactions(
 
     const existingIds = new Set((existingTransactions || []).map((t) => t.square_payment_id))
 
+    // Batch fetch orders for payments that have orderId
+    const orderIds = payments
+      .filter((p) => p.orderId)
+      .map((p) => p.orderId as string)
+
+    const ordersMap = new Map<string, OrderLineItem[]>()
+
+    if (orderIds.length > 0) {
+      try {
+        // Fetch orders in batches of 10
+        for (let i = 0; i < orderIds.length; i += 10) {
+          const batch = orderIds.slice(i, i + 10)
+          const ordersResponse = await squareClient.orders.batchGet({
+            locationId,
+            orderIds: batch,
+          })
+
+          for (const order of ordersResponse.orders || []) {
+            if (order.id && order.lineItems) {
+              const lineItems: OrderLineItem[] = order.lineItems.map((item) => ({
+                name: item.name || 'Unknown Item',
+                quantity: Number(item.quantity) || 1,
+                amount: Number(item.totalMoney?.amount || 0) / 100,
+              }))
+              ordersMap.set(order.id, lineItems)
+            }
+          }
+        }
+      } catch (orderError) {
+        // Log but don't fail sync if order fetch fails
+        console.error('Failed to fetch orders:', orderError)
+      }
+    }
+
     // Process each payment
     for (const payment of payments) {
       try {
@@ -84,6 +119,11 @@ export async function syncSquareTransactions(
 
         const amountCents = Number(payment.amountMoney?.amount || 0)
         const netCents = amountCents - feeCents
+
+        // Get order line items if available
+        const orderLineItems = payment.orderId
+          ? ordersMap.get(payment.orderId) || null
+          : null
 
         const transactionData: SquareTransaction = {
           unit_id: unitId,
@@ -102,6 +142,10 @@ export async function syncSquareTransactions(
           is_reconciled: false,
           square_created_at: payment.createdAt || new Date().toISOString(),
           synced_at: new Date().toISOString(),
+          buyer_email_address: payment.buyerEmailAddress || null,
+          cardholder_name: payment.cardDetails?.card?.cardholderName || null,
+          note: payment.note || null,
+          order_line_items: orderLineItems,
         }
 
         if (existingIds.has(payment.id)) {
