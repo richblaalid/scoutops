@@ -135,19 +135,43 @@ export function PaymentEntry({
 
   // Initialize card payment form with mobile-friendly retry logic
   const initializeCard = useCallback(async () => {
-    if (!window.Square || !cardContainerRef.current || !locationId) {
+    console.log('[PaymentEntry] initializeCard called', {
+      hasSquare: !!window.Square,
+      hasContainer: !!cardContainerRef.current,
+      locationId,
+      applicationId,
+      attempt: initAttemptRef.current,
+    })
+
+    if (!window.Square) {
+      console.error('[PaymentEntry] Square SDK not loaded')
+      setError('Payment system not available. Please refresh the page.')
+      return
+    }
+
+    if (!cardContainerRef.current) {
+      console.error('[PaymentEntry] Card container ref not available')
+      return
+    }
+
+    if (!locationId || !applicationId) {
+      console.error('[PaymentEntry] Missing locationId or applicationId')
+      setError('Payment configuration error. Please contact support.')
       return
     }
 
     // Check container has dimensions (mobile fix)
     const container = cardContainerRef.current
     const rect = container.getBoundingClientRect()
+    console.log('[PaymentEntry] Container dimensions:', rect.width, 'x', rect.height)
 
     if (rect.width === 0 || rect.height === 0) {
       // Container not ready, retry
       if (initAttemptRef.current < 10) {
         initAttemptRef.current++
         setTimeout(() => initializeCard(), 100)
+      } else {
+        setError('Unable to display payment form. Please refresh the page.')
       }
       return
     }
@@ -162,15 +186,22 @@ export function PaymentEntry({
         cardRef.current = null
       }
 
+      console.log('[PaymentEntry] Creating Square payments instance...')
       const payments = await window.Square.payments(applicationId, locationId)
+
+      console.log('[PaymentEntry] Creating card...')
       const card = await payments.card()
-      await card.attach('#card-container')
+
+      console.log('[PaymentEntry] Attaching card to container element...')
+      await card.attach(container)
+
+      console.log('[PaymentEntry] Card initialized successfully')
       cardRef.current = card
       setCardInitialized(true)
       setIsCardLoading(false)
       initAttemptRef.current = 0
     } catch (err) {
-      console.error('Failed to initialize Square card:', err)
+      console.error('[PaymentEntry] Failed to initialize Square card:', err)
 
       // Retry on failure (mobile can be slow)
       if (initAttemptRef.current < 3) {
@@ -187,17 +218,33 @@ export function PaymentEntry({
   // Initialize card when tab becomes active and SDK is ready
   useEffect(() => {
     if (activeTab === 'card' && sdkReady && !cardInitialized && isSquareConnected) {
+      console.log('[PaymentEntry] Triggering card initialization', { activeTab, sdkReady, cardInitialized, isSquareConnected })
+      setIsCardLoading(true)
       // Small delay to ensure container is rendered
       setTimeout(() => initializeCard(), 50)
     }
+  }, [activeTab, sdkReady, cardInitialized, isSquareConnected, initializeCard])
 
+  // Cleanup card when leaving card tab and reset initialized state
+  useEffect(() => {
+    if (activeTab !== 'card' && cardRef.current) {
+      console.log('[PaymentEntry] Leaving card tab, destroying card')
+      cardRef.current.destroy().catch(console.error)
+      cardRef.current = null
+      setCardInitialized(false)
+    }
+  }, [activeTab])
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
       if (cardRef.current) {
+        console.log('[PaymentEntry] Unmounting, destroying card')
         cardRef.current.destroy().catch(console.error)
         cardRef.current = null
       }
     }
-  }, [activeTab, sdkReady, cardInitialized, isSquareConnected, initializeCard])
+  }, [])
 
   // Handle card payment
   const handleCardPayment = async () => {
@@ -387,7 +434,7 @@ export function PaymentEntry({
     }
   }
 
-  const handleSuccess = async () => {
+  const handleSuccess = () => {
     setSuccess(true)
     setAmount('')
     setNotes('')
@@ -396,21 +443,14 @@ export function PaymentEntry({
       setSelectedScoutId('')
     }
 
-    // Reinitialize card form if on card tab
-    if (activeTab === 'card' && cardRef.current) {
-      setCardInitialized(false)
-      await cardRef.current.destroy()
-      cardRef.current = null
-      setTimeout(() => initializeCard(), 100)
-    }
-
     if (onPaymentComplete) {
       onPaymentComplete()
     }
 
+    // Refresh the page after a short delay to show updated balance
+    // The refresh will unmount this component, which will clean up the card properly
     setTimeout(() => {
       router.refresh()
-      setSuccess(false)
     }, 2000)
   }
 
@@ -522,17 +562,39 @@ export function PaymentEntry({
       {activeTab === 'card' && isSquareConnected && (
         <div className="space-y-2">
           <Label>Card Details *</Label>
-          <div
-            id="card-container"
-            ref={cardContainerRef}
-            className={`min-h-[50px] rounded-md border border-stone-300 bg-white p-3 ${
-              isCardLoading ? 'animate-pulse bg-stone-100' : ''
-            }`}
-          >
-            {isCardLoading && (
-              <div className="text-sm text-stone-500">Loading payment form...</div>
-            )}
-          </div>
+          {error && !cardInitialized ? (
+            <div className="rounded-md border border-error bg-error-light p-4">
+              <p className="text-sm text-error">{error}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  setError(null)
+                  setCardInitialized(false)
+                  initAttemptRef.current = 0
+                  setTimeout(() => initializeCard(), 100)
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <div
+              id="card-container"
+              ref={cardContainerRef}
+              className={`min-h-[56px] rounded-md border border-stone-300 bg-white p-3 ${
+                isCardLoading ? 'animate-pulse bg-stone-100' : ''
+              } ${cardInitialized ? '' : 'flex items-center justify-center'}`}
+            >
+              {!cardInitialized && (
+                <div className="text-sm text-stone-500">
+                  {isCardLoading ? 'Loading payment form...' : 'Initializing...'}
+                </div>
+              )}
+            </div>
+          )}
           <p className="text-xs text-stone-500">
             Payments are processed securely by Square. Card details never touch our servers.
           </p>
