@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AccountActions } from '@/components/accounts/account-actions'
 import { AccountTransactions } from '@/components/accounts/account-transactions'
-import { RecordPaymentForm } from '@/components/accounts/record-payment-form'
+import { PaymentEntry } from '@/components/payments/payment-entry'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { isFinancialRole } from '@/lib/roles'
+import { getDefaultLocationId } from '@/lib/square/client'
 
 interface AccountPageProps {
   params: Promise<{ id: string }>
@@ -131,10 +133,12 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
     return dateB.localeCompare(dateA)
   })
 
-  // Get Square configuration for parent payments
-  let squareConfig: { applicationId: string; locationId: string; environment: 'sandbox' | 'production' } | null = null
+  // Get Square configuration for payments
+  const squareApplicationId = process.env.SQUARE_APPLICATION_ID || ''
+  let squareLocationId: string | null = null
+  let squareEnvironment: 'sandbox' | 'production' = 'sandbox'
 
-  if (isParent && balance < 0 && unitId) {
+  if (unitId && (canRecordPayment || (isParent && balance < 0))) {
     const { data: credentials } = await serviceClient
       .from('unit_square_credentials')
       .select('location_id, environment')
@@ -142,14 +146,19 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
       .eq('is_active', true)
       .single()
 
-    if (credentials?.location_id) {
-      squareConfig = {
-        applicationId: process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID || '',
-        locationId: credentials.location_id,
-        environment: (credentials.environment as 'sandbox' | 'production') || 'sandbox',
+    if (credentials) {
+      squareLocationId = credentials.location_id
+      if (!squareLocationId) {
+        squareLocationId = await getDefaultLocationId(unitId)
       }
+      squareEnvironment = (credentials.environment as 'sandbox' | 'production') || 'sandbox'
     }
   }
+
+  // For AccountActions, only pass config if locationId is available (non-null)
+  const squareConfigForActions = squareLocationId
+    ? { applicationId: squareApplicationId, locationId: squareLocationId, environment: squareEnvironment }
+    : null
 
   return (
     <div className="space-y-6">
@@ -194,7 +203,7 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
               balance={balance}
               userRole={userRole}
               isParent={isParent}
-              squareConfig={squareConfig}
+              squareConfig={squareConfigForActions}
             />
           )}
         </div>
@@ -205,12 +214,27 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
 
       {/* Record Payment Form - Financial Roles Only */}
       {canRecordPayment && unitId && account.scouts && (
-        <RecordPaymentForm
-          unitId={unitId}
-          scoutAccountId={account.id}
-          scoutName={scoutName}
-          currentBalance={balance}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Record Payment</CardTitle>
+            <CardDescription>
+              {squareLocationId
+                ? 'Accept card payment or record cash/check payment'
+                : 'Record cash, check, or other payment'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PaymentEntry
+              unitId={unitId}
+              applicationId={squareApplicationId}
+              locationId={squareLocationId}
+              environment={squareEnvironment}
+              scoutAccountId={account.id}
+              scoutName={scoutName}
+              currentBalance={balance}
+            />
+          </CardContent>
+        </Card>
       )}
     </div>
   )

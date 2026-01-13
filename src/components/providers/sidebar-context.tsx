@@ -22,18 +22,16 @@ interface SidebarProviderProps {
   children: ReactNode
 }
 
-export function SidebarProvider({ children }: SidebarProviderProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+// Helper to get initial collapsed state from localStorage
+function getInitialCollapsedState(): boolean {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('chuckbox_sidebar_collapsed') === 'true'
+  }
+  return false
+}
 
-  // Load collapsed state from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('chuckbox_sidebar_collapsed')
-      if (stored === 'true') {
-        setIsCollapsed(true)
-      }
-    }
-  }, [])
+export function SidebarProvider({ children }: SidebarProviderProps) {
+  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState)
 
   // Persist collapsed state to localStorage
   useEffect(() => {

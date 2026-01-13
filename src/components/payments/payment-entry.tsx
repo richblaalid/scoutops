@@ -1,0 +1,654 @@
+'use client'
+
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatCurrency } from '@/lib/utils'
+import { SQUARE_FEE_PERCENT, SQUARE_FEE_FIXED_DOLLARS } from '@/lib/billing'
+import { trackPaymentInitiated, trackPaymentCompleted, trackPaymentFailed } from '@/lib/analytics'
+import type { SquareCard } from '@/types/square'
+import { CreditCard, Banknote } from 'lucide-react'
+
+interface Scout {
+  id: string
+  first_name: string
+  last_name: string
+  scout_accounts: {
+    id: string
+    balance: number | null
+  } | null
+}
+
+interface PaymentEntryProps {
+  // Required
+  unitId: string
+  applicationId: string
+  locationId: string | null
+  environment: 'sandbox' | 'production'
+
+  // Multi-scout mode (payments page)
+  scouts?: Scout[]
+
+  // Single-scout mode (account detail page)
+  scoutAccountId?: string
+  scoutName?: string
+  currentBalance?: number
+
+  // Callbacks
+  onPaymentComplete?: () => void
+}
+
+const PAYMENT_METHODS = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'check', label: 'Check' },
+  { value: 'card', label: 'Card (Manual Entry)' },
+  { value: 'transfer', label: 'Bank Transfer' },
+]
+
+export function PaymentEntry({
+  unitId,
+  applicationId,
+  locationId,
+  environment,
+  scouts,
+  scoutAccountId,
+  scoutName,
+  currentBalance: initialBalance,
+  onPaymentComplete,
+}: PaymentEntryProps) {
+  const router = useRouter()
+  const cardContainerRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<SquareCard | null>(null)
+  const initAttemptRef = useRef(0)
+
+  // Form state
+  const [activeTab, setActiveTab] = useState<string>(locationId ? 'card' : 'manual')
+  const [selectedScoutId, setSelectedScoutId] = useState(scoutAccountId ? '' : '')
+  const [amount, setAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [notes, setNotes] = useState('')
+  const [reference, setReference] = useState('')
+
+  // UI state
+  const [isCardLoading, setIsCardLoading] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [sdkReady, setSdkReady] = useState(false)
+  const [cardInitialized, setCardInitialized] = useState(false)
+
+  // Determine mode
+  const isSingleScoutMode = !!scoutAccountId
+  const isSquareConnected = !!locationId
+
+  // Get selected scout info
+  const selectedScout = isSingleScoutMode
+    ? { id: '', first_name: scoutName?.split(' ')[0] || '', last_name: scoutName?.split(' ').slice(1).join(' ') || '', scout_accounts: { id: scoutAccountId!, balance: initialBalance || 0 } }
+    : scouts?.find((s) => s.id === selectedScoutId)
+
+  const scoutAccount = isSingleScoutMode
+    ? { id: scoutAccountId!, balance: initialBalance || 0 }
+    : selectedScout?.scout_accounts
+
+  const currentBalance = scoutAccount?.balance || 0
+
+  // Calculate amounts
+  const parsedAmount = parseFloat(amount) || 0
+  const isCardPayment = activeTab === 'card'
+  const isManualCard = activeTab === 'manual' && paymentMethod === 'card'
+  const showFees = isCardPayment || isManualCard
+  const feeAmount = showFees ? parsedAmount * SQUARE_FEE_PERCENT + SQUARE_FEE_FIXED_DOLLARS : 0
+  const netAmount = parsedAmount - feeAmount
+
+  // Load Square Web Payments SDK
+  useEffect(() => {
+    if (!isSquareConnected) return
+
+    const sdkUrl =
+      environment === 'production'
+        ? 'https://web.squarecdn.com/v1/square.js'
+        : 'https://sandbox.web.squarecdn.com/v1/square.js'
+
+    if (window.Square) {
+      setSdkReady(true)
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = sdkUrl
+    script.async = true
+    script.onload = () => setSdkReady(true)
+    script.onerror = () => setError('Failed to load Square payment SDK')
+    document.body.appendChild(script)
+
+    return () => {
+      const existingScript = document.querySelector(`script[src="${sdkUrl}"]`)
+      if (existingScript) {
+        existingScript.remove()
+      }
+    }
+  }, [environment, isSquareConnected])
+
+  // Initialize card payment form with mobile-friendly retry logic
+  const initializeCard = useCallback(async () => {
+    if (!window.Square || !cardContainerRef.current || !locationId) {
+      return
+    }
+
+    // Check container has dimensions (mobile fix)
+    const container = cardContainerRef.current
+    const rect = container.getBoundingClientRect()
+
+    if (rect.width === 0 || rect.height === 0) {
+      // Container not ready, retry
+      if (initAttemptRef.current < 10) {
+        initAttemptRef.current++
+        setTimeout(() => initializeCard(), 100)
+      }
+      return
+    }
+
+    try {
+      setIsCardLoading(true)
+      setError(null)
+
+      // Destroy existing card if any
+      if (cardRef.current) {
+        await cardRef.current.destroy()
+        cardRef.current = null
+      }
+
+      const payments = await window.Square.payments(applicationId, locationId)
+      const card = await payments.card()
+      await card.attach('#card-container')
+      cardRef.current = card
+      setCardInitialized(true)
+      setIsCardLoading(false)
+      initAttemptRef.current = 0
+    } catch (err) {
+      console.error('Failed to initialize Square card:', err)
+
+      // Retry on failure (mobile can be slow)
+      if (initAttemptRef.current < 3) {
+        initAttemptRef.current++
+        setTimeout(() => initializeCard(), 500)
+        return
+      }
+
+      setError('Failed to initialize payment form. Please refresh and try again.')
+      setIsCardLoading(false)
+    }
+  }, [applicationId, locationId])
+
+  // Initialize card when tab becomes active and SDK is ready
+  useEffect(() => {
+    if (activeTab === 'card' && sdkReady && !cardInitialized && isSquareConnected) {
+      // Small delay to ensure container is rendered
+      setTimeout(() => initializeCard(), 50)
+    }
+
+    return () => {
+      if (cardRef.current) {
+        cardRef.current.destroy().catch(console.error)
+        cardRef.current = null
+      }
+    }
+  }, [activeTab, sdkReady, cardInitialized, isSquareConnected, initializeCard])
+
+  // Handle card payment
+  const handleCardPayment = async () => {
+    if (!cardRef.current) {
+      setError('Payment form not ready')
+      return
+    }
+
+    if (!scoutAccount) {
+      setError('Please select a scout')
+      return
+    }
+
+    if (parsedAmount < 1) {
+      setError('Minimum payment amount is $1.00')
+      return
+    }
+
+    setIsProcessing(true)
+    setError(null)
+
+    trackPaymentInitiated({
+      amount: parsedAmount,
+      scoutAccountId: scoutAccount.id,
+      method: 'card',
+    })
+
+    try {
+      const tokenResult = await cardRef.current.tokenize()
+
+      if (tokenResult.status !== 'OK' || !tokenResult.token) {
+        const errorMessage = tokenResult.errors?.[0]?.message || 'Card verification failed'
+        setError(errorMessage)
+        setIsProcessing(false)
+        return
+      }
+
+      const response = await fetch('/api/square/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scoutAccountId: scoutAccount.id,
+          amountCents: Math.round(parsedAmount * 100),
+          sourceId: tokenResult.token,
+          description: `Payment for ${selectedScout?.first_name} ${selectedScout?.last_name}`,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Payment failed')
+      }
+
+      trackPaymentCompleted({
+        amount: parsedAmount,
+        fee: feeAmount,
+        net: netAmount,
+        scoutAccountId: scoutAccount.id,
+        method: 'card',
+      })
+
+      handleSuccess()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Payment failed'
+      setError(errorMessage)
+
+      trackPaymentFailed({
+        amount: parsedAmount,
+        errorType: errorMessage,
+        scoutAccountId: scoutAccount?.id,
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // Handle manual payment
+  const handleManualPayment = async () => {
+    if (!scoutAccount) {
+      setError('Please select a scout')
+      return
+    }
+
+    if (parsedAmount <= 0) {
+      setError('Please enter a valid amount')
+      return
+    }
+
+    setIsProcessing(true)
+    setError(null)
+
+    const supabase = createClient()
+
+    try {
+      const paymentDate = new Date().toISOString().split('T')[0]
+      const scoutFullName = `${selectedScout?.first_name} ${selectedScout?.last_name}`
+
+      // Create journal entry
+      const { data: journalEntry, error: journalError } = await supabase
+        .from('journal_entries')
+        .insert({
+          unit_id: unitId,
+          entry_date: paymentDate,
+          description: `Payment from ${scoutFullName}`,
+          entry_type: 'payment',
+          reference: reference || null,
+          is_posted: true,
+        })
+        .select()
+        .single()
+
+      if (journalError || !journalEntry) {
+        throw journalError || new Error('Failed to create journal entry')
+      }
+
+      // Get accounts
+      const { data: accountsData } = await supabase
+        .from('accounts')
+        .select('id, code')
+        .eq('unit_id', unitId)
+        .in('code', ['1000', '1200', '5600'])
+
+      const accounts = accountsData || []
+      const bankAccount = accounts.find((a) => a.code === '1000')
+      const receivableAccount = accounts.find((a) => a.code === '1200')
+      const feeAccount = accounts.find((a) => a.code === '5600')
+
+      if (!bankAccount || !receivableAccount) {
+        throw new Error('Required accounts not found')
+      }
+
+      // Create journal lines
+      const journalLines = [
+        {
+          journal_entry_id: journalEntry.id,
+          account_id: bankAccount.id,
+          scout_account_id: null,
+          debit: netAmount,
+          credit: 0,
+          memo: `${paymentMethod} payment from ${scoutFullName}`,
+        },
+        {
+          journal_entry_id: journalEntry.id,
+          account_id: receivableAccount.id,
+          scout_account_id: scoutAccount.id,
+          debit: 0,
+          credit: parsedAmount,
+          memo: 'Payment received',
+        },
+      ]
+
+      if (isManualCard && feeAccount && feeAmount > 0) {
+        journalLines.push({
+          journal_entry_id: journalEntry.id,
+          account_id: feeAccount.id,
+          scout_account_id: null,
+          debit: feeAmount,
+          credit: 0,
+          memo: 'Card processing fee',
+        })
+      }
+
+      const { error: linesError } = await supabase.from('journal_lines').insert(journalLines)
+      if (linesError) throw linesError
+
+      // Create payment record
+      const { error: paymentError } = await supabase.from('payments').insert({
+        unit_id: unitId,
+        scout_account_id: scoutAccount.id,
+        amount: parsedAmount,
+        fee_amount: isManualCard ? feeAmount : 0,
+        net_amount: isManualCard ? netAmount : parsedAmount,
+        payment_method: paymentMethod,
+        status: 'completed',
+        journal_entry_id: journalEntry.id,
+        notes: notes || null,
+      })
+
+      if (paymentError) throw paymentError
+
+      handleSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleSuccess = async () => {
+    setSuccess(true)
+    setAmount('')
+    setNotes('')
+    setReference('')
+    if (!isSingleScoutMode) {
+      setSelectedScoutId('')
+    }
+
+    // Reinitialize card form if on card tab
+    if (activeTab === 'card' && cardRef.current) {
+      setCardInitialized(false)
+      await cardRef.current.destroy()
+      cardRef.current = null
+      setTimeout(() => initializeCard(), 100)
+    }
+
+    if (onPaymentComplete) {
+      onPaymentComplete()
+    }
+
+    setTimeout(() => {
+      router.refresh()
+      setSuccess(false)
+    }, 2000)
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (activeTab === 'card') {
+      await handleCardPayment()
+    } else {
+      await handleManualPayment()
+    }
+  }
+
+  const handlePayFullBalance = () => {
+    if (currentBalance < 0) {
+      setAmount(Math.abs(currentBalance).toFixed(2))
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Tab Selection - only show if Square is connected */}
+      {isSquareConnected && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="card" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Card Payment
+            </TabsTrigger>
+            <TabsTrigger value="manual" className="flex items-center gap-2">
+              <Banknote className="h-4 w-4" />
+              Manual Entry
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+
+      {/* Scout Selection (multi-scout mode only) */}
+      {!isSingleScoutMode && scouts && (
+        <div className="space-y-2">
+          <Label htmlFor="scout">Scout *</Label>
+          <select
+            id="scout"
+            required
+            disabled={isProcessing}
+            className="flex h-10 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2 disabled:opacity-50"
+            value={selectedScoutId}
+            onChange={(e) => setSelectedScoutId(e.target.value)}
+          >
+            <option value="">Select a scout...</option>
+            {scouts.map((scout) => {
+              const balance = scout.scout_accounts?.balance || 0
+              return (
+                <option key={scout.id} value={scout.id}>
+                  {scout.first_name} {scout.last_name} ({formatCurrency(balance)})
+                </option>
+              )
+            })}
+          </select>
+        </div>
+      )}
+
+      {/* Current Balance Display */}
+      {(selectedScout || isSingleScoutMode) && (
+        <div className="flex items-center justify-between rounded-lg bg-stone-50 p-3">
+          <div>
+            <p className="text-sm font-medium text-stone-900">
+              {isSingleScoutMode ? scoutName : `${selectedScout?.first_name} ${selectedScout?.last_name}`}
+            </p>
+            <p className="text-xs text-stone-500">
+              Current balance:{' '}
+              <span className={currentBalance < 0 ? 'text-error' : currentBalance > 0 ? 'text-success' : ''}>
+                {formatCurrency(currentBalance)}
+              </span>
+            </p>
+          </div>
+          {currentBalance < 0 && (
+            <Button type="button" variant="outline" size="sm" onClick={handlePayFullBalance}>
+              Pay Full Balance
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Amount Input */}
+      <div className="space-y-2">
+        <Label htmlFor="amount">Amount *</Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">$</span>
+          <Input
+            id="amount"
+            type="number"
+            step="0.01"
+            min={activeTab === 'card' ? '1' : '0'}
+            required
+            disabled={isProcessing}
+            className="pl-7 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            onWheel={(e) => e.currentTarget.blur()}
+          />
+        </div>
+        {activeTab === 'card' && (
+          <p className="text-xs text-stone-500">Minimum payment: $1.00</p>
+        )}
+      </div>
+
+      {/* Card Payment Tab Content */}
+      {activeTab === 'card' && isSquareConnected && (
+        <div className="space-y-2">
+          <Label>Card Details *</Label>
+          <div
+            id="card-container"
+            ref={cardContainerRef}
+            className={`min-h-[50px] rounded-md border border-stone-300 bg-white p-3 ${
+              isCardLoading ? 'animate-pulse bg-stone-100' : ''
+            }`}
+          >
+            {isCardLoading && (
+              <div className="text-sm text-stone-500">Loading payment form...</div>
+            )}
+          </div>
+          <p className="text-xs text-stone-500">
+            Payments are processed securely by Square. Card details never touch our servers.
+          </p>
+        </div>
+      )}
+
+      {/* Manual Entry Tab Content */}
+      {(activeTab === 'manual' || !isSquareConnected) && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="method">Payment Method *</Label>
+              <select
+                id="method"
+                required
+                disabled={isProcessing}
+                className="flex h-10 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2 disabled:opacity-50"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              >
+                {PAYMENT_METHODS.map((method) => (
+                  <option key={method.value} value={method.value}>
+                    {method.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reference">Reference #</Label>
+              <Input
+                id="reference"
+                disabled={isProcessing}
+                placeholder="Check number, receipt #, etc."
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Input
+              id="notes"
+              disabled={isProcessing}
+              placeholder="Optional notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Payment Summary */}
+      {parsedAmount > 0 && (
+        <div className="rounded-lg bg-stone-50 p-4">
+          <h4 className="font-medium text-stone-900">Payment Summary</h4>
+          <div className="mt-2 space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-stone-500">Amount:</span>
+              <span className="font-medium text-stone-900">{formatCurrency(parsedAmount)}</span>
+            </div>
+            {showFees && (
+              <div className="flex justify-between text-stone-500">
+                <span>Processing Fee (2.6% + $0.10):</span>
+                <span>-{formatCurrency(feeAmount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between border-t border-stone-200 pt-1 font-medium">
+              <span className="text-stone-700">Net to Unit:</span>
+              <span className="text-stone-900">{formatCurrency(showFees ? netAmount : parsedAmount)}</span>
+            </div>
+            {(selectedScout || isSingleScoutMode) && (
+              <div className="flex justify-between border-t border-stone-200 pt-1">
+                <span className="text-stone-500">New Balance:</span>
+                <span className={currentBalance + parsedAmount < 0 ? 'text-error' : 'text-success'}>
+                  {formatCurrency(currentBalance + parsedAmount)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="rounded-lg bg-error-light p-3 text-sm font-medium text-error">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="rounded-lg bg-success-light p-3 text-sm font-medium text-success">
+          Payment {activeTab === 'card' ? 'processed' : 'recorded'} successfully! Refreshing...
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <Button
+        type="submit"
+        disabled={
+          isProcessing ||
+          (activeTab === 'card' && isCardLoading) ||
+          (!isSingleScoutMode && !selectedScoutId) ||
+          parsedAmount < (activeTab === 'card' ? 1 : 0.01)
+        }
+        className="w-full"
+      >
+        {isProcessing
+          ? 'Processing...'
+          : activeTab === 'card' && isCardLoading
+            ? 'Loading...'
+            : activeTab === 'card'
+              ? `Pay ${parsedAmount > 0 ? formatCurrency(parsedAmount) : ''}`
+              : 'Record Payment'}
+      </Button>
+    </form>
+  )
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import type { SquareCard } from '@/types/square'
 
@@ -435,10 +436,13 @@ export default function PaymentCheckoutPage() {
         {/* Header */}
         <div className="text-center mb-8">
           {linkData.unitLogoUrl && (
-            <img
+            <Image
               src={linkData.unitLogoUrl}
               alt={`${linkData.unitName} logo`}
+              width={80}
+              height={80}
               className="h-20 w-auto mx-auto mb-4 object-contain"
+              unoptimized
             />
           )}
           <h1 className="text-2xl font-bold text-stone-900">{linkData.unitName}</h1>

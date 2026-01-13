@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/logo'
@@ -10,25 +10,27 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  // Handle URL parameters for redirect messages
-  useEffect(() => {
+  // Compute initial message from URL parameters
+  const initialMessage = useMemo(() => {
     const error = searchParams.get('error')
     const urlMessage = searchParams.get('message')
 
     if (error === 'account_deactivated') {
-      setMessage({
-        type: 'error',
+      return {
+        type: 'error' as const,
         text: 'Your account has been deactivated. Contact a unit administrator if you need to regain access.',
-      })
+      }
     } else if (urlMessage === 'account_deleted') {
-      setMessage({
-        type: 'success',
+      return {
+        type: 'success' as const,
         text: 'Your account has been deleted successfully.',
-      })
+      }
     }
+    return null
   }, [searchParams])
+
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(initialMessage)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

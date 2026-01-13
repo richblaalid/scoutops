@@ -65,7 +65,7 @@ export function MemberContactForm({ membershipId, profile }: MemberContactFormPr
     <Card>
       <CardHeader>
         <CardTitle>Contact Information</CardTitle>
-        <CardDescription>Update this member's contact details</CardDescription>
+        <CardDescription>Update this member&apos;s contact details</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">

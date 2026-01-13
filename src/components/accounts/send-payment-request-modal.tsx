@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   Dialog,
@@ -49,14 +49,8 @@ export function SendPaymentRequestModal({
   const amountOwed = Math.abs(balance)
   const owesAmount = balance < 0
 
-  // Fetch guardians when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchGuardians()
-    }
-  }, [open])
-
-  async function fetchGuardians() {
+  // Fetch guardians function
+  const fetchGuardians = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -106,7 +100,14 @@ export function SendPaymentRequestModal({
     } finally {
       setLoading(false)
     }
-  }
+  }, [scoutId])
+
+  // Fetch guardians when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchGuardians()
+    }
+  }, [open, fetchGuardians])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

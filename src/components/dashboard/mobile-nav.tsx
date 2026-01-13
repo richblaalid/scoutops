@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, Settings, LogOut, Plug } from 'lucide-react'
@@ -50,6 +51,7 @@ function getRoleLabel(role: string): string {
 
 export function MobileNav({ user, userName, className }: MobileNavProps) {
   const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
   const { currentRole, units, hasSections, isLeaderWithSection } = useUnit()
   const navItems = currentRole ? getVisibleNavItems(currentRole) : []
   const initials = getInitials(user.email || '', userName)
@@ -58,12 +60,14 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
   const showUnitSettings = isAdmin(userRole)
   const showIntegrations = isFinancialRole(userRole)
 
+  const closeMenu = () => setIsOpen(false)
+
   return (
     <header className={cn(
       "sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-sidebar-border bg-sidebar px-4",
       className
     )}>
-      <Sheet>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="shrink-0">
             <Menu className="h-5 w-5" />
@@ -77,7 +81,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
           <div className="flex h-full flex-col">
             {/* Header Section: ChuckBox Logo - scaled to fit sidebar width */}
             <div className="flex items-center justify-center border-b border-sidebar-border px-4 py-4">
-              <Link href="/" className="flex w-full items-center justify-center">
+              <Link href="/" onClick={closeMenu} className="flex w-full items-center justify-center">
                 <div className="origin-center scale-[0.95]">
                   <Logo variant="full" size="md" />
                 </div>
@@ -109,6 +113,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
                     <li key={item.href}>
                       <Link
                         href={item.href}
+                        onClick={closeMenu}
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                           isActive
@@ -133,6 +138,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
                     <li>
                       <Link
                         href="/settings/unit"
+                        onClick={closeMenu}
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                           pathname === '/settings/unit'
@@ -149,6 +155,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
                     <li>
                       <Link
                         href="/settings/integrations"
+                        onClick={closeMenu}
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                           pathname === '/settings/integrations'
@@ -169,6 +176,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
             <div className="border-t border-sidebar-border px-3 py-3">
               <Link
                 href="/settings"
+                onClick={closeMenu}
                 className="flex items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-sidebar-accent/50"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export interface UnitInfo {
@@ -106,27 +106,31 @@ export function UnitProvider({
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Build list of all accessible units
-  const allUnits: UnitInfo[] = []
-  const unitIdSet = new Set<string>()
+  // Build list of all accessible units (memoized to prevent re-renders)
+  const allUnits = useMemo(() => {
+    const units: UnitInfo[] = []
+    const unitIdSet = new Set<string>()
 
-  // Add units from direct memberships
-  memberships.forEach(m => {
-    if (m.units && !unitIdSet.has(m.units.id)) {
-      allUnits.push(m.units)
-      unitIdSet.add(m.units.id)
-    }
-  })
-
-  // Add units from group memberships
-  groupMemberships.forEach(gm => {
-    gm.unit_groups?.units?.forEach(unit => {
-      if (!unitIdSet.has(unit.id)) {
-        allUnits.push(unit)
-        unitIdSet.add(unit.id)
+    // Add units from direct memberships
+    memberships.forEach(m => {
+      if (m.units && !unitIdSet.has(m.units.id)) {
+        units.push(m.units)
+        unitIdSet.add(m.units.id)
       }
     })
-  })
+
+    // Add units from group memberships
+    groupMemberships.forEach(gm => {
+      gm.unit_groups?.units?.forEach(unit => {
+        if (!unitIdSet.has(unit.id)) {
+          units.push(unit)
+          unitIdSet.add(unit.id)
+        }
+      })
+    })
+
+    return units
+  }, [memberships, groupMemberships])
 
   // Determine initial unit
   const urlUnitId = searchParams.get('unit')

@@ -3,8 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { canAccessPage, canPerformAction } from '@/lib/roles'
-import { PaymentForm } from '@/components/payments/payment-form'
-import { SquarePaymentForm } from '@/components/payments/square-payment-form'
+import { PaymentEntry } from '@/components/payments/payment-entry'
 import { getDefaultLocationId } from '@/lib/square/client'
 import Link from 'next/link'
 
@@ -270,11 +269,19 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
           <CardHeader>
             <CardTitle>Record Payment</CardTitle>
             <CardDescription>
-              Record a cash, check, or card payment
+              {isSquareConnected
+                ? 'Accept card payments or record cash/check payments'
+                : 'Record cash, check, or other payments'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PaymentForm unitId={membership.unit_id} scouts={scouts} />
+            <PaymentEntry
+              unitId={membership.unit_id}
+              applicationId={squareApplicationId}
+              locationId={squareCredentials?.location_id || null}
+              environment={squareCredentials?.environment || 'sandbox'}
+              scouts={scouts}
+            />
           </CardContent>
         </Card>
       )}
@@ -343,25 +350,8 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Square Online Payments */}
-      {isSquareConnected ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Online Card Payment</CardTitle>
-            <CardDescription>
-              Accept card payments via Square
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SquarePaymentForm
-              applicationId={squareApplicationId}
-              locationId={squareCredentials!.location_id!}
-              scouts={scouts}
-              environment={squareCredentials!.environment}
-            />
-          </CardContent>
-        </Card>
-      ) : (
+      {/* Square Connection Prompt (only show if not connected) */}
+      {!isSquareConnected && (
         <Card className="border-dashed border-stone-300">
           <CardHeader>
             <CardTitle className="text-stone-500">Online Payments</CardTitle>
