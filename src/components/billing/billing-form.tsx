@@ -33,7 +33,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
   const [selectedScouts, setSelectedScouts] = useState<Set<string>>(new Set())
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
-  const [billingType, setBillingType] = useState<BillingType>('split')
+  const [billingType, setBillingType] = useState<BillingType>('fixed')
   const [sendNotifications, setSendNotifications] = useState(false)
 
   const parsedAmount = parseFloat(amount) || 0
@@ -185,17 +185,6 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
         <div className="ml-4 mt-3 inline-flex rounded-lg border border-stone-300 bg-white p-1">
           <button
             type="button"
-            onClick={() => setBillingType('split')}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              billingType === 'split'
-                ? 'bg-forest-700 text-white'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            Split Total
-          </button>
-          <button
-            type="button"
             onClick={() => setBillingType('fixed')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               billingType === 'fixed'
@@ -204,6 +193,17 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             }`}
           >
             Fixed Amount
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingType('split')}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              billingType === 'split'
+                ? 'bg-forest-700 text-white'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Split Total
           </button>
         </div>
         <p className="text-sm text-stone-500">
