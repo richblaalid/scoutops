@@ -215,13 +215,42 @@ export function PaymentEntry({
     }
   }, [applicationId, locationId])
 
-  // Initialize card when tab becomes active and SDK is ready
+  // Initialize card when tab becomes active, SDK is ready, and container is visible
   useEffect(() => {
     if (activeTab === 'card' && sdkReady && !cardInitialized && isSquareConnected) {
       console.log('[PaymentEntry] Triggering card initialization', { activeTab, sdkReady, cardInitialized, isSquareConnected })
       setIsCardLoading(true)
-      // Small delay to ensure container is rendered
-      setTimeout(() => initializeCard(), 50)
+
+      // Use IntersectionObserver to wait for container to be visible (better for mobile/animations)
+      if (cardContainerRef.current && 'IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            const entry = entries[0]
+            if (entry && entry.isIntersecting && entry.intersectionRatio > 0) {
+              console.log('[PaymentEntry] Container is visible, initializing card')
+              observer.disconnect()
+              setTimeout(() => initializeCard(), 100)
+            }
+          },
+          { threshold: 0.1 }
+        )
+        observer.observe(cardContainerRef.current)
+
+        // Fallback: try anyway after 500ms if observer doesn't fire
+        const fallbackTimer = setTimeout(() => {
+          console.log('[PaymentEntry] Fallback initialization after timeout')
+          observer.disconnect()
+          initializeCard()
+        }, 500)
+
+        return () => {
+          observer.disconnect()
+          clearTimeout(fallbackTimer)
+        }
+      } else {
+        // Fallback for browsers without IntersectionObserver
+        setTimeout(() => initializeCard(), 100)
+      }
     }
   }, [activeTab, sdkReady, cardInitialized, isSquareConnected, initializeCard])
 
