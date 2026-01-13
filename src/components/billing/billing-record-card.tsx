@@ -57,10 +57,18 @@ export function BillingRecordCard({
 
   return (
     <div className={`rounded-lg border ${isVoid ? 'border-stone-200 bg-stone-50' : 'border-stone-200 bg-white'}`}>
-      {/* Clickable Header */}
-      <button
+      {/* Clickable Header - using div with role="button" to allow nested interactive elements */}
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded(!expanded)}
-        className={`w-full text-left px-4 py-3 flex items-center gap-3 ${isVoid ? 'opacity-60' : ''}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setExpanded(!expanded)
+          }
+        }}
+        className={`w-full text-left px-4 py-3 flex items-center gap-3 cursor-pointer ${isVoid ? 'opacity-60' : ''}`}
       >
         {/* Expand Icon */}
         <div className="text-stone-400">
@@ -127,7 +135,7 @@ export function BillingRecordCard({
             />
           </div>
         )}
-      </button>
+      </div>
 
       {/* Expanded Content */}
       {expanded && (

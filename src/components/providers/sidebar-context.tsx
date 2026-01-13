@@ -22,23 +22,26 @@ interface SidebarProviderProps {
   children: ReactNode
 }
 
-// Helper to get initial collapsed state from localStorage
-function getInitialCollapsedState(): boolean {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('chuckbox_sidebar_collapsed') === 'true'
-  }
-  return false
-}
-
 export function SidebarProvider({ children }: SidebarProviderProps) {
-  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState)
+  // Start with false to match server render, then sync with localStorage after mount
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [hasMounted, setHasMounted] = useState(false)
 
-  // Persist collapsed state to localStorage
+  // Sync with localStorage after mount to avoid hydration mismatch
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('chuckbox_sidebar_collapsed')
+    if (stored === 'true') {
+      setIsCollapsed(true)
+    }
+    setHasMounted(true)
+  }, [])
+
+  // Persist collapsed state to localStorage after initial mount
+  useEffect(() => {
+    if (hasMounted) {
       localStorage.setItem('chuckbox_sidebar_collapsed', String(isCollapsed))
     }
-  }, [isCollapsed])
+  }, [isCollapsed, hasMounted])
 
   const toggleCollapsed = () => setIsCollapsed(prev => !prev)
 

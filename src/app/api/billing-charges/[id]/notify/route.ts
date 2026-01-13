@@ -85,7 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         scout_accounts (
           id,
           scout_id,
-          balance,
+          billing_balance,
           scouts (
             id,
             first_name,
