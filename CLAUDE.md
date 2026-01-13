@@ -47,7 +47,7 @@ Always use the appropriate client based on component type. The middleware (`src/
 - `profiles` - User profiles linked to Supabase Auth
 - `unit_memberships` - Links users to units with roles
 - `scouts` - Scout members within units
-- `scout_accounts` - Financial accounts per scout
+- `scout_accounts` - Financial accounts per scout (dual-balance: `billing_balance` for charges owed, `funds_balance` for scout savings)
 - `journal_entries` / `journal_lines` - Double-entry accounting
 - `billing_records` / `billing_charges` - Fair share billing
 - `payments` - Payment records
@@ -67,3 +67,8 @@ supabase db reset  # Reset and apply all migrations
 - Supabase queries return single objects (not arrays) for one-to-one relations like `scout_accounts`
 - Protected routes check `unit_memberships` for role-based access (admin, treasurer, leader, parent, scout)
 - The middleware deprecation warning about "proxy" is expected - Next.js 16 is transitioning middleware conventions
+- Scout accounts use a dual-balance model:
+  - `billing_balance`: Charges owed to unit (negative = owes money)
+  - `funds_balance`: Scout savings from fundraising/overpayments (always >= 0)
+- Avoid reading localStorage in initial state - defer to useEffect to prevent hydration mismatches
+- Nested interactive elements (button inside button) cause React hydration issues - use `<div role="button">` with keyboard handlers instead
