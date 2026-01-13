@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessDenied } from '@/components/ui/access-denied'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { canAccessPage, canPerformAction } from '@/lib/roles'
 import { BillingForm } from '@/components/billing/billing-form'
+import { BillingRecordCard } from '@/components/billing/billing-record-card'
 import Link from 'next/link'
 
 interface BillingRecord {
@@ -12,6 +13,8 @@ interface BillingRecord {
   total_amount: number
   billing_date: string
   created_at: string | null
+  is_void: boolean | null
+  void_reason: string | null
   events: {
     id: string
     title: string
@@ -20,6 +23,7 @@ interface BillingRecord {
     id: string
     amount: number
     is_paid: boolean | null
+    is_void: boolean | null
     scout_accounts: {
       scouts: {
         first_name: string
@@ -74,6 +78,8 @@ export default async function BillingPage() {
   }
 
   const canCreateBilling = canPerformAction(membership.role, 'manage_billing')
+  const canEditBilling = canPerformAction(membership.role, 'edit_billing')
+  const canVoidBilling = canPerformAction(membership.role, 'void_billing')
 
   // Get active scouts for billing form
   const { data: scoutsData } = await supabase
@@ -101,6 +107,8 @@ export default async function BillingPage() {
       total_amount,
       billing_date,
       created_at,
+      is_void,
+      void_reason,
       events (
         id,
         title
@@ -109,6 +117,7 @@ export default async function BillingPage() {
         id,
         amount,
         is_paid,
+        is_void,
         scout_accounts (
           scouts (
             first_name,
@@ -119,9 +128,10 @@ export default async function BillingPage() {
     `)
     .eq('unit_id', membership.unit_id)
     .order('billing_date', { ascending: false })
-    .limit(10)
+    .limit(20)
 
-  const billingRecords = (billingData as BillingRecord[]) || []
+  // Cast through unknown since is_void columns are added via migration
+  const billingRecords = (billingData as unknown as BillingRecord[]) || []
 
   return (
     <div className="space-y-6">
@@ -148,85 +158,39 @@ export default async function BillingPage() {
       )}
 
       {/* Recent Billing Records */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Billing Records</CardTitle>
-          <CardDescription>
-            {billingRecords.length} billing record{billingRecords.length !== 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {billingRecords.length > 0 ? (
-            <div className="space-y-4">
-              {billingRecords.map((record) => (
-                <div
-                  key={record.id}
-                  className="rounded-lg border p-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium text-stone-900">
-                        {record.description}
-                      </h3>
-                      {record.events && (
-                        <p className="text-sm text-stone-500">
-                          Event: {record.events.title}
-                        </p>
-                      )}
-                      <p className="mt-1 text-sm text-stone-500">
-                        {formatDate(record.created_at || record.billing_date)} • {record.billing_charges.length} scouts
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-stone-900">
-                        {formatCurrency(record.total_amount)}
-                      </p>
-                      <p className="text-sm text-stone-500">
-                        {formatCurrency(
-                          record.total_amount / (record.billing_charges.length || 1)
-                        )}{' '}
-                        per scout
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Show individual charges */}
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {record.billing_charges.slice(0, 5).map((charge) => (
-                      <span
-                        key={charge.id}
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
-                          charge.is_paid
-                            ? 'bg-success-light text-success'
-                            : 'bg-warning-light text-warning'
-                        }`}
-                      >
-                        {charge.scout_accounts?.scouts?.first_name}{' '}
-                        {charge.scout_accounts?.scouts?.last_name?.charAt(0)}.
-                        {charge.is_paid ? ' (Paid)' : ''}
-                      </span>
-                    ))}
-                    {record.billing_charges.length > 5 && (
-                      <span className="text-xs text-stone-500">
-                        +{record.billing_charges.length - 5} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
+      <div>
+        <h2 className="text-lg font-semibold text-stone-900 mb-3">Recent Billing Records</h2>
+        {billingRecords.length > 0 ? (
+          <div className="space-y-3">
+            {billingRecords.map((record) => (
+              <BillingRecordCard
+                key={record.id}
+                id={record.id}
+                description={record.description}
+                totalAmount={record.total_amount}
+                billingDate={record.billing_date}
+                createdAt={record.created_at}
+                isVoid={record.is_void === true}
+                voidReason={record.void_reason}
+                charges={record.billing_charges}
+                canEdit={canEditBilling}
+                canVoid={canVoidBilling}
+              />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center">
               <p className="text-stone-500">No billing records yet</p>
               {canCreateBilling && (
                 <p className="mt-2 text-sm text-stone-400">
                   Create your first billing record above
                 </p>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Help Text */}
       <Card>

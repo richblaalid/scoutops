@@ -29,6 +29,8 @@ export type AppAction =
   | 'delete_scouts'      // Delete scouts (more restricted)
   | 'manage_billing'     // Create/edit billing records
   | 'delete_billing'     // Delete billing records
+  | 'edit_billing'       // Edit billing record description
+  | 'void_billing'       // Void billing charges
   | 'record_payments'    // Record new payments
   | 'void_payments'      // Void existing payments
   | 'manage_members'     // Invite/remove/change roles
@@ -53,6 +55,8 @@ const ACTION_ACCESS: Record<AppAction, MemberRole[]> = {
   delete_scouts: ['admin'],
   manage_billing: ['admin', 'treasurer'],
   delete_billing: ['admin'],
+  edit_billing: ['admin', 'treasurer'],
+  void_billing: ['admin', 'treasurer'],
   record_payments: ['admin', 'treasurer'],
   void_payments: ['admin'],
   manage_members: ['admin'],
