@@ -64,6 +64,7 @@ export function PaymentEntry({
   const cardContainerRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<SquareCard | null>(null)
   const initAttemptRef = useRef(0)
+  const initInProgressRef = useRef(false)
 
   // Form state
   const [activeTab, setActiveTab] = useState<string>(locationId ? 'card' : 'manual')
@@ -135,6 +136,20 @@ export function PaymentEntry({
 
   // Initialize card payment form with mobile-friendly retry logic
   const initializeCard = useCallback(async () => {
+    // Prevent concurrent initialization attempts
+    if (initInProgressRef.current) {
+      console.log('[PaymentEntry] initializeCard skipped - already in progress')
+      return
+    }
+
+    // Skip if already initialized
+    if (cardRef.current) {
+      console.log('[PaymentEntry] initializeCard skipped - card already exists')
+      setCardInitialized(true)
+      setIsCardLoading(false)
+      return
+    }
+
     console.log('[PaymentEntry] initializeCard called', {
       hasSquare: !!window.Square,
       hasContainer: !!cardContainerRef.current,
@@ -176,15 +191,12 @@ export function PaymentEntry({
       return
     }
 
+    // Mark initialization as in progress
+    initInProgressRef.current = true
+
     try {
       setIsCardLoading(true)
       setError(null)
-
-      // Destroy existing card if any
-      if (cardRef.current) {
-        await cardRef.current.destroy()
-        cardRef.current = null
-      }
 
       console.log('[PaymentEntry] Creating Square payments instance...')
       const payments = await window.Square.payments(applicationId, locationId)
@@ -206,50 +218,68 @@ export function PaymentEntry({
       // Retry on failure (mobile can be slow)
       if (initAttemptRef.current < 3) {
         initAttemptRef.current++
+        initInProgressRef.current = false
         setTimeout(() => initializeCard(), 500)
         return
       }
 
       setError('Failed to initialize payment form. Please refresh and try again.')
       setIsCardLoading(false)
+    } finally {
+      initInProgressRef.current = false
     }
   }, [applicationId, locationId])
 
   // Initialize card when tab becomes active, SDK is ready, and container is visible
   useEffect(() => {
-    if (activeTab === 'card' && sdkReady && !cardInitialized && isSquareConnected) {
-      console.log('[PaymentEntry] Triggering card initialization', { activeTab, sdkReady, cardInitialized, isSquareConnected })
-      setIsCardLoading(true)
+    if (activeTab !== 'card' || !sdkReady || cardInitialized || !isSquareConnected) {
+      return
+    }
 
-      // Use IntersectionObserver to wait for container to be visible (better for mobile/animations)
-      if (cardContainerRef.current && 'IntersectionObserver' in window) {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            const entry = entries[0]
-            if (entry && entry.isIntersecting && entry.intersectionRatio > 0) {
-              console.log('[PaymentEntry] Container is visible, initializing card')
-              observer.disconnect()
-              setTimeout(() => initializeCard(), 100)
-            }
-          },
-          { threshold: 0.1 }
-        )
-        observer.observe(cardContainerRef.current)
+    console.log('[PaymentEntry] Triggering card initialization', { activeTab, sdkReady, cardInitialized, isSquareConnected })
+    setIsCardLoading(true)
 
-        // Fallback: try anyway after 500ms if observer doesn't fire
-        const fallbackTimer = setTimeout(() => {
-          console.log('[PaymentEntry] Fallback initialization after timeout')
-          observer.disconnect()
-          initializeCard()
-        }, 500)
+    let cancelled = false
 
-        return () => {
-          observer.disconnect()
-          clearTimeout(fallbackTimer)
-        }
-      } else {
-        // Fallback for browsers without IntersectionObserver
-        setTimeout(() => initializeCard(), 100)
+    const doInit = () => {
+      if (!cancelled) {
+        initializeCard()
+      }
+    }
+
+    // Use IntersectionObserver to wait for container to be visible (better for mobile/animations)
+    if (cardContainerRef.current && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0]
+          if (entry && entry.isIntersecting && entry.intersectionRatio > 0) {
+            console.log('[PaymentEntry] Container is visible, initializing card')
+            observer.disconnect()
+            setTimeout(doInit, 100)
+          }
+        },
+        { threshold: 0.1 }
+      )
+      observer.observe(cardContainerRef.current)
+
+      // Fallback: try anyway after 500ms if observer doesn't fire
+      const fallbackTimer = setTimeout(() => {
+        console.log('[PaymentEntry] Fallback initialization after timeout')
+        observer.disconnect()
+        doInit()
+      }, 500)
+
+      return () => {
+        cancelled = true
+        observer.disconnect()
+        clearTimeout(fallbackTimer)
+      }
+    } else {
+      // Fallback for browsers without IntersectionObserver
+      const timer = setTimeout(doInit, 100)
+      return () => {
+        cancelled = true
+        clearTimeout(timer)
       }
     }
   }, [activeTab, sdkReady, cardInitialized, isSquareConnected, initializeCard])
