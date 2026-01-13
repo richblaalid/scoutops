@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AccountActions } from '@/components/accounts/account-actions'
 import { AccountTransactions } from '@/components/accounts/account-transactions'
-import { PaymentEntry } from '@/components/payments/payment-entry'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { isFinancialRole } from '@/lib/roles'
 import { getDefaultLocationId } from '@/lib/square/client'
 
@@ -204,6 +202,10 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
               userRole={userRole}
               isParent={isParent}
               squareConfig={squareConfigForActions}
+              unitId={unitId}
+              squareApplicationId={squareApplicationId}
+              squareLocationId={squareLocationId}
+              squareEnvironment={squareEnvironment}
             />
           )}
         </div>
@@ -211,31 +213,6 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
 
       {/* Transaction History with Filters */}
       <AccountTransactions transactions={transactions} />
-
-      {/* Record Payment Form - Financial Roles Only */}
-      {canRecordPayment && unitId && account.scouts && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Record Payment</CardTitle>
-            <CardDescription>
-              {squareLocationId
-                ? 'Accept card payment or record cash/check payment'
-                : 'Record cash, check, or other payment'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PaymentEntry
-              unitId={unitId}
-              applicationId={squareApplicationId}
-              locationId={squareLocationId}
-              environment={squareEnvironment}
-              scoutAccountId={account.id}
-              scoutName={scoutName}
-              currentBalance={balance}
-            />
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

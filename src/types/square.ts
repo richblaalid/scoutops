@@ -14,7 +14,7 @@ export interface SquarePayments {
 }
 
 export interface SquareCard {
-  attach: (selector: string) => Promise<void>
+  attach: (selectorOrElement: string | HTMLElement) => Promise<void>
   tokenize: () => Promise<SquareTokenResult>
   destroy: () => Promise<void>
 }
