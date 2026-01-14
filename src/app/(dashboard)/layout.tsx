@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
+
+// Force dynamic rendering - disable caching for this layout
+export const dynamic = 'force-dynamic'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { MobileNav } from '@/components/dashboard/mobile-nav'
 import { MainContent } from '@/components/dashboard/main-content'
