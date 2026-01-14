@@ -46,11 +46,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : profile?.full_name || null
 
   // Get all user's unit memberships
-  const { data: membershipsData } = await supabase
+  const { data: membershipsData, error: membershipsError } = await supabase
     .from('unit_memberships')
     .select('role, unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type, unit_gender, unit_group_id, logo_url)')
     .eq('profile_id', user.id)
     .eq('status', 'active')
+
+  // DEBUG: Log server-side query results
+  console.log('Layout memberships query:', {
+    data: JSON.stringify(membershipsData),
+    error: membershipsError?.message,
+    userId: user.id
+  })
 
   const memberships: UnitMembership[] = (membershipsData || []).map(m => ({
     role: m.role,
