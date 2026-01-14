@@ -121,6 +121,13 @@ export function Sidebar({ user, userName, className }: SidebarProps) {
           </div>
         )}
 
+        {/* DEBUG: Remove after fixing */}
+        <div className="bg-yellow-100 p-2 text-xs text-black">
+          <div>Role: {currentRole || 'NULL'}</div>
+          <div>Units: {units.length}</div>
+          <div>NavItems: {navItems.length}</div>
+        </div>
+
         {/* Navigation Section */}
         <nav className="flex-1 overflow-y-auto px-2 py-4">
           <ul className="space-y-1">
