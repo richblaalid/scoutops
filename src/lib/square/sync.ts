@@ -44,9 +44,9 @@ export async function syncSquareTransactions(
       }
     }
 
-    // Default to last 30 days if no date range specified
+    // Default to last 90 days if no date range specified
     const endDate = options?.endDate || new Date()
-    const startDate = options?.startDate || new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const startDate = options?.startDate || new Date(endDate.getTime() - 90 * 24 * 60 * 60 * 1000)
 
     // Format dates for Square API (RFC 3339)
     const beginTime = startDate.toISOString()
