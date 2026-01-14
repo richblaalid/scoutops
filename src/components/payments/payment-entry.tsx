@@ -85,6 +85,12 @@ export function PaymentEntry({
   const isSingleScoutMode = !!scoutAccountId
   const isSquareConnected = !!locationId
 
+  // Filter scouts to only those with billing balance (owing money)
+  const scoutsWithBalance = scouts?.filter((scout) => {
+    const balance = scout.scout_accounts?.billing_balance || 0
+    return balance < 0 // Only show scouts who owe money
+  }) || []
+
   // Get selected scout info
   const selectedScout = isSingleScoutMode
     ? { id: '', first_name: scoutName?.split(' ')[0] || '', last_name: scoutName?.split(' ').slice(1).join(' ') || '', scout_accounts: { id: scoutAccountId!, billing_balance: initialBalance || 0 } }
@@ -484,6 +490,28 @@ export function PaymentEntry({
 
       if (paymentError) throw paymentError
 
+      // Check for overpayment and transfer to Scout Funds
+      const { data: updatedAccount } = await supabase
+        .from('scout_accounts')
+        .select('billing_balance')
+        .eq('id', scoutAccount.id)
+        .single()
+
+      if (updatedAccount && (updatedAccount.billing_balance || 0) > 0) {
+        const overpaymentAmount = updatedAccount.billing_balance || 0
+        const { error: transferError } = await supabase.rpc('auto_transfer_overpayment', {
+          p_scout_account_id: scoutAccount.id,
+          p_amount: overpaymentAmount,
+        })
+
+        if (transferError) {
+          log.error('Failed to transfer overpayment:', transferError)
+          // Don't fail the payment, just log the error
+        } else {
+          log.info(`Transferred $${overpaymentAmount.toFixed(2)} overpayment to Scout Funds`)
+        }
+      }
+
       handleSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -547,12 +575,23 @@ export function PaymentEntry({
 
       {/* Scout Selection (multi-scout mode only) */}
       {!isSingleScoutMode && scouts && (
-        <ScoutSelector
-          scouts={scouts}
-          selectedScoutId={selectedScoutId}
-          onSelect={setSelectedScoutId}
-          disabled={isProcessing}
-        />
+        scoutsWithBalance.length > 0 ? (
+          <ScoutSelector
+            scouts={scoutsWithBalance}
+            selectedScoutId={selectedScoutId}
+            onSelect={setSelectedScoutId}
+            disabled={isProcessing}
+          />
+        ) : (
+          <div className="rounded-lg bg-stone-50 p-4 text-center">
+            <p className="text-stone-600">
+              No scouts have outstanding charges.
+            </p>
+            <p className="text-sm text-stone-500 mt-1">
+              Use the &ldquo;Add Funds&rdquo; tab to credit scout accounts for fundraising.
+            </p>
+          </div>
+        )
       )}
 
       {/* Current Balance Display */}

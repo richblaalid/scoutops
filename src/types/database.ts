@@ -440,6 +440,44 @@ export type Database = {
           },
         ]
       }
+      fundraiser_types: {
+        Row: {
+          id: string
+          unit_id: string
+          name: string
+          description: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          unit_id: string
+          name: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          unit_id?: string
+          name?: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fundraiser_types_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journal_entries: {
         Row: {
           created_at: string | null
@@ -447,6 +485,7 @@ export type Database = {
           description: string
           entry_date: string
           entry_type: string | null
+          fundraiser_type_id: string | null
           id: string
           is_posted: boolean | null
           is_void: boolean | null
@@ -461,6 +500,7 @@ export type Database = {
           description: string
           entry_date: string
           entry_type?: string | null
+          fundraiser_type_id?: string | null
           id?: string
           is_posted?: boolean | null
           is_void?: boolean | null
@@ -475,6 +515,7 @@ export type Database = {
           description?: string
           entry_date?: string
           entry_type?: string | null
+          fundraiser_type_id?: string | null
           id?: string
           is_posted?: boolean | null
           is_void?: boolean | null
@@ -496,6 +537,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_fundraiser_type_id_fkey"
+            columns: ["fundraiser_type_id"]
+            isOneToOne: false
+            referencedRelation: "fundraiser_types"
             referencedColumns: ["id"]
           },
         ]
@@ -570,6 +618,9 @@ export type Database = {
           square_receipt_url: string | null
           status: string | null
           unit_id: string
+          voided_at: string | null
+          voided_by: string | null
+          void_reason: string | null
         }
         Insert: {
           amount: number
@@ -585,6 +636,9 @@ export type Database = {
           square_receipt_url?: string | null
           status?: string | null
           unit_id: string
+          voided_at?: string | null
+          voided_by?: string | null
+          void_reason?: string | null
         }
         Update: {
           amount?: number
@@ -600,6 +654,9 @@ export type Database = {
           square_receipt_url?: string | null
           status?: string | null
           unit_id?: string
+          voided_at?: string | null
+          voided_by?: string | null
+          void_reason?: string | null
         }
         Relationships: [
           {
@@ -1510,6 +1567,14 @@ export type Database = {
           p_square_refund_id: string
           p_original_square_payment_id: string
           p_refund_reason?: string | null
+        }
+        Returns: Json
+      }
+      void_payment: {
+        Args: {
+          p_payment_id: string
+          p_voided_by: string
+          p_reason: string
         }
         Returns: Json
       }

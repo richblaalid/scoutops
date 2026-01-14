@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { PaymentModal } from './payment-modal'
 import { SendPaymentRequestModal } from './send-payment-request-modal'
 import { UseFundsModal } from './use-funds-modal'
+import { AddFundsModal } from './add-funds-modal'
 import { PaymentEntry } from '@/components/payments/payment-entry'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChevronDown, ChevronUp, CreditCard, Wallet } from 'lucide-react'
@@ -120,6 +121,16 @@ export function AccountActions({
             scoutId={scoutId}
             scoutName={scoutName}
             balance={billingBalance}
+          />
+        )}
+
+        {/* Financial role: Add Funds */}
+        {isFinancialRole && unitId && (
+          <AddFundsModal
+            scoutAccountId={scoutAccountId}
+            scoutName={scoutName}
+            currentFundsBalance={fundsBalance}
+            unitId={unitId}
           />
         )}
 

@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessDenied } from '@/components/ui/access-denied'
-import { formatCurrency, formatDate } from '@/lib/utils'
-import { canAccessPage, canPerformAction } from '@/lib/roles'
+import { formatCurrency } from '@/lib/utils'
+import { canAccessPage, canPerformAction, isAdmin } from '@/lib/roles'
 import { PaymentEntry } from '@/components/payments/payment-entry'
+import { AddFundsForm } from '@/components/payments/add-funds-form'
+import { PaymentsList } from '@/components/payments/payments-list'
 import { PaymentsTabs } from '@/components/payments/payments-tabs'
 import { SquareHistoryTab } from '@/components/payments/square-history-tab'
 import { getDefaultLocationId } from '@/lib/square/client'
@@ -18,6 +20,10 @@ interface Payment {
   status: string | null
   created_at: string | null
   notes: string | null
+  square_payment_id: string | null
+  voided_at: string | null
+  voided_by: string | null
+  void_reason: string | null
   scout_account_id: string
   scout_accounts: {
     scouts: {
@@ -34,7 +40,14 @@ interface Scout {
   scout_accounts: {
     id: string
     billing_balance: number | null
+    funds_balance?: number
   } | null
+}
+
+interface FundraiserType {
+  id: string
+  name: string
+  description: string | null
 }
 
 export default async function PaymentsPage() {
@@ -74,15 +87,15 @@ export default async function PaymentsPage() {
 
   const canRecordPayment = canPerformAction(membership.role, 'record_payments')
 
-  // Get scouts with balances and Square credentials in parallel
+  // Get scouts with balances, Square credentials, and fundraiser types in parallel
   interface SquareCredentialsData {
     merchant_id: string
     location_id: string | null
     environment: 'sandbox' | 'production'
   }
 
-  // Run scouts and credentials queries in parallel
-  const [scoutsResult, credentialsResult] = await Promise.all([
+  // Run scouts, credentials, and fundraiser types queries in parallel
+  const [scoutsResult, credentialsResult, fundraiserTypesResult] = await Promise.all([
     supabase
       .from('scouts')
       .select(`
@@ -91,7 +104,8 @@ export default async function PaymentsPage() {
         last_name,
         scout_accounts (
           id,
-          billing_balance
+          billing_balance,
+          funds_balance
         )
       `)
       .eq('unit_id', membership.unit_id)
@@ -103,9 +117,16 @@ export default async function PaymentsPage() {
       .eq('unit_id', membership.unit_id)
       .eq('is_active', true)
       .single(),
+    supabase
+      .from('fundraiser_types')
+      .select('id, name, description')
+      .eq('unit_id', membership.unit_id)
+      .eq('is_active', true)
+      .order('name'),
   ])
 
   const scouts = (scoutsResult.data as Scout[]) || []
+  const fundraiserTypes = (fundraiserTypesResult.data as FundraiserType[]) || []
   let squareCredentials: SquareCredentialsData | null = null
 
   if (credentialsResult.data) {
@@ -124,6 +145,8 @@ export default async function PaymentsPage() {
   const squareEnvironment = (process.env.SQUARE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production'
   const isSquareConnected = !!squareCredentials && !!squareCredentials.location_id
 
+  const canVoidPayments = isAdmin(membership.role)
+
   // Get recent payments
   const { data: paymentsData } = await supabase
     .from('payments')
@@ -136,6 +159,10 @@ export default async function PaymentsPage() {
       status,
       created_at,
       notes,
+      square_payment_id,
+      voided_at,
+      voided_by,
+      void_reason,
       scout_account_id,
       scout_accounts (
         scouts (
@@ -235,58 +262,7 @@ export default async function PaymentsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {payments.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-stone-200 text-left text-sm font-medium text-stone-500">
-                    <th className="pb-3 pr-4">Date</th>
-                    <th className="pb-3 pr-4">Scout</th>
-                    <th className="pb-3 pr-4">Method</th>
-                    <th className="pb-3 pr-4 text-right">Amount</th>
-                    <th className="pb-3 pr-4 text-right">Fee</th>
-                    <th className="pb-3 text-right">Net</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map((payment) => (
-                    <tr key={payment.id} className="border-b border-stone-100 last:border-0">
-                      <td className="py-3 pr-4 text-stone-600">
-                        {payment.created_at ? formatDate(payment.created_at) : '—'}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <p className="font-medium text-stone-900">
-                          {payment.scout_accounts?.scouts?.first_name}{' '}
-                          {payment.scout_accounts?.scouts?.last_name}
-                        </p>
-                        {payment.notes && (
-                          <p className="text-xs text-stone-500">{payment.notes}</p>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className="rounded-md bg-stone-100 px-2 py-1 text-xs font-medium capitalize text-stone-700">
-                          {payment.payment_method || 'unknown'}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-right font-medium text-success">
-                        {formatCurrency(payment.amount)}
-                      </td>
-                      <td className="py-3 pr-4 text-right text-error">
-                        {payment.fee_amount
-                          ? formatCurrency(payment.fee_amount)
-                          : '—'}
-                      </td>
-                      <td className="py-3 text-right font-medium text-stone-900">
-                        {formatCurrency(payment.net_amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-stone-500">No payments recorded yet</p>
-          )}
+          <PaymentsList payments={payments} canVoid={canVoidPayments} />
         </CardContent>
       </Card>
 
@@ -312,6 +288,33 @@ export default async function PaymentsPage() {
     </div>
   )
 
+  // Content for Add Funds tab
+  const addFundsContent = (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Add Scout Funds</CardTitle>
+          <CardDescription>
+            Credit fundraising earnings to scout accounts (e.g., wreath sales, popcorn sales)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {canRecordPayment ? (
+            <AddFundsForm
+              unitId={membership.unit_id}
+              scouts={scouts}
+              fundraiserTypes={fundraiserTypes}
+            />
+          ) : (
+            <p className="text-stone-500">
+              You don&apos;t have permission to add funds to scout accounts.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+
   // Content for Square History tab
   const squareHistoryContent = (
     <SquareHistoryTab unitId={membership.unit_id} />
@@ -328,6 +331,7 @@ export default async function PaymentsPage() {
 
       <PaymentsTabs
         recordPaymentsContent={recordPaymentsContent}
+        addFundsContent={addFundsContent}
         squareHistoryContent={squareHistoryContent}
         showSquareTab={isSquareConnected}
       />

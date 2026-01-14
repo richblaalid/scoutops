@@ -4,20 +4,30 @@ import { useState, ReactNode } from 'react'
 
 interface PaymentsTabsProps {
   recordPaymentsContent: ReactNode
+  addFundsContent: ReactNode
   squareHistoryContent: ReactNode
   showSquareTab: boolean
 }
 
 export function PaymentsTabs({
   recordPaymentsContent,
+  addFundsContent,
   squareHistoryContent,
   showSquareTab,
 }: PaymentsTabsProps) {
-  const [activeTab, setActiveTab] = useState<'record' | 'square'>('record')
+  const [activeTab, setActiveTab] = useState<'record' | 'funds' | 'square'>('record')
 
-  // If Square tab isn't available, just render record payments content directly
-  if (!showSquareTab) {
-    return <>{recordPaymentsContent}</>
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'record':
+        return recordPaymentsContent
+      case 'funds':
+        return addFundsContent
+      case 'square':
+        return squareHistoryContent
+      default:
+        return recordPaymentsContent
+    }
   }
 
   return (
@@ -36,20 +46,32 @@ export function PaymentsTabs({
             Record Payments
           </button>
           <button
-            onClick={() => setActiveTab('square')}
+            onClick={() => setActiveTab('funds')}
             className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
-              activeTab === 'square'
+              activeTab === 'funds'
                 ? 'border-forest-600 text-forest-600'
                 : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
             }`}
           >
-            Square History
+            Add Funds
           </button>
+          {showSquareTab && (
+            <button
+              onClick={() => setActiveTab('square')}
+              className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+                activeTab === 'square'
+                  ? 'border-forest-600 text-forest-600'
+                  : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
+              }`}
+            >
+              Square History
+            </button>
+          )}
         </nav>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'record' ? recordPaymentsContent : squareHistoryContent}
+      {renderContent()}
     </div>
   )
 }
