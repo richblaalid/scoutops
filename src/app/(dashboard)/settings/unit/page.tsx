@@ -24,8 +24,6 @@ export default async function UnitSettingsPage() {
         name,
         unit_number,
         unit_type,
-        unit_gender,
-        unit_group_id,
         council,
         district,
         chartered_org,
@@ -50,8 +48,6 @@ export default async function UnitSettingsPage() {
     name: string
     unit_number: string
     unit_type: string
-    unit_gender: 'boys' | 'girls' | 'coed' | null
-    unit_group_id: string | null
     council: string | null
     district: string | null
     chartered_org: string | null

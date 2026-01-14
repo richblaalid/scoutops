@@ -70,7 +70,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         id,
         name,
         base_unit_number,
-        units(id, name, unit_number, unit_type, unit_gender, unit_group_id)
+        units(id, name, unit_number, unit_type, logo_url)
       )
     `)
     .eq('profile_id', user.id)
