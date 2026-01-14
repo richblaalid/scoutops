@@ -106,6 +106,41 @@ export async function syncSquareTransactions(
       }
     }
 
+    // Batch fetch customers for payments that have customerId
+    const customerIds = [...new Set(
+      payments
+        .filter((p) => p.customerId)
+        .map((p) => p.customerId as string)
+    )]
+
+    const customersMap = new Map<string, { name: string | null; email: string | null }>()
+
+    if (customerIds.length > 0) {
+      try {
+        // Fetch customers individually (Square doesn't have batch get for customers)
+        for (const customerId of customerIds) {
+          try {
+            const customerResponse = await squareClient.customers.get({ customerId })
+            const customer = customerResponse.customer
+            if (customer) {
+              const name = [customer.givenName, customer.familyName]
+                .filter(Boolean)
+                .join(' ') || null
+              customersMap.set(customerId, {
+                name,
+                email: customer.emailAddress || null,
+              })
+            }
+          } catch {
+            // Skip individual customer fetch errors
+          }
+        }
+      } catch (customerError) {
+        // Log but don't fail sync if customer fetch fails
+        console.error('Failed to fetch customers:', customerError)
+      }
+    }
+
     // Process each payment
     for (const payment of payments) {
       try {
@@ -125,6 +160,11 @@ export async function syncSquareTransactions(
           ? ordersMap.get(payment.orderId) || null
           : null
 
+        // Get customer info from Square Customer record if available
+        const customerData = payment.customerId
+          ? customersMap.get(payment.customerId)
+          : null
+
         const transactionData: SquareTransaction = {
           unit_id: unitId,
           square_payment_id: payment.id,
@@ -142,8 +182,9 @@ export async function syncSquareTransactions(
           is_reconciled: false,
           square_created_at: payment.createdAt || new Date().toISOString(),
           synced_at: new Date().toISOString(),
-          buyer_email_address: payment.buyerEmailAddress || null,
-          cardholder_name: payment.cardDetails?.card?.cardholderName || null,
+          // Prefer customer record data, fall back to payment-level data
+          buyer_email_address: customerData?.email || payment.buyerEmailAddress || null,
+          cardholder_name: customerData?.name || payment.cardDetails?.card?.cardholderName || null,
           note: payment.note || null,
           order_line_items: orderLineItems,
         }
