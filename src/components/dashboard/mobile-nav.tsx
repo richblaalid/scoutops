@@ -14,7 +14,6 @@ import {
   SheetTrigger,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { UnitSwitcher } from './unit-switcher'
 import { UnitLogo } from './unit-logo'
 import { useUnit } from '@/components/providers/unit-context'
 import type { User } from '@supabase/supabase-js'
@@ -51,7 +50,7 @@ function getRoleLabel(role: string): string {
 export function MobileNav({ user, userName, className }: MobileNavProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const { currentRole, units } = useUnit()
+  const { currentRole } = useUnit()
   const navItems = currentRole ? getVisibleNavItems(currentRole) : []
   const initials = getInitials(user.email || '', userName)
   const userRole = currentRole || 'parent'
@@ -90,12 +89,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
             {/* Unit Section */}
             <div className="border-b border-sidebar-border px-4 py-4">
               <div className="flex flex-col items-center gap-3">
-                {/* Unit switcher for multi-unit users, otherwise show logo */}
-                {units.length > 1 ? (
-                  <UnitSwitcher />
-                ) : (
-                  <UnitLogo size="md" />
-                )}
+                <UnitLogo size="md" />
               </div>
             </div>
 

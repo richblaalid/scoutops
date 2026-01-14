@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 import { getVisibleNavItems } from '@/lib/roles'
 import { UserMenu } from './user-menu'
 import { Logo } from '@/components/ui/logo'
-import { UnitSwitcher } from './unit-switcher'
 import { useUnit } from '@/components/providers/unit-context'
 import type { User } from '@supabase/supabase-js'
 
@@ -18,7 +17,7 @@ interface DashboardNavProps {
 
 export function DashboardNav({ user, userName }: DashboardNavProps) {
   const pathname = usePathname()
-  const { currentUnit, currentRole, units } = useUnit()
+  const { currentUnit, currentRole } = useUnit()
   const navItems = currentRole ? getVisibleNavItems(currentRole) : []
 
   return (
@@ -30,11 +29,9 @@ export function DashboardNav({ user, userName }: DashboardNavProps) {
           </Link>
 
           {/* Unit logo/name */}
-          <div className="flex items-center gap-3">
-            {units.length > 1 ? (
-              <UnitSwitcher />
-            ) : currentUnit && (
-              currentUnit.logo_url ? (
+          {currentUnit && (
+            <div className="flex items-center gap-3">
+              {currentUnit.logo_url ? (
                 <Image
                   src={currentUnit.logo_url}
                   alt={currentUnit.name}
@@ -46,9 +43,9 @@ export function DashboardNav({ user, userName }: DashboardNavProps) {
                 <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
                   {currentUnit.name}
                 </span>
-              )
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           <nav className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => (

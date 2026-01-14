@@ -6,7 +6,6 @@ import { Settings, LogOut, Plug, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getVisibleNavItems, isAdmin, isFinancialRole } from '@/lib/roles'
 import { Logo } from '@/components/ui/logo'
-import { UnitSwitcher } from './unit-switcher'
 import { UnitLogo } from './unit-logo'
 import { useUnit } from '@/components/providers/unit-context'
 import { useSidebar } from '@/components/providers/sidebar-context'
@@ -75,7 +74,7 @@ function NavTooltip({
 
 export function Sidebar({ user, userName, className }: SidebarProps) {
   const pathname = usePathname()
-  const { currentRole, units } = useUnit()
+  const { currentRole } = useUnit()
   const { isCollapsed, toggleCollapsed } = useSidebar()
   const navItems = currentRole ? getVisibleNavItems(currentRole) : []
   const initials = getInitials(user.email || '', userName)
@@ -111,22 +110,10 @@ export function Sidebar({ user, userName, className }: SidebarProps) {
         {!isCollapsed && (
           <div className="border-b border-sidebar-border px-4 py-4">
             <div className="flex flex-col items-center gap-3">
-              {/* Unit switcher for multi-unit users, otherwise show logo */}
-              {units.length > 1 ? (
-                <UnitSwitcher />
-              ) : (
-                <UnitLogo size="md" />
-              )}
+              <UnitLogo size="md" />
             </div>
           </div>
         )}
-
-        {/* DEBUG: Remove after fixing */}
-        <div className="bg-yellow-100 p-2 text-xs text-black">
-          <div>Role: {currentRole || 'NULL'}</div>
-          <div>Units: {units.length}</div>
-          <div>NavItems: {navItems.length}</div>
-        </div>
 
         {/* Navigation Section */}
         <nav className="flex-1 overflow-y-auto px-2 py-4">

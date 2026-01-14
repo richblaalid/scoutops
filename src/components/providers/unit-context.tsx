@@ -74,14 +74,6 @@ export function UnitProvider({
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // DEBUG: Log what props we received
-  console.log('UnitProvider props:', {
-    membershipsCount: memberships.length,
-    memberships: JSON.stringify(memberships),
-    groupMembershipsCount: groupMemberships.length,
-    initialUnitId
-  })
-
   // Build list of all accessible units (memoized to prevent re-renders)
   const allUnits = useMemo(() => {
     const units: UnitInfo[] = []
