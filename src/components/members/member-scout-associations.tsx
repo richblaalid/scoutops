@@ -23,12 +23,14 @@ interface AvailableScout {
 }
 
 interface MemberScoutAssociationsProps {
+  unitId: string
   profileId: string
   linkedScouts: LinkedScout[]
   availableScouts: AvailableScout[]
 }
 
 export function MemberScoutAssociations({
+  unitId,
   profileId,
   linkedScouts,
   availableScouts,
@@ -47,7 +49,7 @@ export function MemberScoutAssociations({
     setError(null)
     setSuccess(null)
 
-    const result = await addScoutGuardian(profileId, selectedScoutId, relationship)
+    const result = await addScoutGuardian(unitId, profileId, selectedScoutId, relationship)
 
     if (result.success) {
       setSuccess('Scout association added successfully')
@@ -69,7 +71,7 @@ export function MemberScoutAssociations({
     setError(null)
     setSuccess(null)
 
-    const result = await removeScoutGuardian(guardianshipId)
+    const result = await removeScoutGuardian(unitId, guardianshipId)
 
     if (result.success) {
       setSuccess('Scout association removed successfully')

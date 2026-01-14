@@ -258,8 +258,26 @@ async function handleRefundEvent(
       .eq('id', originalTransaction.payment_id)
   }
 
-  // TODO: Create reversal journal entry for the refund
-  // This would credit the bank account and debit the scout receivable
+  // Create reversal journal entry for the refund if we have a scout account
+  if (originalTransaction.scout_account_id) {
+    const refundAmountCents = refund.amount_money?.amount || 0
+
+    const { error: journalError } = await supabase.rpc('create_refund_journal_entry', {
+      p_unit_id: unitId,
+      p_scout_account_id: originalTransaction.scout_account_id,
+      p_refund_amount_cents: refundAmountCents,
+      p_square_refund_id: refund.id,
+      p_original_square_payment_id: refund.payment_id,
+      p_refund_reason: refund.reason || null,
+    })
+
+    if (journalError) {
+      console.error(`Failed to create refund journal entry for ${refund.id}:`, journalError)
+      // Don't throw - the refund itself is processed, just log the accounting error
+    } else {
+      console.log(`Created refund journal entry for ${refund.id}`)
+    }
+  }
 
   console.log(`Processed refund ${refund.id} for payment ${refund.payment_id}`)
 }

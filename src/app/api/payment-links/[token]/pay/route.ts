@@ -264,25 +264,36 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Create journal entry for the payment
-    const paymentDate = new Date().toISOString().split('T')[0]
+    // Process all database operations atomically via RPC
+    // This ensures journal entries, payment records, billing charges, and Square
+    // transaction sync all succeed or fail together
+    const cardDetails = squarePayment.cardDetails
 
-    const { data: journalEntry, error: journalError } = await supabase
-      .from('journal_entries')
-      .insert({
-        unit_id: paymentLink.unit_id,
-        entry_date: paymentDate,
-        description: `Online payment from ${scoutName} (via payment link)`,
-        entry_type: 'payment',
-        reference: squarePayment.id,
-        is_posted: true,
-      })
-      .select()
-      .single()
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('process_payment_link_payment', {
+      p_payment_link_id: paymentLink.id,
+      p_scout_account_id: paymentLink.scout_account_id,
+      p_base_amount_cents: baseAmountCents,
+      p_total_amount_cents: totalAmountCents,
+      p_fee_amount_cents: squareFeeCents,
+      p_net_amount_cents: netCents,
+      p_square_payment_id: squarePayment.id!,
+      p_square_receipt_url: squarePayment.receiptUrl || null,
+      p_square_order_id: squarePayment.orderId || null,
+      p_scout_name: scoutName,
+      p_fees_passed_to_payer: feesPassedToPayer,
+      p_card_details: {
+        card_brand: cardDetails?.card?.cardBrand || null,
+        last_4: cardDetails?.card?.last4 || null,
+        cardholder_name: cardDetails?.card?.cardholderName || null,
+      },
+      p_buyer_email: squarePayment.buyerEmailAddress || null,
+      p_payment_note: paymentNote,
+    })
 
-    if (journalError || !journalEntry) {
-      console.error('Failed to create journal entry:', journalError)
-      // Payment succeeded in Square but failed to record
+    if (rpcError) {
+      console.error('Failed to process payment in database:', rpcError)
+      // Payment succeeded in Square but failed to record in database
+      // Log the Square payment ID for manual reconciliation
       return NextResponse.json(
         {
           error: 'Payment processed but failed to record. Please contact the unit.',
@@ -292,243 +303,35 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Get accounts for journal lines
-    const { data: accountsData } = await supabase
-      .from('accounts')
-      .select('id, code')
-      .eq('unit_id', paymentLink.unit_id)
-      .in('code', ['1000', '1200', '5600']) // Bank, Scout AR, Payment Fees
-
-    const accounts = accountsData || []
-    const bankAccount = accounts.find((a) => a.code === '1000')
-    const receivableAccount = accounts.find((a) => a.code === '1200')
-    const feeAccount = accounts.find((a) => a.code === '5600')
-
-    if (!bankAccount || !receivableAccount) {
-      console.error('Required accounts not found')
-      return NextResponse.json(
-        {
-          error: 'Payment processed but accounts not configured. Please contact the unit.',
-          squarePaymentId: squarePayment.id,
-        },
-        { status: 500 }
-      )
-    }
-
-    // Create journal lines
-    // When fees are passed to payer:
-    // - Scout is credited only the base amount (what they owed)
-    // - Unit receives net after Square's fee, but fee is offset by payer's additional payment
-    // When fees are absorbed by unit:
-    // - Scout is credited the full amount they paid
-    // - Unit pays Square's fee from their proceeds
-
-    const journalLines: Array<{
+    // Extract results from RPC response
+    const result = rpcResult as {
+      success: boolean
+      payment_id: string
       journal_entry_id: string
-      account_id: string
-      scout_account_id: string | null
-      debit: number
-      credit: number
-      memo: string
-      target_balance: string | null
-    }> = []
-
-    if (feesPassedToPayer && feeAmountCents > 0) {
-      // Fees passed to payer: Scout credited base amount only
-      // Bank receives net amount, fee expense balances the payer's fee contribution
-      journalLines.push(
-        // Debit bank account (net amount received from Square)
-        {
-          journal_entry_id: journalEntry.id,
-          account_id: bankAccount.id,
-          scout_account_id: null,
-          debit: netDollars,
-          credit: 0,
-          memo: `Online payment from ${scoutName}`,
-          target_balance: null,
-        },
-        // Credit scout's billing balance (base amount only - what they actually owed)
-        {
-          journal_entry_id: journalEntry.id,
-          account_id: receivableAccount.id,
-          scout_account_id: paymentLink.scout_account_id,
-          debit: 0,
-          credit: baseAmountDollars,
-          memo: 'Payment received via payment link',
-          target_balance: 'billing',
-        }
-      )
-
-      // If there's a fee account and Square's fee is less than what payer paid in fees,
-      // the difference would be income, but for simplicity we track Square fee as expense
-      // and the payer's fee contribution offsets the total
-      if (feeAccount && squareFeeDollars > 0) {
-        journalLines.push({
-          journal_entry_id: journalEntry.id,
-          account_id: feeAccount.id,
-          scout_account_id: null,
-          debit: squareFeeDollars,
-          credit: 0,
-          memo: 'Square processing fee (paid by payer)',
-          target_balance: null,
-        })
-      }
-    } else {
-      // Fees absorbed by unit: Standard flow
-      journalLines.push(
-        // Debit bank account (net amount received)
-        {
-          journal_entry_id: journalEntry.id,
-          account_id: bankAccount.id,
-          scout_account_id: null,
-          debit: netDollars,
-          credit: 0,
-          memo: `Online payment from ${scoutName}`,
-          target_balance: null,
-        },
-        // Credit scout's billing balance (full amount they paid)
-        {
-          journal_entry_id: journalEntry.id,
-          account_id: receivableAccount.id,
-          scout_account_id: paymentLink.scout_account_id,
-          debit: 0,
-          credit: totalAmountDollars,
-          memo: 'Payment received via payment link',
-          target_balance: 'billing',
-        }
-      )
-
-      // Add fee expense (unit pays this)
-      if (feeAccount && squareFeeDollars > 0) {
-        journalLines.push({
-          journal_entry_id: journalEntry.id,
-          account_id: feeAccount.id,
-          scout_account_id: null,
-          debit: squareFeeDollars,
-          credit: 0,
-          memo: 'Square processing fee',
-          target_balance: null,
-        })
-      }
-    }
-
-    const { error: linesError } = await supabase.from('journal_lines').insert(journalLines)
-
-    if (linesError) {
-      console.error('Failed to create journal lines:', linesError)
-    }
-
-    // Create payment record
-    // Amount is what the scout was credited (base amount if fees passed to payer)
-    const creditedAmount = feesPassedToPayer ? baseAmountDollars : totalAmountDollars
-    const { data: paymentRecord, error: paymentError } = await supabase
-      .from('payments')
-      .insert({
-        unit_id: paymentLink.unit_id,
-        scout_account_id: paymentLink.scout_account_id,
-        amount: creditedAmount,
-        fee_amount: squareFeeDollars,
-        net_amount: netDollars,
-        payment_method: 'card',
-        square_payment_id: squarePayment.id,
-        square_receipt_url: squarePayment.receiptUrl,
-        status: 'completed',
-        journal_entry_id: journalEntry.id,
-        notes: feesPassedToPayer
-          ? `${paymentNote} (via payment link, fee paid by payer)`
-          : `${paymentNote} (via payment link)`,
-      })
-      .select()
-      .single()
-
-    if (paymentError) {
-      console.error('Failed to create payment record:', paymentError)
-    }
-
-    // If there's a billing charge, mark it as paid
-    if (paymentLink.billing_charge_id) {
-      await supabase
-        .from('billing_charges')
-        .update({ is_paid: true })
-        .eq('id', paymentLink.billing_charge_id)
-    }
-
-    // Sync the transaction to square_transactions
-    const cardDetails = squarePayment.cardDetails
-    await supabase.from('square_transactions').insert({
-      unit_id: paymentLink.unit_id,
-      square_payment_id: squarePayment.id!,
-      square_order_id: squarePayment.orderId,
-      amount_money: totalAmountCents,
-      fee_money: squareFeeCents,
-      net_money: netCents,
-      currency: 'USD',
-      status: squarePayment.status!,
-      source_type: squarePayment.sourceType,
-      card_brand: cardDetails?.card?.cardBrand,
-      last_4: cardDetails?.card?.last4,
-      receipt_url: squarePayment.receiptUrl,
-      receipt_number: squarePayment.receiptNumber,
-      payment_id: paymentRecord?.id,
-      scout_account_id: paymentLink.scout_account_id,
-      is_reconciled: true,
-      square_created_at: squarePayment.createdAt!,
-      buyer_email_address: squarePayment.buyerEmailAddress || null,
-      cardholder_name: cardDetails?.card?.cardholderName || null,
-      note: paymentNote,
-    })
-
-    // Calculate remaining balance after this payment
-    const remainingBalanceCents = currentBalanceCents - baseAmountCents
-    const remainingBalanceDollars = remainingBalanceCents / 100
-
-    // Only mark payment link as completed if full balance is paid
-    if (remainingBalanceCents <= 0) {
-      await supabase
-        .from('payment_links')
-        .update({
-          status: 'completed',
-          payment_id: paymentRecord?.id,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', paymentLink.id)
-    }
-    // Otherwise, keep the link active for additional payments
-
-    // Check for overpayment and transfer excess to Scout Funds
-    const { data: updatedAccount } = await supabase
-      .from('scout_accounts')
-      .select('billing_balance')
-      .eq('id', paymentLink.scout_account_id)
-      .single()
-
-    // If billing went positive (overpayment), auto-transfer to funds
-    if (updatedAccount && (updatedAccount.billing_balance || 0) > 0) {
-      const overpaymentAmount = updatedAccount.billing_balance || 0
-      const { error: transferError } = await supabase.rpc('auto_transfer_overpayment', {
-        p_scout_account_id: paymentLink.scout_account_id,
-        p_amount: overpaymentAmount,
-      })
-
-      if (transferError) {
-        console.error('Failed to transfer overpayment:', transferError)
-        // Don't fail the payment, just log the error
-      }
+      amount: number
+      credited_amount: number
+      fee_amount: number
+      net_amount: number
+      fees_passed_to_payer: boolean
+      receipt_url: string | null
+      remaining_balance: number
+      overpayment_transferred: boolean
+      overpayment_amount: number
     }
 
     return NextResponse.json({
       success: true,
       payment: {
-        id: paymentRecord?.id,
+        id: result.payment_id,
         squarePaymentId: squarePayment.id,
-        amount: totalAmountDollars,
-        creditedAmount: creditedAmount,
-        feeAmount: squareFeeDollars,
-        netAmount: netDollars,
-        feesPassedToPayer,
+        amount: result.amount,
+        creditedAmount: result.credited_amount,
+        feeAmount: result.fee_amount,
+        netAmount: result.net_amount,
+        feesPassedToPayer: result.fees_passed_to_payer,
         receiptUrl: squarePayment.receiptUrl,
         status: squarePayment.status,
-        remainingBalance: remainingBalanceDollars,
+        remainingBalance: result.remaining_balance,
       },
     })
   } catch (error) {

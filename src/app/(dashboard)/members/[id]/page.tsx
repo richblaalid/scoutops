@@ -168,6 +168,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
 
       {/* Contact Information */}
       <MemberContactForm
+        unitId={currentMembership.unit_id}
         membershipId={memberMembership.id}
         profile={{
           id: profile.id,
@@ -187,6 +188,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
 
       {/* Scout Associations */}
       <MemberScoutAssociations
+        unitId={currentMembership.unit_id}
         profileId={profile.id}
         linkedScouts={linkedScouts}
         availableScouts={availableScouts}

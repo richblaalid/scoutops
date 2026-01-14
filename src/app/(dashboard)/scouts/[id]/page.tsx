@@ -298,6 +298,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
 
       {/* Guardians Section */}
       <ScoutGuardianAssociations
+        unitId={scout.unit_id}
         scoutId={scout.id}
         scoutName={`${scout.first_name} ${scout.last_name}`}
         guardians={guardians}

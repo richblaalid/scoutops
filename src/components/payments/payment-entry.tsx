@@ -6,12 +6,18 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatCurrency } from '@/lib/utils'
 import { SQUARE_FEE_PERCENT, SQUARE_FEE_FIXED_DOLLARS } from '@/lib/billing'
+import { PAYMENT_METHODS } from '@/lib/constants'
 import { trackPaymentInitiated, trackPaymentCompleted, trackPaymentFailed } from '@/lib/analytics'
+import { createLogger } from '@/lib/logger'
+import { ScoutSelector, SelectedScoutDisplay } from './scout-selector'
+import { PaymentSummary } from './payment-summary'
 import type { SquareCard } from '@/types/square'
 import { CreditCard, Banknote } from 'lucide-react'
+
+const log = createLogger('PaymentEntry')
 
 interface Scout {
   id: string
@@ -41,13 +47,6 @@ interface PaymentEntryProps {
   // Callbacks
   onPaymentComplete?: () => void
 }
-
-const PAYMENT_METHODS = [
-  { value: 'cash', label: 'Cash' },
-  { value: 'check', label: 'Check' },
-  { value: 'card', label: 'Card (Manual Entry)' },
-  { value: 'transfer', label: 'Bank Transfer' },
-]
 
 export function PaymentEntry({
   unitId,
@@ -138,19 +137,19 @@ export function PaymentEntry({
   const initializeCard = useCallback(async () => {
     // Prevent concurrent initialization attempts
     if (initInProgressRef.current) {
-      console.log('[PaymentEntry] initializeCard skipped - already in progress')
+      log.debug('initializeCard skipped - already in progress')
       return
     }
 
     // Skip if already initialized
     if (cardRef.current) {
-      console.log('[PaymentEntry] initializeCard skipped - card already exists')
+      log.debug('initializeCard skipped - card already exists')
       setCardInitialized(true)
       setIsCardLoading(false)
       return
     }
 
-    console.log('[PaymentEntry] initializeCard called', {
+    log.debug('initializeCard called', {
       hasSquare: !!window.Square,
       hasContainer: !!cardContainerRef.current,
       locationId,
@@ -159,18 +158,18 @@ export function PaymentEntry({
     })
 
     if (!window.Square) {
-      console.error('[PaymentEntry] Square SDK not loaded')
+      log.error('Square SDK not loaded')
       setError('Payment system not available. Please refresh the page.')
       return
     }
 
     if (!cardContainerRef.current) {
-      console.error('[PaymentEntry] Card container ref not available')
+      log.error('Card container ref not available')
       return
     }
 
     if (!locationId || !applicationId) {
-      console.error('[PaymentEntry] Missing locationId or applicationId')
+      log.error('Missing locationId or applicationId')
       setError('Payment configuration error. Please contact support.')
       return
     }
@@ -178,7 +177,7 @@ export function PaymentEntry({
     // Check container has dimensions (mobile fix)
     const container = cardContainerRef.current
     const rect = container.getBoundingClientRect()
-    console.log('[PaymentEntry] Container dimensions:', rect.width, 'x', rect.height)
+    log.debug('Container dimensions', { width: rect.width, height: rect.height })
 
     if (rect.width === 0 || rect.height === 0) {
       // Container not ready, retry
@@ -198,22 +197,22 @@ export function PaymentEntry({
       setIsCardLoading(true)
       setError(null)
 
-      console.log('[PaymentEntry] Creating Square payments instance...')
+      log.debug('Creating Square payments instance')
       const payments = await window.Square.payments(applicationId, locationId)
 
-      console.log('[PaymentEntry] Creating card...')
+      log.debug('Creating card')
       const card = await payments.card()
 
-      console.log('[PaymentEntry] Attaching card to container element...')
+      log.debug('Attaching card to container element')
       await card.attach(container)
 
-      console.log('[PaymentEntry] Card initialized successfully')
+      log.debug('Card initialized successfully')
       cardRef.current = card
       setCardInitialized(true)
       setIsCardLoading(false)
       initAttemptRef.current = 0
     } catch (err) {
-      console.error('[PaymentEntry] Failed to initialize Square card:', err)
+      log.error('Failed to initialize Square card', err)
 
       // Retry on failure (mobile can be slow)
       if (initAttemptRef.current < 3) {
@@ -236,7 +235,7 @@ export function PaymentEntry({
       return
     }
 
-    console.log('[PaymentEntry] Triggering card initialization', { activeTab, sdkReady, cardInitialized, isSquareConnected })
+    log.debug('Triggering card initialization', { activeTab, sdkReady, cardInitialized, isSquareConnected })
     setIsCardLoading(true)
 
     let cancelled = false
@@ -253,7 +252,7 @@ export function PaymentEntry({
         (entries) => {
           const entry = entries[0]
           if (entry && entry.isIntersecting && entry.intersectionRatio > 0) {
-            console.log('[PaymentEntry] Container is visible, initializing card')
+            log.debug('Container is visible, initializing card')
             observer.disconnect()
             setTimeout(doInit, 100)
           }
@@ -264,7 +263,7 @@ export function PaymentEntry({
 
       // Fallback: try anyway after 500ms if observer doesn't fire
       const fallbackTimer = setTimeout(() => {
-        console.log('[PaymentEntry] Fallback initialization after timeout')
+        log.debug('Fallback initialization after timeout')
         observer.disconnect()
         doInit()
       }, 500)
@@ -287,8 +286,8 @@ export function PaymentEntry({
   // Cleanup card when leaving card tab and reset initialized state
   useEffect(() => {
     if (activeTab !== 'card' && cardRef.current) {
-      console.log('[PaymentEntry] Leaving card tab, destroying card')
-      cardRef.current.destroy().catch(console.error)
+      log.debug('Leaving card tab, destroying card')
+      cardRef.current.destroy().catch((err) => log.error('Error destroying card', err))
       cardRef.current = null
       setCardInitialized(false)
     }
@@ -298,8 +297,8 @@ export function PaymentEntry({
   useEffect(() => {
     return () => {
       if (cardRef.current) {
-        console.log('[PaymentEntry] Unmounting, destroying card')
-        cardRef.current.destroy().catch(console.error)
+        log.debug('Unmounting, destroying card')
+        cardRef.current.destroy().catch((err) => log.error('Error destroying card on unmount', err))
         cardRef.current = null
       }
     }
@@ -548,49 +547,21 @@ export function PaymentEntry({
 
       {/* Scout Selection (multi-scout mode only) */}
       {!isSingleScoutMode && scouts && (
-        <div className="space-y-2">
-          <Label htmlFor="scout">Scout *</Label>
-          <select
-            id="scout"
-            required
-            disabled={isProcessing}
-            className="flex h-10 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2 disabled:opacity-50"
-            value={selectedScoutId}
-            onChange={(e) => setSelectedScoutId(e.target.value)}
-          >
-            <option value="">Select a scout...</option>
-            {scouts.map((scout) => {
-              const balance = scout.scout_accounts?.billing_balance || 0
-              return (
-                <option key={scout.id} value={scout.id}>
-                  {scout.first_name} {scout.last_name} ({balance < 0 ? `owes ${formatCurrency(Math.abs(balance))}` : 'paid up'})
-                </option>
-              )
-            })}
-          </select>
-        </div>
+        <ScoutSelector
+          scouts={scouts}
+          selectedScoutId={selectedScoutId}
+          onSelect={setSelectedScoutId}
+          disabled={isProcessing}
+        />
       )}
 
       {/* Current Balance Display */}
       {(selectedScout || isSingleScoutMode) && (
-        <div className="flex items-center justify-between rounded-lg bg-stone-50 p-3">
-          <div>
-            <p className="text-sm font-medium text-stone-900">
-              {isSingleScoutMode ? scoutName : `${selectedScout?.first_name} ${selectedScout?.last_name}`}
-            </p>
-            <p className="text-xs text-stone-500">
-              Current balance:{' '}
-              <span className={currentBalance < 0 ? 'text-error' : currentBalance > 0 ? 'text-success' : ''}>
-                {formatCurrency(currentBalance)}
-              </span>
-            </p>
-          </div>
-          {currentBalance < 0 && (
-            <Button type="button" variant="outline" size="sm" onClick={handlePayFullBalance}>
-              Pay Full Balance
-            </Button>
-          )}
-        </div>
+        <SelectedScoutDisplay
+          scoutName={isSingleScoutMode ? scoutName || '' : `${selectedScout?.first_name} ${selectedScout?.last_name}`}
+          currentBalance={currentBalance}
+          onPayFullBalance={currentBalance < 0 ? handlePayFullBalance : undefined}
+        />
       )}
 
       {/* Amount Input */}
@@ -708,35 +679,14 @@ export function PaymentEntry({
       )}
 
       {/* Payment Summary */}
-      {parsedAmount > 0 && (
-        <div className="rounded-lg bg-stone-50 p-4">
-          <h4 className="font-medium text-stone-900">Payment Summary</h4>
-          <div className="mt-2 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-stone-500">Amount:</span>
-              <span className="font-medium text-stone-900">{formatCurrency(parsedAmount)}</span>
-            </div>
-            {showFees && (
-              <div className="flex justify-between text-stone-500">
-                <span>Processing Fee (2.6% + $0.10):</span>
-                <span>-{formatCurrency(feeAmount)}</span>
-              </div>
-            )}
-            <div className="flex justify-between border-t border-stone-200 pt-1 font-medium">
-              <span className="text-stone-700">Net to Unit:</span>
-              <span className="text-stone-900">{formatCurrency(showFees ? netAmount : parsedAmount)}</span>
-            </div>
-            {(selectedScout || isSingleScoutMode) && (
-              <div className="flex justify-between border-t border-stone-200 pt-1">
-                <span className="text-stone-500">New Balance:</span>
-                <span className={currentBalance + parsedAmount < 0 ? 'text-error' : 'text-success'}>
-                  {formatCurrency(currentBalance + parsedAmount)}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <PaymentSummary
+        amount={parsedAmount}
+        showFees={showFees}
+        feeAmount={feeAmount}
+        netAmount={netAmount}
+        currentBalance={currentBalance}
+        showNewBalance={!!(selectedScout || isSingleScoutMode)}
+      />
 
       {/* Error/Success Messages */}
       {error && (

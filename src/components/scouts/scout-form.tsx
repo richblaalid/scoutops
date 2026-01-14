@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
+import { MONTHS, SCOUT_RANKS, parseDateParts } from '@/lib/constants'
 import { Mail, Phone, Star } from 'lucide-react'
 
 interface Patrol {
@@ -33,21 +34,6 @@ interface AvailableMember {
   email: string
 }
 
-const MONTHS = [
-  { value: '01', label: 'January' },
-  { value: '02', label: 'February' },
-  { value: '03', label: 'March' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'June' },
-  { value: '07', label: 'July' },
-  { value: '08', label: 'August' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
-]
-
 interface ScoutFormProps {
   unitId: string
   scout?: {
@@ -65,23 +51,6 @@ interface ScoutFormProps {
   availableMembers?: AvailableMember[]
   onClose: () => void
   onSuccess: () => void
-}
-
-const RANKS = [
-  'New Scout',
-  'Scout',
-  'Tenderfoot',
-  'Second Class',
-  'First Class',
-  'Star',
-  'Life',
-  'Eagle',
-]
-
-function parseDateParts(dateStr: string | null | undefined) {
-  if (!dateStr) return { year: '', month: '', day: '' }
-  const [year, month, day] = dateStr.split('-')
-  return { year: year || '', month: month || '', day: day || '' }
 }
 
 export function ScoutForm({ unitId, scout, guardians = [], availableMembers = [], onClose, onSuccess }: ScoutFormProps) {
@@ -161,7 +130,7 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
     setGuardianError(null)
     setGuardianSuccess(null)
 
-    const result = await addScoutGuardian(selectedProfileId, scout.id, relationship)
+    const result = await addScoutGuardian(unitId, selectedProfileId, scout.id, relationship)
 
     if (result.success) {
       setGuardianSuccess('Guardian added successfully')
@@ -185,7 +154,7 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
     setGuardianError(null)
     setGuardianSuccess(null)
 
-    const result = await removeScoutGuardian(guardianshipId)
+    const result = await removeScoutGuardian(unitId, guardianshipId)
 
     if (result.success) {
       setGuardianSuccess('Guardian removed successfully')
@@ -310,7 +279,7 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
                 defaultValue={scout?.rank || ''}
               >
                 <option value="">Select rank...</option>
-                {RANKS.map((rank) => (
+                {SCOUT_RANKS.map((rank) => (
                   <option key={rank} value={rank}>
                     {rank}
                   </option>

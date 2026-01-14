@@ -51,14 +51,14 @@ describe('roles', () => {
     })
 
     describe('payments', () => {
-      it('should allow admin, treasurer, parent to access payments', () => {
+      it('should allow admin and treasurer to access payments', () => {
         expect(canAccessPage('admin', 'payments')).toBe(true)
         expect(canAccessPage('treasurer', 'payments')).toBe(true)
-        expect(canAccessPage('parent', 'payments')).toBe(true)
       })
 
-      it('should deny leader and scout access to payments', () => {
+      it('should deny leader, parent, and scout access to payments', () => {
         expect(canAccessPage('leader', 'payments')).toBe(false)
+        expect(canAccessPage('parent', 'payments')).toBe(false)
         expect(canAccessPage('scout', 'payments')).toBe(false)
       })
     })
@@ -89,18 +89,8 @@ describe('roles', () => {
       })
     })
 
-    describe('pay (parent payment portal)', () => {
-      it('should only allow parent to access pay', () => {
-        expect(canAccessPage('parent', 'pay')).toBe(true)
-      })
-
-      it('should deny all other roles access to pay', () => {
-        expect(canAccessPage('admin', 'pay')).toBe(false)
-        expect(canAccessPage('treasurer', 'pay')).toBe(false)
-        expect(canAccessPage('leader', 'pay')).toBe(false)
-        expect(canAccessPage('scout', 'pay')).toBe(false)
-      })
-    })
+    // Note: The /pay/[token] route is a public payment link page accessed via token,
+    // not a role-based dashboard page. It doesn't use role-based access control.
   })
 
   describe('canPerformAction', () => {
@@ -208,7 +198,7 @@ describe('roles', () => {
     it('should return correct items for parent', () => {
       const items = getVisibleNavItems('parent')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts', 'payments', 'pay'
+        'dashboard', 'scouts', 'accounts'
       ])
     })
 

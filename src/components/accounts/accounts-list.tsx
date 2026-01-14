@@ -1,8 +1,12 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
+import { MultiSelectDropdown } from '@/components/ui/multi-select-dropdown'
+import { StatusFilterButtons, BalanceFilterButtons, type StatusFilter, type BalanceFilter } from '@/components/ui/filter-buttons'
+import { SearchInput } from '@/components/ui/search-input'
+import { SortIcon, type SortDirection } from '@/components/ui/sort-icon'
 
 interface ScoutAccount {
   id: string
@@ -24,220 +28,6 @@ interface AccountsListProps {
 }
 
 type SortColumn = 'name' | 'patrol' | 'status' | 'billing' | 'funds'
-type SortDirection = 'asc' | 'desc'
-type StatusFilter = 'all' | 'active' | 'inactive'
-type BalanceFilter = 'all' | 'owes' | 'has_funds' | 'settled'
-
-function SearchIcon() {
-  return (
-    <svg className="h-5 w-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  )
-}
-
-function ClearIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  )
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-    </svg>
-  )
-}
-
-function SortIcon({ direction, active }: { direction: SortDirection; active: boolean }) {
-  if (!active) {
-    return (
-      <svg className="ml-1 inline h-4 w-4 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-      </svg>
-    )
-  }
-  return direction === 'asc' ? (
-    <svg className="ml-1 inline h-4 w-4 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-    </svg>
-  ) : (
-    <svg className="ml-1 inline h-4 w-4 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  )
-}
-
-interface MultiSelectDropdownProps {
-  label: string
-  options: string[]
-  selected: Set<string>
-  onChange: (selected: Set<string>) => void
-}
-
-function MultiSelectDropdown({ label, options, selected, onChange }: MultiSelectDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const toggleOption = (option: string) => {
-    const newSelected = new Set(selected)
-    if (newSelected.has(option)) {
-      newSelected.delete(option)
-    } else {
-      newSelected.add(option)
-    }
-    onChange(newSelected)
-  }
-
-  const clearAll = () => {
-    onChange(new Set())
-  }
-
-  const hasSelection = selected.size > 0
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-          hasSelection
-            ? 'border-forest-300 bg-forest-50 text-forest-700'
-            : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50'
-        }`}
-      >
-        {label}
-        {hasSelection && (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-forest-600 text-xs text-white">
-            {selected.size}
-          </span>
-        )}
-        <ChevronDownIcon />
-      </button>
-
-      {isOpen && (
-        <div className="absolute left-0 z-10 mt-1 w-48 rounded-lg border border-stone-200 bg-white py-1 shadow-lg">
-          {options.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-stone-500">No options</div>
-          ) : (
-            <>
-              {hasSelection && (
-                <button
-                  onClick={clearAll}
-                  className="w-full px-3 py-1.5 text-left text-xs text-stone-500 hover:bg-stone-50"
-                >
-                  Clear all
-                </button>
-              )}
-              {options.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => toggleOption(option)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-stone-50"
-                >
-                  <span
-                    className={`flex h-4 w-4 items-center justify-center rounded border ${
-                      selected.has(option)
-                        ? 'border-forest-600 bg-forest-600 text-white'
-                        : 'border-stone-300'
-                    }`}
-                  >
-                    {selected.has(option) && <CheckIcon />}
-                  </span>
-                  {option}
-                </button>
-              ))}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface StatusFilterProps {
-  value: StatusFilter
-  onChange: (value: StatusFilter) => void
-}
-
-function StatusFilterButtons({ value, onChange }: StatusFilterProps) {
-  const options: { key: StatusFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'active', label: 'Active' },
-    { key: 'inactive', label: 'Inactive' },
-  ]
-
-  return (
-    <div className="inline-flex rounded-lg border border-stone-300 bg-white p-0.5">
-      {options.map((option) => (
-        <button
-          key={option.key}
-          onClick={() => onChange(option.key)}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            value === option.key
-              ? 'bg-forest-800 text-white'
-              : 'text-stone-600 hover:text-stone-900'
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-interface BalanceFilterProps {
-  value: BalanceFilter
-  onChange: (value: BalanceFilter) => void
-}
-
-function BalanceFilterButtons({ value, onChange }: BalanceFilterProps) {
-  const options: { key: BalanceFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'owes', label: 'Owes' },
-    { key: 'has_funds', label: 'Has Funds' },
-    { key: 'settled', label: 'Settled' },
-  ]
-
-  return (
-    <div className="inline-flex rounded-lg border border-stone-300 bg-white p-0.5">
-      {options.map((option) => (
-        <button
-          key={option.key}
-          onClick={() => onChange(option.key)}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            value === option.key
-              ? 'bg-forest-800 text-white'
-              : 'text-stone-600 hover:text-stone-900'
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 export function AccountsList({ accounts, showPatrolFilter = true }: AccountsListProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('billing')
@@ -359,26 +149,12 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
       {/* Search and Filters Row */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Search Input */}
-        <div className="relative w-64">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <SearchIcon />
-          </div>
-          <input
-            type="text"
-            placeholder="Search by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full rounded-lg border border-stone-300 bg-white py-2 pl-10 pr-10 text-sm placeholder-stone-500 focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-stone-400 hover:text-stone-600"
-            >
-              <ClearIcon />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search by name..."
+          ariaLabel="Search accounts by name"
+        />
 
         {/* Patrol Filter Dropdown */}
         {showPatrolFilter && patrols.length > 0 && (

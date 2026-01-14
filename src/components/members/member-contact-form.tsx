@@ -10,6 +10,7 @@ import { updateMemberProfile } from '@/app/actions/members'
 type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
 
 interface MemberContactFormProps {
+  unitId: string
   membershipId: string
   profile: {
     id: string
@@ -27,7 +28,7 @@ interface MemberContactFormProps {
   }
 }
 
-export function MemberContactForm({ membershipId, profile }: MemberContactFormProps) {
+export function MemberContactForm({ unitId, membershipId, profile }: MemberContactFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -39,7 +40,7 @@ export function MemberContactForm({ membershipId, profile }: MemberContactFormPr
     const formData = new FormData(e.currentTarget)
     const genderValue = formData.get('gender') as string
 
-    const result = await updateMemberProfile(profile.id, {
+    const result = await updateMemberProfile(unitId, profile.id, {
       first_name: formData.get('first_name') as string || null,
       last_name: formData.get('last_name') as string || null,
       gender: genderValue && genderValue !== '' ? genderValue as Gender : null,

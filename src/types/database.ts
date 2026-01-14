@@ -1483,6 +1483,36 @@ export type Database = {
         }
         Returns: { boys_section_id: string | null; girls_section_id: string | null }[]
       }
+      process_payment_link_payment: {
+        Args: {
+          p_payment_link_id: string
+          p_scout_account_id: string
+          p_base_amount_cents: number
+          p_total_amount_cents: number
+          p_fee_amount_cents: number
+          p_net_amount_cents: number
+          p_square_payment_id: string
+          p_square_receipt_url: string | null
+          p_square_order_id: string | null
+          p_scout_name: string
+          p_fees_passed_to_payer: boolean
+          p_card_details: Json
+          p_buyer_email?: string | null
+          p_payment_note?: string | null
+        }
+        Returns: Json
+      }
+      create_refund_journal_entry: {
+        Args: {
+          p_unit_id: string
+          p_scout_account_id: string
+          p_refund_amount_cents: number
+          p_square_refund_id: string
+          p_original_square_payment_id: string
+          p_refund_reason?: string | null
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

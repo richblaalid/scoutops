@@ -27,6 +27,7 @@ interface AvailableMember {
 }
 
 interface ScoutGuardianAssociationsProps {
+  unitId: string
   scoutId: string
   scoutName: string
   guardians: LinkedGuardian[]
@@ -35,6 +36,7 @@ interface ScoutGuardianAssociationsProps {
 }
 
 export function ScoutGuardianAssociations({
+  unitId,
   scoutId,
   scoutName,
   guardians,
@@ -59,7 +61,7 @@ export function ScoutGuardianAssociations({
     setError(null)
     setSuccess(null)
 
-    const result = await addScoutGuardian(selectedProfileId, scoutId, relationship)
+    const result = await addScoutGuardian(unitId, selectedProfileId, scoutId, relationship)
 
     if (result.success) {
       setSuccess('Guardian added successfully')
@@ -81,7 +83,7 @@ export function ScoutGuardianAssociations({
     setError(null)
     setSuccess(null)
 
-    const result = await removeScoutGuardian(guardianshipId)
+    const result = await removeScoutGuardian(unitId, guardianshipId)
 
     if (result.success) {
       setSuccess('Guardian removed successfully')

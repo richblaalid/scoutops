@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { formatCurrency } from '@/lib/utils'
 import { SQUARE_FEE_PERCENT, SQUARE_FEE_FIXED_DOLLARS } from '@/lib/billing'
+import { createLogger } from '@/lib/logger'
 import type { SquareCard, SquareTokenResult } from '@/types/square'
+
+const log = createLogger('ParentPayment')
 
 interface Scout {
   id: string
@@ -132,7 +135,7 @@ export function ParentPaymentForm({
       cardRef.current = card
       setIsLoading(false)
     } catch (err) {
-      console.error('Failed to initialize Square card:', err)
+      log.error('Failed to initialize Square card', err)
       setError('Failed to initialize payment form')
       setIsLoading(false)
     }
@@ -145,7 +148,7 @@ export function ParentPaymentForm({
 
     return () => {
       if (cardRef.current) {
-        cardRef.current.destroy().catch(console.error)
+        cardRef.current.destroy().catch((err) => log.error('Error destroying card', err))
         cardRef.current = null
       }
     }
