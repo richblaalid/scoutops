@@ -121,6 +121,7 @@ export default async function PaymentsPage() {
   }
 
   const squareApplicationId = process.env.SQUARE_APPLICATION_ID || ''
+  const squareEnvironment = (process.env.SQUARE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production'
   const isSquareConnected = !!squareCredentials && !!squareCredentials.location_id
 
   // Get recent payments
@@ -218,7 +219,7 @@ export default async function PaymentsPage() {
               unitId={membership.unit_id}
               applicationId={squareApplicationId}
               locationId={squareCredentials?.location_id || null}
-              environment={squareCredentials?.environment || 'sandbox'}
+              environment={squareEnvironment}
               scouts={scouts}
             />
           </CardContent>

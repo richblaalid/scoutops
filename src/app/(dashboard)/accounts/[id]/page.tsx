@@ -136,13 +136,13 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
 
   // Get Square configuration for payments
   const squareApplicationId = process.env.SQUARE_APPLICATION_ID || ''
+  const squareEnvironment = (process.env.SQUARE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production'
   let squareLocationId: string | null = null
-  let squareEnvironment: 'sandbox' | 'production' = 'sandbox'
 
   if (unitId && (canRecordPayment || (isParent && billingBalance < 0))) {
     const { data: credentials } = await serviceClient
       .from('unit_square_credentials')
-      .select('location_id, environment')
+      .select('location_id')
       .eq('unit_id', unitId)
       .eq('is_active', true)
       .single()
@@ -152,7 +152,6 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
       if (!squareLocationId) {
         squareLocationId = await getDefaultLocationId(unitId)
       }
-      squareEnvironment = (credentials.environment as 'sandbox' | 'production') || 'sandbox'
     }
   }
 

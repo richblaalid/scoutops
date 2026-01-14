@@ -121,7 +121,7 @@ export default async function IntegrationsPage({
           merchantId={squareCredentials?.merchant_id}
           connectedAt={squareCredentials?.connected_at}
           lastSyncAt={squareCredentials?.last_sync_at}
-          environment={squareCredentials?.environment}
+          environment={(process.env.SQUARE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production'}
           isAdmin={isAdmin}
         />
 
