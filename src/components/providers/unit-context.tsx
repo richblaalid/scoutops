@@ -8,8 +8,6 @@ export interface UnitInfo {
   name: string
   unit_number: string
   unit_type: string
-  unit_gender: 'boys' | 'girls' | 'coed' | null
-  unit_group_id: string | null
   logo_url?: string | null
 }
 
@@ -132,21 +130,12 @@ export function UnitProvider({
   const currentUnit = allUnits.find(u => u.id === currentUnitId) || null
   const currentMembership = memberships.find(m => m.unit_id === currentUnitId)
 
-  // Check group memberships for role if not directly a member
-  let currentRole = currentMembership?.role || null
-  if (!currentRole && currentUnit?.unit_group_id) {
-    const groupMembership = groupMemberships.find(
-      gm => gm.unit_groups?.id === currentUnit.unit_group_id
-    )
-    currentRole = groupMembership?.role || null
-  }
+  // Get role from direct membership
+  const currentRole = currentMembership?.role || null
 
-  // Find linked units if current unit is in a group (legacy support)
-  const linkedGroup = currentUnit?.unit_group_id
-    ? groupMemberships.find(gm => gm.unit_groups?.id === currentUnit.unit_group_id)?.unit_groups || null
-    : null
-
-  const linkedUnits = linkedGroup?.units || (currentUnit ? [currentUnit] : [])
+  // Legacy support for linked units (no longer used)
+  const linkedGroup = null
+  const linkedUnits = currentUnit ? [currentUnit] : []
 
   // Persist unit selection and clean up invalid stored values
   useEffect(() => {
