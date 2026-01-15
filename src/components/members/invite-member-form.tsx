@@ -34,6 +34,8 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
   const [role, setRole] = useState<MemberRole>('parent')
   const [selectedScoutIds, setSelectedScoutIds] = useState<string[]>([])
 
+  const [selectedScoutId, setSelectedScoutId] = useState<string>('')
+
   const handleScoutToggle = (scoutId: string) => {
     setSelectedScoutIds(prev =>
       prev.includes(scoutId)
@@ -54,11 +56,19 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
       return
     }
 
+    // Validate scout role has a scout selected
+    if (role === 'scout' && !selectedScoutId) {
+      setError('Please select which scout this user represents')
+      setIsLoading(false)
+      return
+    }
+
     const result = await inviteMember({
       unitId,
       email: email.trim(),
       role,
       scoutIds: role === 'parent' ? selectedScoutIds : undefined,
+      linkedScoutId: role === 'scout' ? selectedScoutId : undefined,
     })
 
     if (!result.success) {
@@ -97,10 +107,14 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
               id="role"
               value={role}
               onChange={(e) => {
-                setRole(e.target.value as MemberRole)
-                // Clear scout selection when changing away from parent
-                if (e.target.value !== 'parent') {
+                const newRole = e.target.value as MemberRole
+                setRole(newRole)
+                // Clear scout selections when changing roles
+                if (newRole !== 'parent') {
                   setSelectedScoutIds([])
+                }
+                if (newRole !== 'scout') {
+                  setSelectedScoutId('')
                 }
               }}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -151,6 +165,40 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
                   {selectedScoutIds.length} scout{selectedScoutIds.length !== 1 ? 's' : ''} selected
                 </p>
               )}
+            </div>
+          )}
+
+          {role === 'scout' && (
+            <div className="space-y-2">
+              <Label>Which Scout? *</Label>
+              <p className="text-xs text-stone-500 mb-2">
+                Select the scout this user represents
+              </p>
+              <div className="max-h-48 overflow-y-auto rounded-md border p-2 space-y-1">
+                {scouts.length === 0 ? (
+                  <p className="text-sm text-stone-500 py-2 text-center">
+                    No scouts in this unit yet
+                  </p>
+                ) : (
+                  scouts.map((scout) => (
+                    <label
+                      key={scout.id}
+                      className="flex items-center gap-2 rounded p-2 hover:bg-stone-50 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="linked-scout"
+                        checked={selectedScoutId === scout.id}
+                        onChange={() => setSelectedScoutId(scout.id)}
+                        className="h-4 w-4 border-stone-300 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm">
+                        {scout.first_name} {scout.last_name}
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
           )}
 

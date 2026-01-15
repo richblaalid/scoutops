@@ -872,6 +872,7 @@ export type Database = {
           last_name: string
           patrol: string | null
           patrol_id: string | null
+          profile_id: string | null
           rank: string | null
           unit_id: string
           updated_at: string | null
@@ -886,6 +887,7 @@ export type Database = {
           last_name: string
           patrol?: string | null
           patrol_id?: string | null
+          profile_id?: string | null
           rank?: string | null
           unit_id: string
           updated_at?: string | null
@@ -900,6 +902,7 @@ export type Database = {
           last_name?: string
           patrol?: string | null
           patrol_id?: string | null
+          profile_id?: string | null
           rank?: string | null
           unit_id?: string
           updated_at?: string | null
@@ -910,6 +913,13 @@ export type Database = {
             columns: ["patrol_id"]
             isOneToOne: false
             referencedRelation: "patrols"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scouts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -985,6 +995,7 @@ export type Database = {
           status: string
           is_active: boolean | null
           scout_ids: string[] | null
+          linked_scout_id: string | null
           invited_by: string | null
           invited_at: string | null
           accepted_at: string | null
@@ -1001,6 +1012,7 @@ export type Database = {
           status?: string
           is_active?: boolean | null
           scout_ids?: string[] | null
+          linked_scout_id?: string | null
           invited_by?: string | null
           invited_at?: string | null
           accepted_at?: string | null
@@ -1017,6 +1029,7 @@ export type Database = {
           status?: string
           is_active?: boolean | null
           scout_ids?: string[] | null
+          linked_scout_id?: string | null
           invited_by?: string | null
           invited_at?: string | null
           accepted_at?: string | null
@@ -1044,6 +1057,13 @@ export type Database = {
             columns: ["invited_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_memberships_linked_scout_id_fkey"
+            columns: ["linked_scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
             referencedColumns: ["id"]
           },
           {

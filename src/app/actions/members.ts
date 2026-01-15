@@ -12,6 +12,7 @@ interface InviteMemberParams {
   email: string
   role: MemberRole
   scoutIds?: string[]
+  linkedScoutId?: string
 }
 
 interface ActionResult {
@@ -22,7 +23,7 @@ interface ActionResult {
 
 // Invite a new member to the unit
 // Creates a membership record with status='invited'
-export async function inviteMember({ unitId, email, role, scoutIds }: InviteMemberParams): Promise<ActionResult> {
+export async function inviteMember({ unitId, email, role, scoutIds, linkedScoutId }: InviteMemberParams): Promise<ActionResult> {
   const supabase = await createClient()
 
   // Get current user
@@ -94,6 +95,7 @@ export async function inviteMember({ unitId, email, role, scoutIds }: InviteMemb
       role,
       status: 'invited',
       scout_ids: role === 'parent' && scoutIds?.length ? scoutIds : null,
+      linked_scout_id: role === 'scout' && linkedScoutId ? linkedScoutId : null,
       invited_by: user.id,
       invited_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -147,7 +149,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
   // Find invited memberships for this email
   const { data: invites, error: invitesError } = await supabase
     .from('unit_memberships')
-    .select('id, unit_id, role, scout_ids')
+    .select('id, unit_id, role, scout_ids, linked_scout_id')
     .eq('email', user.email.toLowerCase())
     .eq('status', 'invited')
 
@@ -205,6 +207,22 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
         console.error('Failed to create guardian links:', guardianError.message)
       } else {
         console.log(`Created ${guardianRecords.length} guardian link(s) for user ${user.email}`)
+      }
+    }
+
+    // Link profile to scout record for scout role
+    // Use admin client to bypass RLS
+    if (invite.role === 'scout' && invite.linked_scout_id) {
+      const adminSupabase = createAdminClient()
+      const { error: scoutLinkError } = await adminSupabase
+        .from('scouts')
+        .update({ profile_id: user.id })
+        .eq('id', invite.linked_scout_id)
+
+      if (scoutLinkError) {
+        console.error('Failed to link profile to scout:', scoutLinkError.message)
+      } else {
+        console.log(`Linked profile ${user.id} to scout ${invite.linked_scout_id}`)
       }
     }
 
