@@ -111,6 +111,60 @@ export type Database = {
           },
         ]
       }
+      adult_trainings: {
+        Row: {
+          id: string
+          profile_id: string
+          unit_id: string
+          training_code: string
+          training_name: string
+          completed_at: string | null
+          expires_at: string | null
+          is_current: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          unit_id: string
+          training_code: string
+          training_name: string
+          completed_at?: string | null
+          expires_at?: string | null
+          is_current?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          unit_id?: string
+          training_code?: string
+          training_name?: string
+          completed_at?: string | null
+          expires_at?: string | null
+          is_current?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adult_trainings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adult_trainings_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_charges: {
         Row: {
           amount: number
@@ -722,57 +776,78 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_city: string | null
+          address_state: string | null
+          address_street: string | null
+          address_zip: string | null
+          bsa_member_id: string | null
           created_at: string | null
+          date_joined: string | null
           email: string
           email_secondary: string | null
           first_name: string | null
           full_name: string | null
           gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
+          health_form_expires: string | null
+          health_form_status: string | null
           id: string
           is_active: boolean | null
           last_name: string | null
+          middle_name: string | null
           phone_primary: string | null
           phone_secondary: string | null
-          address_street: string | null
-          address_city: string | null
-          address_state: string | null
-          address_zip: string | null
+          swim_class_date: string | null
+          swim_classification: string | null
           updated_at: string | null
         }
         Insert: {
+          address_city?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          bsa_member_id?: string | null
           created_at?: string | null
+          date_joined?: string | null
           email: string
           email_secondary?: string | null
           first_name?: string | null
           full_name?: string | null
           gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
+          health_form_expires?: string | null
+          health_form_status?: string | null
           id: string
           is_active?: boolean | null
           last_name?: string | null
+          middle_name?: string | null
           phone_primary?: string | null
           phone_secondary?: string | null
-          address_street?: string | null
-          address_city?: string | null
-          address_state?: string | null
-          address_zip?: string | null
+          swim_class_date?: string | null
+          swim_classification?: string | null
           updated_at?: string | null
         }
         Update: {
+          address_city?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          bsa_member_id?: string | null
           created_at?: string | null
+          date_joined?: string | null
           email?: string
           email_secondary?: string | null
           first_name?: string | null
           full_name?: string | null
           gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
+          health_form_expires?: string | null
+          health_form_status?: string | null
           id?: string
           is_active?: boolean | null
           last_name?: string | null
+          middle_name?: string | null
           phone_primary?: string | null
           phone_secondary?: string | null
-          address_street?: string | null
-          address_city?: string | null
-          address_state?: string | null
-          address_zip?: string | null
+          swim_class_date?: string | null
+          swim_classification?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -865,45 +940,69 @@ export type Database = {
         Row: {
           bsa_member_id: string | null
           created_at: string | null
+          current_position: string | null
+          date_joined: string | null
           date_of_birth: string | null
           first_name: string
+          gender: string | null
+          health_form_expires: string | null
+          health_form_status: string | null
           id: string
           is_active: boolean | null
           last_name: string
+          middle_name: string | null
           patrol: string | null
           patrol_id: string | null
           profile_id: string | null
           rank: string | null
+          swim_class_date: string | null
+          swim_classification: string | null
           unit_id: string
           updated_at: string | null
         }
         Insert: {
           bsa_member_id?: string | null
           created_at?: string | null
+          current_position?: string | null
+          date_joined?: string | null
           date_of_birth?: string | null
           first_name: string
+          gender?: string | null
+          health_form_expires?: string | null
+          health_form_status?: string | null
           id?: string
           is_active?: boolean | null
           last_name: string
+          middle_name?: string | null
           patrol?: string | null
           patrol_id?: string | null
           profile_id?: string | null
           rank?: string | null
+          swim_class_date?: string | null
+          swim_classification?: string | null
           unit_id: string
           updated_at?: string | null
         }
         Update: {
           bsa_member_id?: string | null
           created_at?: string | null
+          current_position?: string | null
+          date_joined?: string | null
           date_of_birth?: string | null
           first_name?: string
+          gender?: string | null
+          health_form_expires?: string | null
+          health_form_status?: string | null
           id?: string
           is_active?: boolean | null
           last_name?: string
+          middle_name?: string | null
           patrol?: string | null
           patrol_id?: string | null
           profile_id?: string | null
           rank?: string | null
+          swim_class_date?: string | null
+          swim_classification?: string | null
           unit_id?: string
           updated_at?: string | null
         }
@@ -996,6 +1095,7 @@ export type Database = {
           is_active: boolean | null
           scout_ids: string[] | null
           linked_scout_id: string | null
+          current_position: string | null
           invited_by: string | null
           invited_at: string | null
           accepted_at: string | null
@@ -1013,6 +1113,7 @@ export type Database = {
           is_active?: boolean | null
           scout_ids?: string[] | null
           linked_scout_id?: string | null
+          current_position?: string | null
           invited_by?: string | null
           invited_at?: string | null
           accepted_at?: string | null
@@ -1030,6 +1131,7 @@ export type Database = {
           is_active?: boolean | null
           scout_ids?: string[] | null
           linked_scout_id?: string | null
+          current_position?: string | null
           invited_by?: string | null
           invited_at?: string | null
           accepted_at?: string | null

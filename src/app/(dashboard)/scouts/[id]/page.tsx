@@ -59,12 +59,20 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     id: string
     first_name: string
     last_name: string
+    middle_name: string | null
     patrol: string | null
     patrol_id: string | null
     rank: string | null
+    current_position: string | null
     is_active: boolean | null
     date_of_birth: string | null
     bsa_member_id: string | null
+    gender: string | null
+    date_joined: string | null
+    health_form_status: string | null
+    health_form_expires: string | null
+    swim_classification: string | null
+    swim_class_date: string | null
     created_at: string | null
     updated_at: string | null
     unit_id: string
@@ -235,6 +243,12 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
               <p className="text-sm text-stone-500">Rank</p>
               <p className="font-medium">{scout.rank || 'Not set'}</p>
             </div>
+            {scout.current_position && (
+              <div>
+                <p className="text-sm text-stone-500">Position</p>
+                <p className="font-medium">{scout.current_position}</p>
+              </div>
+            )}
             {scout.date_of_birth && (
               <div>
                 <p className="text-sm text-stone-500">Date of Birth</p>
@@ -245,6 +259,12 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
               <div>
                 <p className="text-sm text-stone-500">BSA Member ID</p>
                 <p className="font-medium">{scout.bsa_member_id}</p>
+              </div>
+            )}
+            {scout.date_joined && (
+              <div>
+                <p className="text-sm text-stone-500">Date Joined</p>
+                <p className="font-medium">{scout.date_joined}</p>
               </div>
             )}
           </CardContent>
@@ -305,6 +325,71 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         availableMembers={availableMembers}
         canEdit={canEditGuardians || false}
       />
+
+      {/* Health & Safety */}
+      {(scout.health_form_status || scout.swim_classification) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Health & Safety</CardTitle>
+            <CardDescription>BSA health and safety information</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {/* Health Form */}
+              <div>
+                <p className="text-sm font-medium text-stone-500">Health Form</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                      scout.health_form_status === 'current'
+                        ? 'bg-success-light text-success'
+                        : scout.health_form_status === 'expired'
+                        ? 'bg-error-light text-error'
+                        : 'bg-stone-100 text-stone-600'
+                    }`}
+                  >
+                    {scout.health_form_status
+                      ? scout.health_form_status.charAt(0).toUpperCase() + scout.health_form_status.slice(1)
+                      : 'Unknown'}
+                  </span>
+                  {scout.health_form_expires && (
+                    <span className="text-sm text-stone-500">
+                      Expires: {scout.health_form_expires}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Swim Classification */}
+              <div>
+                <p className="text-sm font-medium text-stone-500">Swim Classification</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                      scout.swim_classification === 'swimmer'
+                        ? 'bg-success-light text-success'
+                        : scout.swim_classification === 'beginner'
+                        ? 'bg-warning-light text-warning'
+                        : scout.swim_classification === 'non-swimmer'
+                        ? 'bg-error-light text-error'
+                        : 'bg-stone-100 text-stone-600'
+                    }`}
+                  >
+                    {scout.swim_classification
+                      ? scout.swim_classification.charAt(0).toUpperCase() + scout.swim_classification.slice(1).replace('-', ' ')
+                      : 'Not recorded'}
+                  </span>
+                  {scout.swim_class_date && (
+                    <span className="text-sm text-stone-500">
+                      Tested: {scout.swim_class_date}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Transactions */}
       <Card>
