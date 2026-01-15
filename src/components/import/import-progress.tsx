@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, XCircle, AlertCircle, Users, UserCheck, Link2, GraduationCap } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertCircle, Users, UserCheck, Link2, GraduationCap, Flag } from 'lucide-react'
 
 interface ImportResult {
   success: boolean
@@ -12,6 +12,7 @@ interface ImportResult {
   scoutsUpdated: number
   guardiansLinked: number
   trainingsImported: number
+  patrolsCreated: number
   errors: string[]
 }
 
@@ -103,14 +104,14 @@ export function ImportProgress({ result, onDone }: ImportProgressProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4" />
-              Trainings
+              <Flag className="h-4 w-4" />
+              Patrols
             </CardDescription>
-            <CardTitle className="text-2xl">{result.trainingsImported}</CardTitle>
+            <CardTitle className="text-2xl">{result.patrolsCreated}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-stone-500">
-              Training records imported
+              New patrols created
             </p>
           </CardContent>
         </Card>

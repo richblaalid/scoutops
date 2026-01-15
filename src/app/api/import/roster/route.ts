@@ -21,6 +21,7 @@ interface ImportResult {
   scoutsUpdated: number
   guardiansLinked: number
   trainingsImported: number
+  patrolsCreated: number
   errors: string[]
 }
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return NextResponse.json(
-      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, errors: ['Unauthorized'] },
+      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, patrolsCreated: 0, errors: ['Unauthorized'] },
       { status: 401 }
     )
   }
@@ -46,14 +47,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
 
   if (membershipError || !membership) {
     return NextResponse.json(
-      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, errors: ['No active unit membership'] },
+      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, patrolsCreated: 0, errors: ['No active unit membership'] },
       { status: 403 }
     )
   }
 
   if (membership.role !== 'admin' && membership.role !== 'treasurer') {
     return NextResponse.json(
-      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, errors: ['Only admins and treasurers can import rosters'] },
+      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, patrolsCreated: 0, errors: ['Only admins and treasurers can import rosters'] },
       { status: 403 }
     )
   }
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
     data = await request.json()
   } catch {
     return NextResponse.json(
-      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, errors: ['Invalid request body'] },
+      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, patrolsCreated: 0, errors: ['Invalid request body'] },
       { status: 400 }
     )
   }
@@ -79,12 +80,80 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
   let scoutsUpdated = 0
   let guardiansLinked = 0
   let trainingsImported = 0
+  let patrolsCreated = 0
 
   // Use admin client for operations that might bypass RLS
   const adminSupabase = createAdminClient()
 
   // Map to track BSA ID -> profile ID for guardian linking
   const bsaIdToProfileId = new Map<string, string>()
+
+  // Map to track patrol name -> patrol id
+  const patrolNameToId = new Map<string, string>()
+
+  // ============================================
+  // Create missing patrols
+  // ============================================
+  // Collect unique patrol names from scouts
+  const patrolNames = new Set<string>()
+  for (const scout of scouts) {
+    if (scout.patrol) {
+      patrolNames.add(scout.patrol)
+    }
+  }
+
+  if (patrolNames.size > 0) {
+    // Get existing patrols for this unit
+    const { data: existingPatrols } = await adminSupabase
+      .from('patrols')
+      .select('id, name')
+      .eq('unit_id', unitId)
+
+    // Build map of existing patrols
+    for (const patrol of existingPatrols || []) {
+      patrolNameToId.set(patrol.name.toLowerCase(), patrol.id)
+    }
+
+    // Get max display_order for new patrols
+    let maxOrder = 0
+    if (existingPatrols && existingPatrols.length > 0) {
+      const { data: maxOrderData } = await adminSupabase
+        .from('patrols')
+        .select('display_order')
+        .eq('unit_id', unitId)
+        .order('display_order', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (maxOrderData) {
+        maxOrder = maxOrderData.display_order
+      }
+    }
+
+    // Create missing patrols
+    for (const patrolName of patrolNames) {
+      if (!patrolNameToId.has(patrolName.toLowerCase())) {
+        maxOrder++
+        const { data: newPatrol, error: patrolError } = await adminSupabase
+          .from('patrols')
+          .insert({
+            unit_id: unitId,
+            name: patrolName,
+            display_order: maxOrder,
+            is_active: true,
+          })
+          .select('id')
+          .single()
+
+        if (patrolError) {
+          errors.push(`Error creating patrol ${patrolName}: ${patrolError.message}`)
+        } else if (newPatrol) {
+          patrolNameToId.set(patrolName.toLowerCase(), newPatrol.id)
+          patrolsCreated++
+        }
+      }
+    }
+  }
 
   // ============================================
   // Import Adults
@@ -190,6 +259,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
 
           // Update existing scout
           const scoutPosition = getScoutPosition(scout.positions)
+          const patrolId = scout.patrol ? patrolNameToId.get(scout.patrol.toLowerCase()) : null
           await adminSupabase
             .from('scouts')
             .update({
@@ -198,6 +268,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
               rank: scout.rank,
               date_of_birth: scout.dateOfBirth,
               patrol: scout.patrol,
+              patrol_id: patrolId || null,
               current_position: scoutPosition,
               updated_at: new Date().toISOString(),
             })
@@ -211,6 +282,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
       if (!scoutId) {
         // Insert scout
         const scoutPosition = getScoutPosition(scout.positions)
+        const patrolId = scout.patrol ? patrolNameToId.get(scout.patrol.toLowerCase()) : null
         const { data: newScout, error: scoutError } = await adminSupabase
           .from('scouts')
           .insert({
@@ -220,6 +292,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
             bsa_member_id: scout.bsaMemberId,
             rank: scout.rank,
             patrol: scout.patrol,
+            patrol_id: patrolId || null,
             date_of_birth: scout.dateOfBirth,
             current_position: scoutPosition,
             is_active: true,
@@ -305,6 +378,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
     scoutsUpdated,
     guardiansLinked,
     trainingsImported,
+    patrolsCreated,
     errors,
   })
 }

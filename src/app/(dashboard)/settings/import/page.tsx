@@ -21,6 +21,7 @@ interface ImportResult {
   scoutsUpdated: number
   guardiansLinked: number
   trainingsImported: number
+  patrolsCreated: number
   errors: string[]
 }
 

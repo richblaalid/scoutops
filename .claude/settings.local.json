@@ -6,7 +6,10 @@
       "Bash(git add:*)",
       "Bash(pkill:*)",
       "Bash(npm run dev:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(xargs:*)"
     ]
   }
 }
