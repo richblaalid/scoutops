@@ -146,15 +146,21 @@ function parseRosterRow(
   const patrol = patrolMatch ? patrolMatch[1] : null;
 
   // Extract positions (up to 2)
+  // Order matters: longer/more specific positions must come first to prevent
+  // substring matching issues (e.g., "Senior Patrol Leader" before "Patrol Leader")
   const knownPositions = [
-    'Scoutmaster',
-    'Assistant Scoutmaster',
-    'Committee Member',
-    'Committee Chair',
-    'Senior Patrol Leader',
     'Assistant Senior Patrol Leader',
-    'Patrol Leader',
+    'Senior Patrol Leader',
     'Assistant Patrol Leader',
+    'Patrol Leader',
+    'Junior Assistant Scoutmaster',
+    'Assistant Scoutmaster',
+    'Scoutmaster',
+    'Committee Chair',
+    'Committee Member',
+    'Order of the Arrow Representative',
+    'Outdoor Ethics Guide',
+    'Leave No Trace Trainer',
     'Troop Guide',
     'Den Chief',
     'Scribe',
@@ -164,19 +170,24 @@ function parseRosterRow(
     'Chaplain Aide',
     'Instructor',
     'Webmaster',
-    'Outdoor Ethics Guide',
-    'Leave No Trace Trainer',
     'Youth Member',
-    'Order of the Arrow Representative',
     'Bugler',
-    'Junior Assistant Scoutmaster',
   ];
 
-  // Find all positions in the text
+  // Find all positions in the text using word boundaries to avoid substring matches
   const foundPositions: string[] = [];
+  let searchText = rest;
+
   for (const pos of knownPositions) {
-    if (rest.includes(pos) && !foundPositions.includes(pos)) {
+    // Create a regex with word boundary-like matching
+    // We escape special chars and look for the position not surrounded by word chars
+    const escapedPos = pos.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const posRegex = new RegExp(`(?:^|[^a-zA-Z])${escapedPos}(?:[^a-zA-Z]|$)`);
+
+    if (posRegex.test(searchText) && !foundPositions.includes(pos)) {
       foundPositions.push(pos);
+      // Remove the matched position from search text to prevent partial re-matches
+      searchText = searchText.replace(pos, ' '.repeat(pos.length));
       if (foundPositions.length >= 2) break; // Only need up to 2
     }
   }
