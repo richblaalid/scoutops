@@ -1056,6 +1056,7 @@ export type Database = {
           member_type: string
           patrol: string | null
           position: string | null
+          position_2: string | null
           profile_id: string | null
           renewal_status: string | null
           sync_session_id: string | null
@@ -1077,6 +1078,7 @@ export type Database = {
           member_type: string
           patrol?: string | null
           position?: string | null
+          position_2?: string | null
           profile_id?: string | null
           renewal_status?: string | null
           sync_session_id?: string | null
@@ -1098,6 +1100,7 @@ export type Database = {
           member_type?: string
           patrol?: string | null
           position?: string | null
+          position_2?: string | null
           profile_id?: string | null
           renewal_status?: string | null
           sync_session_id?: string | null
@@ -1424,6 +1427,7 @@ export type Database = {
           bsa_member_id: string | null
           created_at: string | null
           current_position: string | null
+          current_position_2: string | null
           date_joined: string | null
           date_of_birth: string | null
           first_name: string
@@ -1447,6 +1451,7 @@ export type Database = {
           bsa_member_id?: string | null
           created_at?: string | null
           current_position?: string | null
+          current_position_2?: string | null
           date_joined?: string | null
           date_of_birth?: string | null
           first_name: string
@@ -1470,6 +1475,7 @@ export type Database = {
           bsa_member_id?: string | null
           created_at?: string | null
           current_position?: string | null
+          current_position_2?: string | null
           date_joined?: string | null
           date_of_birth?: string | null
           first_name?: string
@@ -1761,6 +1767,7 @@ export type Database = {
           member_type: string
           patrol: string | null
           position: string | null
+          position_2: string | null
           rank: string | null
           renewal_status: string | null
           session_id: string
@@ -1786,6 +1793,7 @@ export type Database = {
           member_type: string
           patrol?: string | null
           position?: string | null
+          position_2?: string | null
           rank?: string | null
           renewal_status?: string | null
           session_id: string
@@ -1811,6 +1819,7 @@ export type Database = {
           member_type?: string
           patrol?: string | null
           position?: string | null
+          position_2?: string | null
           rank?: string | null
           renewal_status?: string | null
           session_id?: string

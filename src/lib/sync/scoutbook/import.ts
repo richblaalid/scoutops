@@ -44,6 +44,7 @@ export interface StagedMember {
   rank: string | null
   patrol: string | null
   position: string | null
+  position2: string | null
   changeType: 'create' | 'update' | 'skip'
   existingScoutId: string | null
   changes: Record<string, { old: string | null; new: string | null }> | null
@@ -98,7 +99,7 @@ export async function stageRosterMembers(
   // Get existing scouts by BSA member ID for this unit
   const { data: existingScouts, error: scoutsError } = await supabase
     .from('scouts')
-    .select('id, bsa_member_id, first_name, last_name, rank, patrol, current_position')
+    .select('id, bsa_member_id, first_name, last_name, rank, patrol, current_position, current_position_2')
     .eq('unit_id', unitId)
     .not('bsa_member_id', 'is', null)
 
@@ -109,7 +110,7 @@ export async function stageRosterMembers(
   // Get existing roster_adults by BSA member ID for this unit
   const { data: existingAdults, error: adultsError } = await supabase
     .from('roster_adults')
-    .select('id, bsa_member_id, first_name, last_name, position, patrol, profile_id')
+    .select('id, bsa_member_id, first_name, last_name, position, position_2, patrol, profile_id')
     .eq('unit_id', unitId)
 
   if (adultsError) {
@@ -218,6 +219,9 @@ export async function stageRosterMembers(
         if (existingAdult.position !== member.position) {
           changes.position = { old: existingAdult.position, new: member.position }
         }
+        if (existingAdult.position_2 !== member.position2) {
+          changes.position_2 = { old: existingAdult.position_2, new: member.position2 }
+        }
         if (existingAdult.patrol !== member.patrol) {
           changes.patrol = { old: existingAdult.patrol, new: member.patrol }
         }
@@ -236,6 +240,7 @@ export async function stageRosterMembers(
           rank: member.lastRankApproved,
           patrol: member.patrol,
           position: member.position,
+          position_2: member.position2,
           renewal_status: member.renewalStatus,
           expiration_date: member.expirationDate,
           change_type: hasChanges ? 'update' : 'skip',
@@ -267,6 +272,7 @@ export async function stageRosterMembers(
           rank: member.lastRankApproved,
           patrol: member.patrol,
           position: member.position,
+          position_2: member.position2,
           renewal_status: member.renewalStatus,
           expiration_date: member.expirationDate,
           change_type: 'create',
@@ -305,6 +311,9 @@ export async function stageRosterMembers(
       if (existingScout.current_position !== member.position) {
         changes.position = { old: existingScout.current_position, new: member.position }
       }
+      if (existingScout.current_position_2 !== member.position2) {
+        changes.position_2 = { old: existingScout.current_position_2, new: member.position2 }
+      }
 
       const hasChanges = Object.keys(changes).length > 0
 
@@ -320,6 +329,7 @@ export async function stageRosterMembers(
         rank: member.lastRankApproved,
         patrol: member.patrol,
         position: member.position,
+        position_2: member.position2,
         renewal_status: member.renewalStatus,
         expiration_date: member.expirationDate,
         change_type: hasChanges ? 'update' : 'skip',
@@ -351,6 +361,7 @@ export async function stageRosterMembers(
         rank: member.lastRankApproved,
         patrol: member.patrol,
         position: member.position,
+        position_2: member.position2,
         renewal_status: member.renewalStatus,
         expiration_date: member.expirationDate,
         change_type: 'create',
@@ -423,6 +434,7 @@ export async function getStagedMembers(
     rank: row.rank,
     patrol: row.patrol,
     position: row.position,
+    position2: row.position_2,
     changeType: row.change_type as 'create' | 'update' | 'skip',
     existingScoutId: row.existing_scout_id,
     changes: row.changes as Record<string, { old: string | null; new: string | null }> | null,
@@ -518,6 +530,7 @@ export async function confirmStagedImport(
         patrol: member.patrol,
         patrol_id: patrolId,
         current_position: member.position,
+        current_position_2: member.position_2,
         is_active: member.renewal_status === 'Current',
       })
 
@@ -531,6 +544,7 @@ export async function confirmStagedImport(
             lastRankApproved: member.rank,
             patrol: member.patrol,
             position: member.position,
+            position2: member.position_2,
             renewalStatus: member.renewal_status || '',
             expirationDate: member.expiration_date || '',
           },
@@ -549,6 +563,7 @@ export async function confirmStagedImport(
           patrol: member.patrol,
           patrol_id: patrolId,
           current_position: member.position,
+          current_position_2: member.position_2,
           is_active: member.renewal_status === 'Current',
           updated_at: new Date().toISOString(),
         })
@@ -564,6 +579,7 @@ export async function confirmStagedImport(
             lastRankApproved: member.rank,
             patrol: member.patrol,
             position: member.position,
+            position2: member.position_2,
             renewalStatus: member.renewal_status || '',
             expirationDate: member.expiration_date || '',
           },
@@ -589,6 +605,7 @@ export async function confirmStagedImport(
         age: member.age,
         patrol: member.patrol,
         position: member.position,
+        position_2: member.position_2,
         renewal_status: member.renewal_status,
         expiration_date: member.expiration_date,
         profile_id: member.matched_profile_id,
@@ -607,6 +624,7 @@ export async function confirmStagedImport(
             lastRankApproved: member.rank,
             patrol: member.patrol,
             position: member.position,
+            position2: member.position_2,
             renewalStatus: member.renewal_status || '',
             expirationDate: member.expiration_date || '',
           },
@@ -628,6 +646,7 @@ export async function confirmStagedImport(
           full_name: member.full_name,
           patrol: member.patrol,
           position: member.position,
+          position_2: member.position_2,
           renewal_status: member.renewal_status,
           expiration_date: member.expiration_date,
           is_active: member.renewal_status === 'Current',
@@ -647,6 +666,7 @@ export async function confirmStagedImport(
             lastRankApproved: member.rank,
             patrol: member.patrol,
             position: member.position,
+            position2: member.position_2,
             renewalStatus: member.renewal_status || '',
             expirationDate: member.expiration_date || '',
           },

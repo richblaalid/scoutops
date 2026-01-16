@@ -20,6 +20,8 @@ interface Scout {
   is_active: boolean | null
   date_of_birth: string | null
   bsa_member_id: string | null
+  current_position: string | null
+  current_position_2: string | null
   scout_accounts: { id: string; billing_balance: number | null } | null
 }
 
@@ -29,7 +31,7 @@ interface ScoutsListProps {
   unitId: string
 }
 
-type SortColumn = 'name' | 'patrol' | 'rank' | 'status' | 'billing'
+type SortColumn = 'name' | 'patrol' | 'rank' | 'position' | 'status' | 'billing'
 
 export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
   const router = useRouter()
@@ -39,6 +41,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPatrols, setSelectedPatrols] = useState<Set<string>>(new Set())
   const [selectedRanks, setSelectedRanks] = useState<Set<string>>(new Set())
+  const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   // Extract unique patrols and ranks from scouts
@@ -58,6 +61,15 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
     return Array.from(uniqueRanks).sort()
   }, [scouts])
 
+  const positions = useMemo(() => {
+    const uniquePositions = new Set<string>()
+    scouts.forEach((s) => {
+      if (s.current_position) uniquePositions.add(s.current_position)
+      if (s.current_position_2) uniquePositions.add(s.current_position_2)
+    })
+    return Array.from(uniquePositions).sort()
+  }, [scouts])
+
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
@@ -67,11 +79,12 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
     }
   }
 
-  const hasActiveFilters = selectedPatrols.size > 0 || selectedRanks.size > 0 || statusFilter !== 'all'
+  const hasActiveFilters = selectedPatrols.size > 0 || selectedRanks.size > 0 || selectedPositions.size > 0 || statusFilter !== 'all'
 
   const clearAllFilters = () => {
     setSelectedPatrols(new Set())
     setSelectedRanks(new Set())
+    setSelectedPositions(new Set())
     setStatusFilter('all')
     setSearchQuery('')
   }
@@ -102,6 +115,14 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
       filtered = filtered.filter((scout) => scout.rank && selectedRanks.has(scout.rank))
     }
 
+    // Filter by position (matches if either position matches)
+    if (selectedPositions.size > 0) {
+      filtered = filtered.filter((scout) =>
+        (scout.current_position && selectedPositions.has(scout.current_position)) ||
+        (scout.current_position_2 && selectedPositions.has(scout.current_position_2))
+      )
+    }
+
     // Filter by status
     if (statusFilter === 'active') {
       filtered = filtered.filter((scout) => scout.is_active === true)
@@ -123,6 +144,9 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
         case 'rank':
           comparison = (a.rank || '').localeCompare(b.rank || '')
           break
+        case 'position':
+          comparison = (a.current_position || '').localeCompare(b.current_position || '')
+          break
         case 'status':
           comparison = (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1
           break
@@ -135,7 +159,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
 
       return sortDirection === 'asc' ? comparison : -comparison
     })
-  }, [scouts, sortColumn, sortDirection, searchQuery, selectedPatrols, selectedRanks, statusFilter])
+  }, [scouts, sortColumn, sortDirection, searchQuery, selectedPatrols, selectedRanks, selectedPositions, statusFilter])
 
   if (scouts.length === 0) {
     return (
@@ -185,6 +209,13 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
           onChange={setSelectedRanks}
         />
 
+        <MultiSelectDropdown
+          label="Position"
+          options={positions}
+          selected={selectedPositions}
+          onChange={setSelectedPositions}
+        />
+
         {/* Status Filter */}
         <StatusFilterButtons value={statusFilter} onChange={setStatusFilter} />
 
@@ -231,7 +262,13 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                 <SortIcon direction={sortDirection} active={sortColumn === 'rank'} />
               </button>
             </th>
-            <th className={`${headerClass} hidden lg:table-cell`} aria-sort={getAriaSort('status')}>
+            <th className={`${headerClass} hidden lg:table-cell`} aria-sort={getAriaSort('position')}>
+              <button type="button" onClick={() => handleSort('position')} className={headerButtonClass}>
+                Position
+                <SortIcon direction={sortDirection} active={sortColumn === 'position'} />
+              </button>
+            </th>
+            <th className={`${headerClass} hidden xl:table-cell`} aria-sort={getAriaSort('status')}>
               <button type="button" onClick={() => handleSort('status')} className={headerButtonClass}>
                 Status
                 <SortIcon direction={sortDirection} active={sortColumn === 'status'} />
@@ -249,7 +286,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
         <tbody>
           {filteredAndSortedScouts.length === 0 ? (
             <tr>
-              <td colSpan={canManage ? 6 : 5} className="py-8 text-center text-stone-500">
+              <td colSpan={canManage ? 7 : 6} className="py-8 text-center text-stone-500">
                 No scouts match your filters
               </td>
             </tr>
@@ -276,7 +313,17 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                 </td>
                 <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">{scout.patrol || '—'}</td>
                 <td className="hidden py-3 pr-4 text-stone-600 md:table-cell">{scout.rank || '—'}</td>
-                <td className="hidden py-3 pr-4 lg:table-cell">
+                <td className="hidden py-3 pr-4 text-stone-600 lg:table-cell">
+                  {scout.current_position ? (
+                    <div>
+                      <span>{scout.current_position}</span>
+                      {scout.current_position_2 && (
+                        <span className="block text-xs text-stone-500">{scout.current_position_2}</span>
+                      )}
+                    </div>
+                  ) : '—'}
+                </td>
+                <td className="hidden py-3 pr-4 xl:table-cell">
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                       scout.is_active

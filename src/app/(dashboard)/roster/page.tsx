@@ -50,6 +50,8 @@ export default async function RosterPage() {
     is_active: boolean | null
     date_of_birth: string | null
     bsa_member_id: string | null
+    current_position: string | null
+    current_position_2: string | null
     scout_accounts: { id: string; billing_balance: number | null } | null
   }
 
@@ -60,6 +62,7 @@ export default async function RosterPage() {
     full_name: string
     member_type: string
     position: string | null
+    position_2: string | null
     patrol: string | null
     bsa_member_id: string
     renewal_status: string | null
@@ -98,6 +101,8 @@ export default async function RosterPage() {
           is_active,
           date_of_birth,
           bsa_member_id,
+          current_position,
+          current_position_2,
           scout_accounts (
             id,
             billing_balance
@@ -124,6 +129,8 @@ export default async function RosterPage() {
         is_active,
         date_of_birth,
         bsa_member_id,
+        current_position,
+        current_position_2,
         scout_accounts (
           id,
           billing_balance
@@ -144,6 +151,7 @@ export default async function RosterPage() {
         full_name,
         member_type,
         position,
+        position_2,
         patrol,
         bsa_member_id,
         renewal_status,

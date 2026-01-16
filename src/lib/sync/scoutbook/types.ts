@@ -16,7 +16,8 @@ export interface RosterMember {
   age: string; // "15" or "(21+)"
   lastRankApproved: string | null; // "Life Scout", "Eagle Scout", etc.
   patrol: string | null; // "Flaring Phoenix", "Blazing Bulls", or "unassigned"
-  position: string | null; // "Senior Patrol Leader", "Scoutmaster"
+  position: string | null; // Primary position: "Senior Patrol Leader", "Scoutmaster"
+  position2: string | null; // Secondary position (if member holds 2 positions)
   renewalStatus: string; // "Current", "Eligible to Renew", "Current (Over 18)"
   expirationDate: string; // "8/31/2026"
 }

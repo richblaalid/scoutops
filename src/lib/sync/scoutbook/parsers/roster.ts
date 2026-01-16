@@ -145,8 +145,8 @@ function parseRosterRow(
   );
   const patrol = patrolMatch ? patrolMatch[1] : null;
 
-  // Extract position
-  const positions = [
+  // Extract positions (up to 2)
+  const knownPositions = [
     'Scoutmaster',
     'Assistant Scoutmaster',
     'Committee Member',
@@ -167,14 +167,22 @@ function parseRosterRow(
     'Outdoor Ethics Guide',
     'Leave No Trace Trainer',
     'Youth Member',
+    'Order of the Arrow Representative',
+    'Bugler',
+    'Junior Assistant Scoutmaster',
   ];
-  let position: string | null = null;
-  for (const pos of positions) {
-    if (rest.includes(pos)) {
-      position = pos;
-      break;
+
+  // Find all positions in the text
+  const foundPositions: string[] = [];
+  for (const pos of knownPositions) {
+    if (rest.includes(pos) && !foundPositions.includes(pos)) {
+      foundPositions.push(pos);
+      if (foundPositions.length >= 2) break; // Only need up to 2
     }
   }
+
+  const position = foundPositions[0] || null;
+  const position2 = foundPositions[1] || null;
 
   return {
     name,
@@ -184,6 +192,7 @@ function parseRosterRow(
     lastRankApproved,
     patrol,
     position,
+    position2,
     renewalStatus,
     expirationDate,
   };
@@ -237,6 +246,9 @@ export function parseRosterFromRefs(
     // Note: There might be a "dropping" switch cell in between
     const dateRef = refs[`e${keyNum + 8}`] || refs[`e${keyNum + 7}`];
 
+    // Position might be in one cell or split across cells
+    const position2Ref = refs[`e${keyNum + 6}`];
+
     members.push({
       name,
       bsaMemberId: bsaIdRef.name!,
@@ -245,6 +257,7 @@ export function parseRosterFromRefs(
       lastRankApproved: rankRef?.name || null,
       patrol: patrolRef?.name || null,
       position: positionRef?.name || null,
+      position2: position2Ref?.name && position2Ref.name !== statusRef?.name ? position2Ref.name : null,
       renewalStatus: statusRef?.name || 'Current',
       expirationDate: dateRef?.name || '',
     });

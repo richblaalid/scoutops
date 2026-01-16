@@ -15,6 +15,7 @@ interface RosterAdult {
   full_name: string
   member_type: string
   position: string | null
+  position_2: string | null
   patrol: string | null
   bsa_member_id: string
   renewal_status: string | null
@@ -47,6 +48,7 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
     const unique = new Set<string>()
     adults.forEach((a) => {
       if (a.position) unique.add(a.position)
+      if (a.position_2) unique.add(a.position_2)
     })
     return Array.from(unique).sort()
   }, [adults])
@@ -94,7 +96,10 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
       : adults
 
     if (selectedPositions.size > 0) {
-      filtered = filtered.filter((adult) => adult.position && selectedPositions.has(adult.position))
+      filtered = filtered.filter((adult) =>
+        (adult.position && selectedPositions.has(adult.position)) ||
+        (adult.position_2 && selectedPositions.has(adult.position_2))
+      )
     }
 
     if (selectedTypes.size > 0) {
@@ -293,11 +298,23 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
                       <p className="text-xs text-stone-500">BSA# {adult.bsa_member_id}</p>
                       {/* Show position on mobile under name */}
                       {adult.position && (
-                        <p className="text-xs text-stone-500 sm:hidden">{adult.position}</p>
+                        <p className="text-xs text-stone-500 sm:hidden">
+                          {adult.position}
+                          {adult.position_2 && `, ${adult.position_2}`}
+                        </p>
                       )}
                     </div>
                   </td>
-                  <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">{adult.position || '—'}</td>
+                  <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">
+                    {adult.position ? (
+                      <div>
+                        <span>{adult.position}</span>
+                        {adult.position_2 && (
+                          <span className="block text-xs text-stone-500">{adult.position_2}</span>
+                        )}
+                      </div>
+                    ) : '—'}
+                  </td>
                   <td className="hidden py-3 pr-4 text-stone-600 md:table-cell">{formatMemberType(adult.member_type)}</td>
                   <td className="hidden py-3 pr-4 lg:table-cell">
                     {getBsaStatusBadge(adult.renewal_status)}
