@@ -53,11 +53,16 @@ interface ScoutFormProps {
   onSuccess: () => void
 }
 
-export function ScoutForm({ unitId, scout, guardians = [], availableMembers = [], onClose, onSuccess }: ScoutFormProps) {
+export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], availableMembers: initialAvailableMembers = [], onClose, onSuccess }: ScoutFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [patrols, setPatrols] = useState<Patrol[]>([])
   const [selectedPatrolId, setSelectedPatrolId] = useState<string>(scout?.patrol_id || '')
+
+  // Guardian data - can be passed in or fetched dynamically
+  const [guardians, setGuardians] = useState<Guardian[]>(initialGuardians)
+  const [availableMembers, setAvailableMembers] = useState<AvailableMember[]>(initialAvailableMembers)
+  const [guardiansLoaded, setGuardiansLoaded] = useState(initialGuardians.length > 0 || !scout)
 
   // Guardian management state
   const [isAddingGuardian, setIsAddingGuardian] = useState(false)
@@ -91,6 +96,65 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
     fetchPatrols()
   }, [unitId])
 
+  // Fetch guardians and available members if not provided and editing a scout
+  useEffect(() => {
+    if (!scout || guardiansLoaded) return
+
+    const scoutId = scout.id // Capture for async closure
+
+    async function fetchGuardiansAndMembers() {
+      const supabase = createClient()
+
+      // Fetch guardians for this scout
+      const { data: guardiansData } = await supabase
+        .from('scout_guardians')
+        .select(`
+          id,
+          relationship,
+          is_primary,
+          profiles (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_primary
+          )
+        `)
+        .eq('scout_id', scoutId)
+
+      if (guardiansData) {
+        setGuardians(guardiansData as Guardian[])
+      }
+
+      // Fetch available members (profiles with active unit memberships)
+      const { data: membersData } = await supabase
+        .from('unit_memberships')
+        .select(`
+          profile_id,
+          profiles!unit_memberships_profile_id_fkey (
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('unit_id', unitId)
+        .eq('status', 'active')
+
+      if (membersData) {
+        type MemberRow = { profiles: AvailableMember | null }
+        const members = (membersData as unknown as MemberRow[])
+          .map((m) => m.profiles)
+          .filter((p): p is AvailableMember => p !== null)
+        setAvailableMembers(members)
+      }
+
+      setGuardiansLoaded(true)
+    }
+
+    fetchGuardiansAndMembers()
+  }, [scout, unitId, guardiansLoaded])
+
   // Generate years from current year going back 50 years (descending order)
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear()
@@ -123,6 +187,32 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
     return email
   }
 
+  // Helper to refetch guardians after changes
+  const refetchGuardians = async () => {
+    if (!scout) return
+
+    const supabase = createClient()
+    const { data: guardiansData } = await supabase
+      .from('scout_guardians')
+      .select(`
+        id,
+        relationship,
+        is_primary,
+        profiles (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone_primary
+        )
+      `)
+      .eq('scout_id', scout.id)
+
+    if (guardiansData) {
+      setGuardians(guardiansData as Guardian[])
+    }
+  }
+
   const handleAddGuardian = async () => {
     if (!selectedProfileId || !scout) return
 
@@ -136,8 +226,8 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
       setGuardianSuccess('Guardian added successfully')
       setSelectedProfileId('')
       setIsAddingGuardian(false)
-      // Refresh the page to get updated guardians
-      onSuccess()
+      // Refetch guardians to update local state
+      await refetchGuardians()
     } else {
       setGuardianError(result.error || 'Failed to add guardian')
     }
@@ -158,8 +248,8 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
 
     if (result.success) {
       setGuardianSuccess('Guardian removed successfully')
-      // Refresh the page to get updated guardians
-      onSuccess()
+      // Refetch guardians to update local state
+      await refetchGuardians()
     } else {
       setGuardianError(result.error || 'Failed to remove guardian')
     }
@@ -356,7 +446,7 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
                 <Label>Guardians</Label>
-                {filteredAvailableMembers.length > 0 && !isAddingGuardian && (
+                {guardiansLoaded && filteredAvailableMembers.length > 0 && !isAddingGuardian && (
                   <button
                     type="button"
                     onClick={() => setIsAddingGuardian(true)}
@@ -367,20 +457,24 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
                 )}
               </div>
 
-              {guardianError && (
+              {!guardiansLoaded && (
+                <p className="text-sm text-stone-500">Loading guardians...</p>
+              )}
+
+              {guardiansLoaded && guardianError && (
                 <div className="rounded-md bg-error-light p-2 text-sm text-error">
                   {guardianError}
                 </div>
               )}
 
-              {guardianSuccess && (
+              {guardiansLoaded && guardianSuccess && (
                 <div className="rounded-md bg-success-light p-2 text-sm text-success">
                   {guardianSuccess}
                 </div>
               )}
 
               {/* Add Guardian Form */}
-              {isAddingGuardian && (
+              {guardiansLoaded && isAddingGuardian && (
                 <div className="rounded-lg border border-dashed border-stone-300 p-3">
                   <div className="flex flex-wrap gap-2">
                     <select
@@ -433,7 +527,7 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
               )}
 
               {/* Guardian List */}
-              {guardians.length > 0 ? (
+              {guardiansLoaded && guardians.length > 0 ? (
                 <div className="space-y-2">
                   {guardians.map((guardian) => {
                     const guardianName = getGuardianName(guardian)
@@ -474,9 +568,9 @@ export function ScoutForm({ unitId, scout, guardians = [], availableMembers = []
                     )
                   })}
                 </div>
-              ) : (
+              ) : guardiansLoaded ? (
                 <p className="text-sm text-stone-500">No guardians linked</p>
-              )}
+              ) : null}
             </div>
           )}
 
