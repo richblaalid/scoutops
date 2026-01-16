@@ -580,9 +580,16 @@ export function ScoutbookSyncCard({
                               </td>
                               <td className="p-2 text-xs text-stone-500">
                                 {member.changeType === 'create' && (
-                                  <span>
-                                    {member.rank || 'No rank'} - {member.patrol || 'No patrol'}
-                                  </span>
+                                  <div>
+                                    <span>{member.rank || 'No rank'} - {member.patrol || 'No patrol'}</span>
+                                    {(member.position || member.position2) && (
+                                      <span className="block text-stone-400">
+                                        {member.position}
+                                        {member.position && member.position2 && ', '}
+                                        {member.position2}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                                 {member.changeType === 'update' && member.changes && (
                                   <span>
@@ -648,7 +655,14 @@ export function ScoutbookSyncCard({
                                 </span>
                               </td>
                               <td className="p-2 text-xs text-stone-500">
-                                {member.position || '-'}
+                                {member.position ? (
+                                  <div>
+                                    <span>{member.position}</span>
+                                    {member.position2 && (
+                                      <span className="block text-stone-400">{member.position2}</span>
+                                    )}
+                                  </div>
+                                ) : '-'}
                               </td>
                               <td className="p-2">
                                 {member.changeType === 'create' && (
