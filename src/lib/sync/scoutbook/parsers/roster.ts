@@ -200,51 +200,35 @@ function parseRosterRow(
     'Bugler',
   ];
 
-  // Scoutbook displays positions with numeric prefixes like "1Senior Patrol Leader" or "2Den Chief"
-  // First, try to extract positions with their slot numbers
-  const numberedPositions: { slot: number; position: string }[] = [];
+  // Scoutbook roster shows positions with a count prefix like "2Den Chief" meaning
+  // the scout has 2 positions total, with Den Chief being the one displayed.
+  // The other position(s) are only visible on hover, which we can't capture.
+  //
+  // Format: <count><PositionName> where count is the total number of positions
+  // We extract the visible position and note the count for reference.
 
-  for (const pos of knownPositions) {
-    // Look for positions with optional numeric prefix (1 or 2)
-    const escapedPos = pos.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Match: optional digit prefix (1 or 2) followed by position name
-    const posRegex = new RegExp(`([12])?${escapedPos}(?:[^a-zA-Z]|$)`, 'i');
-    const match = rest.match(posRegex);
-
-    if (match && !numberedPositions.some(p => p.position === pos)) {
-      const slot = match[1] ? parseInt(match[1], 10) : 1;
-      numberedPositions.push({ slot, position: pos });
-    }
-  }
-
-  // Sort by slot number and take up to 2 positions
-  numberedPositions.sort((a, b) => a.slot - b.slot);
-
-  // If we found numbered positions, use them; otherwise fall back to order found
   let position: string | null = null;
   let position2: string | null = null;
+  let positionCount = 0;
 
-  if (numberedPositions.length > 0) {
-    // Find position in slot 1 and slot 2
-    const slot1 = numberedPositions.find(p => p.slot === 1);
-    const slot2 = numberedPositions.find(p => p.slot === 2);
+  for (const pos of knownPositions) {
+    const escapedPos = pos.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Match: optional digit prefix (position count) followed by position name
+    const posRegex = new RegExp(`(\\d)?${escapedPos}(?:[^a-zA-Z]|$)`, 'i');
+    const match = rest.match(posRegex);
 
-    if (slot1 && slot2) {
-      position = slot1.position;
-      position2 = slot2.position;
-    } else if (slot1) {
-      position = slot1.position;
-    } else if (slot2) {
-      // Only has slot 2, put it in position (primary)
-      position = slot2.position;
-    } else {
-      // No specific slots, just use first found
-      position = numberedPositions[0]?.position || null;
-      position2 = numberedPositions[1]?.position || null;
+    if (match) {
+      position = pos;
+      positionCount = match[1] ? parseInt(match[1], 10) : 1;
+      break; // Only one position is visible in roster view
     }
   }
 
-  const foundPositions = numberedPositions.map(p => `${p.slot}:${p.position}`);
+  // Note: position2 will always be null from roster view since Scoutbook
+  // only displays one position. The positionCount tells us if there are more.
+  // To get all positions, need to navigate to individual profile pages.
+
+  const foundPositions = position ? [`${positionCount}:${position}`] : [];
 
   // Debug: Log extracted positions
   if (DEBUG_POSITIONS || isDebugTarget) {

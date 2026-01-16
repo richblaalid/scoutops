@@ -18,7 +18,12 @@ function createSnapshot(rowContent: string): AgentBrowserSnapshot {
 
 describe('roster parser', () => {
   describe('position extraction', () => {
-    it('extracts a single position with number prefix', () => {
+    // Note: Scoutbook roster view only shows ONE position per member.
+    // The number prefix indicates how many positions they have total.
+    // e.g., "2Den Chief" means 2 positions, with Den Chief being the visible one.
+    // The second position is only visible on hover, which we can't capture.
+
+    it('extracts position with count prefix of 1', () => {
       const snapshot = createSnapshot(
         'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Senior Patrol Leader Current 8/31/2026'
       );
@@ -26,18 +31,19 @@ describe('roster parser', () => {
 
       expect(members).toHaveLength(1);
       expect(members[0].position).toBe('Senior Patrol Leader');
-      expect(members[0].position2).toBeNull();
+      expect(members[0].position2).toBeNull(); // Roster only shows one position
     });
 
-    it('extracts two numbered positions', () => {
+    it('extracts position with count prefix of 2 (has hidden second position)', () => {
+      // "2Den Chief" means scout has 2 positions, Den Chief is the one displayed
       const snapshot = createSnapshot(
-        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Senior Patrol Leader 2Den Chief Current 8/31/2026'
+        'Ben Blaalid 141419860 YOUTH 11 Tenderfoot Blazing Bulls 2Den Chief Current 11/30/2026'
       );
       const members = parseRosterPage(snapshot);
 
       expect(members).toHaveLength(1);
-      expect(members[0].position).toBe('Senior Patrol Leader');
-      expect(members[0].position2).toBe('Den Chief');
+      expect(members[0].position).toBe('Den Chief');
+      expect(members[0].position2).toBeNull(); // Second position only visible on hover
     });
 
     it('handles position without number prefix', () => {
@@ -48,19 +54,6 @@ describe('roster parser', () => {
 
       expect(members).toHaveLength(1);
       expect(members[0].position).toBe('Senior Patrol Leader');
-      expect(members[0].position2).toBeNull();
-    });
-
-    it('handles only position 2 (slot 1 empty)', () => {
-      // This is the actual format from Scoutbook when someone only has a second position
-      const snapshot = createSnapshot(
-        'Ben Blaalid 141419860 YOUTH 11 Tenderfoot Blazing Bulls 2Den Chief Current 11/30/2026'
-      );
-      const members = parseRosterPage(snapshot);
-
-      expect(members).toHaveLength(1);
-      // When only slot 2 has a position, it becomes the primary position
-      expect(members[0].position).toBe('Den Chief');
       expect(members[0].position2).toBeNull();
     });
 
@@ -75,15 +68,15 @@ describe('roster parser', () => {
       expect(members[0].position2).toBeNull();
     });
 
-    it('handles Patrol Leader distinct from Senior Patrol Leader with numbers', () => {
+    it('handles Patrol Leader correctly', () => {
       const snapshot = createSnapshot(
-        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Patrol Leader 2Den Chief Current 8/31/2026'
+        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Patrol Leader Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 
       expect(members).toHaveLength(1);
       expect(members[0].position).toBe('Patrol Leader');
-      expect(members[0].position2).toBe('Den Chief');
+      expect(members[0].position2).toBeNull();
     });
 
     it('handles Assistant Scoutmaster without matching Scoutmaster', () => {
@@ -97,26 +90,15 @@ describe('roster parser', () => {
       expect(members[0].position2).toBeNull();
     });
 
-    it('handles both Assistant Scoutmaster and Committee Member', () => {
+    it('handles no position', () => {
       const snapshot = createSnapshot(
-        'Jane Smith 987654321 LEADER (21+) Eagle Scout unassigned 1Assistant Scoutmaster 2Committee Member Current 8/31/2026'
+        'Jane Smith 987654321 LEADER (21+) Eagle Scout unassigned Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 
       expect(members).toHaveLength(1);
-      expect(members[0].position).toBe('Assistant Scoutmaster');
-      expect(members[0].position2).toBe('Committee Member');
-    });
-
-    it('extracts positions for youth with Troop Guide and Instructor', () => {
-      const snapshot = createSnapshot(
-        'Ben Blaalid 111222333 YOUTH 16 Star Scout Blazing Bulls 1Troop Guide 2Instructor Current 8/31/2026'
-      );
-      const members = parseRosterPage(snapshot);
-
-      expect(members).toHaveLength(1);
-      expect(members[0].position).toBe('Troop Guide');
-      expect(members[0].position2).toBe('Instructor');
+      expect(members[0].position).toBeNull();
+      expect(members[0].position2).toBeNull();
     });
   });
 
