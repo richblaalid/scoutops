@@ -205,8 +205,8 @@ export class AgentBrowserClient {
 
         // The Scoutbook tour modal buttons have name="[object Object]" due to a bug
         // But the actual button text appears in the snapshot text as: button "[object Object]" [ref=eXX]: Skip
-        // Look for the Skip button ref in the snapshot text
-        const skipMatch = snapshotText.match(/button[^]*?\[ref=(e\d+)\][^]*?:\s*Skip\b/i);
+        // Look for the Skip button ref in the snapshot text - must be on same line
+        const skipMatch = snapshotText.match(/button "[^"]*" \[ref=(e\d+)\][^\n]*: Skip\b/i);
         if (skipMatch) {
           const skipRef = skipMatch[1];
           console.log(`[Browser] Found Skip button via snapshot text: @${skipRef}`);
@@ -229,12 +229,14 @@ export class AgentBrowserClient {
         // Check if tour modal text is present but Skip button wasn't found
         if (snapshotText.includes('Welcome to Scoutbook Plus') || snapshotText.includes('begin the tour')) {
           console.log('[Browser] Tour modal detected but Skip button not found in expected format');
+          // Debug: show last 500 chars of snapshot where modal buttons should be
+          console.log('[Browser] Snapshot tail:', snapshotText.slice(-500));
 
-          // Try to find any button with Skip text
-          const anySkipMatch = snapshotText.match(/\[ref=(e\d+)\][^\n]*Skip/i);
-          if (anySkipMatch) {
-            console.log(`[Browser] Found Skip via loose match: @${anySkipMatch[1]}`);
-            await this.click(`@${anySkipMatch[1]}`);
+          // Look for [object Object] buttons which are the modal buttons
+          const objectButtonMatch = snapshotText.match(/button "\[object Object\]" \[ref=(e\d+)\][^\n]*: Skip/i);
+          if (objectButtonMatch) {
+            console.log(`[Browser] Found Skip via [object Object] pattern: @${objectButtonMatch[1]}`);
+            await this.click(`@${objectButtonMatch[1]}`);
             await this.sleep(500);
             return true;
           }
