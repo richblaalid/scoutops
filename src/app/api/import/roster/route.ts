@@ -126,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
         .single()
 
       if (maxOrderData) {
-        maxOrder = maxOrderData.display_order
+        maxOrder = maxOrderData.display_order ?? 0
       }
     }
 
@@ -156,14 +156,88 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
   }
 
   // ============================================
-  // Import Adults
+  // Import Adults to roster_adults table
   // ============================================
   for (const adult of adults) {
     try {
-      // Check for existing profile by email
+      const fullName = `${adult.firstName} ${adult.lastName}`
+      const primaryPosition = adult.positions?.[0] || null
+
+      // Determine member type from positions
+      let memberType = 'P 18+' // Default to parent
+      if (adult.positions?.some(p =>
+        p.toLowerCase().includes('scoutmaster') ||
+        p.toLowerCase().includes('assistant scoutmaster') ||
+        p.toLowerCase().includes('committee') ||
+        p.toLowerCase().includes('den leader') ||
+        p.toLowerCase().includes('cubmaster') ||
+        p.toLowerCase().includes('pack trainer')
+      )) {
+        memberType = 'LEADER'
+      }
+
+      // Check for existing roster_adult by BSA ID
+      let rosterAdultId: string | null = null
       let profileId: string | null = null
 
-      if (adult.email) {
+      if (adult.bsaMemberId) {
+        const { data: existingRosterAdult } = await adminSupabase
+          .from('roster_adults')
+          .select('id, profile_id')
+          .eq('unit_id', unitId)
+          .eq('bsa_member_id', adult.bsaMemberId)
+          .maybeSingle()
+
+        if (existingRosterAdult) {
+          rosterAdultId = existingRosterAdult.id
+          profileId = existingRosterAdult.profile_id
+
+          // Update existing roster adult
+          await adminSupabase
+            .from('roster_adults')
+            .update({
+              first_name: adult.firstName,
+              last_name: adult.lastName,
+              full_name: fullName,
+              member_type: memberType,
+              position: primaryPosition,
+              last_synced_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', rosterAdultId)
+
+          adultsUpdated++
+        }
+      }
+
+      // Create new roster_adult if not found
+      if (!rosterAdultId && adult.bsaMemberId) {
+        const { data: newRosterAdult, error: rosterError } = await adminSupabase
+          .from('roster_adults')
+          .insert({
+            unit_id: unitId,
+            bsa_member_id: adult.bsaMemberId,
+            first_name: adult.firstName,
+            last_name: adult.lastName,
+            full_name: fullName,
+            member_type: memberType,
+            position: primaryPosition,
+            is_active: true,
+            last_synced_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single()
+
+        if (rosterError) {
+          errors.push(`Error creating roster adult ${fullName}: ${rosterError.message}`)
+        } else if (newRosterAdult) {
+          rosterAdultId = newRosterAdult.id
+          adultsImported++
+        }
+      }
+
+      // Try to match to existing profile by email (for guardian linking)
+      if (adult.email && !profileId) {
         const { data: existingProfile } = await adminSupabase
           .from('profiles')
           .select('id')
@@ -173,65 +247,22 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
         if (existingProfile) {
           profileId = existingProfile.id
 
-          // Update existing profile with core fields only (new columns may not be in PostgREST cache yet)
-          await adminSupabase
-            .from('profiles')
-            .update({
-              first_name: adult.firstName,
-              last_name: adult.lastName,
-              full_name: `${adult.firstName} ${adult.lastName}`,
-              phone_primary: adult.phone,
-              address_street: adult.address,
-              address_city: adult.city,
-              address_state: adult.state,
-              address_zip: adult.zip,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', profileId)
-
-          adultsUpdated++
+          // Link roster adult to profile
+          if (rosterAdultId) {
+            await adminSupabase
+              .from('roster_adults')
+              .update({
+                profile_id: profileId,
+                linked_at: new Date().toISOString(),
+              })
+              .eq('id', rosterAdultId)
+          }
         }
       }
 
       // Track BSA ID for guardian linking
       if (adult.bsaMemberId && profileId) {
         bsaIdToProfileId.set(adult.bsaMemberId, profileId)
-      }
-
-      // Check/update unit membership if profile exists
-      if (profileId) {
-        const { data: existingMembership } = await adminSupabase
-          .from('unit_memberships')
-          .select('id')
-          .eq('unit_id', unitId)
-          .eq('profile_id', profileId)
-          .maybeSingle()
-
-        const role = deriveRole(adult.positions)
-
-        if (existingMembership) {
-          // Update existing membership (skip current_position - new column may not be in cache)
-          await adminSupabase
-            .from('unit_memberships')
-            .update({ role })
-            .eq('id', existingMembership.id)
-        } else {
-          // Create new membership (skip current_position - new column may not be in cache)
-          await adminSupabase
-            .from('unit_memberships')
-            .insert({
-              unit_id: unitId,
-              profile_id: profileId,
-              role,
-              status: 'active',
-              joined_at: new Date().toISOString(),
-            })
-
-          adultsImported++
-        }
-
-        // Skip trainings import for now - adult_trainings table may not be in schema cache yet
-        // TODO: Re-enable once schema cache is refreshed
       }
     } catch (err) {
       errors.push(`Error importing adult ${adult.firstName} ${adult.lastName}: ${err instanceof Error ? err.message : String(err)}`)

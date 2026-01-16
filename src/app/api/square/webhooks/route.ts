@@ -268,7 +268,7 @@ async function handleRefundEvent(
       p_refund_amount_cents: refundAmountCents,
       p_square_refund_id: refund.id,
       p_original_square_payment_id: refund.payment_id,
-      p_refund_reason: refund.reason || null,
+      p_refund_reason: refund.reason || undefined,
     })
 
     if (journalError) {

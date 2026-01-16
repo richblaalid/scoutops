@@ -149,7 +149,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
   // Find invited memberships for this email
   const { data: invites, error: invitesError } = await supabase
     .from('unit_memberships')
-    .select('id, unit_id, role, scout_ids, linked_scout_id')
+    .select('id, unit_id, role, scout_ids, linked_scout_id, roster_adult_id')
     .eq('email', user.email.toLowerCase())
     .eq('status', 'invited')
 
@@ -223,6 +223,24 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
         console.error('Failed to link profile to scout:', scoutLinkError.message)
       } else {
         console.log(`Linked profile ${user.id} to scout ${invite.linked_scout_id}`)
+      }
+    }
+
+    // Link profile to roster_adults record if this invite originated from roster import
+    if (invite.roster_adult_id) {
+      const adminSupabase = createAdminClient()
+      const { error: rosterLinkError } = await adminSupabase
+        .from('roster_adults')
+        .update({
+          profile_id: user.id,
+          linked_at: new Date().toISOString(),
+        })
+        .eq('id', invite.roster_adult_id)
+
+      if (rosterLinkError) {
+        console.error('Failed to link profile to roster adult:', rosterLinkError.message)
+      } else {
+        console.log(`Linked profile ${user.id} to roster adult ${invite.roster_adult_id}`)
       }
     }
 

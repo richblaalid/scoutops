@@ -4,6 +4,8 @@ import { ProfileForm } from '@/components/settings/profile-form'
 import { ContactForm } from '@/components/settings/contact-form'
 import { DangerZone } from '@/components/settings/danger-zone'
 
+type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
+
 export default async function SettingsPage() {
   const supabase = await createClient()
 
@@ -34,7 +36,7 @@ export default async function SettingsPage() {
           profile={{
             first_name: profile.first_name,
             last_name: profile.last_name,
-            gender: profile.gender,
+            gender: profile.gender as Gender | null,
             address_street: profile.address_street,
             address_city: profile.address_city,
             address_state: profile.address_state,

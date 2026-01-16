@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
   public: {
     Tables: {
       accounts: {
@@ -53,6 +58,60 @@ export type Database = {
           },
           {
             foreignKeyName: "accounts_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adult_trainings: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_current: boolean | null
+          profile_id: string
+          training_code: string
+          training_name: string
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_current?: boolean | null
+          profile_id: string
+          training_code: string
+          training_name: string
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_current?: boolean | null
+          profile_id?: string
+          training_code?: string
+          training_name?: string
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adult_trainings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adult_trainings_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
@@ -111,81 +170,42 @@ export type Database = {
           },
         ]
       }
-      adult_trainings: {
-        Row: {
-          id: string
-          profile_id: string
-          unit_id: string
-          training_code: string
-          training_name: string
-          completed_at: string | null
-          expires_at: string | null
-          is_current: boolean | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          profile_id: string
-          unit_id: string
-          training_code: string
-          training_name: string
-          completed_at?: string | null
-          expires_at?: string | null
-          is_current?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          profile_id?: string
-          unit_id?: string
-          training_code?: string
-          training_name?: string
-          completed_at?: string | null
-          expires_at?: string | null
-          is_current?: boolean | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "adult_trainings_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "adult_trainings_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       billing_charges: {
         Row: {
           amount: number
           billing_record_id: string
           id: string
           is_paid: boolean | null
+          is_void: boolean | null
           scout_account_id: string
+          void_journal_entry_id: string | null
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
         }
         Insert: {
           amount: number
           billing_record_id: string
           id?: string
           is_paid?: boolean | null
+          is_void?: boolean | null
           scout_account_id: string
+          void_journal_entry_id?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Update: {
           amount?: number
           billing_record_id?: string
           id?: string
           is_paid?: boolean | null
+          is_void?: boolean | null
           scout_account_id?: string
+          void_journal_entry_id?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Relationships: [
           {
@@ -202,6 +222,20 @@ export type Database = {
             referencedRelation: "scout_accounts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "billing_charges_void_journal_entry_id_fkey"
+            columns: ["void_journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_charges_voided_by_fkey"
+            columns: ["voided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       billing_records: {
@@ -212,9 +246,13 @@ export type Database = {
           description: string
           event_id: string | null
           id: string
+          is_void: boolean | null
           journal_entry_id: string | null
           total_amount: number
           unit_id: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
         }
         Insert: {
           billing_date: string
@@ -223,9 +261,13 @@ export type Database = {
           description: string
           event_id?: string | null
           id?: string
+          is_void?: boolean | null
           journal_entry_id?: string | null
           total_amount: number
           unit_id: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Update: {
           billing_date?: string
@@ -234,9 +276,13 @@ export type Database = {
           description?: string
           event_id?: string | null
           id?: string
+          is_void?: boolean | null
           journal_entry_id?: string | null
           total_amount?: number
           unit_id?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Relationships: [
           {
@@ -265,6 +311,13 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_records_voided_by_fkey"
+            columns: ["voided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -396,6 +449,86 @@ export type Database = {
           },
         ]
       }
+      fundraiser_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fundraiser_types_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_memberships: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          profile_id: string
+          role: string
+          unit_group_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          profile_id: string
+          role: string
+          unit_group_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          profile_id?: string
+          role?: string
+          unit_group_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_memberships_unit_group_id_fkey"
+            columns: ["unit_group_id"]
+            isOneToOne: false
+            referencedRelation: "unit_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_checkouts: {
         Row: {
           checked_out_at: string | null
@@ -494,44 +627,6 @@ export type Database = {
           },
         ]
       }
-      fundraiser_types: {
-        Row: {
-          id: string
-          unit_id: string
-          name: string
-          description: string | null
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          unit_id: string
-          name: string
-          description?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          unit_id?: string
-          name?: string
-          description?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fundraiser_types_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       journal_entries: {
         Row: {
           created_at: string | null
@@ -587,17 +682,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "journal_entries_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "journal_entries_fundraiser_type_id_fkey"
             columns: ["fundraiser_type_id"]
             isOneToOne: false
             referencedRelation: "fundraiser_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
@@ -657,6 +752,130 @@ export type Database = {
           },
         ]
       }
+      patrols: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patrols_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_links: {
+        Row: {
+          amount: number
+          base_amount: number | null
+          billing_charge_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          expires_at: string
+          fee_amount: number | null
+          fees_passed_to_payer: boolean | null
+          id: string
+          payment_id: string | null
+          scout_account_id: string | null
+          status: string | null
+          token: string
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          base_amount?: number | null
+          billing_charge_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at: string
+          fee_amount?: number | null
+          fees_passed_to_payer?: boolean | null
+          id?: string
+          payment_id?: string | null
+          scout_account_id?: string | null
+          status?: string | null
+          token: string
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          base_amount?: number | null
+          billing_charge_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string
+          fee_amount?: number | null
+          fees_passed_to_payer?: boolean | null
+          id?: string
+          payment_id?: string | null
+          scout_account_id?: string | null
+          status?: string | null
+          token?: string
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_links_billing_charge_id_fkey"
+            columns: ["billing_charge_id"]
+            isOneToOne: false
+            referencedRelation: "billing_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_scout_account_id_fkey"
+            columns: ["scout_account_id"]
+            isOneToOne: false
+            referencedRelation: "scout_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -672,9 +891,9 @@ export type Database = {
           square_receipt_url: string | null
           status: string | null
           unit_id: string
+          void_reason: string | null
           voided_at: string | null
           voided_by: string | null
-          void_reason: string | null
         }
         Insert: {
           amount: number
@@ -690,9 +909,9 @@ export type Database = {
           square_receipt_url?: string | null
           status?: string | null
           unit_id: string
+          void_reason?: string | null
           voided_at?: string | null
           voided_by?: string | null
-          void_reason?: string | null
         }
         Update: {
           amount?: number
@@ -708,9 +927,9 @@ export type Database = {
           square_receipt_url?: string | null
           status?: string | null
           unit_id?: string
+          void_reason?: string | null
           voided_at?: string | null
           voided_by?: string | null
-          void_reason?: string | null
         }
         Relationships: [
           {
@@ -734,42 +953,11 @@ export type Database = {
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      patrols: {
-        Row: {
-          id: string
-          unit_id: string
-          name: string
-          display_order: number
-          is_active: boolean
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          unit_id: string
-          name: string
-          display_order?: number
-          is_active?: boolean
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          unit_id?: string
-          name?: string
-          display_order?: number
-          is_active?: boolean
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "patrols_unit_id_fkey"
-            columns: ["unit_id"]
+            foreignKeyName: "payments_voided_by_fkey"
+            columns: ["voided_by"]
             isOneToOne: false
-            referencedRelation: "units"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -787,7 +975,7 @@ export type Database = {
           email_secondary: string | null
           first_name: string | null
           full_name: string | null
-          gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
+          gender: string | null
           health_form_expires: string | null
           health_form_status: string | null
           id: string
@@ -812,7 +1000,7 @@ export type Database = {
           email_secondary?: string | null
           first_name?: string | null
           full_name?: string | null
-          gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
+          gender?: string | null
           health_form_expires?: string | null
           health_form_status?: string | null
           id: string
@@ -837,7 +1025,7 @@ export type Database = {
           email_secondary?: string | null
           first_name?: string | null
           full_name?: string | null
-          gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
+          gender?: string | null
           health_form_expires?: string | null
           health_form_status?: string | null
           id?: string
@@ -852,11 +1040,99 @@ export type Database = {
         }
         Relationships: []
       }
+      roster_adults: {
+        Row: {
+          age: string | null
+          bsa_member_id: string
+          created_at: string | null
+          expiration_date: string | null
+          first_name: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          last_name: string
+          last_synced_at: string | null
+          linked_at: string | null
+          member_type: string
+          patrol: string | null
+          position: string | null
+          profile_id: string | null
+          renewal_status: string | null
+          sync_session_id: string | null
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          age?: string | null
+          bsa_member_id: string
+          created_at?: string | null
+          expiration_date?: string | null
+          first_name: string
+          full_name: string
+          id?: string
+          is_active?: boolean | null
+          last_name: string
+          last_synced_at?: string | null
+          linked_at?: string | null
+          member_type: string
+          patrol?: string | null
+          position?: string | null
+          profile_id?: string | null
+          renewal_status?: string | null
+          sync_session_id?: string | null
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          age?: string | null
+          bsa_member_id?: string
+          created_at?: string | null
+          expiration_date?: string | null
+          first_name?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_name?: string
+          last_synced_at?: string | null
+          linked_at?: string | null
+          member_type?: string
+          patrol?: string | null
+          position?: string | null
+          profile_id?: string | null
+          renewal_status?: string | null
+          sync_session_id?: string | null
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_adults_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_adults_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_adults_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scout_accounts: {
         Row: {
           billing_balance: number | null
-          funds_balance: number
           created_at: string | null
+          funds_balance: number
           id: string
           scout_id: string
           unit_id: string
@@ -864,8 +1140,8 @@ export type Database = {
         }
         Insert: {
           billing_balance?: number | null
-          funds_balance?: number
           created_at?: string | null
+          funds_balance?: number
           id?: string
           scout_id: string
           unit_id: string
@@ -873,8 +1149,8 @@ export type Database = {
         }
         Update: {
           billing_balance?: number | null
-          funds_balance?: number
           created_at?: string | null
+          funds_balance?: number
           id?: string
           scout_id?: string
           unit_id?: string
@@ -893,6 +1169,108 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_activity_logs: {
+        Row: {
+          camping_nights: number | null
+          hiking_miles: number | null
+          id: string
+          scout_id: string
+          service_hours: number | null
+          sync_session_id: string | null
+          synced_at: string | null
+        }
+        Insert: {
+          camping_nights?: number | null
+          hiking_miles?: number | null
+          id?: string
+          scout_id: string
+          service_hours?: number | null
+          sync_session_id?: string | null
+          synced_at?: string | null
+        }
+        Update: {
+          camping_nights?: number | null
+          hiking_miles?: number | null
+          id?: string
+          scout_id?: string
+          service_hours?: number | null
+          sync_session_id?: string | null
+          synced_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_activity_logs_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: true
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_activity_logs_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_advancements: {
+        Row: {
+          advancement_data: Json | null
+          bsa_member_id: string | null
+          current_rank: string | null
+          date_joined: string | null
+          id: string
+          last_rank_cub_scout: string | null
+          last_rank_scouts_bsa: string | null
+          membership_status: string | null
+          scout_id: string
+          sync_session_id: string | null
+          synced_at: string | null
+        }
+        Insert: {
+          advancement_data?: Json | null
+          bsa_member_id?: string | null
+          current_rank?: string | null
+          date_joined?: string | null
+          id?: string
+          last_rank_cub_scout?: string | null
+          last_rank_scouts_bsa?: string | null
+          membership_status?: string | null
+          scout_id: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+        }
+        Update: {
+          advancement_data?: Json | null
+          bsa_member_id?: string | null
+          current_rank?: string | null
+          date_joined?: string | null
+          id?: string
+          last_rank_cub_scout?: string | null
+          last_rank_scouts_bsa?: string | null
+          membership_status?: string | null
+          scout_id?: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_advancements_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: true
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_advancements_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -932,6 +1310,111 @@ export type Database = {
             columns: ["scout_id"]
             isOneToOne: false
             referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_leadership_positions: {
+        Row: {
+          date_range: string | null
+          days: number | null
+          id: string
+          is_current: boolean | null
+          position: string
+          scout_id: string
+          sync_session_id: string | null
+          synced_at: string | null
+          unit_name: string | null
+        }
+        Insert: {
+          date_range?: string | null
+          days?: number | null
+          id?: string
+          is_current?: boolean | null
+          position: string
+          scout_id: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+          unit_name?: string | null
+        }
+        Update: {
+          date_range?: string | null
+          days?: number | null
+          id?: string
+          is_current?: boolean | null
+          position?: string
+          scout_id?: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+          unit_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_leadership_positions_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_leadership_positions_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_rank_requirements: {
+        Row: {
+          completed_date: string | null
+          id: string
+          percent_complete: number | null
+          rank_name: string
+          requirements: Json | null
+          requirements_version: string | null
+          scout_id: string
+          status: string
+          sync_session_id: string | null
+          synced_at: string | null
+        }
+        Insert: {
+          completed_date?: string | null
+          id?: string
+          percent_complete?: number | null
+          rank_name: string
+          requirements?: Json | null
+          requirements_version?: string | null
+          scout_id: string
+          status?: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+        }
+        Update: {
+          completed_date?: string | null
+          id?: string
+          percent_complete?: number | null
+          rank_name?: string
+          requirements?: Json | null
+          requirements_version?: string | null
+          scout_id?: string
+          status?: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_rank_requirements_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_requirements_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1030,51 +1513,419 @@ export type Database = {
           },
         ]
       }
-      unit_invites: {
+      snapshot_fingerprints: {
         Row: {
+          captured_at: string | null
           id: string
-          unit_id: string
-          email: string
-          role: string
-          invited_by: string
-          status: string
-          created_at: string | null
-          expires_at: string | null
-          accepted_at: string | null
-          scout_ids: string[] | null
+          key_elements: Json
+          page_type: string
+          sample_snapshot: Json | null
+          structure_hash: string
+          updated_at: string | null
         }
         Insert: {
+          captured_at?: string | null
           id?: string
-          unit_id: string
-          email: string
-          role: string
-          invited_by: string
-          status?: string
-          created_at?: string | null
-          expires_at?: string | null
-          accepted_at?: string | null
-          scout_ids?: string[] | null
+          key_elements: Json
+          page_type: string
+          sample_snapshot?: Json | null
+          structure_hash: string
+          updated_at?: string | null
         }
         Update: {
+          captured_at?: string | null
           id?: string
-          unit_id?: string
-          email?: string
-          role?: string
-          invited_by?: string
-          status?: string
+          key_elements?: Json
+          page_type?: string
+          sample_snapshot?: Json | null
+          structure_hash?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      square_transactions: {
+        Row: {
+          amount_money: number
+          buyer_email_address: string | null
+          card_brand: string | null
+          cardholder_name: string | null
+          created_at: string | null
+          currency: string | null
+          fee_money: number | null
+          id: string
+          is_reconciled: boolean | null
+          last_4: string | null
+          net_money: number
+          note: string | null
+          order_line_items: Json | null
+          payment_id: string | null
+          receipt_number: string | null
+          receipt_url: string | null
+          scout_account_id: string | null
+          source_type: string | null
+          square_created_at: string
+          square_order_id: string | null
+          square_payment_id: string
+          status: string
+          synced_at: string | null
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount_money: number
+          buyer_email_address?: string | null
+          card_brand?: string | null
+          cardholder_name?: string | null
           created_at?: string | null
-          expires_at?: string | null
-          accepted_at?: string | null
-          scout_ids?: string[] | null
+          currency?: string | null
+          fee_money?: number | null
+          id?: string
+          is_reconciled?: boolean | null
+          last_4?: string | null
+          net_money: number
+          note?: string | null
+          order_line_items?: Json | null
+          payment_id?: string | null
+          receipt_number?: string | null
+          receipt_url?: string | null
+          scout_account_id?: string | null
+          source_type?: string | null
+          square_created_at: string
+          square_order_id?: string | null
+          square_payment_id: string
+          status: string
+          synced_at?: string | null
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount_money?: number
+          buyer_email_address?: string | null
+          card_brand?: string | null
+          cardholder_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          fee_money?: number | null
+          id?: string
+          is_reconciled?: boolean | null
+          last_4?: string | null
+          net_money?: number
+          note?: string | null
+          order_line_items?: Json | null
+          payment_id?: string | null
+          receipt_number?: string | null
+          receipt_url?: string | null
+          scout_account_id?: string | null
+          source_type?: string | null
+          square_created_at?: string
+          square_order_id?: string | null
+          square_payment_id?: string
+          status?: string
+          synced_at?: string | null
+          unit_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "unit_invites_unit_id_fkey"
+            foreignKeyName: "square_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "square_transactions_scout_account_id_fkey"
+            columns: ["scout_account_id"]
+            isOneToOne: false
+            referencedRelation: "scout_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "square_transactions_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      sync_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          error_log: Json | null
+          id: string
+          pages_visited: number | null
+          records_extracted: number | null
+          started_at: string | null
+          status: string
+          unit_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error_log?: Json | null
+          id?: string
+          pages_visited?: number | null
+          records_extracted?: number | null
+          started_at?: string | null
+          status?: string
+          unit_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error_log?: Json | null
+          id?: string
+          pages_visited?: number | null
+          records_extracted?: number | null
+          started_at?: string | null
+          status?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_sessions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_snapshots: {
+        Row: {
+          accessibility_tree: Json
+          captured_at: string | null
+          id: string
+          page_type: string
+          page_url: string
+          screenshot_url: string | null
+          sync_session_id: string
+        }
+        Insert: {
+          accessibility_tree: Json
+          captured_at?: string | null
+          id?: string
+          page_type: string
+          page_url: string
+          screenshot_url?: string | null
+          sync_session_id: string
+        }
+        Update: {
+          accessibility_tree?: Json
+          captured_at?: string | null
+          id?: string
+          page_type?: string
+          page_url?: string
+          screenshot_url?: string | null
+          sync_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_snapshots_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_staged_members: {
+        Row: {
+          age: string | null
+          bsa_member_id: string
+          change_type: string
+          changes: Json | null
+          created_at: string | null
+          existing_roster_adult_id: string | null
+          existing_scout_id: string | null
+          expiration_date: string | null
+          first_name: string
+          full_name: string
+          id: string
+          is_selected: boolean | null
+          last_name: string
+          match_type: string | null
+          matched_profile_id: string | null
+          member_type: string
+          patrol: string | null
+          position: string | null
+          rank: string | null
+          renewal_status: string | null
+          session_id: string
+          skip_reason: string | null
+          unit_id: string
+        }
+        Insert: {
+          age?: string | null
+          bsa_member_id: string
+          change_type: string
+          changes?: Json | null
+          created_at?: string | null
+          existing_roster_adult_id?: string | null
+          existing_scout_id?: string | null
+          expiration_date?: string | null
+          first_name: string
+          full_name: string
+          id?: string
+          is_selected?: boolean | null
+          last_name: string
+          match_type?: string | null
+          matched_profile_id?: string | null
+          member_type: string
+          patrol?: string | null
+          position?: string | null
+          rank?: string | null
+          renewal_status?: string | null
+          session_id: string
+          skip_reason?: string | null
+          unit_id: string
+        }
+        Update: {
+          age?: string | null
+          bsa_member_id?: string
+          change_type?: string
+          changes?: Json | null
+          created_at?: string | null
+          existing_roster_adult_id?: string | null
+          existing_scout_id?: string | null
+          expiration_date?: string | null
+          first_name?: string
+          full_name?: string
+          id?: string
+          is_selected?: boolean | null
+          last_name?: string
+          match_type?: string | null
+          matched_profile_id?: string | null
+          member_type?: string
+          patrol?: string | null
+          position?: string | null
+          rank?: string | null
+          renewal_status?: string | null
+          session_id?: string
+          skip_reason?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_staged_members_existing_roster_adult_id_fkey"
+            columns: ["existing_roster_adult_id"]
+            isOneToOne: false
+            referencedRelation: "roster_adults"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_staged_members_existing_scout_id_fkey"
+            columns: ["existing_scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_staged_members_matched_profile_id_fkey"
+            columns: ["matched_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_staged_members_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_staged_members_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_groups: {
+        Row: {
+          base_unit_number: string | null
+          chartered_org: string | null
+          council: string | null
+          created_at: string | null
+          district: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_unit_number?: string | null
+          chartered_org?: string | null
+          council?: string | null
+          created_at?: string | null
+          district?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_unit_number?: string | null
+          chartered_org?: string | null
+          council?: string | null
+          created_at?: string | null
+          district?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      unit_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invited_by: string
+          role: string
+          scout_ids: string[] | null
+          status: string
+          unit_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_by: string
+          role: string
+          scout_ids?: string[] | null
+          status?: string
+          unit_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string
+          role?: string
+          scout_ids?: string[] | null
+          status?: string
+          unit_id?: string
+        }
+        Relationships: [
           {
             foreignKeyName: "unit_invites_invited_by_fkey"
             columns: ["invited_by"]
@@ -1082,78 +1933,71 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      unit_memberships: {
-        Row: {
-          id: string
-          unit_id: string
-          profile_id: string | null
-          email: string | null
-          role: string
-          status: string
-          is_active: boolean | null
-          scout_ids: string[] | null
-          linked_scout_id: string | null
-          current_position: string | null
-          invited_by: string | null
-          invited_at: string | null
-          accepted_at: string | null
-          expires_at: string | null
-          joined_at: string | null
-          section_unit_id: string | null
-        }
-        Insert: {
-          id?: string
-          unit_id: string
-          profile_id?: string | null
-          email?: string | null
-          role: string
-          status?: string
-          is_active?: boolean | null
-          scout_ids?: string[] | null
-          linked_scout_id?: string | null
-          current_position?: string | null
-          invited_by?: string | null
-          invited_at?: string | null
-          accepted_at?: string | null
-          expires_at?: string | null
-          joined_at?: string | null
-          section_unit_id?: string | null
-        }
-        Update: {
-          id?: string
-          unit_id?: string
-          profile_id?: string | null
-          email?: string | null
-          role?: string
-          status?: string
-          is_active?: boolean | null
-          scout_ids?: string[] | null
-          linked_scout_id?: string | null
-          current_position?: string | null
-          invited_by?: string | null
-          invited_at?: string | null
-          accepted_at?: string | null
-          expires_at?: string | null
-          joined_at?: string | null
-          section_unit_id?: string | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "unit_memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unit_memberships_unit_id_fkey"
+            foreignKeyName: "unit_invites_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      unit_memberships: {
+        Row: {
+          accepted_at: string | null
+          current_position: string | null
+          email: string | null
+          expires_at: string | null
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          is_active: boolean | null
+          joined_at: string | null
+          linked_scout_id: string | null
+          profile_id: string | null
+          role: string
+          roster_adult_id: string | null
+          scout_ids: string[] | null
+          status: string | null
+          unit_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          current_position?: string | null
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          linked_scout_id?: string | null
+          profile_id?: string | null
+          role: string
+          roster_adult_id?: string | null
+          scout_ids?: string[] | null
+          status?: string | null
+          unit_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          current_position?: string | null
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          linked_scout_id?: string | null
+          profile_id?: string | null
+          role?: string
+          roster_adult_id?: string | null
+          scout_ids?: string[] | null
+          status?: string | null
+          unit_id?: string
+        }
+        Relationships: [
           {
             foreignKeyName: "unit_memberships_invited_by_fkey"
             columns: ["invited_by"]
@@ -1169,9 +2013,79 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "unit_memberships_section_unit_id_fkey"
-            columns: ["section_unit_id"]
+            foreignKeyName: "unit_memberships_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_memberships_roster_adult_id_fkey"
+            columns: ["roster_adult_id"]
+            isOneToOne: false
+            referencedRelation: "roster_adults"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_memberships_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_square_credentials: {
+        Row: {
+          access_token_encrypted: string
+          connected_at: string | null
+          created_at: string | null
+          environment: string | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          location_id: string | null
+          merchant_id: string
+          refresh_token_encrypted: string
+          token_expires_at: string
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_token_encrypted: string
+          connected_at?: string | null
+          created_at?: string | null
+          environment?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          location_id?: string | null
+          merchant_id: string
+          refresh_token_encrypted: string
+          token_expires_at: string
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string
+          connected_at?: string | null
+          created_at?: string | null
+          environment?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          location_id?: string | null
+          merchant_id?: string
+          refresh_token_encrypted?: string
+          token_expires_at?: string
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_square_credentials_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: true
             referencedRelation: "units"
             referencedColumns: ["id"]
           },
@@ -1186,16 +2100,14 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          pass_fees_to_payer: boolean | null
+          processing_fee_fixed: number | null
+          processing_fee_percent: number | null
+          unit_gender: string | null
+          unit_group_id: string | null
           unit_number: string
           unit_type: string
-          unit_gender: 'boys' | 'girls' | 'coed' | null
-          unit_group_id: string | null
-          parent_unit_id: string | null
-          is_section: boolean
           updated_at: string | null
-          processing_fee_percent: number
-          processing_fee_fixed: number
-          pass_fees_to_payer: boolean
         }
         Insert: {
           chartered_org?: string | null
@@ -1205,16 +2117,14 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          pass_fees_to_payer?: boolean | null
+          processing_fee_fixed?: number | null
+          processing_fee_percent?: number | null
+          unit_gender?: string | null
+          unit_group_id?: string | null
           unit_number: string
           unit_type: string
-          unit_gender?: 'boys' | 'girls' | 'coed' | null
-          unit_group_id?: string | null
-          parent_unit_id?: string | null
-          is_section?: boolean
           updated_at?: string | null
-          processing_fee_percent?: number
-          processing_fee_fixed?: number
-          pass_fees_to_payer?: boolean
         }
         Update: {
           chartered_org?: string | null
@@ -1224,16 +2134,14 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          pass_fees_to_payer?: boolean | null
+          processing_fee_fixed?: number | null
+          processing_fee_percent?: number | null
+          unit_gender?: string | null
+          unit_group_id?: string | null
           unit_number?: string
           unit_type?: string
-          unit_gender?: 'boys' | 'girls' | 'coed' | null
-          unit_group_id?: string | null
-          parent_unit_id?: string | null
-          is_section?: boolean
           updated_at?: string | null
-          processing_fee_percent?: number
-          processing_fee_fixed?: number
-          pass_fees_to_payer?: boolean
         }
         Relationships: [
           {
@@ -1243,352 +2151,78 @@ export type Database = {
             referencedRelation: "unit_groups"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "units_parent_unit_id_fkey"
-            columns: ["parent_unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          }
         ]
       }
-      unit_groups: {
+      waitlist: {
         Row: {
-          id: string
-          name: string
-          base_unit_number: string | null
-          council: string | null
-          district: string | null
-          chartered_org: string | null
+          additional_info: string | null
+          biggest_pain_point: string | null
           created_at: string
-          updated_at: string
+          current_payment_platform: string | null
+          current_software: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          name: string | null
+          referral_source: string | null
+          unit_size: string | null
+          unit_type: string | null
+          user_agent: string | null
         }
         Insert: {
-          id?: string
-          name: string
-          base_unit_number?: string | null
-          council?: string | null
-          district?: string | null
-          chartered_org?: string | null
+          additional_info?: string | null
+          biggest_pain_point?: string | null
           created_at?: string
-          updated_at?: string
+          current_payment_platform?: string | null
+          current_software?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          name?: string | null
+          referral_source?: string | null
+          unit_size?: string | null
+          unit_type?: string | null
+          user_agent?: string | null
         }
         Update: {
-          id?: string
-          name?: string
-          base_unit_number?: string | null
-          council?: string | null
-          district?: string | null
-          chartered_org?: string | null
+          additional_info?: string | null
+          biggest_pain_point?: string | null
           created_at?: string
-          updated_at?: string
+          current_payment_platform?: string | null
+          current_software?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          name?: string | null
+          referral_source?: string | null
+          unit_size?: string | null
+          unit_type?: string | null
+          user_agent?: string | null
         }
         Relationships: []
-      }
-      group_memberships: {
-        Row: {
-          id: string
-          unit_group_id: string
-          profile_id: string
-          role: 'admin' | 'treasurer' | 'leader'
-          is_active: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          unit_group_id: string
-          profile_id: string
-          role: 'admin' | 'treasurer' | 'leader'
-          is_active?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          unit_group_id?: string
-          profile_id?: string
-          role?: 'admin' | 'treasurer' | 'leader'
-          is_active?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_memberships_unit_group_id_fkey"
-            columns: ["unit_group_id"]
-            isOneToOne: false
-            referencedRelation: "unit_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      unit_square_credentials: {
-        Row: {
-          id: string
-          unit_id: string
-          merchant_id: string
-          location_id: string | null
-          access_token_encrypted: string
-          refresh_token_encrypted: string
-          token_expires_at: string
-          environment: 'sandbox' | 'production'
-          is_active: boolean
-          connected_at: string
-          last_sync_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          unit_id: string
-          merchant_id: string
-          location_id?: string | null
-          access_token_encrypted: string
-          refresh_token_encrypted: string
-          token_expires_at: string
-          environment?: 'sandbox' | 'production'
-          is_active?: boolean
-          connected_at?: string
-          last_sync_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          unit_id?: string
-          merchant_id?: string
-          location_id?: string | null
-          access_token_encrypted?: string
-          refresh_token_encrypted?: string
-          token_expires_at?: string
-          environment?: 'sandbox' | 'production'
-          is_active?: boolean
-          connected_at?: string
-          last_sync_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "unit_square_credentials_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: true
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      square_transactions: {
-        Row: {
-          id: string
-          unit_id: string
-          square_payment_id: string
-          square_order_id: string | null
-          amount_money: number
-          fee_money: number
-          net_money: number
-          currency: string
-          status: string
-          source_type: string | null
-          card_brand: string | null
-          last_4: string | null
-          receipt_url: string | null
-          receipt_number: string | null
-          payment_id: string | null
-          scout_account_id: string | null
-          is_reconciled: boolean
-          square_created_at: string
-          synced_at: string
-          created_at: string
-          updated_at: string
-          buyer_email_address: string | null
-          cardholder_name: string | null
-          note: string | null
-          order_line_items: { name: string; quantity: number; amount: number }[] | null
-        }
-        Insert: {
-          id?: string
-          unit_id: string
-          square_payment_id: string
-          square_order_id?: string | null
-          amount_money: number
-          fee_money?: number
-          net_money: number
-          currency?: string
-          status: string
-          source_type?: string | null
-          card_brand?: string | null
-          last_4?: string | null
-          receipt_url?: string | null
-          receipt_number?: string | null
-          payment_id?: string | null
-          scout_account_id?: string | null
-          is_reconciled?: boolean
-          square_created_at: string
-          synced_at?: string
-          created_at?: string
-          updated_at?: string
-          buyer_email_address?: string | null
-          cardholder_name?: string | null
-          note?: string | null
-          order_line_items?: { name: string; quantity: number; amount: number }[] | null
-        }
-        Update: {
-          id?: string
-          unit_id?: string
-          square_payment_id?: string
-          square_order_id?: string | null
-          amount_money?: number
-          fee_money?: number
-          net_money?: number
-          currency?: string
-          status?: string
-          source_type?: string | null
-          card_brand?: string | null
-          last_4?: string | null
-          receipt_url?: string | null
-          receipt_number?: string | null
-          payment_id?: string | null
-          scout_account_id?: string | null
-          is_reconciled?: boolean
-          square_created_at?: string
-          synced_at?: string
-          created_at?: string
-          updated_at?: string
-          buyer_email_address?: string | null
-          cardholder_name?: string | null
-          note?: string | null
-          order_line_items?: { name: string; quantity: number; amount: number }[] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "square_transactions_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "square_transactions_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "square_transactions_scout_account_id_fkey"
-            columns: ["scout_account_id"]
-            isOneToOne: false
-            referencedRelation: "scout_accounts"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      payment_links: {
-        Row: {
-          id: string
-          unit_id: string
-          scout_account_id: string | null
-          billing_charge_id: string | null
-          amount: number
-          base_amount: number | null
-          fee_amount: number
-          fees_passed_to_payer: boolean
-          description: string | null
-          token: string
-          status: 'pending' | 'completed' | 'expired' | 'cancelled'
-          payment_id: string | null
-          expires_at: string
-          completed_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          unit_id: string
-          scout_account_id?: string | null
-          billing_charge_id?: string | null
-          amount: number
-          base_amount?: number | null
-          fee_amount?: number
-          fees_passed_to_payer?: boolean
-          description?: string | null
-          token: string
-          status?: 'pending' | 'completed' | 'expired' | 'cancelled'
-          payment_id?: string | null
-          expires_at: string
-          completed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          unit_id?: string
-          scout_account_id?: string | null
-          billing_charge_id?: string | null
-          amount?: number
-          base_amount?: number | null
-          fee_amount?: number
-          fees_passed_to_payer?: boolean
-          description?: string | null
-          token?: string
-          status?: 'pending' | 'completed' | 'expired' | 'cancelled'
-          payment_id?: string | null
-          expires_at?: string
-          completed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_links_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_links_scout_account_id_fkey"
-            columns: ["scout_account_id"]
-            isOneToOne: false
-            referencedRelation: "scout_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_links_billing_charge_id_fkey"
-            columns: ["billing_charge_id"]
-            isOneToOne: false
-            referencedRelation: "billing_charges"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_links_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          }
-        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      auto_transfer_overpayment: {
+        Args: { p_amount: number; p_scout_account_id: string }
+        Returns: undefined
+      }
+      can_access_journal_line: {
+        Args: { line_journal_entry_id: string; required_roles: string[] }
+        Returns: boolean
+      }
       create_billing_with_journal: {
         Args: {
-          p_unit_id: string
-          p_description: string
-          p_total_amount: number
           p_billing_date: string
           p_billing_type: string
+          p_description: string
           p_per_scout_amount: number
           p_scout_accounts: Json
+          p_total_amount: number
+          p_unit_id: string
         }
         Returns: Json
       }
@@ -1596,108 +2230,97 @@ export type Database = {
         Args: { p_unit_id: string }
         Returns: undefined
       }
-      get_user_units: { Args: never; Returns: string[] }
-      user_has_role: {
-        Args: { required_roles: string[]; unit: string }
-        Returns: boolean
-      }
-      validate_journal_entry_balance: {
-        Args: { entry_id: string }
-        Returns: boolean
-      }
-      transfer_funds_to_billing: {
-        Args: {
-          p_scout_account_id: string
-          p_amount: number
-          p_description?: string
-        }
-        Returns: Json
-      }
-      auto_transfer_overpayment: {
-        Args: {
-          p_scout_account_id: string
-          p_amount: number
-        }
-        Returns: undefined
-      }
-      credit_fundraising_to_scout: {
-        Args: {
-          p_scout_account_id: string
-          p_amount: number
-          p_description: string
-          p_fundraiser_type?: string
-        }
-        Returns: Json
-      }
       create_linked_troop_group: {
         Args: {
-          p_group_name: string
           p_base_unit_number: string
-          p_unit_id: string
+          p_group_name: string
           p_unit_gender: string
+          p_unit_id: string
         }
         Returns: string
       }
+      create_refund_journal_entry: {
+        Args: {
+          p_original_square_payment_id: string
+          p_refund_amount_cents: number
+          p_refund_reason?: string
+          p_scout_account_id: string
+          p_square_refund_id: string
+          p_unit_id: string
+        }
+        Returns: Json
+      }
+      credit_fundraising_to_scout: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_fundraiser_type?: string
+          p_scout_account_id: string
+        }
+        Returns: Json
+      }
+      get_auth_user_email: { Args: never; Returns: string }
       get_linked_unit_ids: {
         Args: { target_unit_id: string }
         Returns: string[]
       }
-      get_user_unit_groups: {
-        Args: Record<string, never>
-        Returns: string[]
-      }
-      get_unit_sections: {
-        Args: { p_unit_id: string }
-        Returns: string[]
-      }
-      get_parent_unit: {
-        Args: { p_unit_id: string }
-        Returns: string
-      }
-      create_unit_sections: {
-        Args: {
-          p_parent_unit_id: string
-          p_boys_number?: string
-          p_girls_number?: string
-        }
-        Returns: { boys_section_id: string | null; girls_section_id: string | null }[]
+      get_user_active_unit_ids: { Args: never; Returns: string[] }
+      get_user_unit_groups: { Args: never; Returns: string[] }
+      get_user_units: { Args: never; Returns: string[] }
+      parent_can_access_journal_line: {
+        Args: { line_scout_account_id: string }
+        Returns: boolean
       }
       process_payment_link_payment: {
         Args: {
-          p_payment_link_id: string
-          p_scout_account_id: string
           p_base_amount_cents: number
-          p_total_amount_cents: number
-          p_fee_amount_cents: number
-          p_net_amount_cents: number
-          p_square_payment_id: string
-          p_square_receipt_url: string | null
-          p_square_order_id: string | null
-          p_scout_name: string
-          p_fees_passed_to_payer: boolean
+          p_buyer_email?: string
           p_card_details: Json
-          p_buyer_email?: string | null
-          p_payment_note?: string | null
+          p_fee_amount_cents: number
+          p_fees_passed_to_payer: boolean
+          p_net_amount_cents: number
+          p_payment_link_id: string
+          p_payment_note?: string
+          p_scout_account_id: string
+          p_scout_name: string
+          p_square_order_id: string
+          p_square_payment_id: string
+          p_square_receipt_url: string
+          p_total_amount_cents: number
         }
         Returns: Json
       }
-      create_refund_journal_entry: {
+      transfer_funds_to_billing: {
         Args: {
-          p_unit_id: string
+          p_amount: number
+          p_description?: string
           p_scout_account_id: string
-          p_refund_amount_cents: number
-          p_square_refund_id: string
-          p_original_square_payment_id: string
-          p_refund_reason?: string | null
         }
+        Returns: Json
+      }
+      update_billing_description: {
+        Args: { p_billing_record_id: string; p_new_description: string }
+        Returns: Json
+      }
+      user_has_role: {
+        Args: { required_roles: string[]; unit: string }
+        Returns: boolean
+      }
+      user_is_unit_admin: { Args: { check_unit_id: string }; Returns: boolean }
+      validate_journal_entry_balance: {
+        Args: { entry_id: string }
+        Returns: boolean
+      }
+      void_billing_charge: {
+        Args: { p_billing_charge_id: string; p_void_reason: string }
+        Returns: Json
+      }
+      void_billing_record: {
+        Args: { p_billing_record_id: string; p_void_reason: string }
         Returns: Json
       }
       void_payment: {
-        Args: {
-          p_payment_id: string
-          p_voided_by: string
-          p_reason: string
-        }
+        Args: { p_payment_id: string; p_reason: string; p_voided_by: string }
         Returns: Json
       }
     }
@@ -1710,23 +2333,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof Database
+  schema: keyof DatabaseWithoutInternals
 }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -1744,16 +2369,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof Database
+  schema: keyof DatabaseWithoutInternals
 }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -1769,16 +2394,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof Database
+  schema: keyof DatabaseWithoutInternals
 }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -1794,16 +2419,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof Database
+  schema: keyof DatabaseWithoutInternals
 }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -1811,16 +2436,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof Database
+  schema: keyof DatabaseWithoutInternals
 }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { SquareConnectionCard } from '@/components/settings/square-connection-card'
 import { PaymentFeeSettingsCard } from '@/components/settings/payment-fee-settings-card'
+import { ScoutbookSyncCard } from '@/components/settings/scoutbook-sync-card'
 import { isFinancialRole } from '@/lib/roles'
 
 export default async function IntegrationsPage({
@@ -91,6 +92,16 @@ export default async function IntegrationsPage({
     }
   }
 
+  // Get last Scoutbook sync session
+  const { data: lastSyncSession } = await supabase
+    .from('sync_sessions')
+    .select('completed_at, records_extracted')
+    .eq('unit_id', membership.unit_id)
+    .eq('status', 'completed')
+    .order('completed_at', { ascending: false })
+    .limit(1)
+    .single()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -133,6 +144,12 @@ export default async function IntegrationsPage({
           effectiveRate={effectiveRate}
           isAdmin={isAdmin}
           squareConnected={!!squareCredentials}
+        />
+
+        <ScoutbookSyncCard
+          lastSyncAt={lastSyncSession?.completed_at}
+          lastSyncMemberCount={lastSyncSession?.records_extracted}
+          isAdmin={isAdmin}
         />
 
         {/* Placeholder for future integrations */}

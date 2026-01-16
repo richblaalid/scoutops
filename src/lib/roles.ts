@@ -76,7 +76,7 @@ export interface NavItem {
 // Navigation items with their required pages and icons
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', page: 'dashboard', icon: LayoutDashboard },
-  { href: '/scouts', label: 'Scouts', page: 'scouts', icon: Users },
+  { href: '/roster', label: 'Roster', page: 'scouts', icon: Users },
   { href: '/accounts', label: 'Accounts', page: 'accounts', icon: Wallet },
   { href: '/billing', label: 'Billing', page: 'billing', icon: Receipt },
   { href: '/payments', label: 'Payments', page: 'payments', icon: CreditCard },

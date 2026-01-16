@@ -52,10 +52,46 @@ Always use the appropriate client based on component type. The middleware (`src/
 - `billing_records` / `billing_charges` - Fair share billing
 - `payments` - Payment records
 
+### Supabase Environments
+
+**CRITICAL: This project has separate dev and prod databases. Always verify the target before running migrations.**
+
+| Environment | Project Ref | Purpose |
+|-------------|-------------|---------|
+| **Development** | `feownmcpkfugkcivdoal` | Local development, testing |
+| **Production** | `jtzidlmxrorbjnygfvvp` | Live production data - DO NOT modify without explicit approval |
+
+### Supabase Migration Safety Rules
+
+**BEFORE running any `supabase db push` or migration command:**
+
+1. **Always check which project is currently linked:**
+   ```bash
+   supabase projects list
+   ```
+
+2. **Link to the correct project (DEV by default):**
+   ```bash
+   supabase link --project-ref feownmcpkfugkcivdoal  # DEV
+   ```
+
+3. **Never push to production without explicit user approval.** If the user asks for a migration, assume DEV unless they specifically say "production" or "prod".
+
+4. **After pushing migrations, remind user to reload schema cache** in Supabase Dashboard → Settings → API → "Reload schema cache"
+
 ### Supabase Migrations
-Migrations are in `supabase/migrations/`. Run locally with:
+Migrations are in `supabase/migrations/`.
+
+**For development (default):**
 ```bash
-supabase db reset  # Reset and apply all migrations
+supabase link --project-ref feownmcpkfugkcivdoal  # Ensure linked to DEV
+supabase db push                                   # Push to DEV
+```
+
+**For production (requires explicit approval):**
+```bash
+supabase link --project-ref jtzidlmxrorbjnygfvvp  # Link to PROD
+supabase db push                                   # Push to PROD
 ```
 
 ### Component Patterns

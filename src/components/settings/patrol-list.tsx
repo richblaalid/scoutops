@@ -20,8 +20,8 @@ import {
 interface Patrol {
   id: string
   name: string
-  display_order: number
-  is_active: boolean
+  display_order: number | null
+  is_active: boolean | null
   unit_id: string
 }
 
@@ -41,7 +41,9 @@ export function PatrolList({ unitId, patrols }: PatrolListProps) {
   const [error, setError] = useState<string | null>(null)
 
   const sortedPatrols = patrols.sort((a, b) => {
-    if (a.display_order !== b.display_order) return a.display_order - b.display_order
+    const orderA = a.display_order ?? 0
+    const orderB = b.display_order ?? 0
+    if (orderA !== orderB) return orderA - orderB
     return a.name.localeCompare(b.name)
   })
 

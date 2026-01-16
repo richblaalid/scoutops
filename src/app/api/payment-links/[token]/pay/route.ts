@@ -277,8 +277,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       p_fee_amount_cents: squareFeeCents,
       p_net_amount_cents: netCents,
       p_square_payment_id: squarePayment.id!,
-      p_square_receipt_url: squarePayment.receiptUrl || null,
-      p_square_order_id: squarePayment.orderId || null,
+      p_square_receipt_url: squarePayment.receiptUrl || '',
+      p_square_order_id: squarePayment.orderId || '',
       p_scout_name: scoutName,
       p_fees_passed_to_payer: feesPassedToPayer,
       p_card_details: {
@@ -286,7 +286,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         last_4: cardDetails?.card?.last4 || null,
         cardholder_name: cardDetails?.card?.cardholderName || null,
       },
-      p_buyer_email: squarePayment.buyerEmailAddress || null,
+      p_buyer_email: squarePayment.buyerEmailAddress || undefined,
       p_payment_note: paymentNote,
     })
 
