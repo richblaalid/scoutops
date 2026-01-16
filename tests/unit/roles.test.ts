@@ -7,6 +7,7 @@ import {
   isManagementRole,
   hasFilteredView,
   isAdmin,
+  isTreasurer,
   type MemberRole,
   type AppPage,
   type AppAction,
@@ -259,6 +260,19 @@ describe('roles', () => {
       expect(isAdmin('leader')).toBe(false)
       expect(isAdmin('parent')).toBe(false)
       expect(isAdmin('scout')).toBe(false)
+    })
+  })
+
+  describe('isTreasurer', () => {
+    it('should return true only for treasurer', () => {
+      expect(isTreasurer('treasurer')).toBe(true)
+    })
+
+    it('should return false for all other roles', () => {
+      expect(isTreasurer('admin')).toBe(false)
+      expect(isTreasurer('leader')).toBe(false)
+      expect(isTreasurer('parent')).toBe(false)
+      expect(isTreasurer('scout')).toBe(false)
     })
   })
 })
