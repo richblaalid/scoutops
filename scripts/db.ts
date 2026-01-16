@@ -195,16 +195,16 @@ async function seedBase(): Promise<void> {
 
   // 4. Create admin membership
   console.log('Creating admin membership...');
-  const { error: memberError } = await supabase.from('unit_memberships').upsert(
-    {
-      unit_id: UNIT_ID,
-      profile_id: adminId,
-      role: 'admin',
-      status: 'active',
-    },
-    { onConflict: 'unit_id,profile_id' }
-  );
+  // First delete any existing membership for this user
+  await supabase.from('unit_memberships').delete().eq('profile_id', adminId);
+  const { error: memberError } = await supabase.from('unit_memberships').insert({
+    unit_id: UNIT_ID,
+    profile_id: adminId,
+    role: 'admin',
+    status: 'active',
+  });
   if (memberError) console.log(`  Warning: ${memberError.message}`);
+  else console.log(`  Created admin membership`);
 
   console.log('\n✅ Base seed complete!');
   console.log(`\nLogin credentials:`);
@@ -251,15 +251,14 @@ async function seedTestData(): Promise<void> {
 
   for (const [role, id] of Object.entries(userIds)) {
     if (role === 'admin') continue;
-    const { error } = await supabase.from('unit_memberships').upsert(
-      {
-        unit_id: UNIT_ID,
-        profile_id: id,
-        role: roleMapping[role],
-        status: 'active',
-      },
-      { onConflict: 'unit_id,profile_id' }
-    );
+    // First delete any existing membership for this user
+    await supabase.from('unit_memberships').delete().eq('profile_id', id);
+    const { error } = await supabase.from('unit_memberships').insert({
+      unit_id: UNIT_ID,
+      profile_id: id,
+      role: roleMapping[role],
+      status: 'active',
+    });
     if (error) console.log(`  Warning: ${error.message}`);
     else console.log(`  Created membership: ${role}`);
   }
