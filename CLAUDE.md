@@ -18,6 +18,36 @@ npm run test:ui      # Vitest UI
 vitest run tests/unit/utils.test.ts  # Run single test file
 ```
 
+### Database Dev Tools
+
+```bash
+npm run db:reset       # Clear all data from database
+npm run db:seed:base   # Seed unit with admin user ready to login
+npm run db:seed:test   # Add test scouts, parents, and users for each role
+npm run db:seed:all    # Run base + test seeds
+npm run db:fresh       # Reset + seed all (fresh start)
+npm run db:dump        # Export current database to JSON (supabase/seeds/)
+npm run db:dump -- name  # Export with custom name
+npm run db:restore -- supabase/seeds/file.json  # Restore from dump
+npm run db:list        # List available dump files
+```
+
+**Test User Credentials** (password: `testpassword123`):
+| Role | Email |
+|------|-------|
+| admin | richard.blaalid+admin@withcaldera.com |
+| treasurer | richard.blaalid+treasurer@withcaldera.com |
+| leader | richard.blaalid+leader@withcaldera.com |
+| parent | richard.blaalid+parent@withcaldera.com |
+| scout | richard.blaalid+scout@withcaldera.com |
+
+**Workflow example:**
+```bash
+npm run db:dump -- before-testing  # Save current state
+# ... do destructive testing ...
+npm run db:restore -- supabase/seeds/before-testing.json  # Restore
+```
+
 ## Architecture
 
 ### Tech Stack
