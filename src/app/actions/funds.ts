@@ -23,6 +23,17 @@ export async function addFundsToScout(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Get the scout account to find the unit
   const { data: scoutAccount, error: accountError } = await supabase
     .from('scout_accounts')
@@ -47,7 +58,7 @@ export async function addFundsToScout(
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', scoutAccount.unit_id)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -122,6 +133,17 @@ export async function voidPayment(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Get the payment to find the unit
   const { data: payment, error: paymentError } = await supabase
     .from('payments')
@@ -150,7 +172,7 @@ export async function voidPayment(
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', payment.unit_id)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -165,7 +187,7 @@ export async function voidPayment(
   // Call the RPC function
   const { data, error } = await supabase.rpc('void_payment', {
     p_payment_id: paymentId,
-    p_voided_by: user.id,
+    p_voided_by: profile.id,
     p_reason: reason.trim(),
   })
 

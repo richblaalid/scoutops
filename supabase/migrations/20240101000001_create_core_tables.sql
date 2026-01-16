@@ -17,16 +17,32 @@ CREATE TABLE units (
 );
 
 -- ============================================
--- PROFILES (extends Supabase auth.users)
+-- PROFILES (decoupled from auth.users - can exist without user account)
 -- ============================================
 CREATE TABLE profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    email VARCHAR(255) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,  -- nullable: set when they have an account
+    email VARCHAR(255),  -- nullable for imported adults without email
     full_name VARCHAR(255),
+    first_name VARCHAR(100),  -- for imported adults
+    last_name VARCHAR(100),   -- for imported adults
     phone VARCHAR(20),
+    -- BSA/Scoutbook fields (for imported adults)
+    bsa_member_id VARCHAR(20),
+    member_type VARCHAR(20) CHECK (member_type IN ('LEADER', 'P 18+') OR member_type IS NULL),
+    patrol VARCHAR(100),  -- for patrol association
+    renewal_status VARCHAR(50),
+    expiration_date VARCHAR(20),
+    is_active BOOLEAN DEFAULT true,
+    -- Sync tracking
+    sync_session_id UUID,
+    last_synced_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX idx_profiles_user_id ON profiles(user_id);
+CREATE INDEX idx_profiles_bsa_member_id ON profiles(bsa_member_id);
 
 -- ============================================
 -- UNIT MEMBERSHIPS (links users to units with roles)

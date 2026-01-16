@@ -19,6 +19,17 @@ export default async function UnitSettingsPage() {
     redirect('/login')
   }
 
+  // Get user's profile (profile_id is now separate from auth user id)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!profile) {
+    redirect('/login')
+  }
+
   // Get user's membership and unit info
   const { data: membership } = await supabase
     .from('unit_memberships')
@@ -34,7 +45,7 @@ export default async function UnitSettingsPage() {
         logo_url
       )`
     )
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .single()
 

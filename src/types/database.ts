@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       accounts: {
@@ -487,48 +512,6 @@ export type Database = {
           },
         ]
       }
-      group_memberships: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          profile_id: string
-          role: string
-          unit_group_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          profile_id: string
-          role: string
-          unit_group_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          profile_id?: string
-          role?: string
-          unit_group_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_memberships_unit_group_id_fkey"
-            columns: ["unit_group_id"]
-            isOneToOne: false
-            referencedRelation: "unit_groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       inventory_checkouts: {
         Row: {
           checked_out_at: string | null
@@ -971,8 +954,9 @@ export type Database = {
           bsa_member_id: string | null
           created_at: string | null
           date_joined: string | null
-          email: string
+          email: string | null
           email_secondary: string | null
+          expiration_date: string | null
           first_name: string | null
           full_name: string | null
           gender: string | null
@@ -981,155 +965,90 @@ export type Database = {
           id: string
           is_active: boolean | null
           last_name: string | null
+          last_synced_at: string | null
+          member_type: string | null
           middle_name: string | null
+          patrol: string | null
           phone_primary: string | null
           phone_secondary: string | null
-          swim_class_date: string | null
-          swim_classification: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          address_city?: string | null
-          address_state?: string | null
-          address_street?: string | null
-          address_zip?: string | null
-          bsa_member_id?: string | null
-          created_at?: string | null
-          date_joined?: string | null
-          email: string
-          email_secondary?: string | null
-          first_name?: string | null
-          full_name?: string | null
-          gender?: string | null
-          health_form_expires?: string | null
-          health_form_status?: string | null
-          id: string
-          is_active?: boolean | null
-          last_name?: string | null
-          middle_name?: string | null
-          phone_primary?: string | null
-          phone_secondary?: string | null
-          swim_class_date?: string | null
-          swim_classification?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          address_city?: string | null
-          address_state?: string | null
-          address_street?: string | null
-          address_zip?: string | null
-          bsa_member_id?: string | null
-          created_at?: string | null
-          date_joined?: string | null
-          email?: string
-          email_secondary?: string | null
-          first_name?: string | null
-          full_name?: string | null
-          gender?: string | null
-          health_form_expires?: string | null
-          health_form_status?: string | null
-          id?: string
-          is_active?: boolean | null
-          last_name?: string | null
-          middle_name?: string | null
-          phone_primary?: string | null
-          phone_secondary?: string | null
-          swim_class_date?: string | null
-          swim_classification?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      roster_adults: {
-        Row: {
-          age: string | null
-          bsa_member_id: string
-          created_at: string | null
-          expiration_date: string | null
-          first_name: string
-          full_name: string
-          id: string
-          is_active: boolean | null
-          last_name: string
-          last_synced_at: string | null
-          linked_at: string | null
-          member_type: string
-          patrol: string | null
           position: string | null
           position_2: string | null
-          profile_id: string | null
           renewal_status: string | null
+          swim_class_date: string | null
+          swim_classification: string | null
           sync_session_id: string | null
-          unit_id: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          age?: string | null
-          bsa_member_id: string
+          address_city?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          bsa_member_id?: string | null
           created_at?: string | null
+          date_joined?: string | null
+          email?: string | null
+          email_secondary?: string | null
           expiration_date?: string | null
-          first_name: string
-          full_name: string
+          first_name?: string | null
+          full_name?: string | null
+          gender?: string | null
+          health_form_expires?: string | null
+          health_form_status?: string | null
           id?: string
           is_active?: boolean | null
-          last_name: string
+          last_name?: string | null
           last_synced_at?: string | null
-          linked_at?: string | null
-          member_type: string
+          member_type?: string | null
+          middle_name?: string | null
           patrol?: string | null
+          phone_primary?: string | null
+          phone_secondary?: string | null
           position?: string | null
           position_2?: string | null
-          profile_id?: string | null
           renewal_status?: string | null
+          swim_class_date?: string | null
+          swim_classification?: string | null
           sync_session_id?: string | null
-          unit_id: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          age?: string | null
-          bsa_member_id?: string
+          address_city?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          bsa_member_id?: string | null
           created_at?: string | null
+          date_joined?: string | null
+          email?: string | null
+          email_secondary?: string | null
           expiration_date?: string | null
-          first_name?: string
-          full_name?: string
+          first_name?: string | null
+          full_name?: string | null
+          gender?: string | null
+          health_form_expires?: string | null
+          health_form_status?: string | null
           id?: string
           is_active?: boolean | null
-          last_name?: string
+          last_name?: string | null
           last_synced_at?: string | null
-          linked_at?: string | null
-          member_type?: string
+          member_type?: string | null
+          middle_name?: string | null
           patrol?: string | null
+          phone_primary?: string | null
+          phone_secondary?: string | null
           position?: string | null
           position_2?: string | null
-          profile_id?: string | null
           renewal_status?: string | null
+          swim_class_date?: string | null
+          swim_classification?: string | null
           sync_session_id?: string | null
-          unit_id?: string
           updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "roster_adults_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "roster_adults_sync_session_id_fkey"
-            columns: ["sync_session_id"]
-            isOneToOne: false
-            referencedRelation: "sync_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "roster_adults_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       scout_accounts: {
         Row: {
@@ -1754,7 +1673,7 @@ export type Database = {
           change_type: string
           changes: Json | null
           created_at: string | null
-          existing_roster_adult_id: string | null
+          existing_profile_id: string | null
           existing_scout_id: string | null
           expiration_date: string | null
           first_name: string
@@ -1780,7 +1699,7 @@ export type Database = {
           change_type: string
           changes?: Json | null
           created_at?: string | null
-          existing_roster_adult_id?: string | null
+          existing_profile_id?: string | null
           existing_scout_id?: string | null
           expiration_date?: string | null
           first_name: string
@@ -1806,7 +1725,7 @@ export type Database = {
           change_type?: string
           changes?: Json | null
           created_at?: string | null
-          existing_roster_adult_id?: string | null
+          existing_profile_id?: string | null
           existing_scout_id?: string | null
           expiration_date?: string | null
           first_name?: string
@@ -1828,10 +1747,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "sync_staged_members_existing_roster_adult_id_fkey"
-            columns: ["existing_roster_adult_id"]
+            foreignKeyName: "sync_staged_members_existing_profile_id_fkey"
+            columns: ["existing_profile_id"]
             isOneToOne: false
-            referencedRelation: "roster_adults"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1863,39 +1782,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      unit_groups: {
-        Row: {
-          base_unit_number: string | null
-          chartered_org: string | null
-          council: string | null
-          created_at: string | null
-          district: string | null
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          base_unit_number?: string | null
-          chartered_org?: string | null
-          council?: string | null
-          created_at?: string | null
-          district?: string | null
-          id?: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          base_unit_number?: string | null
-          chartered_org?: string | null
-          council?: string | null
-          created_at?: string | null
-          district?: string | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       unit_invites: {
         Row: {
@@ -1965,7 +1851,6 @@ export type Database = {
           linked_scout_id: string | null
           profile_id: string | null
           role: string
-          roster_adult_id: string | null
           scout_ids: string[] | null
           status: string | null
           unit_id: string
@@ -1983,7 +1868,6 @@ export type Database = {
           linked_scout_id?: string | null
           profile_id?: string | null
           role: string
-          roster_adult_id?: string | null
           scout_ids?: string[] | null
           status?: string | null
           unit_id: string
@@ -2001,7 +1885,6 @@ export type Database = {
           linked_scout_id?: string | null
           profile_id?: string | null
           role?: string
-          roster_adult_id?: string | null
           scout_ids?: string[] | null
           status?: string | null
           unit_id?: string
@@ -2026,13 +1909,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unit_memberships_roster_adult_id_fkey"
-            columns: ["roster_adult_id"]
-            isOneToOne: false
-            referencedRelation: "roster_adults"
             referencedColumns: ["id"]
           },
           {
@@ -2112,8 +1988,6 @@ export type Database = {
           pass_fees_to_payer: boolean | null
           processing_fee_fixed: number | null
           processing_fee_percent: number | null
-          unit_gender: string | null
-          unit_group_id: string | null
           unit_number: string
           unit_type: string
           updated_at: string | null
@@ -2129,8 +2003,6 @@ export type Database = {
           pass_fees_to_payer?: boolean | null
           processing_fee_fixed?: number | null
           processing_fee_percent?: number | null
-          unit_gender?: string | null
-          unit_group_id?: string | null
           unit_number: string
           unit_type: string
           updated_at?: string | null
@@ -2146,21 +2018,11 @@ export type Database = {
           pass_fees_to_payer?: boolean | null
           processing_fee_fixed?: number | null
           processing_fee_percent?: number | null
-          unit_gender?: string | null
-          unit_group_id?: string | null
           unit_number?: string
           unit_type?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "units_unit_group_id_fkey"
-            columns: ["unit_group_id"]
-            isOneToOne: false
-            referencedRelation: "unit_groups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       waitlist: {
         Row: {
@@ -2219,10 +2081,6 @@ export type Database = {
         Args: { p_amount: number; p_scout_account_id: string }
         Returns: undefined
       }
-      can_access_journal_line: {
-        Args: { line_journal_entry_id: string; required_roles: string[] }
-        Returns: boolean
-      }
       create_billing_with_journal: {
         Args: {
           p_billing_date: string
@@ -2238,15 +2096,6 @@ export type Database = {
       create_default_accounts: {
         Args: { p_unit_id: string }
         Returns: undefined
-      }
-      create_linked_troop_group: {
-        Args: {
-          p_base_unit_number: string
-          p_group_name: string
-          p_unit_gender: string
-          p_unit_id: string
-        }
-        Returns: string
       }
       create_refund_journal_entry: {
         Args: {
@@ -2269,17 +2118,10 @@ export type Database = {
         Returns: Json
       }
       get_auth_user_email: { Args: never; Returns: string }
-      get_linked_unit_ids: {
-        Args: { target_unit_id: string }
-        Returns: string[]
-      }
+      get_current_profile_id: { Args: never; Returns: string }
       get_user_active_unit_ids: { Args: never; Returns: string[] }
-      get_user_unit_groups: { Args: never; Returns: string[] }
+      get_user_unit_ids_secure: { Args: never; Returns: string[] }
       get_user_units: { Args: never; Returns: string[] }
-      parent_can_access_journal_line: {
-        Args: { line_scout_account_id: string }
-        Returns: boolean
-      }
       process_payment_link_payment: {
         Args: {
           p_base_amount_cents: number
@@ -2460,6 +2302,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

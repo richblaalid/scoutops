@@ -2,27 +2,36 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { MultiSelectDropdown } from '@/components/ui/multi-select-dropdown'
 import { StatusFilterButtons, type StatusFilter } from '@/components/ui/filter-buttons'
 import { SearchInput } from '@/components/ui/search-input'
 import { SortIcon, type SortDirection } from '@/components/ui/sort-icon'
 import { InviteRosterAdultDialog } from './invite-roster-adult-dialog'
+import { AdultForm } from './adult-form'
 
 interface RosterAdult {
   id: string
-  first_name: string
-  last_name: string
-  full_name: string
-  member_type: string
+  first_name: string | null
+  last_name: string | null
+  full_name: string | null
+  email?: string | null
+  email_secondary?: string | null
+  phone_primary?: string | null
+  phone_secondary?: string | null
+  address_street?: string | null
+  address_city?: string | null
+  address_state?: string | null
+  address_zip?: string | null
+  member_type: string | null
   position: string | null
   position_2: string | null
   patrol: string | null
-  bsa_member_id: string
+  bsa_member_id: string | null
   renewal_status: string | null
   expiration_date: string | null
   is_active: boolean | null
-  profile_id: string | null
-  linked_at: string | null
+  user_id: string | null  // indicates if they have an app account
 }
 
 interface AdultsListProps {
@@ -42,6 +51,7 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [invitingAdult, setInvitingAdult] = useState<RosterAdult | null>(null)
+  const [editingAdult, setEditingAdult] = useState<RosterAdult | null>(null)
 
   // Extract unique positions and types
   const positions = useMemo(() => {
@@ -83,13 +93,13 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
     const query = searchQuery.toLowerCase().trim()
     let filtered = query
       ? adults.filter((adult) => {
-          const fullName = `${adult.first_name} ${adult.last_name}`.toLowerCase()
-          const reverseName = `${adult.last_name} ${adult.first_name}`.toLowerCase()
+          const fullName = `${adult.first_name || ''} ${adult.last_name || ''}`.toLowerCase()
+          const reverseName = `${adult.last_name || ''} ${adult.first_name || ''}`.toLowerCase()
           return (
             fullName.includes(query) ||
             reverseName.includes(query) ||
-            adult.first_name.toLowerCase().includes(query) ||
-            adult.last_name.toLowerCase().includes(query) ||
+            (adult.first_name?.toLowerCase().includes(query) ?? false) ||
+            (adult.last_name?.toLowerCase().includes(query) ?? false) ||
             (adult.position?.toLowerCase().includes(query) ?? false)
           )
         })
@@ -103,7 +113,7 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
     }
 
     if (selectedTypes.size > 0) {
-      filtered = filtered.filter((adult) => selectedTypes.has(adult.member_type))
+      filtered = filtered.filter((adult) => adult.member_type && selectedTypes.has(adult.member_type))
     }
 
     if (statusFilter === 'active') {
@@ -123,7 +133,7 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
           comparison = (a.position || '').localeCompare(b.position || '')
           break
         case 'type':
-          comparison = a.member_type.localeCompare(b.member_type)
+          comparison = (a.member_type || '').localeCompare(b.member_type || '')
           break
         case 'status':
           comparison = (a.is_active === b.is_active) ? 0 : a.is_active ? -1 : 1
@@ -184,11 +194,11 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
     )
   }
 
-  const getAppStatusBadge = (profileId: string | null) => {
-    if (profileId) {
+  const getAppStatusBadge = (userId: string | null) => {
+    if (userId) {
       return (
         <span className="inline-flex rounded-full px-2 py-1 text-xs font-medium bg-forest-100 text-forest-700">
-          Linked
+          App User
         </span>
       )
     }
@@ -315,21 +325,31 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
                       </div>
                     ) : '—'}
                   </td>
-                  <td className="hidden py-3 pr-4 text-stone-600 md:table-cell">{formatMemberType(adult.member_type)}</td>
+                  <td className="hidden py-3 pr-4 text-stone-600 md:table-cell">{adult.member_type ? formatMemberType(adult.member_type) : '—'}</td>
                   <td className="hidden py-3 pr-4 lg:table-cell">
                     {getBsaStatusBadge(adult.renewal_status)}
                   </td>
                   <td className="hidden py-3 pr-4 xl:table-cell">
-                    {getAppStatusBadge(adult.profile_id)}
+                    {getAppStatusBadge(adult.user_id)}
                   </td>
                   {canManage && (
                     <td className="py-3 pl-4 sm:pl-6 whitespace-nowrap">
                       <div className="flex gap-2">
-                        {adult.profile_id ? (
-                          <span className="text-sm text-stone-400">Linked</span>
-                        ) : (
+                        <Link
+                          href={`/adults/${adult.id}`}
+                          className="text-sm text-forest-600 hover:text-forest-800"
+                        >
+                          View
+                        </Link>
+                        <button
+                          className="text-sm text-forest-600 hover:text-forest-800"
+                          onClick={() => setEditingAdult(adult)}
+                        >
+                          Edit
+                        </button>
+                        {!adult.user_id && (
                           <button
-                            className="text-sm text-forest-600 hover:text-forest-800"
+                            className="text-sm text-stone-500 hover:text-stone-700"
                             onClick={() => setInvitingAdult(adult)}
                           >
                             Invite
@@ -356,6 +376,36 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
           }}
           onSuccess={() => {
             setInvitingAdult(null)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {/* Edit Dialog */}
+      {editingAdult && (
+        <AdultForm
+          unitId={unitId}
+          adult={{
+            id: editingAdult.id,
+            first_name: editingAdult.first_name,
+            last_name: editingAdult.last_name,
+            email: editingAdult.email || null,
+            email_secondary: editingAdult.email_secondary || null,
+            phone_primary: editingAdult.phone_primary || null,
+            phone_secondary: editingAdult.phone_secondary || null,
+            address_street: editingAdult.address_street || null,
+            address_city: editingAdult.address_city || null,
+            address_state: editingAdult.address_state || null,
+            address_zip: editingAdult.address_zip || null,
+            member_type: editingAdult.member_type,
+            position: editingAdult.position,
+            position_2: editingAdult.position_2,
+            bsa_member_id: editingAdult.bsa_member_id,
+            is_active: editingAdult.is_active,
+          }}
+          onClose={() => setEditingAdult(null)}
+          onSuccess={() => {
+            setEditingAdult(null)
             router.refresh()
           }}
         />

@@ -105,7 +105,6 @@ async function resetDatabase(): Promise<void> {
     // Sync/staging tables
     'sync_staged_members',
     'scoutbook_sync_sessions',
-    'roster_adults',
     // Square/payment tables (must come before payments and billing)
     'square_transactions',
     'payment_links',
@@ -166,19 +165,50 @@ async function seedBase(): Promise<void> {
 
   // 1. Create admin user
   console.log('Creating admin user...');
-  const adminId = await createOrGetUser(TEST_USERS.admin, 'Admin User');
+  const adminUserId = await createOrGetUser(TEST_USERS.admin, 'Admin User');
 
-  // 2. Create profile for admin
+  // 2. Create/update profile for admin (user_id links to auth, id is auto-generated)
+  // Note: The handle_new_user trigger may have already created a profile
   console.log('Creating admin profile...');
-  const { error: profileError } = await supabase.from('profiles').upsert({
-    id: adminId,
-    email: TEST_USERS.admin,
-    full_name: 'Admin User',
-    first_name: 'Admin',
-    last_name: 'User',
-    phone_primary: '555-123-0001',
-  });
-  if (profileError) console.log(`  Warning: ${profileError.message}`);
+
+  // First check if profile already exists (created by trigger)
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', adminUserId)
+    .single();
+
+  let adminProfileId: string;
+
+  if (existingProfile) {
+    // Update existing profile
+    adminProfileId = existingProfile.id;
+    const { error: updateError } = await supabase.from('profiles').update({
+      email: TEST_USERS.admin,
+      full_name: 'Admin User',
+      first_name: 'Admin',
+      last_name: 'User',
+      phone_primary: '555-123-0001',
+    }).eq('id', adminProfileId);
+    if (updateError) console.log(`  Warning: ${updateError.message}`);
+    console.log(`  Updated existing profile: ${adminProfileId}`);
+  } else {
+    // Create new profile
+    const { data: newProfile, error: insertError } = await supabase.from('profiles').insert({
+      user_id: adminUserId,
+      email: TEST_USERS.admin,
+      full_name: 'Admin User',
+      first_name: 'Admin',
+      last_name: 'User',
+      phone_primary: '555-123-0001',
+    }).select('id').single();
+    if (insertError) {
+      console.error(`  Failed to create profile: ${insertError.message}`);
+      return;
+    }
+    adminProfileId = newProfile.id;
+    console.log(`  Created new profile: ${adminProfileId}`);
+  }
 
   // 3. Create unit
   console.log('Creating unit...');
@@ -193,13 +223,13 @@ async function seedBase(): Promise<void> {
   });
   if (unitError) console.log(`  Warning: ${unitError.message}`);
 
-  // 4. Create admin membership
+  // 4. Create admin membership (use profile_id, not user_id)
   console.log('Creating admin membership...');
-  // First delete any existing membership for this user
-  await supabase.from('unit_memberships').delete().eq('profile_id', adminId);
+  // First delete any existing membership for this profile
+  await supabase.from('unit_memberships').delete().eq('profile_id', adminProfileId);
   const { error: memberError } = await supabase.from('unit_memberships').insert({
     unit_id: UNIT_ID,
-    profile_id: adminId,
+    profile_id: adminProfileId,
     role: 'admin',
     status: 'active',
   });
@@ -218,6 +248,7 @@ async function seedTestData(): Promise<void> {
   // 1. Create test users for each role
   console.log('\nCreating test users for each role...');
   const userIds: Record<string, string> = {};
+  const profileIds: Record<string, string> = {};
 
   for (const [role, email] of Object.entries(TEST_USERS)) {
     if (role === 'admin') continue; // Already created in base seed
@@ -225,22 +256,48 @@ async function seedTestData(): Promise<void> {
     userIds[role] = await createOrGetUser(email, name);
   }
 
-  // 2. Create profiles for test users
+  // 2. Create/update profiles for test users (user_id links to auth, id is auto-generated)
+  // Note: The handle_new_user trigger may have already created profiles
   console.log('\nCreating profiles...');
-  for (const [role, id] of Object.entries(userIds)) {
-    const { error } = await supabase.from('profiles').upsert({
-      id,
-      email: TEST_USERS[role as keyof typeof TEST_USERS],
-      full_name: `${role.charAt(0).toUpperCase() + role.slice(1)} User`,
-      first_name: role.charAt(0).toUpperCase() + role.slice(1),
-      last_name: 'User',
-      phone_primary: `555-123-${String(Object.keys(userIds).indexOf(role) + 2).padStart(4, '0')}`,
-    });
-    if (error) console.log(`  Warning: ${error.message}`);
-    else console.log(`  Created profile: ${role}`);
+  for (const [role, userId] of Object.entries(userIds)) {
+    // First check if profile already exists (created by trigger)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (existingProfile) {
+      // Update existing profile
+      profileIds[role] = existingProfile.id;
+      const { error: updateError } = await supabase.from('profiles').update({
+        email: TEST_USERS[role as keyof typeof TEST_USERS],
+        full_name: `${role.charAt(0).toUpperCase() + role.slice(1)} User`,
+        first_name: role.charAt(0).toUpperCase() + role.slice(1),
+        last_name: 'User',
+        phone_primary: `555-123-${String(Object.keys(userIds).indexOf(role) + 2).padStart(4, '0')}`,
+      }).eq('id', existingProfile.id);
+      if (updateError) console.log(`  Warning: ${updateError.message}`);
+      else console.log(`  Updated profile: ${role}`);
+    } else {
+      // Create new profile
+      const { data: newProfile, error: insertError } = await supabase.from('profiles').insert({
+        user_id: userId,
+        email: TEST_USERS[role as keyof typeof TEST_USERS],
+        full_name: `${role.charAt(0).toUpperCase() + role.slice(1)} User`,
+        first_name: role.charAt(0).toUpperCase() + role.slice(1),
+        last_name: 'User',
+        phone_primary: `555-123-${String(Object.keys(userIds).indexOf(role) + 2).padStart(4, '0')}`,
+      }).select('id').single();
+      if (insertError) console.log(`  Warning: ${insertError.message}`);
+      else {
+        profileIds[role] = newProfile.id;
+        console.log(`  Created profile: ${role}`);
+      }
+    }
   }
 
-  // 3. Create memberships for test users
+  // 3. Create memberships for test users (use profile_id, not user_id)
   console.log('\nCreating memberships...');
   const roleMapping: Record<string, string> = {
     treasurer: 'treasurer',
@@ -249,13 +306,13 @@ async function seedTestData(): Promise<void> {
     scout: 'scout',
   };
 
-  for (const [role, id] of Object.entries(userIds)) {
-    if (role === 'admin') continue;
-    // First delete any existing membership for this user
-    await supabase.from('unit_memberships').delete().eq('profile_id', id);
+  for (const [role, profileId] of Object.entries(profileIds)) {
+    if (role === 'admin' || !profileId) continue;
+    // First delete any existing membership for this profile
+    await supabase.from('unit_memberships').delete().eq('profile_id', profileId);
     const { error } = await supabase.from('unit_memberships').insert({
       unit_id: UNIT_ID,
-      profile_id: id,
+      profile_id: profileId,
       role: roleMapping[role],
       status: 'active',
     });
@@ -302,16 +359,16 @@ async function seedTestData(): Promise<void> {
     else console.log(`  Created scout: ${scout.first_name} ${scout.last_name}`);
   }
 
-  // 6. Link parent user to scouts as guardian
+  // 6. Link parent user to scouts as guardian (use profile_id, not user_id)
   console.log('\nLinking parent to scouts...');
-  const parentId = userIds['parent'];
-  if (parentId) {
+  const parentProfileId = profileIds['parent'];
+  if (parentProfileId) {
     // Link to first two scouts
     for (const scoutId of [scouts[0].id, scouts[1].id]) {
       const { error } = await supabase.from('scout_guardians').upsert(
         {
           scout_id: scoutId,
-          profile_id: parentId,
+          profile_id: parentProfileId,
           relationship: 'parent',
           is_primary: true,
         },
@@ -322,13 +379,13 @@ async function seedTestData(): Promise<void> {
     }
   }
 
-  // 7. Link scout user to a scout profile
+  // 7. Link scout user to a scout profile (use profile_id, not user_id)
   console.log('\nLinking scout user to scout profile...');
-  const scoutUserId = userIds['scout'];
-  if (scoutUserId) {
+  const scoutProfileId = profileIds['scout'];
+  if (scoutProfileId) {
     const { error } = await supabase
       .from('scouts')
-      .update({ profile_id: scoutUserId })
+      .update({ profile_id: scoutProfileId })
       .eq('id', scouts[2].id); // Charlie Chen
     if (error) console.log(`  Warning: ${error.message}`);
     else console.log(`  Linked scout user to: Charlie Chen`);
@@ -363,7 +420,6 @@ const DUMP_TABLES = [
   'payments',
   'payment_links',
   'square_transactions',
-  'roster_adults',
   'scoutbook_sync_sessions',
   'sync_staged_members',
 ];
@@ -488,14 +544,27 @@ async function restoreDatabase(filepath: string): Promise<void> {
   }
 
   // Helper to remap user IDs in data
-  const remapUserIds = (data: Record<string, unknown>): Record<string, unknown> => {
+  // Note: profiles.user_id links to auth.users, but profiles.id is independent
+  // Other tables use profile_id which references profiles.id (not auth.users.id)
+  const remapUserIds = (data: Record<string, unknown>, table: string): Record<string, unknown> => {
     const remapped = { ...data };
-    const userIdFields = ['id', 'profile_id', 'created_by', 'updated_by'];
-    for (const field of userIdFields) {
+
+    // For profiles table, only remap user_id (which links to auth.users)
+    if (table === 'profiles') {
+      if (remapped['user_id'] && typeof remapped['user_id'] === 'string' && userIdMap.has(remapped['user_id'] as string)) {
+        remapped['user_id'] = userIdMap.get(remapped['user_id'] as string);
+      }
+      return remapped;
+    }
+
+    // For other tables, remap created_by/updated_by if they reference auth users
+    const authUserFields = ['created_by', 'updated_by'];
+    for (const field of authUserFields) {
       if (remapped[field] && typeof remapped[field] === 'string' && userIdMap.has(remapped[field] as string)) {
         remapped[field] = userIdMap.get(remapped[field] as string);
       }
     }
+    // Note: profile_id references profiles.id which is preserved as-is
     return remapped;
   };
 
@@ -506,8 +575,8 @@ async function restoreDatabase(filepath: string): Promise<void> {
     if (!rows || rows.length === 0) continue;
 
     try {
-      // Remap user IDs if this table has profile references
-      const remappedRows = rows.map((row) => remapUserIds(row as Record<string, unknown>));
+      // Remap user IDs if this table has auth user references
+      const remappedRows = rows.map((row) => remapUserIds(row as Record<string, unknown>, table));
 
       const { error } = await supabase.from(table).upsert(remappedRows);
       if (error) {

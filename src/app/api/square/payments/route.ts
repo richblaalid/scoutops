@@ -69,11 +69,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get user's profile (profile_id is separate from auth user id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 403 })
+    }
+
     // Get user's active membership
     const { data: membership } = await supabase
       .from('unit_memberships')
       .select('unit_id, role')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
       .eq('status', 'active')
       .single()
 
@@ -81,12 +92,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No active membership found' }, { status: 403 })
     }
 
-    // Get user profile for email to pass to Square
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('email, full_name')
-      .eq('id', user.id)
-      .single()
+    // Use profile for email to pass to Square
+    const userProfile = profile
 
     // Parse and validate request body
     const rawBody = await request.json()

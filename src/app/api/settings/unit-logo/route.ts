@@ -23,11 +23,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing file or unit ID' }, { status: 400 })
     }
 
+    // Get user's profile (profile_id is separate from auth user id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 403 })
+    }
+
     // Verify user is admin of this unit
     const { data: membership } = await supabase
       .from('unit_memberships')
       .select('role')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
       .eq('unit_id', unitId)
       .eq('status', 'active')
       .single()
@@ -108,11 +119,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Missing unit ID' }, { status: 400 })
     }
 
+    // Get user's profile (profile_id is separate from auth user id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 403 })
+    }
+
     // Verify user is admin of this unit
     const { data: membership } = await supabase
       .from('unit_memberships')
       .select('role')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
       .eq('unit_id', unitId)
       .eq('status', 'active')
       .single()

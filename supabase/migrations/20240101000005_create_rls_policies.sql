@@ -23,6 +23,16 @@ ALTER TABLE inventory_checkouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
+-- HELPER FUNCTION: Get current user's profile_id
+-- ============================================
+CREATE OR REPLACE FUNCTION get_current_profile_id()
+RETURNS UUID AS $$
+BEGIN
+    RETURN (SELECT id FROM profiles WHERE user_id = auth.uid() LIMIT 1);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================
 -- HELPER FUNCTION: Get user's units
 -- ============================================
 CREATE OR REPLACE FUNCTION get_user_units()
@@ -30,7 +40,7 @@ RETURNS SETOF UUID AS $$
 BEGIN
     RETURN QUERY
     SELECT unit_id FROM unit_memberships
-    WHERE profile_id = auth.uid() AND is_active = true;
+    WHERE profile_id = get_current_profile_id() AND is_active = true;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -43,7 +53,7 @@ BEGIN
     RETURN EXISTS (
         SELECT 1 FROM unit_memberships
         WHERE unit_id = unit
-        AND profile_id = auth.uid()
+        AND profile_id = get_current_profile_id()
         AND is_active = true
         AND role = ANY(required_roles)
     );
@@ -55,11 +65,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================
 CREATE POLICY "Users can view own profile"
     ON profiles FOR SELECT
-    USING (id = auth.uid());
+    USING (user_id = auth.uid());
 
 CREATE POLICY "Users can update own profile"
     ON profiles FOR UPDATE
-    USING (id = auth.uid());
+    USING (user_id = auth.uid());
 
 CREATE POLICY "Users can view profiles in their units"
     ON profiles FOR SELECT
@@ -67,6 +77,19 @@ CREATE POLICY "Users can view profiles in their units"
         id IN (
             SELECT profile_id FROM unit_memberships
             WHERE unit_id IN (SELECT get_user_units())
+        )
+    );
+
+-- Allow viewing non-user profiles (imported adults without accounts)
+CREATE POLICY "Users can view non-user profiles linked as guardians"
+    ON profiles FOR SELECT
+    USING (
+        user_id IS NULL AND
+        id IN (
+            SELECT profile_id FROM scout_guardians
+            WHERE scout_id IN (
+                SELECT id FROM scouts WHERE unit_id IN (SELECT get_user_units())
+            )
         )
     );
 
@@ -147,7 +170,7 @@ CREATE POLICY "Parents can view own scouts accounts"
     ON scout_accounts FOR SELECT
     USING (
         scout_id IN (
-            SELECT scout_id FROM scout_guardians WHERE profile_id = auth.uid()
+            SELECT scout_id FROM scout_guardians WHERE profile_id = get_current_profile_id()
         )
     );
 
@@ -211,13 +234,13 @@ CREATE POLICY "Users can view RSVPs in their units"
 
 CREATE POLICY "Users can manage own RSVPs"
     ON event_rsvps FOR ALL
-    USING (profile_id = auth.uid());
+    USING (profile_id = get_current_profile_id());
 
 CREATE POLICY "Parents can manage their scouts RSVPs"
     ON event_rsvps FOR ALL
     USING (
         scout_id IN (
-            SELECT scout_id FROM scout_guardians WHERE profile_id = auth.uid()
+            SELECT scout_id FROM scout_guardians WHERE profile_id = get_current_profile_id()
         )
     );
 
@@ -250,7 +273,7 @@ CREATE POLICY "Parents can view own scouts billing charges"
         scout_account_id IN (
             SELECT sa.id FROM scout_accounts sa
             JOIN scout_guardians sg ON sg.scout_id = sa.scout_id
-            WHERE sg.profile_id = auth.uid()
+            WHERE sg.profile_id = get_current_profile_id()
         )
     );
 
@@ -276,7 +299,7 @@ CREATE POLICY "Parents can view own scouts payments"
         scout_account_id IN (
             SELECT sa.id FROM scout_accounts sa
             JOIN scout_guardians sg ON sg.scout_id = sa.scout_id
-            WHERE sg.profile_id = auth.uid()
+            WHERE sg.profile_id = get_current_profile_id()
         )
     );
 

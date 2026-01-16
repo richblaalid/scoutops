@@ -24,8 +24,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Get user's profile to check if active and get their name
   const { data: profile } = await supabase
     .from('profiles')
-    .select('first_name, last_name, full_name, is_active, email')
-    .eq('id', user.id)
+    .select('id, first_name, last_name, full_name, is_active, email')
+    .eq('user_id', user.id)
     .single()
 
   // Check if user is inactive (soft deleted)
@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     await supabase
       .from('profiles')
       .update({ email: user.email, updated_at: new Date().toISOString() })
-      .eq('id', user.id)
+      .eq('user_id', user.id)
   }
 
   // Get display name (prefer first + last, fall back to full_name)
@@ -48,12 +48,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? `${profile.first_name} ${profile.last_name}`
     : profile?.full_name || null
 
-  // Get all user's unit memberships
-  const { data: membershipsData } = await supabase
+  // Get all user's unit memberships (use profile.id, not user.id)
+  const { data: membershipsData } = profile ? await supabase
     .from('unit_memberships')
     .select('role, unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type, logo_url)')
-    .eq('profile_id', user.id)
-    .eq('status', 'active')
+    .eq('profile_id', profile.id)
+    .eq('status', 'active') : { data: null }
 
   const memberships: UnitMembership[] = (membershipsData || []).map(m => ({
     role: m.role,
@@ -61,29 +61,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     units: m.units as UnitMembership['units']
   }))
 
-  // Get group memberships (for linked troop committee access)
-  const { data: groupMembershipsData } = await supabase
-    .from('group_memberships')
-    .select(`
-      role,
-      unit_groups(
-        id,
-        name,
-        base_unit_number,
-        units(id, name, unit_number, unit_type, logo_url)
-      )
-    `)
-    .eq('profile_id', user.id)
-    .eq('is_active', true)
+  // Group memberships feature not yet implemented
+  const groupMemberships: { role: string; unit_groups: UnitGroup | null }[] = []
 
-  const groupMemberships = (groupMembershipsData || []).map(gm => ({
-    role: gm.role,
-    unit_groups: gm.unit_groups as UnitGroup | null
-  }))
-
-  // Determine primary unit for PostHog (first direct membership or first from group)
+  // Determine primary unit for PostHog
   const primaryMembership = memberships[0]
-  const primaryUnit = primaryMembership?.units || groupMemberships[0]?.unit_groups?.units?.[0]
+  const primaryUnit = primaryMembership?.units
 
   return (
     <div className="min-h-screen">

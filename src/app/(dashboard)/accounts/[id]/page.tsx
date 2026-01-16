@@ -38,11 +38,20 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
 
   if (!user) return null
 
+  // Get user's profile (profile_id is now separate from auth user id)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!profile) return null
+
   // Get user's membership role and unit info
   const { data: membership } = await supabase
     .from('unit_memberships')
     .select('role, unit_id')
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .single()
 
@@ -54,7 +63,7 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
   const { data: guardianCheck } = await supabase
     .from('scout_guardians')
     .select('id')
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .limit(1)
 
   const isParent = (guardianCheck?.length ?? 0) > 0 && !canRecordPayment

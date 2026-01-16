@@ -43,13 +43,22 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     notFound()
   }
 
-  // Get user's unit membership to check role
-  const { data: membershipData } = await supabase
-    .from('unit_memberships')
-    .select('unit_id, role')
-    .eq('profile_id', user.id)
-    .eq('status', 'active')
+  // Get user's profile
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
     .single()
+
+  // Get user's unit membership to check role
+  const { data: membershipData } = profileData
+    ? await supabase
+        .from('unit_memberships')
+        .select('unit_id, role')
+        .eq('profile_id', profileData.id)
+        .eq('status', 'active')
+        .single()
+    : { data: null }
 
   const membership = membershipData as { unit_id: string; role: string } | null
   const canEditScout = membership && ['admin', 'treasurer', 'leader'].includes(membership.role)
@@ -128,12 +137,16 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
       id,
       relationship,
       is_primary,
+      profile_id,
       profiles (
         id,
         first_name,
         last_name,
+        full_name,
         email,
-        phone_primary
+        member_type,
+        position,
+        user_id
       )
     `)
     .eq('scout_id', id)
@@ -143,20 +156,26 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     id: string
     relationship: string | null
     is_primary: boolean | null
+    profile_id: string
     profiles: {
       id: string
       first_name: string | null
       last_name: string | null
-      email: string
-      phone_primary: string | null
+      full_name: string | null
+      email: string | null
+      member_type: string | null
+      position: string | null
+      user_id: string | null
     }
   }
 
-  const guardians = (guardiansData as Guardian[]) || []
+  const guardians = ((guardiansData || []) as Guardian[]).filter(g => g.profiles !== null)
 
-  // Get available members (profiles with active unit memberships) for adding guardians
-  let availableMembers: { id: string; first_name: string | null; last_name: string | null; email: string }[] = []
+  // Get available profiles (adults in this unit) for adding guardians
+  let availableProfiles: { id: string; first_name: string | null; last_name: string | null; full_name: string | null; email: string | null; member_type: string | null; user_id: string | null }[] = []
+
   if (canEditGuardians && membership) {
+    // Get profile IDs from unit memberships
     const { data: membersData } = await supabase
       .from('unit_memberships')
       .select('profile_id')
@@ -170,10 +189,10 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     if (profileIds.length > 0) {
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email')
+        .select('id, first_name, last_name, full_name, email, member_type, user_id')
         .in('id', profileIds)
 
-      availableMembers = (profilesData || []) as { id: string; first_name: string | null; last_name: string | null; email: string }[]
+      availableProfiles = (profilesData || []) as typeof availableProfiles
     }
   }
 
@@ -212,8 +231,23 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
                 bsa_member_id: scout.bsa_member_id,
                 is_active: scout.is_active,
               }}
-              guardians={canEditGuardians ? guardians : []}
-              availableMembers={canEditGuardians ? availableMembers : []}
+              guardians={canEditGuardians ? guardians.map(g => ({
+                id: g.id,
+                relationship: g.relationship,
+                is_primary: g.is_primary,
+                profiles: {
+                  id: g.profiles.id,
+                  first_name: g.profiles.first_name,
+                  last_name: g.profiles.last_name,
+                  email: g.profiles.email || '',
+                }
+              })) : []}
+              availableMembers={canEditGuardians ? availableProfiles.map(p => ({
+                id: p.id,
+                first_name: p.first_name,
+                last_name: p.last_name,
+                email: p.email || '',
+              })) : []}
             />
           )}
           <span
@@ -322,7 +356,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         scoutId={scout.id}
         scoutName={`${scout.first_name} ${scout.last_name}`}
         guardians={guardians}
-        availableMembers={availableMembers}
+        availableProfiles={availableProfiles}
         canEdit={canEditGuardians || false}
       />
 

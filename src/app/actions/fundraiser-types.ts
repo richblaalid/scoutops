@@ -39,11 +39,22 @@ export async function createFundraiserType(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   const { data: membership, error: membershipError } = await supabase
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', unitId)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -91,6 +102,17 @@ export async function updateFundraiserType(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Get the fundraiser type to check unit
   const { data: fundraiserType, error: fetchError } = await supabase
     .from('fundraiser_types')
@@ -110,7 +132,7 @@ export async function updateFundraiserType(
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', fundraiserType.unit_id)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -155,6 +177,17 @@ export async function deleteFundraiserType(id: string): Promise<ActionResult> {
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Get the fundraiser type to check unit
   const { data: fundraiserType, error: fetchError } = await supabase
     .from('fundraiser_types')
@@ -174,7 +207,7 @@ export async function deleteFundraiserType(id: string): Promise<ActionResult> {
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', fundraiserType.unit_id)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 

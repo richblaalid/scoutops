@@ -12,18 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { inviteRosterAdult } from '@/app/actions/roster-adults'
+import { inviteProfileToApp } from '@/app/actions/members'
 
 type MemberRole = 'admin' | 'treasurer' | 'leader' | 'parent'
 
 interface RosterAdult {
   id: string
-  first_name: string
-  last_name: string
-  full_name: string
-  member_type: string
+  first_name: string | null
+  last_name: string | null
+  full_name: string | null
+  member_type: string | null
   position: string | null
-  bsa_member_id: string
+  bsa_member_id: string | null
+  user_id: string | null
 }
 
 interface InviteRosterAdultDialogProps {
@@ -56,15 +57,17 @@ export function InviteRosterAdultDialog({
     adult.member_type === 'LEADER' ? 'leader' : 'parent'
   )
 
+  const displayName = adult.full_name || `${adult.first_name || ''} ${adult.last_name || ''}`.trim() || 'Unknown'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
     setWarning(null)
 
-    const result = await inviteRosterAdult({
+    const result = await inviteProfileToApp({
       unitId,
-      rosterAdultId: adult.id,
+      profileId: adult.id,
       email: email.trim(),
       role,
     })
@@ -104,7 +107,7 @@ export function InviteRosterAdultDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invite {adult.full_name}</DialogTitle>
+          <DialogTitle>Invite {displayName}</DialogTitle>
           <DialogDescription>
             Send an invitation to join your unit. They&apos;ll receive an email with a link to sign up.
           </DialogDescription>
@@ -116,18 +119,22 @@ export function InviteRosterAdultDialog({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <span className="text-stone-500">Name:</span>
-                <span className="ml-2 font-medium">{adult.full_name}</span>
+                <span className="ml-2 font-medium">{displayName}</span>
               </div>
-              <div>
-                <span className="text-stone-500">BSA#:</span>
-                <span className="ml-2 font-medium">{adult.bsa_member_id}</span>
-              </div>
-              <div>
-                <span className="text-stone-500">Type:</span>
-                <span className="ml-2 font-medium">
-                  {adult.member_type === 'LEADER' ? 'Leader' : 'Parent'}
-                </span>
-              </div>
+              {adult.bsa_member_id && (
+                <div>
+                  <span className="text-stone-500">BSA#:</span>
+                  <span className="ml-2 font-medium">{adult.bsa_member_id}</span>
+                </div>
+              )}
+              {adult.member_type && (
+                <div>
+                  <span className="text-stone-500">Type:</span>
+                  <span className="ml-2 font-medium">
+                    {adult.member_type === 'LEADER' ? 'Leader' : 'Parent'}
+                  </span>
+                </div>
+              )}
               {adult.position && (
                 <div>
                   <span className="text-stone-500">Position:</span>

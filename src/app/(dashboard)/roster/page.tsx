@@ -14,13 +14,22 @@ export default async function RosterPage() {
 
   if (!user) return null
 
-  // Get user's unit membership
-  const { data: membershipData } = await supabase
-    .from('unit_memberships')
-    .select('unit_id, role')
-    .eq('profile_id', user.id)
-    .eq('status', 'active')
+  // Get user's profile
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
     .single()
+
+  // Get user's unit membership
+  const { data: membershipData } = profileData
+    ? await supabase
+        .from('unit_memberships')
+        .select('unit_id, role')
+        .eq('profile_id', profileData.id)
+        .eq('status', 'active')
+        .single()
+    : { data: null }
 
   const membership = membershipData as { unit_id: string; role: string } | null
 
@@ -57,19 +66,26 @@ export default async function RosterPage() {
 
   interface RosterAdult {
     id: string
-    first_name: string
-    last_name: string
-    full_name: string
-    member_type: string
+    first_name: string | null
+    last_name: string | null
+    full_name: string | null
+    email: string | null
+    email_secondary: string | null
+    phone_primary: string | null
+    phone_secondary: string | null
+    address_street: string | null
+    address_city: string | null
+    address_state: string | null
+    address_zip: string | null
+    member_type: string | null
     position: string | null
     position_2: string | null
     patrol: string | null
-    bsa_member_id: string
+    bsa_member_id: string | null
     renewal_status: string | null
     expiration_date: string | null
     is_active: boolean | null
-    profile_id: string | null
-    linked_at: string | null
+    user_id: string | null  // indicates if they have an app account
   }
 
   const canManageScouts = canPerformAction(membership.role, 'manage_scouts')
@@ -79,12 +95,12 @@ export default async function RosterPage() {
   let scouts: ScoutWithAccount[] = []
   let adults: RosterAdult[] = []
 
-  if (isParent) {
+  if (isParent && profileData) {
     // Parents only see scouts they are guardians of
     const { data: guardianData } = await supabase
       .from('scout_guardians')
       .select('scout_id')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profileData.id)
 
     const scoutIds = (guardianData || []).map(g => g.scout_id)
 
@@ -141,29 +157,50 @@ export default async function RosterPage() {
 
     scouts = (scoutsData as ScoutWithAccount[]) || []
 
-    // Fetch roster adults (only for non-parent users)
-    const { data: adultsData } = await supabase
-      .from('roster_adults')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        full_name,
-        member_type,
-        position,
-        position_2,
-        patrol,
-        bsa_member_id,
-        renewal_status,
-        expiration_date,
-        is_active,
-        profile_id,
-        linked_at
-      `)
+    // Fetch adult profiles (those with member_type set - from roster import)
+    // Get profile IDs from unit memberships
+    const { data: memberProfileData } = await supabase
+      .from('unit_memberships')
+      .select('profile_id')
       .eq('unit_id', membership.unit_id)
-      .order('last_name', { ascending: true })
+      .eq('status', 'active')
 
-    adults = (adultsData as RosterAdult[]) || []
+    const memberProfileIds = (memberProfileData || [])
+      .map(m => m.profile_id)
+      .filter((id): id is string => id !== null)
+
+    if (memberProfileIds.length > 0) {
+      const { data: adultsData } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          full_name,
+          email,
+          email_secondary,
+          phone_primary,
+          phone_secondary,
+          address_street,
+          address_city,
+          address_state,
+          address_zip,
+          member_type,
+          position,
+          position_2,
+          patrol,
+          bsa_member_id,
+          renewal_status,
+          expiration_date,
+          is_active,
+          user_id
+        `)
+        .in('id', memberProfileIds)
+        .not('member_type', 'is', null)  // Only adults with member_type (from roster)
+        .order('last_name', { ascending: true })
+
+      adults = (adultsData as RosterAdult[]) || []
+    }
   }
 
   const totalMembers = scouts.length + adults.length

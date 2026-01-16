@@ -4,26 +4,33 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
-import { Mail, Phone, Star } from 'lucide-react'
+import { Mail, Star, UserCircle } from 'lucide-react'
 
 interface LinkedGuardian {
   id: string  // guardianship id
   relationship: string | null
   is_primary: boolean | null
+  profile_id: string
   profiles: {
     id: string
     first_name: string | null
     last_name: string | null
-    email: string
-    phone_primary: string | null
+    full_name: string | null
+    email: string | null
+    member_type: string | null
+    position: string | null
+    user_id: string | null
   }
 }
 
-interface AvailableMember {
+interface AvailableProfile {
   id: string
   first_name: string | null
   last_name: string | null
-  email: string
+  full_name: string | null
+  email: string | null
+  member_type: string | null
+  user_id: string | null
 }
 
 interface ScoutGuardianAssociationsProps {
@@ -31,7 +38,7 @@ interface ScoutGuardianAssociationsProps {
   scoutId: string
   scoutName: string
   guardians: LinkedGuardian[]
-  availableMembers: AvailableMember[]
+  availableProfiles: AvailableProfile[]
   canEdit: boolean
 }
 
@@ -40,7 +47,7 @@ export function ScoutGuardianAssociations({
   scoutId,
   scoutName,
   guardians,
-  availableMembers,
+  availableProfiles,
   canEdit,
 }: ScoutGuardianAssociationsProps) {
   const [isAdding, setIsAdding] = useState(false)
@@ -50,9 +57,11 @@ export function ScoutGuardianAssociations({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  // Filter out already-linked guardians from available members
-  const linkedProfileIds = new Set(guardians.map(g => g.profiles.id))
-  const filteredAvailableMembers = availableMembers.filter(m => !linkedProfileIds.has(m.id))
+  // Filter out already-linked guardians from available profiles
+  const linkedProfileIds = new Set(guardians.map(g => g.profile_id))
+  const filteredAvailableProfiles = availableProfiles.filter(p => !linkedProfileIds.has(p.id))
+
+  const hasAvailableOptions = filteredAvailableProfiles.length > 0
 
   const handleAddGuardian = async () => {
     if (!selectedProfileId) return
@@ -94,12 +103,29 @@ export function ScoutGuardianAssociations({
     setLoadingId(null)
   }
 
-  const getGuardianName = (guardian: LinkedGuardian) => {
-    const { first_name, last_name, email } = guardian.profiles
+  const getGuardianName = (guardian: LinkedGuardian): string => {
+    const { first_name, last_name, full_name, email } = guardian.profiles
+    if (full_name) {
+      return full_name
+    }
     if (first_name || last_name) {
       return `${first_name || ''} ${last_name || ''}`.trim()
     }
-    return email
+    return email || 'Unknown'
+  }
+
+  const getProfileDisplayName = (profile: AvailableProfile): string => {
+    if (profile.full_name) {
+      return profile.full_name
+    }
+    if (profile.first_name || profile.last_name) {
+      return `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+    }
+    return profile.email || 'Unknown'
+  }
+
+  const isAppUser = (profile: { user_id: string | null }): boolean => {
+    return !!profile.user_id
   }
 
   return (
@@ -112,7 +138,7 @@ export function ScoutGuardianAssociations({
               Parents and guardians linked to this scout
             </CardDescription>
           </div>
-          {canEdit && filteredAvailableMembers.length > 0 && !isAdding && (
+          {canEdit && hasAvailableOptions && !isAdding && (
             <Button variant="outline" size="sm" onClick={() => setIsAdding(true)}>
               Add Guardian
             </Button>
@@ -136,18 +162,19 @@ export function ScoutGuardianAssociations({
         {isAdding && canEdit && (
           <div className="mb-4 rounded-lg border border-dashed border-stone-300 p-4">
             <h4 className="mb-3 text-sm font-medium text-stone-700">Add Guardian</h4>
+
             <div className="flex flex-wrap gap-3">
               <select
                 value={selectedProfileId}
                 onChange={(e) => setSelectedProfileId(e.target.value)}
                 className="rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
               >
-                <option value="">Select a member...</option>
-                {filteredAvailableMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.first_name || member.last_name
-                      ? `${member.first_name || ''} ${member.last_name || ''}`.trim()
-                      : member.email}
+                <option value="">Select an adult...</option>
+                {filteredAvailableProfiles.map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {getProfileDisplayName(profile)}
+                    {profile.member_type ? ` (${profile.member_type})` : ''}
+                    {!profile.user_id && ' - Not yet invited'}
                   </option>
                 ))}
               </select>
@@ -187,6 +214,9 @@ export function ScoutGuardianAssociations({
           <div className="space-y-2">
             {guardians.map((guardian) => {
               const guardianName = getGuardianName(guardian)
+              const guardianEmail = guardian.profiles.email
+              const hasAccount = isAppUser(guardian.profiles)
+
               return (
                 <div
                   key={guardian.id}
@@ -203,21 +233,29 @@ export function ScoutGuardianAssociations({
                           Primary
                         </span>
                       )}
+                      {hasAccount && (
+                        <span className="inline-flex items-center gap-1 rounded bg-forest-100 px-1.5 py-0.5 text-xs font-medium text-forest-700">
+                          <UserCircle className="h-3 w-3" />
+                          App User
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-stone-500 capitalize">
                       {guardian.relationship || 'Guardian'}
+                      {guardian.profiles.position && (
+                        <span className="text-stone-400"> · {guardian.profiles.position}</span>
+                      )}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-stone-500">
-                      {guardian.profiles.email && (
+                      {guardianEmail && (
                         <span className="flex items-center gap-1">
                           <Mail className="h-3 w-3" />
-                          {guardian.profiles.email}
+                          {guardianEmail}
                         </span>
                       )}
-                      {guardian.profiles.phone_primary && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {guardian.profiles.phone_primary}
+                      {!hasAccount && (
+                        <span className="text-stone-400 italic">
+                          Not yet invited to app
                         </span>
                       )}
                     </div>
@@ -238,7 +276,7 @@ export function ScoutGuardianAssociations({
         ) : (
           <p className="text-stone-500">
             No guardians are linked to this scout.
-            {canEdit && filteredAvailableMembers.length > 0 && ' Click "Add Guardian" to link a parent or guardian.'}
+            {canEdit && hasAvailableOptions && ' Click "Add Guardian" to link a parent or guardian.'}
           </p>
         )}
       </CardContent>

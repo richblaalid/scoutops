@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
 import { MONTHS, SCOUT_RANKS, parseDateParts } from '@/lib/constants'
-import { Mail, Phone, Star } from 'lucide-react'
+import { Mail, Star } from 'lucide-react'
 
 interface Patrol {
   id: string
@@ -23,7 +23,6 @@ interface Guardian {
     first_name: string | null
     last_name: string | null
     email: string
-    phone_primary: string | null
   }
 }
 
@@ -116,8 +115,7 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
             id,
             first_name,
             last_name,
-            email,
-            phone_primary
+            email
           )
         `)
         .eq('scout_id', scoutId)
@@ -202,8 +200,7 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
           id,
           first_name,
           last_name,
-          email,
-          phone_primary
+          email
         )
       `)
       .eq('scout_id', scout.id)

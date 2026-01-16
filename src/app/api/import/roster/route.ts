@@ -37,11 +37,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
     )
   }
 
+  // Get user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!profile) {
+    return NextResponse.json(
+      { success: false, adultsImported: 0, adultsUpdated: 0, scoutsImported: 0, scoutsUpdated: 0, guardiansLinked: 0, trainingsImported: 0, patrolsCreated: 0, errors: ['Profile not found'] },
+      { status: 403 }
+    )
+  }
+
   // Get user's unit and verify admin role
   const { data: membership, error: membershipError } = await supabase
     .from('unit_memberships')
     .select('unit_id, role')
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .single()
 
@@ -156,7 +170,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
   }
 
   // ============================================
-  // Import Adults to roster_adults table
+  // Import Adults to profiles table
   // ============================================
   for (const adult of adults) {
     try {
@@ -164,7 +178,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
       const primaryPosition = adult.positions?.[0] || null
 
       // Determine member type from positions
-      let memberType = 'P 18+' // Default to parent
+      let memberType: 'LEADER' | 'P 18+' = 'P 18+' // Default to parent
       if (adult.positions?.some(p =>
         p.toLowerCase().includes('scoutmaster') ||
         p.toLowerCase().includes('assistant scoutmaster') ||
@@ -176,25 +190,22 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
         memberType = 'LEADER'
       }
 
-      // Check for existing roster_adult by BSA ID
-      let rosterAdultId: string | null = null
+      // Check for existing profile by BSA ID
       let profileId: string | null = null
 
       if (adult.bsaMemberId) {
-        const { data: existingRosterAdult } = await adminSupabase
-          .from('roster_adults')
-          .select('id, profile_id')
-          .eq('unit_id', unitId)
+        const { data: existingProfile } = await adminSupabase
+          .from('profiles')
+          .select('id')
           .eq('bsa_member_id', adult.bsaMemberId)
           .maybeSingle()
 
-        if (existingRosterAdult) {
-          rosterAdultId = existingRosterAdult.id
-          profileId = existingRosterAdult.profile_id
+        if (existingProfile) {
+          profileId = existingProfile.id
 
-          // Update existing roster adult
+          // Update existing profile
           await adminSupabase
-            .from('roster_adults')
+            .from('profiles')
             .update({
               first_name: adult.firstName,
               last_name: adult.lastName,
@@ -202,24 +213,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
               member_type: memberType,
               position: primaryPosition,
               last_synced_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
             })
-            .eq('id', rosterAdultId)
+            .eq('id', profileId)
 
           adultsUpdated++
         }
       }
 
-      // Create new roster_adult if not found
-      if (!rosterAdultId && adult.bsaMemberId) {
-        const { data: newRosterAdult, error: rosterError } = await adminSupabase
-          .from('roster_adults')
+      // Create new profile if not found
+      if (!profileId && adult.bsaMemberId) {
+        const { data: newProfile, error: profileError } = await adminSupabase
+          .from('profiles')
           .insert({
-            unit_id: unitId,
             bsa_member_id: adult.bsaMemberId,
             first_name: adult.firstName,
             last_name: adult.lastName,
             full_name: fullName,
+            email: adult.email?.toLowerCase() || null,
             member_type: memberType,
             position: primaryPosition,
             is_active: true,
@@ -228,35 +238,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
           .select('id')
           .single()
 
-        if (rosterError) {
-          errors.push(`Error creating roster adult ${fullName}: ${rosterError.message}`)
-        } else if (newRosterAdult) {
-          rosterAdultId = newRosterAdult.id
+        if (profileError) {
+          errors.push(`Error creating adult profile ${fullName}: ${profileError.message}`)
+        } else if (newProfile) {
+          profileId = newProfile.id
           adultsImported++
-        }
-      }
 
-      // Try to match to existing profile by email (for guardian linking)
-      if (adult.email && !profileId) {
-        const { data: existingProfile } = await adminSupabase
-          .from('profiles')
-          .select('id')
-          .eq('email', adult.email.toLowerCase())
-          .maybeSingle()
-
-        if (existingProfile) {
-          profileId = existingProfile.id
-
-          // Link roster adult to profile
-          if (rosterAdultId) {
-            await adminSupabase
-              .from('roster_adults')
-              .update({
-                profile_id: profileId,
-                linked_at: new Date().toISOString(),
-              })
-              .eq('id', rosterAdultId)
-          }
+          // Create unit membership for the adult
+          await adminSupabase
+            .from('unit_memberships')
+            .insert({
+              unit_id: unitId,
+              profile_id: profileId,
+              role: memberType === 'LEADER' ? 'leader' : 'parent',
+              is_active: true,
+            })
         }
       }
 

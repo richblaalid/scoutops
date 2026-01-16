@@ -25,11 +25,22 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
     redirect('/login')
   }
 
+  // Get user's profile (profile_id is now separate from auth user id)
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!currentProfile) {
+    redirect('/login')
+  }
+
   // Get current user's membership
   const { data: currentMembership } = await supabase
     .from('unit_memberships')
     .select('unit_id, role')
-    .eq('profile_id', user.id)
+    .eq('profile_id', currentProfile.id)
     .eq('status', 'active')
     .single()
 
@@ -128,7 +139,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   )
 
   const displayName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email
-  const isCurrentUser = profile.id === user.id
+  const isCurrentUser = profile.id === currentProfile.id
 
   return (
     <div className="space-y-4">

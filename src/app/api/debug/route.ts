@@ -16,24 +16,27 @@ export async function GET() {
       return NextResponse.json({ error: 'Not logged in' })
     }
 
-    // Try to get membership (simple)
-    const { data: membershipSimple, error: membershipSimpleError } = await supabase
-      .from('unit_memberships')
-      .select('*')
-      .eq('profile_id', user.id)
-
-    // Try to get membership WITH units join (this is what layout uses)
-    const { data: membershipWithUnits, error: membershipWithUnitsError } = await supabase
-      .from('unit_memberships')
-      .select('role, unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type)')
-      .eq('profile_id', user.id)
-      .eq('status', 'active')
-
-    // Get profile
+    // Get profile (profile_id is separate from auth user id)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
+      .single()
+
+    const profileId = profile?.id
+
+    // Try to get membership (simple)
+    const { data: membershipSimple, error: membershipSimpleError } = profileId ? await supabase
+      .from('unit_memberships')
+      .select('*')
+      .eq('profile_id', profileId) : { data: null, error: { message: 'No profile found' } }
+
+    // Try to get membership WITH units join (this is what layout uses)
+    const { data: membershipWithUnits, error: membershipWithUnitsError } = profileId ? await supabase
+      .from('unit_memberships')
+      .select('role, unit_id, units:units!unit_memberships_unit_id_fkey(id, name, unit_number, unit_type)')
+      .eq('profile_id', profileId)
+      .eq('status', 'active') : { data: null, error: { message: 'No profile found' } }
 
     // Try to get units directly
     const { data: units, error: unitsError } = await supabase

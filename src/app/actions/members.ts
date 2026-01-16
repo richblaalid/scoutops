@@ -32,12 +32,24 @@ export async function inviteMember({ unitId, email, role, scoutIds, linkedScoutI
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (profileError || !profile) {
+    console.error('Profile lookup error:', profileError)
+    return { success: false, error: 'Failed to find your profile' }
+  }
+
   // Check if user is admin of this unit
   const { data: membership, error: membershipError } = await supabase
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', unitId)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -96,7 +108,7 @@ export async function inviteMember({ unitId, email, role, scoutIds, linkedScoutI
       status: 'invited',
       scout_ids: role === 'parent' && scoutIds?.length ? scoutIds : null,
       linked_scout_id: role === 'scout' && linkedScoutId ? linkedScoutId : null,
-      invited_by: user.id,
+      invited_by: profile.id,
       invited_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     })
@@ -146,10 +158,22 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
     return { accepted: 0 }
   }
 
+  // Get the user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    console.error('No profile found for user:', user.id)
+    return { accepted: 0 }
+  }
+
   // Find invited memberships for this email
   const { data: invites, error: invitesError } = await supabase
     .from('unit_memberships')
-    .select('id, unit_id, role, scout_ids, linked_scout_id, roster_adult_id')
+    .select('id, unit_id, role, scout_ids, linked_scout_id')
     .eq('email', user.email.toLowerCase())
     .eq('status', 'invited')
 
@@ -173,7 +197,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
     const { error: updateError } = await supabase
       .from('unit_memberships')
       .update({
-        profile_id: user.id,
+        profile_id: profile.id,
         status: 'active',
         accepted_at: new Date().toISOString(),
         joined_at: new Date().toISOString(),
@@ -183,7 +207,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
     if (updateError) {
       console.error('Failed to accept invite:', updateError.message, {
         membership_id: invite.id,
-        profile_id: user.id,
+        profile_id: profile.id,
       })
       continue
     }
@@ -193,7 +217,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
     if (invite.role === 'parent' && invite.scout_ids && invite.scout_ids.length > 0) {
       const guardianRecords = invite.scout_ids.map((scoutId: string, index: number) => ({
         scout_id: scoutId,
-        profile_id: user.id,
+        profile_id: profile.id,
         is_primary: index === 0,
         relationship: 'parent',
       }))
@@ -216,31 +240,13 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
       const adminSupabase = createAdminClient()
       const { error: scoutLinkError } = await adminSupabase
         .from('scouts')
-        .update({ profile_id: user.id })
+        .update({ profile_id: profile.id })
         .eq('id', invite.linked_scout_id)
 
       if (scoutLinkError) {
         console.error('Failed to link profile to scout:', scoutLinkError.message)
       } else {
-        console.log(`Linked profile ${user.id} to scout ${invite.linked_scout_id}`)
-      }
-    }
-
-    // Link profile to roster_adults record if this invite originated from roster import
-    if (invite.roster_adult_id) {
-      const adminSupabase = createAdminClient()
-      const { error: rosterLinkError } = await adminSupabase
-        .from('roster_adults')
-        .update({
-          profile_id: user.id,
-          linked_at: new Date().toISOString(),
-        })
-        .eq('id', invite.roster_adult_id)
-
-      if (rosterLinkError) {
-        console.error('Failed to link profile to roster adult:', rosterLinkError.message)
-      } else {
-        console.log(`Linked profile ${user.id} to roster adult ${invite.roster_adult_id}`)
+        console.log(`Linked profile ${profile.id} to scout ${invite.linked_scout_id}`)
       }
     }
 
@@ -265,12 +271,23 @@ export async function updateMemberRole(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Check if user is admin
   const { data: adminCheck, error: adminError } = await supabase
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', unitId)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -334,12 +351,23 @@ export async function removeMember(unitId: string, memberId: string): Promise<Ac
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Check if user is admin
   const { data: adminCheck, error: adminError } = await supabase
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', unitId)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -416,6 +444,17 @@ export async function resendInvite(memberId: string): Promise<ActionResult> {
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Get the membership
   const { data: membership, error: membershipError } = await supabase
     .from('unit_memberships')
@@ -445,7 +484,7 @@ export async function resendInvite(memberId: string): Promise<ActionResult> {
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', membership.unit_id)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -519,12 +558,23 @@ export async function updateMemberProfile(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Check if user is admin of the specified unit
   const { data: currentMembership, error: membershipError } = await supabase
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', unitId)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -605,12 +655,23 @@ export async function addScoutGuardian(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Check if user is admin of the specified unit
   const { data: currentMembership, error: membershipError } = await supabase
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', unitId)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -675,6 +736,7 @@ export async function addScoutGuardian(
   }
 
   revalidatePath(`/members`)
+  revalidatePath(`/scouts`)
   return { success: true }
 }
 
@@ -688,12 +750,23 @@ export async function removeScoutGuardian(unitId: string, guardianshipId: string
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Check if user is admin of the specified unit
   const { data: currentMembership, error: membershipError } = await supabase
     .from('unit_memberships')
     .select('role')
     .eq('unit_id', unitId)
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .maybeSingle()
 
@@ -720,5 +793,122 @@ export async function removeScoutGuardian(unitId: string, guardianshipId: string
   }
 
   revalidatePath(`/members`)
+  revalidatePath(`/scouts`)
+  return { success: true }
+}
+
+// Invite an existing profile (adult) to create an app account
+export async function inviteProfileToApp({
+  unitId,
+  profileId,
+  email,
+  role,
+}: {
+  unitId: string
+  profileId: string
+  email: string
+  role: MemberRole
+}): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  // Get current user's profile
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!currentProfile) {
+    return { success: false, error: 'Failed to find your profile' }
+  }
+
+  // Check if user is admin of this unit
+  const { data: membership, error: membershipError } = await supabase
+    .from('unit_memberships')
+    .select('role')
+    .eq('unit_id', unitId)
+    .eq('profile_id', currentProfile.id)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (membershipError) {
+    console.error('Membership check error:', membershipError)
+    return { success: false, error: 'Failed to verify permissions' }
+  }
+
+  if (!membership || (membership.role !== 'admin' && membership.role !== 'treasurer')) {
+    return { success: false, error: 'Only admins and treasurers can send invites' }
+  }
+
+  // Verify the profile exists and doesn't already have a user account
+  const adminSupabase2 = createAdminClient()
+  const { data: targetProfile, error: profileError } = await adminSupabase2
+    .from('profiles')
+    .select('id, user_id, email')
+    .eq('id', profileId)
+    .single()
+
+  if (profileError || !targetProfile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
+  if (targetProfile.user_id) {
+    return { success: false, error: 'This person already has an app account' }
+  }
+
+  // Update the profile's email
+  const { error: updateError } = await adminSupabase2
+    .from('profiles')
+    .update({ email: email.toLowerCase() })
+    .eq('id', profileId)
+
+  if (updateError) {
+    console.error('Profile update error:', updateError)
+    return { success: false, error: 'Failed to update profile email' }
+  }
+
+  // Update the membership role
+  const { error: roleError } = await adminSupabase2
+    .from('unit_memberships')
+    .update({ role })
+    .eq('unit_id', unitId)
+    .eq('profile_id', profileId)
+
+  if (roleError) {
+    console.error('Role update error:', roleError)
+    // Not critical, continue
+  }
+
+  // Send the invite email via Supabase Admin Auth API
+  try {
+    const { error: emailError } = await adminSupabase2.auth.admin.inviteUserByEmail(
+      email.toLowerCase(),
+      {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+        data: {
+          profile_id: profileId,
+        },
+      }
+    )
+
+    if (emailError?.code === 'email_exists') {
+      return { success: true, warning: 'User already has an account. They can log in to access the unit.' }
+    } else if (emailError) {
+      console.error('Auth email error:', emailError)
+      return { success: true, warning: 'Invite created but email may not have been sent.' }
+    }
+  } catch (err) {
+    console.error('Admin client error:', err)
+    return { success: true, warning: 'Invite created but email may not have been sent.' }
+  }
+
+  revalidatePath('/roster')
+  revalidatePath('/members')
   return { success: true }
 }

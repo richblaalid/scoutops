@@ -62,10 +62,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(errorUrl)
     }
 
+    // Get user's profile (profile_id is separate from auth user id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile) {
+      const errorUrl = new URL(settingsUrl)
+      errorUrl.searchParams.set('error', 'Profile not found')
+      return NextResponse.redirect(errorUrl)
+    }
+
     const { data: membership } = await supabase
       .from('unit_memberships')
       .select('unit_id, role')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
       .eq('unit_id', unitId)
       .eq('status', 'active')
       .single()

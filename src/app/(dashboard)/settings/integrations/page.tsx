@@ -24,6 +24,17 @@ export default async function IntegrationsPage({
     redirect('/login')
   }
 
+  // Get user's profile (profile_id is now separate from auth user id)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!profile) {
+    redirect('/login')
+  }
+
   // Get user's membership and role with unit fee settings
   const { data: membership } = await supabase
     .from('unit_memberships')
@@ -35,7 +46,7 @@ export default async function IntegrationsPage({
         pass_fees_to_payer
       )`
     )
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .single()
 

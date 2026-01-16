@@ -56,8 +56,8 @@ CREATE POLICY "Users can view staged members for their unit"
     EXISTS (
       SELECT 1 FROM unit_memberships
       WHERE unit_memberships.unit_id = sync_staged_members.unit_id
-        AND unit_memberships.profile_id = auth.uid()
-        AND unit_memberships.status = 'active'
+        AND unit_memberships.profile_id = get_current_profile_id()
+        AND unit_memberships.is_active = true
     )
   );
 
@@ -69,8 +69,8 @@ CREATE POLICY "Admins can modify staged members"
     EXISTS (
       SELECT 1 FROM unit_memberships
       WHERE unit_memberships.unit_id = sync_staged_members.unit_id
-        AND unit_memberships.profile_id = auth.uid()
+        AND unit_memberships.profile_id = get_current_profile_id()
         AND unit_memberships.role IN ('admin', 'treasurer')
-        AND unit_memberships.status = 'active'
+        AND unit_memberships.is_active = true
     )
   );

@@ -134,3 +134,10 @@ export function hasFilteredView(role: MemberRole | string): boolean {
 export function isAdmin(role: MemberRole | string): boolean {
   return role === 'admin'
 }
+
+/**
+ * Check if role is treasurer
+ */
+export function isTreasurer(role: MemberRole | string): boolean {
+  return role === 'treasurer'
+}

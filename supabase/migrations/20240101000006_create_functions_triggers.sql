@@ -81,9 +81,9 @@ CREATE TRIGGER trigger_reverse_scout_balance_delete
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, email, full_name)
+    INSERT INTO public.profiles (user_id, email, full_name)
     VALUES (
-        NEW.id,
+        NEW.id,  -- Link to auth.users via user_id column
         NEW.email,
         COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email)
     );

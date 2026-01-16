@@ -43,11 +43,20 @@ export default async function DashboardPage() {
 
   if (!user) return null
 
+  // Get user's profile (profile_id is now separate from auth user id)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!profile) return null
+
   // Get user's unit membership
   const { data: membershipData } = await supabase
     .from('unit_memberships')
     .select('unit_id, role')
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .single()
 
@@ -76,7 +85,7 @@ export default async function DashboardPage() {
     const { data: guardianData } = await supabase
       .from('scout_guardians')
       .select('scout_id')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
     linkedScoutIds = (guardianData || []).map((g) => g.scout_id)
   }
 
@@ -85,7 +94,7 @@ export default async function DashboardPage() {
     const { data: scoutData } = await supabase
       .from('scouts')
       .select('id, scout_accounts(id)')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
       .single()
 
     if (scoutData) {

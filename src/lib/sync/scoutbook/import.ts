@@ -51,7 +51,7 @@ export interface StagedMember {
   skipReason: string | null
   isSelected: boolean
   // Adult-specific fields
-  existingRosterAdultId: string | null
+  existingProfileId: string | null
   matchedProfileId: string | null
   matchType: 'bsa_id' | 'name_exact' | 'name_fuzzy' | 'none' | null
   renewalStatus: string | null
@@ -107,14 +107,64 @@ export async function stageRosterMembers(
     throw new Error(`Failed to fetch existing scouts: ${scoutsError.message}`)
   }
 
-  // Get existing roster_adults by BSA member ID for this unit
-  const { data: existingAdults, error: adultsError } = await supabase
-    .from('roster_adults')
-    .select('id, bsa_member_id, first_name, last_name, position, position_2, patrol, profile_id')
+  // Get existing adult profiles by BSA member ID for this unit
+  // Adults are profiles with a unit_membership and member_type set
+  const { data: unitMemberProfiles, error: adultsError } = await supabase
+    .from('unit_memberships')
+    .select(`
+      profile_id,
+      profiles:profiles!unit_memberships_profile_id_fkey (
+        id, bsa_member_id, first_name, last_name, full_name, position, position_2, patrol, member_type
+      )
+    `)
     .eq('unit_id', unitId)
+    .eq('status', 'active')
 
   if (adultsError) {
-    throw new Error(`Failed to fetch existing roster adults: ${adultsError.message}`)
+    throw new Error(`Failed to fetch existing adult profiles: ${adultsError.message}`)
+  }
+
+  // Also get profiles directly by BSA member ID (may not have unit membership yet)
+  const { data: profilesByBsa } = await supabase
+    .from('profiles')
+    .select('id, bsa_member_id, first_name, last_name, full_name, position, position_2, patrol, member_type')
+    .not('bsa_member_id', 'is', null)
+
+  // Build map of existing adults by BSA member ID
+  type ExistingAdult = {
+    id: string
+    bsa_member_id: string | null
+    first_name: string | null
+    last_name: string | null
+    position: string | null
+    position_2: string | null
+    patrol: string | null
+  }
+  const existingAdults: ExistingAdult[] = []
+
+  // Add from unit memberships
+  for (const membership of unitMemberProfiles || []) {
+    const profile = membership.profiles as unknown as {
+      id: string
+      bsa_member_id: string | null
+      first_name: string | null
+      last_name: string | null
+      position: string | null
+      position_2: string | null
+      patrol: string | null
+      member_type: string | null
+    }
+    if (profile && profile.member_type && profile.bsa_member_id) {
+      existingAdults.push({
+        id: profile.id,
+        bsa_member_id: profile.bsa_member_id,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        position: profile.position,
+        position_2: profile.position_2,
+        patrol: profile.patrol,
+      })
+    }
   }
 
   // Get profiles with BSA member IDs for matching
@@ -148,10 +198,10 @@ export async function stageRosterMembers(
     (existingScouts || []).map((s) => [s.bsa_member_id!, s])
   )
   const existingAdultsByBsaId = new Map(
-    (existingAdults || []).map((a) => [a.bsa_member_id, a])
+    existingAdults.filter((a) => a.bsa_member_id).map((a) => [a.bsa_member_id!, a])
   )
   const profilesByBsaId = new Map(
-    (profilesWithBsaId || []).map((p) => [p.bsa_member_id!, p])
+    (profilesByBsa || []).filter((p) => p.bsa_member_id).map((p) => [p.bsa_member_id!, p])
   )
 
   // Helper to match adult to profile
@@ -207,7 +257,7 @@ export async function stageRosterMembers(
       const { profileId, matchType } = matchAdultToProfile(member)
 
       if (existingAdult) {
-        // Check for changes to existing roster adult
+        // Check for changes to existing adult profile
         const changes: Record<string, { old: string | null; new: string | null }> = {}
 
         if (existingAdult.first_name !== firstName) {
@@ -245,9 +295,9 @@ export async function stageRosterMembers(
           expiration_date: member.expirationDate,
           change_type: hasChanges ? 'update' : 'skip',
           existing_scout_id: null,
-          existing_roster_adult_id: existingAdult.id,
-          matched_profile_id: existingAdult.profile_id || profileId,
-          match_type: existingAdult.profile_id ? 'bsa_id' : matchType,
+          existing_profile_id: existingAdult.id,
+          matched_profile_id: existingAdult.id,
+          match_type: 'bsa_id',
           changes: hasChanges ? changes : null,
           skip_reason: hasChanges ? null : 'no_changes',
           is_selected: hasChanges, // Auto-select updates
@@ -259,7 +309,7 @@ export async function stageRosterMembers(
           toSkip++
         }
       } else {
-        // New roster adult
+        // New adult - will create profile
         stagedRows.push({
           session_id: sessionId,
           unit_id: unitId,
@@ -277,7 +327,7 @@ export async function stageRosterMembers(
           expiration_date: member.expirationDate,
           change_type: 'create',
           existing_scout_id: null,
-          existing_roster_adult_id: null,
+          existing_profile_id: null,
           matched_profile_id: profileId,
           match_type: matchType,
           changes: null,
@@ -334,7 +384,7 @@ export async function stageRosterMembers(
         expiration_date: member.expirationDate,
         change_type: hasChanges ? 'update' : 'skip',
         existing_scout_id: existingScout.id,
-        existing_roster_adult_id: null,
+        existing_profile_id: null,
         matched_profile_id: null,
         match_type: null,
         changes: hasChanges ? changes : null,
@@ -366,7 +416,7 @@ export async function stageRosterMembers(
         expiration_date: member.expirationDate,
         change_type: 'create',
         existing_scout_id: null,
-        existing_roster_adult_id: null,
+        existing_profile_id: null,
         matched_profile_id: null,
         match_type: null,
         changes: null,
@@ -441,7 +491,7 @@ export async function getStagedMembers(
     skipReason: row.skip_reason,
     isSelected: row.is_selected ?? true,
     // Adult-specific fields
-    existingRosterAdultId: row.existing_roster_adult_id,
+    existingProfileId: row.existing_profile_id,
     matchedProfileId: row.matched_profile_id,
     matchType: row.match_type as 'bsa_id' | 'name_exact' | 'name_fuzzy' | 'none' | null,
     renewalStatus: row.renewal_status,
@@ -472,7 +522,7 @@ export async function updateStagedSelection(
 
 /**
  * Confirm and import selected staged members
- * Handles both scouts (→ scouts table) and adults (→ roster_adults table)
+ * Handles both scouts (→ scouts table) and adults (→ profiles table)
  */
 export async function confirmStagedImport(
   supabase: SupabaseClient<Database>,
@@ -591,55 +641,123 @@ export async function confirmStagedImport(
     }
   }
 
-  // Process adults → roster_adults table
+  // Process adults → profiles table
   for (const member of adultMembers) {
     if (member.change_type === 'create') {
-      // Create new roster adult
-      const { error: insertError } = await supabase.from('roster_adults').insert({
-        unit_id: unitId,
-        bsa_member_id: member.bsa_member_id,
-        first_name: member.first_name,
-        last_name: member.last_name,
-        full_name: member.full_name,
-        member_type: member.member_type as 'LEADER' | 'P 18+',
-        age: member.age,
-        patrol: member.patrol,
-        position: member.position,
-        position_2: member.position_2,
-        renewal_status: member.renewal_status,
-        expiration_date: member.expiration_date,
-        profile_id: member.matched_profile_id,
-        linked_at: member.matched_profile_id ? new Date().toISOString() : null,
-        sync_session_id: sessionId,
-        is_active: member.renewal_status === 'Current',
-      })
-
-      if (insertError) {
-        result.errors.push({
-          member: {
-            name: member.full_name,
-            bsaMemberId: member.bsa_member_id,
-            type: member.member_type as 'LEADER' | 'P 18+',
-            age: member.age || '',
-            lastRankApproved: member.rank,
+      // Create new profile for adult (or update existing matched profile)
+      if (member.matched_profile_id) {
+        // Update the matched profile with BSA data
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            bsa_member_id: member.bsa_member_id,
+            first_name: member.first_name,
+            last_name: member.last_name,
+            full_name: member.full_name,
+            member_type: member.member_type as 'LEADER' | 'P 18+',
             patrol: member.patrol,
             position: member.position,
-            position2: member.position_2,
-            renewalStatus: member.renewal_status || '',
-            expirationDate: member.expiration_date || '',
-          },
-          error: insertError.message,
-        })
-      } else {
-        result.adultsCreated++
-        if (member.matched_profile_id) {
+            position_2: member.position_2,
+            renewal_status: member.renewal_status,
+            expiration_date: member.expiration_date,
+            is_active: member.renewal_status === 'Current',
+            last_synced_at: new Date().toISOString(),
+            sync_session_id: sessionId,
+          })
+          .eq('id', member.matched_profile_id)
+
+        if (updateError) {
+          result.errors.push({
+            member: {
+              name: member.full_name,
+              bsaMemberId: member.bsa_member_id,
+              type: member.member_type as 'LEADER' | 'P 18+',
+              age: member.age || '',
+              lastRankApproved: member.rank,
+              patrol: member.patrol,
+              position: member.position,
+              position2: member.position_2,
+              renewalStatus: member.renewal_status || '',
+              expirationDate: member.expiration_date || '',
+            },
+            error: updateError.message,
+          })
+        } else {
           result.adultsLinked++
+
+          // Ensure unit membership exists for matched profile
+          const { data: existingMembership } = await supabase
+            .from('unit_memberships')
+            .select('id')
+            .eq('profile_id', member.matched_profile_id)
+            .eq('unit_id', unitId)
+            .maybeSingle()
+
+          if (!existingMembership) {
+            await supabase.from('unit_memberships').insert({
+              unit_id: unitId,
+              profile_id: member.matched_profile_id,
+              role: member.member_type === 'LEADER' ? 'leader' : 'parent',
+              status: 'active',
+            })
+          }
+        }
+      } else {
+        // Create new profile for adult (no matched existing profile)
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            bsa_member_id: member.bsa_member_id,
+            first_name: member.first_name,
+            last_name: member.last_name,
+            full_name: member.full_name,
+            member_type: member.member_type as 'LEADER' | 'P 18+',
+            patrol: member.patrol,
+            position: member.position,
+            position_2: member.position_2,
+            renewal_status: member.renewal_status,
+            expiration_date: member.expiration_date,
+            is_active: member.renewal_status === 'Current',
+            sync_session_id: sessionId,
+            last_synced_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single()
+
+        if (insertError) {
+          result.errors.push({
+            member: {
+              name: member.full_name,
+              bsaMemberId: member.bsa_member_id,
+              type: member.member_type as 'LEADER' | 'P 18+',
+              age: member.age || '',
+              lastRankApproved: member.rank,
+              patrol: member.patrol,
+              position: member.position,
+              position2: member.position_2,
+              renewalStatus: member.renewal_status || '',
+              expirationDate: member.expiration_date || '',
+            },
+            error: insertError.message,
+          })
+        } else {
+          result.adultsCreated++
+
+          // Create unit membership for the new profile
+          if (newProfile) {
+            await supabase.from('unit_memberships').insert({
+              unit_id: unitId,
+              profile_id: newProfile.id,
+              role: member.member_type === 'LEADER' ? 'leader' : 'parent',
+              status: 'active',
+            })
+          }
         }
       }
-    } else if (member.change_type === 'update' && member.existing_roster_adult_id) {
-      // Update existing roster adult
+    } else if (member.change_type === 'update' && member.existing_profile_id) {
+      // Update existing adult profile
       const { error: updateError } = await supabase
-        .from('roster_adults')
+        .from('profiles')
         .update({
           first_name: member.first_name,
           last_name: member.last_name,
@@ -652,9 +770,8 @@ export async function confirmStagedImport(
           is_active: member.renewal_status === 'Current',
           last_synced_at: new Date().toISOString(),
           sync_session_id: sessionId,
-          updated_at: new Date().toISOString(),
         })
-        .eq('id', member.existing_roster_adult_id)
+        .eq('id', member.existing_profile_id)
 
       if (updateError) {
         result.errors.push({

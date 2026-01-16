@@ -17,7 +17,7 @@ export default async function SettingsPage() {
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single()
 
   if (error || !profile) {
@@ -49,7 +49,7 @@ export default async function SettingsPage() {
 
         <ContactForm
           profile={{
-            email: user.email || profile.email,
+            email: user.email || profile.email || '',
             email_secondary: profile.email_secondary,
             phone_primary: profile.phone_primary,
             phone_secondary: profile.phone_secondary,

@@ -35,7 +35,7 @@ export async function getProfile() {
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single()
 
   if (error) {
@@ -82,7 +82,7 @@ export async function updateProfile(data: ProfileData): Promise<ActionResult> {
   const { error } = await supabase
     .from('profiles')
     .update(updateData)
-    .eq('id', user.id)
+    .eq('user_id', user.id)
 
   if (error) {
     console.error('Profile update error:', error)
@@ -136,6 +136,17 @@ export async function deactivateAccount(): Promise<ActionResult> {
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Get current user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile) {
+    return { success: false, error: 'Profile not found' }
+  }
+
   // Mark profile as inactive
   const { error: profileError } = await supabase
     .from('profiles')
@@ -143,7 +154,7 @@ export async function deactivateAccount(): Promise<ActionResult> {
       is_active: false,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', user.id)
+    .eq('id', profile.id)
 
   if (profileError) {
     console.error('Deactivate error:', profileError)
@@ -154,7 +165,7 @@ export async function deactivateAccount(): Promise<ActionResult> {
   const { error: membershipError } = await supabase
     .from('unit_memberships')
     .update({ status: 'inactive' })
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
 
   if (membershipError) {
     console.error('Membership deactivation error:', membershipError)

@@ -128,11 +128,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get user's profile (profile_id is separate from auth user id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: 'Profile not found' },
+        { status: 403 }
+      )
+    }
+
     // Get user's unit membership
     const { data: membership } = await supabase
       .from('unit_memberships')
       .select('unit_id, role')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
       .eq('status', 'active')
       .single()
 
@@ -179,7 +193,7 @@ export async function POST(request: Request) {
       .insert({
         unit_id: membership.unit_id,
         status: 'running',
-        created_by: user.id,
+        created_by: profile.id,
       })
       .select()
       .single()

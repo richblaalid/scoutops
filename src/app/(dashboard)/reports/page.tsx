@@ -40,11 +40,20 @@ export default async function ReportsPage() {
 
   if (!user) return null
 
+  // Get user's profile (profile_id is now separate from auth user id)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!profile) return null
+
   // Get user's unit membership
   const { data: membershipData } = await supabase
     .from('unit_memberships')
     .select('unit_id, role, units:units!unit_memberships_unit_id_fkey(name, unit_number)')
-    .eq('profile_id', user.id)
+    .eq('profile_id', profile.id)
     .eq('status', 'active')
     .single()
 

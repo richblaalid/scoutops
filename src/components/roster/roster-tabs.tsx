@@ -21,19 +21,18 @@ interface Scout {
 
 interface RosterAdult {
   id: string
-  first_name: string
-  last_name: string
-  full_name: string
-  member_type: string
+  first_name: string | null
+  last_name: string | null
+  full_name: string | null
+  member_type: string | null
   position: string | null
   position_2: string | null
   patrol: string | null
-  bsa_member_id: string
+  bsa_member_id: string | null
   renewal_status: string | null
   expiration_date: string | null
   is_active: boolean | null
-  profile_id: string | null
-  linked_at: string | null
+  user_id: string | null  // indicates if they have an app account
 }
 
 interface RosterTabsProps {
