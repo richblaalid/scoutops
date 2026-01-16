@@ -18,9 +18,9 @@ function createSnapshot(rowContent: string): AgentBrowserSnapshot {
 
 describe('roster parser', () => {
   describe('position extraction', () => {
-    it('extracts a single position', () => {
+    it('extracts a single position with number prefix', () => {
       const snapshot = createSnapshot(
-        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix Senior Patrol Leader Current 8/31/2026'
+        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Senior Patrol Leader Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 
@@ -29,9 +29,9 @@ describe('roster parser', () => {
       expect(members[0].position2).toBeNull();
     });
 
-    it('extracts two positions', () => {
+    it('extracts two numbered positions', () => {
       const snapshot = createSnapshot(
-        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix Senior Patrol Leader Den Chief Current 8/31/2026'
+        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Senior Patrol Leader 2Den Chief Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 
@@ -40,7 +40,7 @@ describe('roster parser', () => {
       expect(members[0].position2).toBe('Den Chief');
     });
 
-    it('does not match Patrol Leader as substring of Senior Patrol Leader', () => {
+    it('handles position without number prefix', () => {
       const snapshot = createSnapshot(
         'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix Senior Patrol Leader Current 8/31/2026'
       );
@@ -48,13 +48,36 @@ describe('roster parser', () => {
 
       expect(members).toHaveLength(1);
       expect(members[0].position).toBe('Senior Patrol Leader');
-      // Should NOT find "Patrol Leader" as a false positive
       expect(members[0].position2).toBeNull();
     });
 
-    it('handles Patrol Leader distinct from Senior Patrol Leader', () => {
+    it('handles only position 2 (slot 1 empty)', () => {
+      // This is the actual format from Scoutbook when someone only has a second position
       const snapshot = createSnapshot(
-        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix Patrol Leader Den Chief Current 8/31/2026'
+        'Ben Blaalid 141419860 YOUTH 11 Tenderfoot Blazing Bulls 2Den Chief Current 11/30/2026'
+      );
+      const members = parseRosterPage(snapshot);
+
+      expect(members).toHaveLength(1);
+      // When only slot 2 has a position, it becomes the primary position
+      expect(members[0].position).toBe('Den Chief');
+      expect(members[0].position2).toBeNull();
+    });
+
+    it('does not match Patrol Leader as substring of Senior Patrol Leader', () => {
+      const snapshot = createSnapshot(
+        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Senior Patrol Leader Current 8/31/2026'
+      );
+      const members = parseRosterPage(snapshot);
+
+      expect(members).toHaveLength(1);
+      expect(members[0].position).toBe('Senior Patrol Leader');
+      expect(members[0].position2).toBeNull();
+    });
+
+    it('handles Patrol Leader distinct from Senior Patrol Leader with numbers', () => {
+      const snapshot = createSnapshot(
+        'John Doe 123456789 YOUTH 14 Life Scout Flaring Phoenix 1Patrol Leader 2Den Chief Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 
@@ -65,7 +88,7 @@ describe('roster parser', () => {
 
     it('handles Assistant Scoutmaster without matching Scoutmaster', () => {
       const snapshot = createSnapshot(
-        'Jane Smith 987654321 LEADER (21+) Eagle Scout unassigned Assistant Scoutmaster Current 8/31/2026'
+        'Jane Smith 987654321 LEADER (21+) Eagle Scout unassigned 1Assistant Scoutmaster Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 
@@ -76,7 +99,7 @@ describe('roster parser', () => {
 
     it('handles both Assistant Scoutmaster and Committee Member', () => {
       const snapshot = createSnapshot(
-        'Jane Smith 987654321 LEADER (21+) Eagle Scout unassigned Assistant Scoutmaster Committee Member Current 8/31/2026'
+        'Jane Smith 987654321 LEADER (21+) Eagle Scout unassigned 1Assistant Scoutmaster 2Committee Member Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 
@@ -87,7 +110,7 @@ describe('roster parser', () => {
 
     it('extracts positions for youth with Troop Guide and Instructor', () => {
       const snapshot = createSnapshot(
-        'Ben Blaalid 111222333 YOUTH 16 Star Scout Blazing Bulls Troop Guide Instructor Current 8/31/2026'
+        'Ben Blaalid 111222333 YOUTH 16 Star Scout Blazing Bulls 1Troop Guide 2Instructor Current 8/31/2026'
       );
       const members = parseRosterPage(snapshot);
 

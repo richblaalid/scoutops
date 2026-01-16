@@ -200,26 +200,51 @@ function parseRosterRow(
     'Bugler',
   ];
 
-  // Find all positions in the text using word boundaries to avoid substring matches
-  const foundPositions: string[] = [];
-  let searchText = rest;
+  // Scoutbook displays positions with numeric prefixes like "1Senior Patrol Leader" or "2Den Chief"
+  // First, try to extract positions with their slot numbers
+  const numberedPositions: { slot: number; position: string }[] = [];
 
   for (const pos of knownPositions) {
-    // Create a regex with word boundary-like matching
-    // We escape special chars and look for the position not surrounded by word chars
+    // Look for positions with optional numeric prefix (1 or 2)
     const escapedPos = pos.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const posRegex = new RegExp(`(?:^|[^a-zA-Z])${escapedPos}(?:[^a-zA-Z]|$)`);
+    // Match: optional digit prefix (1 or 2) followed by position name
+    const posRegex = new RegExp(`([12])?${escapedPos}(?:[^a-zA-Z]|$)`, 'i');
+    const match = rest.match(posRegex);
 
-    if (posRegex.test(searchText) && !foundPositions.includes(pos)) {
-      foundPositions.push(pos);
-      // Remove the matched position from search text to prevent partial re-matches
-      searchText = searchText.replace(pos, ' '.repeat(pos.length));
-      if (foundPositions.length >= 2) break; // Only need up to 2
+    if (match && !numberedPositions.some(p => p.position === pos)) {
+      const slot = match[1] ? parseInt(match[1], 10) : 1;
+      numberedPositions.push({ slot, position: pos });
     }
   }
 
-  const position = foundPositions[0] || null;
-  const position2 = foundPositions[1] || null;
+  // Sort by slot number and take up to 2 positions
+  numberedPositions.sort((a, b) => a.slot - b.slot);
+
+  // If we found numbered positions, use them; otherwise fall back to order found
+  let position: string | null = null;
+  let position2: string | null = null;
+
+  if (numberedPositions.length > 0) {
+    // Find position in slot 1 and slot 2
+    const slot1 = numberedPositions.find(p => p.slot === 1);
+    const slot2 = numberedPositions.find(p => p.slot === 2);
+
+    if (slot1 && slot2) {
+      position = slot1.position;
+      position2 = slot2.position;
+    } else if (slot1) {
+      position = slot1.position;
+    } else if (slot2) {
+      // Only has slot 2, put it in position (primary)
+      position = slot2.position;
+    } else {
+      // No specific slots, just use first found
+      position = numberedPositions[0]?.position || null;
+      position2 = numberedPositions[1]?.position || null;
+    }
+  }
+
+  const foundPositions = numberedPositions.map(p => `${p.slot}:${p.position}`);
 
   // Debug: Log extracted positions
   if (DEBUG_POSITIONS || isDebugTarget) {
