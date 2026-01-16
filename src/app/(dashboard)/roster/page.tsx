@@ -158,12 +158,12 @@ export default async function RosterPage() {
     scouts = (scoutsData as ScoutWithAccount[]) || []
 
     // Fetch adult profiles (those with member_type set - from roster import)
-    // Get profile IDs from unit memberships
+    // Get profile IDs from unit memberships (include both 'active' and 'roster' status)
     const { data: memberProfileData } = await supabase
       .from('unit_memberships')
       .select('profile_id')
       .eq('unit_id', membership.unit_id)
-      .eq('status', 'active')
+      .in('status', ['active', 'roster', 'invited'])
 
     const memberProfileIds = (memberProfileData || [])
       .map(m => m.profile_id)

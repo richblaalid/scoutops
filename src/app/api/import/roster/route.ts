@@ -203,18 +203,41 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
         if (existingProfile) {
           profileId = existingProfile.id
 
-          // Update existing profile
+          // Update existing profile - include contact info from CSV
           await adminSupabase
             .from('profiles')
             .update({
               first_name: adult.firstName,
               last_name: adult.lastName,
               full_name: fullName,
+              email: adult.email?.toLowerCase() || null,
+              phone_primary: adult.phone || null,
+              address_street: adult.address || null,
+              address_city: adult.city || null,
+              address_state: adult.state || null,
+              address_zip: adult.zip || null,
               member_type: memberType,
               position: primaryPosition,
               last_synced_at: new Date().toISOString(),
             })
             .eq('id', profileId)
+
+          // Ensure unit membership exists for the updated profile
+          const { data: existingMembership } = await adminSupabase
+            .from('unit_memberships')
+            .select('id')
+            .eq('profile_id', profileId)
+            .eq('unit_id', unitId)
+            .maybeSingle()
+
+          if (!existingMembership) {
+            await adminSupabase.from('unit_memberships').insert({
+              unit_id: unitId,
+              profile_id: profileId,
+              role: memberType === 'LEADER' ? 'leader' : 'parent',
+              status: 'roster',
+            })
+          }
 
           adultsUpdated++
         }
@@ -230,6 +253,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
             last_name: adult.lastName,
             full_name: fullName,
             email: adult.email?.toLowerCase() || null,
+            phone_primary: adult.phone || null,
+            address_street: adult.address || null,
+            address_city: adult.city || null,
+            address_state: adult.state || null,
+            address_zip: adult.zip || null,
             member_type: memberType,
             position: primaryPosition,
             is_active: true,
@@ -244,14 +272,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
           profileId = newProfile.id
           adultsImported++
 
-          // Create unit membership for the adult
+          // Create unit membership for the adult (roster status until invited)
           await adminSupabase
             .from('unit_memberships')
             .insert({
               unit_id: unitId,
               profile_id: profileId,
               role: memberType === 'LEADER' ? 'leader' : 'parent',
-              is_active: true,
+              status: 'roster',
             })
         }
       }

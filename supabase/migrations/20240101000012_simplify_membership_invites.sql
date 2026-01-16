@@ -12,7 +12,7 @@ ALTER TABLE unit_memberships ALTER COLUMN profile_id DROP NOT NULL;
 -- Add new columns for invite functionality
 ALTER TABLE unit_memberships ADD COLUMN IF NOT EXISTS email VARCHAR(255);
 ALTER TABLE unit_memberships ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active'
-  CHECK (status IN ('invited', 'active', 'inactive'));
+  CHECK (status IN ('roster', 'invited', 'active', 'inactive'));
 ALTER TABLE unit_memberships ADD COLUMN IF NOT EXISTS scout_ids UUID[] DEFAULT NULL;
 ALTER TABLE unit_memberships ADD COLUMN IF NOT EXISTS invited_by UUID REFERENCES profiles(id);
 ALTER TABLE unit_memberships ADD COLUMN IF NOT EXISTS invited_at TIMESTAMPTZ;

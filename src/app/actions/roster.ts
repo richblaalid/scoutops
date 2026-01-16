@@ -16,6 +16,7 @@ export async function updateRosterAdult(
   data: {
     first_name: string | null
     last_name: string | null
+    email: string | null // Only updated if profile has no user account
     email_secondary: string | null
     phone_primary: string | null
     phone_secondary: string | null
@@ -67,27 +68,33 @@ export async function updateRosterAdult(
     return { success: false, error: 'Only admins can update roster adults' }
   }
 
+  // Use admin client to bypass RLS
+  const adminSupabase = createAdminClient()
+
   // Verify the target profile is a member of the same unit via unit_memberships
-  const { data: targetMembership, error: targetError } = await supabase
-    .from('unit_memberships')
-    .select('id')
-    .eq('profile_id', profileId)
-    .eq('unit_id', unitId)
+  // Also get user_id to check if email can be updated
+  const { data: targetProfile, error: targetError } = await adminSupabase
+    .from('profiles')
+    .select(`
+      id,
+      user_id,
+      unit_memberships!inner (id)
+    `)
+    .eq('id', profileId)
+    .eq('unit_memberships.unit_id', unitId)
     .maybeSingle()
 
   if (targetError) {
-    console.error('Target membership check error:', targetError)
+    console.error('Target profile check error:', targetError)
     return { success: false, error: 'Failed to verify member' }
   }
 
-  if (!targetMembership) {
+  if (!targetProfile) {
     return { success: false, error: 'Adult not found in your unit' }
   }
 
-  // Update the profile using admin client to bypass RLS
-  const adminSupabase = createAdminClient()
-
-  const updateData = {
+  // Build update data - only include email if profile has no user account
+  const updateData: Record<string, unknown> = {
     first_name: data.first_name,
     last_name: data.last_name,
     full_name: [data.first_name, data.last_name].filter(Boolean).join(' ') || null,
@@ -104,6 +111,11 @@ export async function updateRosterAdult(
     bsa_member_id: data.bsa_member_id,
     is_active: data.is_active,
     updated_at: new Date().toISOString(),
+  }
+
+  // Only allow email update if profile has no user account (imported profile)
+  if (!targetProfile.user_id && data.email !== undefined) {
+    updateData.email = data.email?.toLowerCase() || null
   }
 
   const { error } = await adminSupabase

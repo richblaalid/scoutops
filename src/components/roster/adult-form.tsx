@@ -16,6 +16,7 @@ interface AdultFormProps {
   unitId: string
   adult: {
     id: string
+    user_id: string | null // null means imported profile without app account
     first_name: string | null
     last_name: string | null
     email: string | null
@@ -51,6 +52,7 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
     const result = await updateRosterAdult(unitId, adult.id, {
       first_name: (formData.get('first_name') as string) || null,
       last_name: (formData.get('last_name') as string) || null,
+      email: adult.user_id ? null : (formData.get('email') as string) || null,
       email_secondary: (formData.get('email_secondary') as string) || null,
       phone_primary: (formData.get('phone_primary') as string) || null,
       phone_secondary: (formData.get('phone_secondary') as string) || null,
@@ -106,12 +108,26 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
           {/* Email */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Primary Email</Label>
-              <Input
-                value={adult.email || ''}
-                disabled
-                className="bg-stone-50 text-stone-600"
-              />
+              <Label htmlFor="email">Primary Email</Label>
+              {adult.user_id ? (
+                // Email is linked to app account - cannot be edited
+                <>
+                  <Input
+                    value={adult.email || ''}
+                    disabled
+                    className="bg-stone-50 text-stone-600"
+                  />
+                  <p className="text-xs text-stone-500">Linked to app account</p>
+                </>
+              ) : (
+                // Imported profile without app account - email can be edited
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  defaultValue={adult.email || ''}
+                />
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email_secondary">Secondary Email</Label>

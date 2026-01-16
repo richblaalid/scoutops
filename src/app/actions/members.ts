@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export type MemberRole = 'admin' | 'treasurer' | 'leader' | 'parent' | 'scout'
-export type MemberStatus = 'invited' | 'active' | 'inactive'
+export type MemberStatus = 'roster' | 'invited' | 'active' | 'inactive'
 
 interface InviteMemberParams {
   unitId: string
@@ -151,6 +151,7 @@ export async function inviteMember({ unitId, email, role, scoutIds, linkedScoutI
 // Finds memberships with status='invited' matching user's email and activates them
 export async function acceptPendingInvites(): Promise<{ accepted: number; unitId?: string }> {
   const supabase = await createClient()
+  const adminSupabase = createAdminClient()
 
   // Get current user
   const { data: { user } } = await supabase.auth.getUser()
@@ -158,22 +159,22 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
     return { accepted: 0 }
   }
 
-  // Get the user's profile
-  const { data: profile } = await supabase
+  // Get the user's profile (created by signup trigger)
+  const { data: userProfile } = await supabase
     .from('profiles')
     .select('id')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (!profile) {
+  if (!userProfile) {
     console.error('No profile found for user:', user.id)
     return { accepted: 0 }
   }
 
   // Find invited memberships for this email
-  const { data: invites, error: invitesError } = await supabase
+  const { data: invites, error: invitesError } = await adminSupabase
     .from('unit_memberships')
-    .select('id, unit_id, role, scout_ids, linked_scout_id')
+    .select('id, unit_id, role, profile_id, scout_ids, linked_scout_id')
     .eq('email', user.email.toLowerCase())
     .eq('status', 'invited')
 
@@ -193,11 +194,45 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
   let lastUnitId: string | undefined
 
   for (const invite of invites) {
-    // Update the membership: set profile_id, status='active', accepted_at
-    const { error: updateError } = await supabase
+    let finalProfileId = userProfile.id
+
+    // If membership already has a profile_id (roster invite), keep it and link to auth user
+    if (invite.profile_id && invite.profile_id !== userProfile.id) {
+      console.log(`Membership has existing profile_id ${invite.profile_id}, linking to auth user`)
+
+      // Link the roster profile to the auth user
+      const { error: linkError } = await adminSupabase
+        .from('profiles')
+        .update({ user_id: user.id })
+        .eq('id', invite.profile_id)
+
+      if (linkError) {
+        console.error('Failed to link roster profile to user:', linkError.message)
+      } else {
+        finalProfileId = invite.profile_id
+
+        // Delete the duplicate profile created by signup trigger if it's empty
+        const { data: duplicateProfile } = await adminSupabase
+          .from('profiles')
+          .select('member_type, bsa_member_id')
+          .eq('id', userProfile.id)
+          .single()
+
+        if (duplicateProfile && !duplicateProfile.member_type && !duplicateProfile.bsa_member_id) {
+          console.log(`Deleting duplicate empty profile ${userProfile.id}`)
+          await adminSupabase
+            .from('profiles')
+            .delete()
+            .eq('id', userProfile.id)
+        }
+      }
+    }
+
+    // Update the membership: set status='active', accepted_at
+    const { error: updateError } = await adminSupabase
       .from('unit_memberships')
       .update({
-        profile_id: profile.id,
+        profile_id: finalProfileId,
         status: 'active',
         accepted_at: new Date().toISOString(),
         joined_at: new Date().toISOString(),
@@ -207,22 +242,20 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
     if (updateError) {
       console.error('Failed to accept invite:', updateError.message, {
         membership_id: invite.id,
-        profile_id: profile.id,
+        profile_id: finalProfileId,
       })
       continue
     }
 
     // Create scout_guardians records for parent role
-    // Use admin client to bypass RLS (user doesn't have permission to insert guardians)
     if (invite.role === 'parent' && invite.scout_ids && invite.scout_ids.length > 0) {
       const guardianRecords = invite.scout_ids.map((scoutId: string, index: number) => ({
         scout_id: scoutId,
-        profile_id: profile.id,
+        profile_id: finalProfileId,
         is_primary: index === 0,
         relationship: 'parent',
       }))
 
-      const adminSupabase = createAdminClient()
       const { error: guardianError } = await adminSupabase
         .from('scout_guardians')
         .insert(guardianRecords)
@@ -235,18 +268,16 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
     }
 
     // Link profile to scout record for scout role
-    // Use admin client to bypass RLS
     if (invite.role === 'scout' && invite.linked_scout_id) {
-      const adminSupabase = createAdminClient()
       const { error: scoutLinkError } = await adminSupabase
         .from('scouts')
-        .update({ profile_id: profile.id })
+        .update({ profile_id: finalProfileId })
         .eq('id', invite.linked_scout_id)
 
       if (scoutLinkError) {
         console.error('Failed to link profile to scout:', scoutLinkError.message)
       } else {
-        console.log(`Linked profile ${profile.id} to scout ${invite.linked_scout_id}`)
+        console.log(`Linked profile ${finalProfileId} to scout ${invite.linked_scout_id}`)
       }
     }
 
@@ -873,16 +904,23 @@ export async function inviteProfileToApp({
     return { success: false, error: 'Failed to update profile email' }
   }
 
-  // Update the membership role
-  const { error: roleError } = await adminSupabase2
+  // Update the membership: set role and status to 'invited'
+  const { error: membershipUpdateError } = await adminSupabase2
     .from('unit_memberships')
-    .update({ role })
+    .update({
+      role,
+      status: 'invited',
+      email: email.toLowerCase(),
+      invited_at: new Date().toISOString(),
+      invited_by: currentProfile.id,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    })
     .eq('unit_id', unitId)
     .eq('profile_id', profileId)
 
-  if (roleError) {
-    console.error('Role update error:', roleError)
-    // Not critical, continue
+  if (membershipUpdateError) {
+    console.error('Membership update error:', membershipUpdateError)
+    return { success: false, error: 'Failed to update membership status' }
   }
 
   // Send the invite email via Supabase Admin Auth API

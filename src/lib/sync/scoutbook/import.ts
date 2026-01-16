@@ -9,6 +9,18 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 import { RosterMember } from './types'
 
+/**
+ * Determine if a member is active based on their BSA renewal status.
+ * A member is considered active unless their status explicitly indicates "Expired".
+ * - "Current" → active
+ * - "Eligible for Renewal" → active (registration expiring soon but still a member)
+ * - "Expired" → inactive
+ */
+function isRenewalStatusActive(renewalStatus: string | null | undefined): boolean {
+  if (!renewalStatus) return true // Default to active if no status
+  return !renewalStatus.toLowerCase().includes('expired')
+}
+
 export interface ImportResult {
   // Scouts
   created: number
@@ -87,7 +99,7 @@ function parseName(fullName: string): { firstName: string; lastName: string } {
  *
  * Analyzes each member to determine:
  * - Youth: create (new), update (existing with changes), skip (no changes)
- * - Adults: create (new roster_adult), update (existing roster_adult with changes)
+ * - Adults: create (new profile), update (existing profile with changes)
  *           Also matches adults to existing profiles by BSA ID or name
  */
 export async function stageRosterMembers(
@@ -118,7 +130,7 @@ export async function stageRosterMembers(
       )
     `)
     .eq('unit_id', unitId)
-    .eq('status', 'active')
+    .in('status', ['active', 'roster', 'invited'])
 
   if (adultsError) {
     throw new Error(`Failed to fetch existing adult profiles: ${adultsError.message}`)
@@ -173,12 +185,12 @@ export async function stageRosterMembers(
     .select('id, bsa_member_id, full_name, first_name, last_name')
     .not('bsa_member_id', 'is', null)
 
-  // Get active unit member profile IDs for name matching
+  // Get unit member profile IDs for name matching (any status except inactive)
   const { data: unitMemberships } = await supabase
     .from('unit_memberships')
     .select('profile_id')
     .eq('unit_id', unitId)
-    .eq('status', 'active')
+    .in('status', ['active', 'roster', 'invited'])
     .not('profile_id', 'is', null)
 
   const unitProfileIds = (unitMemberships || [])
@@ -238,7 +250,7 @@ export async function stageRosterMembers(
   }
 
   console.log(
-    `[Staging] Analyzing ${rosterMembers.length} members (${existingScoutsByBsaId.size} scouts, ${existingAdultsByBsaId.size} roster adults)`
+    `[Staging] Analyzing ${rosterMembers.length} members (${existingScoutsByBsaId.size} scouts, ${existingAdultsByBsaId.size} adult profiles)`
   )
 
   const stagedRows: Database['public']['Tables']['sync_staged_members']['Insert'][] = []
@@ -581,7 +593,7 @@ export async function confirmStagedImport(
         patrol_id: patrolId,
         current_position: member.position,
         current_position_2: member.position_2,
-        is_active: member.renewal_status === 'Current',
+        is_active: isRenewalStatusActive(member.renewal_status),
       })
 
       if (insertError) {
@@ -614,7 +626,7 @@ export async function confirmStagedImport(
           patrol_id: patrolId,
           current_position: member.position,
           current_position_2: member.position_2,
-          is_active: member.renewal_status === 'Current',
+          is_active: isRenewalStatusActive(member.renewal_status),
           updated_at: new Date().toISOString(),
         })
         .eq('id', member.existing_scout_id)
@@ -660,7 +672,7 @@ export async function confirmStagedImport(
             position_2: member.position_2,
             renewal_status: member.renewal_status,
             expiration_date: member.expiration_date,
-            is_active: member.renewal_status === 'Current',
+            is_active: isRenewalStatusActive(member.renewal_status),
             last_synced_at: new Date().toISOString(),
             sync_session_id: sessionId,
           })
@@ -698,7 +710,7 @@ export async function confirmStagedImport(
               unit_id: unitId,
               profile_id: member.matched_profile_id,
               role: member.member_type === 'LEADER' ? 'leader' : 'parent',
-              status: 'active',
+              status: 'roster', // Adults from roster are not yet app members
             })
           }
         }
@@ -717,7 +729,7 @@ export async function confirmStagedImport(
             position_2: member.position_2,
             renewal_status: member.renewal_status,
             expiration_date: member.expiration_date,
-            is_active: member.renewal_status === 'Current',
+            is_active: isRenewalStatusActive(member.renewal_status),
             sync_session_id: sessionId,
             last_synced_at: new Date().toISOString(),
           })
@@ -749,7 +761,7 @@ export async function confirmStagedImport(
               unit_id: unitId,
               profile_id: newProfile.id,
               role: member.member_type === 'LEADER' ? 'leader' : 'parent',
-              status: 'active',
+              status: 'roster', // Adults from roster are not yet app members
             })
           }
         }
@@ -767,7 +779,7 @@ export async function confirmStagedImport(
           position_2: member.position_2,
           renewal_status: member.renewal_status,
           expiration_date: member.expiration_date,
-          is_active: member.renewal_status === 'Current',
+          is_active: isRenewalStatusActive(member.renewal_status),
           last_synced_at: new Date().toISOString(),
           sync_session_id: sessionId,
         })
@@ -914,7 +926,7 @@ export async function importRosterMembers(
             patrol: member.patrol || null,
             patrol_id: patrolId,
             current_position: member.position,
-            is_active: member.renewalStatus === 'Current',
+            is_active: isRenewalStatusActive(member.renewalStatus),
             updated_at: new Date().toISOString(),
           })
           .eq('id', existing.id)
@@ -935,7 +947,7 @@ export async function importRosterMembers(
           patrol: member.patrol || null,
           patrol_id: patrolId,
           current_position: member.position,
-          is_active: member.renewalStatus === 'Current',
+          is_active: isRenewalStatusActive(member.renewalStatus),
         })
 
         if (insertError) {

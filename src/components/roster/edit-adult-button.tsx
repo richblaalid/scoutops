@@ -10,6 +10,7 @@ interface EditAdultButtonProps {
   unitId: string
   adult: {
     id: string
+    user_id: string | null
     first_name: string | null
     last_name: string | null
     email: string | null

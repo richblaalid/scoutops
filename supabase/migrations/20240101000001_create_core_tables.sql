@@ -26,7 +26,7 @@ CREATE TABLE profiles (
     full_name VARCHAR(255),
     first_name VARCHAR(100),  -- for imported adults
     last_name VARCHAR(100),   -- for imported adults
-    phone VARCHAR(20),
+    phone VARCHAR(30),
     -- BSA/Scoutbook fields (for imported adults)
     bsa_member_id VARCHAR(20),
     member_type VARCHAR(20) CHECK (member_type IN ('LEADER', 'P 18+') OR member_type IS NULL),

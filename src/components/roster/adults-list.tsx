@@ -387,6 +387,7 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
           unitId={unitId}
           adult={{
             id: editingAdult.id,
+            user_id: editingAdult.user_id,
             first_name: editingAdult.first_name,
             last_name: editingAdult.last_name,
             email: editingAdult.email || null,

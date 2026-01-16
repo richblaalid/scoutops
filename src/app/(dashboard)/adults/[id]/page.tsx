@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessDenied } from '@/components/ui/access-denied'
 import { isAdmin, isTreasurer } from '@/lib/roles'
 import { EditAdultButton } from '@/components/roster/edit-adult-button'
+import { InviteAdultButton } from '@/components/roster/invite-adult-button'
 
 interface AdultDetailPageProps {
   params: Promise<{ id: string }>
@@ -173,6 +174,7 @@ export default async function AdultDetailPage({ params }: AdultDetailPageProps) 
             unitId={currentMembership.unit_id}
             adult={{
               id: adult.id,
+              user_id: adult.user_id,
               first_name: adult.first_name,
               last_name: adult.last_name,
               email: adult.email,
@@ -290,19 +292,41 @@ export default async function AdultDetailPage({ params }: AdultDetailPageProps) 
             <CardTitle>App Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-stone-500">Account Status</p>
-              <div className="mt-1">
-                {hasAppAccount ? (
-                  <span className="inline-flex rounded-full px-2 py-1 text-xs font-medium bg-forest-100 text-forest-700">
-                    Has App Account
-                  </span>
-                ) : (
-                  <span className="inline-flex rounded-full px-2 py-1 text-xs font-medium bg-stone-100 text-stone-500">
-                    No App Account
-                  </span>
-                )}
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-stone-500">Account Status</p>
+                <div className="mt-1">
+                  {hasAppAccount ? (
+                    <span className="inline-flex rounded-full px-2 py-1 text-xs font-medium bg-forest-100 text-forest-700">
+                      Has App Account
+                    </span>
+                  ) : adultMembership?.status === 'invited' ? (
+                    <span className="inline-flex rounded-full px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700">
+                      Invite Pending
+                    </span>
+                  ) : (
+                    <span className="inline-flex rounded-full px-2 py-1 text-xs font-medium bg-stone-100 text-stone-500">
+                      No App Account
+                    </span>
+                  )}
+                </div>
               </div>
+              {!hasAppAccount && adultMembership?.status === 'roster' && (
+                <InviteAdultButton
+                  unitId={currentMembership.unit_id}
+                  adult={{
+                    id: adult.id,
+                    first_name: adult.first_name,
+                    last_name: adult.last_name,
+                    full_name: adult.full_name,
+                    email: adult.email,
+                    member_type: adult.member_type,
+                    position: adult.position,
+                    bsa_member_id: adult.bsa_member_id,
+                    user_id: adult.user_id,
+                  }}
+                />
+              )}
             </div>
             {adultMembership && (
               <div className="grid gap-4 sm:grid-cols-2">

@@ -143,7 +143,7 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
                       <div className="flex items-center gap-3">
                         {member.profiles && (
                           <Link
-                            href={`/members/${member.id}`}
+                            href={`/adults/${member.profiles.id}`}
                             className="text-sm text-forest-600 hover:text-forest-800"
                           >
                             View

@@ -21,6 +21,7 @@ interface RosterAdult {
   first_name: string | null
   last_name: string | null
   full_name: string | null
+  email?: string | null
   member_type: string | null
   position: string | null
   bsa_member_id: string | null
@@ -52,7 +53,7 @@ export function InviteRosterAdultDialog({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [warning, setWarning] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(adult.email || '')
   const [role, setRole] = useState<MemberRole>(
     adult.member_type === 'LEADER' ? 'leader' : 'parent'
   )
@@ -95,7 +96,7 @@ export function InviteRosterAdultDialog({
 
   const handleClose = () => {
     if (!isLoading) {
-      setEmail('')
+      setEmail(adult.email || '')
       setError(null)
       setWarning(null)
       setRole(adult.member_type === 'LEADER' ? 'leader' : 'parent')
