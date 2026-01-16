@@ -208,6 +208,24 @@ export async function syncFromScoutbook(
 
     console.log(`[Sync] Extraction complete: ${rosterMembers.length} members from ${currentPage} pages`);
 
+    // Deduplicate by BSA member ID (handles pagination edge cases)
+    const uniqueMembers = new Map<string, RosterMember>();
+    for (const member of rosterMembers) {
+      // Keep the first occurrence (or overwrite with later if you prefer latest)
+      if (!uniqueMembers.has(member.bsaMemberId)) {
+        uniqueMembers.set(member.bsaMemberId, member);
+      }
+    }
+    const deduplicatedMembers = Array.from(uniqueMembers.values());
+
+    if (deduplicatedMembers.length < rosterMembers.length) {
+      console.log(`[Sync] Deduplicated: ${rosterMembers.length} -> ${deduplicatedMembers.length} members`);
+    }
+
+    // Clear and replace with deduplicated list
+    rosterMembers.length = 0;
+    rosterMembers.push(...deduplicatedMembers);
+
     session.recordsExtracted = rosterMembers.length;
 
     // Phase 3: Extract individual profiles (if not roster-only)
