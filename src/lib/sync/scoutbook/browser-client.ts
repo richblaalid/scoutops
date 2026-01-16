@@ -189,74 +189,67 @@ export class AgentBrowserClient {
    * This modal appears on first login and blocks interaction
    */
   async dismissTourModal(): Promise<boolean> {
-    try {
-      const snapshot = await this.snapshot(true);
-      const refs = snapshot.data?.refs || {};
+    // Try multiple times since the modal may take a moment to appear
+    const maxAttempts = 3;
 
-      // Debug: log all clickable elements to help identify the right button
-      const clickableElements = Object.entries(refs).filter(
-        ([, r]) => r.role === 'button' || r.role === 'link' || r.name
-      );
-      console.log('[Browser] Looking for tour modal. Clickable elements:',
-        clickableElements.slice(0, 15).map(([k, r]) => `${k}:${r.role}:"${r.name}"`).join(', ')
-      );
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log(`[Browser] Checking for tour modal (attempt ${attempt}/${maxAttempts})...`);
 
-      // Look for SKIP button first (Scoutbook uses uppercase "SKIP")
-      // Check any clickable role, not just 'button'
-      const skipEntry = Object.entries(refs).find(
-        ([, r]) => r.name?.toUpperCase() === 'SKIP'
-      );
+      // Wait a bit for modal to appear (longer on first attempt)
+      await this.sleep(attempt === 1 ? 1000 : 500);
 
-      if (skipEntry) {
-        console.log(`[Browser] Found SKIP button: @${skipEntry[0]} (role: ${skipEntry[1].role})`);
-        await this.click(`@${skipEntry[0]}`);
-        await this.sleep(500);
-        return true;
-      }
+      try {
+        const snapshot = await this.snapshot(false); // Get full snapshot, not just interactive
+        const refs = snapshot.data?.refs || {};
+        const snapshotText = snapshot.data?.snapshot || '';
 
-      // Look for other common dismiss button patterns (any clickable role)
-      const dismissNames = [
-        'skip tour', 'close', 'got it', 'dismiss',
-        'no thanks', 'maybe later', '×', 'x', 'close dialog', 'close modal'
-      ];
-
-      for (const name of dismissNames) {
-        const entry = Object.entries(refs).find(
-          ([, r]) => r.name?.toLowerCase() === name
-        );
-
-        if (entry) {
-          console.log(`[Browser] Found dismiss button: "${entry[1].name}" @${entry[0]}`);
-          await this.click(`@${entry[0]}`);
+        // The Scoutbook tour modal buttons have name="[object Object]" due to a bug
+        // But the actual button text appears in the snapshot text as: button "[object Object]" [ref=eXX]: Skip
+        // Look for the Skip button ref in the snapshot text
+        const skipMatch = snapshotText.match(/button[^]*?\[ref=(e\d+)\][^]*?:\s*Skip\b/i);
+        if (skipMatch) {
+          const skipRef = skipMatch[1];
+          console.log(`[Browser] Found Skip button via snapshot text: @${skipRef}`);
+          await this.click(`@${skipRef}`);
           await this.sleep(500);
           return true;
         }
+
+        // Also check refs directly in case the name is correct
+        for (const [key, ref] of Object.entries(refs)) {
+          const name = ref.name?.trim();
+          if (name && name.toLowerCase() === 'skip') {
+            console.log(`[Browser] Found Skip button via refs: @${key}`);
+            await this.click(`@${key}`);
+            await this.sleep(500);
+            return true;
+          }
+        }
+
+        // Check if tour modal text is present but Skip button wasn't found
+        if (snapshotText.includes('Welcome to Scoutbook Plus') || snapshotText.includes('begin the tour')) {
+          console.log('[Browser] Tour modal detected but Skip button not found in expected format');
+
+          // Try to find any button with Skip text
+          const anySkipMatch = snapshotText.match(/\[ref=(e\d+)\][^\n]*Skip/i);
+          if (anySkipMatch) {
+            console.log(`[Browser] Found Skip via loose match: @${anySkipMatch[1]}`);
+            await this.click(`@${anySkipMatch[1]}`);
+            await this.sleep(500);
+            return true;
+          }
+        }
+
+      } catch (error) {
+        console.warn(`[Browser] Error on attempt ${attempt}:`, error);
       }
-
-      // Look for any element containing "skip" in its name (but not "start" or "take")
-      const skipContainsEntry = Object.entries(refs).find(
-        ([, r]) =>
-          r.name?.toLowerCase().includes('skip') &&
-          !r.name?.toLowerCase().includes('start') &&
-          !r.name?.toLowerCase().includes('take')
-      );
-
-      if (skipContainsEntry) {
-        console.log(`[Browser] Found skip-like button: "${skipContainsEntry[1].name}" @${skipContainsEntry[0]}`);
-        await this.click(`@${skipContainsEntry[0]}`);
-        await this.sleep(500);
-        return true;
-      }
-
-      // Last resort: try pressing Escape to close any modal
-      console.log('[Browser] No specific tour modal button found, trying Escape key');
-      await this.press('Escape');
-      await this.sleep(300);
-      return false;
-    } catch (error) {
-      console.warn('[Browser] Error checking for tour modal:', error);
-      return false;
     }
+
+    // Last resort: try pressing Escape to close any modal
+    console.log('[Browser] No Skip button found after retries, trying Escape key');
+    await this.press('Escape');
+    await this.sleep(300);
+    return false;
   }
 
   /**
