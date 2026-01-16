@@ -193,63 +193,59 @@ export class AgentBrowserClient {
       const snapshot = await this.snapshot(true);
       const refs = snapshot.data?.refs || {};
 
-      // Look for common tour/modal dismiss buttons
-      // Scoutbook Plus uses various patterns for the tour modal
-      const dismissPatterns = [
-        // Common close button text
-        { name: 'Skip', role: 'button' },
-        { name: 'Skip Tour', role: 'button' },
-        { name: 'Close', role: 'button' },
-        { name: 'Got it', role: 'button' },
-        { name: 'Dismiss', role: 'button' },
-        { name: 'No thanks', role: 'button' },
-        { name: 'Maybe later', role: 'button' },
-        // X button patterns
-        { name: '×', role: 'button' },
-        { name: 'X', role: 'button' },
-        { name: 'close', role: 'button' },
-        // Dialog close buttons
-        { name: 'Close dialog', role: 'button' },
-        { name: 'Close modal', role: 'button' },
+      // Debug: log all clickable elements to help identify the right button
+      const clickableElements = Object.entries(refs).filter(
+        ([, r]) => r.role === 'button' || r.role === 'link' || r.name
+      );
+      console.log('[Browser] Looking for tour modal. Clickable elements:',
+        clickableElements.slice(0, 15).map(([k, r]) => `${k}:${r.role}:"${r.name}"`).join(', ')
+      );
+
+      // Look for SKIP button first (Scoutbook uses uppercase "SKIP")
+      // Check any clickable role, not just 'button'
+      const skipEntry = Object.entries(refs).find(
+        ([, r]) => r.name?.toUpperCase() === 'SKIP'
+      );
+
+      if (skipEntry) {
+        console.log(`[Browser] Found SKIP button: @${skipEntry[0]} (role: ${skipEntry[1].role})`);
+        await this.click(`@${skipEntry[0]}`);
+        await this.sleep(500);
+        return true;
+      }
+
+      // Look for other common dismiss button patterns (any clickable role)
+      const dismissNames = [
+        'skip tour', 'close', 'got it', 'dismiss',
+        'no thanks', 'maybe later', '×', 'x', 'close dialog', 'close modal'
       ];
 
-      for (const pattern of dismissPatterns) {
+      for (const name of dismissNames) {
         const entry = Object.entries(refs).find(
-          ([, r]) =>
-            r.name?.toLowerCase() === pattern.name.toLowerCase() &&
-            r.role === pattern.role
+          ([, r]) => r.name?.toLowerCase() === name
         );
 
         if (entry) {
-          console.log(`[Browser] Found tour modal dismiss button: "${pattern.name}"`);
+          console.log(`[Browser] Found dismiss button: "${entry[1].name}" @${entry[0]}`);
           await this.click(`@${entry[0]}`);
           await this.sleep(500);
           return true;
         }
       }
 
-      // Also look for any button that contains "skip" or "close" in a dialog context
-      const dialogEntry = Object.entries(refs).find(
-        ([, r]) => r.role === 'dialog' || r.role === 'alertdialog'
+      // Look for any element containing "skip" in its name (but not "start" or "take")
+      const skipContainsEntry = Object.entries(refs).find(
+        ([, r]) =>
+          r.name?.toLowerCase().includes('skip') &&
+          !r.name?.toLowerCase().includes('start') &&
+          !r.name?.toLowerCase().includes('take')
       );
 
-      if (dialogEntry) {
-        // Found a dialog, look for skip/close button
-        const closeBtn = Object.entries(refs).find(
-          ([, r]) =>
-            r.role === 'button' &&
-            r.name &&
-            (r.name.toLowerCase().includes('skip') ||
-              r.name.toLowerCase().includes('close') ||
-              r.name.toLowerCase().includes('dismiss'))
-        );
-
-        if (closeBtn) {
-          console.log(`[Browser] Found dialog close button: "${closeBtn[1].name}"`);
-          await this.click(`@${closeBtn[0]}`);
-          await this.sleep(500);
-          return true;
-        }
+      if (skipContainsEntry) {
+        console.log(`[Browser] Found skip-like button: "${skipContainsEntry[1].name}" @${skipContainsEntry[0]}`);
+        await this.click(`@${skipContainsEntry[0]}`);
+        await this.sleep(500);
+        return true;
       }
 
       // Last resort: try pressing Escape to close any modal
