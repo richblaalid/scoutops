@@ -83,6 +83,9 @@ export async function syncFromScoutbook(
       percentComplete: 100,
     });
 
+    // Dismiss tour modal if present (appears on first login)
+    await client.dismissTourModal();
+
     // Phase 2: Extract roster data
     reportProgress(opts.onProgress, {
       phase: 'roster',
@@ -92,8 +95,7 @@ export async function syncFromScoutbook(
       percentComplete: 0,
     });
 
-    // Always navigate to roster explicitly after login
-    // This handles cases where tutorial modals or other overlays appear
+    // Navigate to roster
     await client.navigateToRoster();
     await sleep(opts.rateLimitDelay * 2); // Extra delay for page load
 

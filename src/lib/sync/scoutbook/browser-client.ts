@@ -185,6 +185,85 @@ export class AgentBrowserClient {
   }
 
   /**
+   * Dismiss the Scoutbook tour modal if present
+   * This modal appears on first login and blocks interaction
+   */
+  async dismissTourModal(): Promise<boolean> {
+    try {
+      const snapshot = await this.snapshot(true);
+      const refs = snapshot.data?.refs || {};
+
+      // Look for common tour/modal dismiss buttons
+      // Scoutbook Plus uses various patterns for the tour modal
+      const dismissPatterns = [
+        // Common close button text
+        { name: 'Skip', role: 'button' },
+        { name: 'Skip Tour', role: 'button' },
+        { name: 'Close', role: 'button' },
+        { name: 'Got it', role: 'button' },
+        { name: 'Dismiss', role: 'button' },
+        { name: 'No thanks', role: 'button' },
+        { name: 'Maybe later', role: 'button' },
+        // X button patterns
+        { name: '×', role: 'button' },
+        { name: 'X', role: 'button' },
+        { name: 'close', role: 'button' },
+        // Dialog close buttons
+        { name: 'Close dialog', role: 'button' },
+        { name: 'Close modal', role: 'button' },
+      ];
+
+      for (const pattern of dismissPatterns) {
+        const entry = Object.entries(refs).find(
+          ([, r]) =>
+            r.name?.toLowerCase() === pattern.name.toLowerCase() &&
+            r.role === pattern.role
+        );
+
+        if (entry) {
+          console.log(`[Browser] Found tour modal dismiss button: "${pattern.name}"`);
+          await this.click(`@${entry[0]}`);
+          await this.sleep(500);
+          return true;
+        }
+      }
+
+      // Also look for any button that contains "skip" or "close" in a dialog context
+      const dialogEntry = Object.entries(refs).find(
+        ([, r]) => r.role === 'dialog' || r.role === 'alertdialog'
+      );
+
+      if (dialogEntry) {
+        // Found a dialog, look for skip/close button
+        const closeBtn = Object.entries(refs).find(
+          ([, r]) =>
+            r.role === 'button' &&
+            r.name &&
+            (r.name.toLowerCase().includes('skip') ||
+              r.name.toLowerCase().includes('close') ||
+              r.name.toLowerCase().includes('dismiss'))
+        );
+
+        if (closeBtn) {
+          console.log(`[Browser] Found dialog close button: "${closeBtn[1].name}"`);
+          await this.click(`@${closeBtn[0]}`);
+          await this.sleep(500);
+          return true;
+        }
+      }
+
+      // Last resort: try pressing Escape to close any modal
+      console.log('[Browser] No specific tour modal button found, trying Escape key');
+      await this.press('Escape');
+      await this.sleep(300);
+      return false;
+    } catch (error) {
+      console.warn('[Browser] Error checking for tour modal:', error);
+      return false;
+    }
+  }
+
+  /**
    * Check if currently on the roster page
    */
   async isOnRosterPage(): Promise<boolean> {
