@@ -135,13 +135,13 @@ BEGIN
     RETURN QUERY
     -- Direct memberships
     SELECT unit_id FROM unit_memberships
-    WHERE profile_id = auth.uid() AND is_active = true
+    WHERE profile_id = auth.uid() AND status = 'active'
     UNION
     -- Sections of units user has membership to
     SELECT u.id FROM units u
     WHERE u.parent_unit_id IN (
         SELECT unit_id FROM unit_memberships
-        WHERE profile_id = auth.uid() AND is_active = true
+        WHERE profile_id = auth.uid() AND status = 'active'
     )
     UNION
     -- Units via group membership (keep for backwards compat during transition)

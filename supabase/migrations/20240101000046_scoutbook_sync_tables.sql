@@ -138,7 +138,7 @@ CREATE POLICY "sync_sessions_select" ON sync_sessions
     FOR SELECT USING (
         unit_id IN (
             SELECT unit_id FROM unit_memberships
-            WHERE profile_id = get_current_profile_id() AND is_active = true
+            WHERE profile_id = get_current_profile_id() AND status = 'active'
         )
     );
 
@@ -147,7 +147,7 @@ CREATE POLICY "sync_sessions_insert" ON sync_sessions
         unit_id IN (
             SELECT unit_id FROM unit_memberships
             WHERE profile_id = get_current_profile_id()
-            AND is_active = true
+            AND status = 'active'
             AND role IN ('admin', 'treasurer')
         )
     );
@@ -157,7 +157,7 @@ CREATE POLICY "sync_sessions_update" ON sync_sessions
         unit_id IN (
             SELECT unit_id FROM unit_memberships
             WHERE profile_id = get_current_profile_id()
-            AND is_active = true
+            AND status = 'active'
             AND role IN ('admin', 'treasurer')
         )
     );
@@ -169,7 +169,7 @@ CREATE POLICY "sync_snapshots_select" ON sync_snapshots
             SELECT id FROM sync_sessions WHERE unit_id IN (
                 SELECT unit_id FROM unit_memberships
                 WHERE profile_id = get_current_profile_id()
-                AND is_active = true
+                AND status = 'active'
                 AND role IN ('admin', 'treasurer')
             )
         )
@@ -181,7 +181,7 @@ CREATE POLICY "sync_snapshots_insert" ON sync_snapshots
             SELECT id FROM sync_sessions WHERE unit_id IN (
                 SELECT unit_id FROM unit_memberships
                 WHERE profile_id = get_current_profile_id()
-                AND is_active = true
+                AND status = 'active'
                 AND role IN ('admin', 'treasurer')
             )
         )
@@ -197,7 +197,7 @@ CREATE POLICY "scout_advancements_select" ON scout_advancements
         scout_id IN (
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
-            WHERE um.profile_id = get_current_profile_id() AND um.is_active = true
+            WHERE um.profile_id = get_current_profile_id() AND um.status = 'active'
         )
     );
 
@@ -207,7 +207,7 @@ CREATE POLICY "scout_advancements_insert" ON scout_advancements
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -218,7 +218,7 @@ CREATE POLICY "scout_advancements_update" ON scout_advancements
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -229,7 +229,7 @@ CREATE POLICY "scout_rank_requirements_select" ON scout_rank_requirements
         scout_id IN (
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
-            WHERE um.profile_id = get_current_profile_id() AND um.is_active = true
+            WHERE um.profile_id = get_current_profile_id() AND um.status = 'active'
         )
     );
 
@@ -239,7 +239,7 @@ CREATE POLICY "scout_rank_requirements_insert" ON scout_rank_requirements
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -250,7 +250,7 @@ CREATE POLICY "scout_rank_requirements_update" ON scout_rank_requirements
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -261,7 +261,7 @@ CREATE POLICY "scout_leadership_positions_select" ON scout_leadership_positions
         scout_id IN (
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
-            WHERE um.profile_id = get_current_profile_id() AND um.is_active = true
+            WHERE um.profile_id = get_current_profile_id() AND um.status = 'active'
         )
     );
 
@@ -271,7 +271,7 @@ CREATE POLICY "scout_leadership_positions_insert" ON scout_leadership_positions
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -282,7 +282,7 @@ CREATE POLICY "scout_leadership_positions_update" ON scout_leadership_positions
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -293,7 +293,7 @@ CREATE POLICY "scout_leadership_positions_delete" ON scout_leadership_positions
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -304,7 +304,7 @@ CREATE POLICY "scout_activity_logs_select" ON scout_activity_logs
         scout_id IN (
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
-            WHERE um.profile_id = get_current_profile_id() AND um.is_active = true
+            WHERE um.profile_id = get_current_profile_id() AND um.status = 'active'
         )
     );
 
@@ -314,7 +314,7 @@ CREATE POLICY "scout_activity_logs_insert" ON scout_activity_logs
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );
@@ -325,7 +325,7 @@ CREATE POLICY "scout_activity_logs_update" ON scout_activity_logs
             SELECT s.id FROM scouts s
             JOIN unit_memberships um ON s.unit_id = um.unit_id
             WHERE um.profile_id = get_current_profile_id()
-            AND um.is_active = true
+            AND um.status = 'active'
             AND um.role IN ('admin', 'treasurer')
         )
     );

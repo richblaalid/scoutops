@@ -40,7 +40,7 @@ RETURNS SETOF UUID AS $$
 BEGIN
     RETURN QUERY
     SELECT unit_id FROM unit_memberships
-    WHERE profile_id = get_current_profile_id() AND is_active = true;
+    WHERE profile_id = get_current_profile_id() AND status = 'active';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -54,7 +54,7 @@ BEGIN
         SELECT 1 FROM unit_memberships
         WHERE unit_id = unit
         AND profile_id = get_current_profile_id()
-        AND is_active = true
+        AND status = 'active'
         AND role = ANY(required_roles)
     );
 END;

@@ -34,7 +34,7 @@ CREATE POLICY "Admins can view unit invites"
       WHERE um.unit_id = unit_invites.unit_id
         AND um.profile_id = auth.uid()
         AND um.role = 'admin'
-        AND um.is_active = true
+        AND um.status = 'active'
     )
   );
 
@@ -49,7 +49,7 @@ CREATE POLICY "Admins can create unit invites"
       WHERE um.unit_id = unit_invites.unit_id
         AND um.profile_id = auth.uid()
         AND um.role = 'admin'
-        AND um.is_active = true
+        AND um.status = 'active'
     )
   );
 
@@ -64,7 +64,7 @@ CREATE POLICY "Admins can update unit invites"
       WHERE um.unit_id = unit_invites.unit_id
         AND um.profile_id = auth.uid()
         AND um.role = 'admin'
-        AND um.is_active = true
+        AND um.status = 'active'
     )
   );
 
@@ -79,7 +79,7 @@ CREATE POLICY "Admins can delete unit invites"
       WHERE um.unit_id = unit_invites.unit_id
         AND um.profile_id = auth.uid()
         AND um.role = 'admin'
-        AND um.is_active = true
+        AND um.status = 'active'
     )
   );
 

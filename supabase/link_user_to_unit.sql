@@ -5,29 +5,29 @@
 -- Replace YOUR_EMAIL with your actual email
 
 -- Option 1: Link by email (easiest)
-INSERT INTO unit_memberships (unit_id, profile_id, role, is_active)
+INSERT INTO unit_memberships (unit_id, profile_id, role, status)
 SELECT
     '10000000-0000-4000-a000-000000000001',
     p.id,
     'admin',
-    true
+    'active'
 FROM profiles p
 WHERE p.email = 'YOUR_EMAIL_HERE'
-ON CONFLICT (unit_id, profile_id) DO UPDATE SET role = 'admin', is_active = true;
+ON CONFLICT (unit_id, profile_id) DO UPDATE SET role = 'admin', status = 'active';
 
 -- Option 2: Link the most recently created user (if you just signed up)
 -- Uncomment to use:
 /*
-INSERT INTO unit_memberships (unit_id, profile_id, role, is_active)
+INSERT INTO unit_memberships (unit_id, profile_id, role, status)
 SELECT
     '10000000-0000-4000-a000-000000000001',
     p.id,
     'admin',
-    true
+    'active'
 FROM profiles p
 ORDER BY p.created_at DESC
 LIMIT 1
-ON CONFLICT (unit_id, profile_id) DO UPDATE SET role = 'admin', is_active = true;
+ON CONFLICT (unit_id, profile_id) DO UPDATE SET role = 'admin', status = 'active';
 */
 
 -- Verify the membership was created
@@ -38,4 +38,4 @@ SELECT
 FROM unit_memberships um
 JOIN profiles p ON p.id = um.profile_id
 JOIN units u ON u.id = um.unit_id
-WHERE um.is_active = true;
+WHERE um.status = 'active';

@@ -91,7 +91,7 @@ BEGIN
     RETURN QUERY
     -- Direct memberships only
     SELECT unit_id FROM unit_memberships
-    WHERE profile_id = auth.uid() AND is_active = true
+    WHERE profile_id = auth.uid() AND status = 'active'
     UNION
     -- Units via group membership (keep for backwards compat)
     SELECT u.id FROM units u

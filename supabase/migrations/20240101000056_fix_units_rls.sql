@@ -9,6 +9,6 @@ CREATE POLICY "Users can view units via membership"
         id IN (
             SELECT unit_id FROM unit_memberships
             WHERE profile_id = get_current_profile_id()
-            AND is_active = true
+            AND status = 'active'
         )
     );
