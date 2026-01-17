@@ -18,6 +18,13 @@
  *   npx tsx scripts/db.ts seed:all
  *   npx tsx scripts/db.ts dump my-snapshot
  *   npx tsx scripts/db.ts restore supabase/seeds/my-snapshot.json
+ *
+ * Flags:
+ *   --prod       - Use production environment (.env.prod instead of .env.local)
+ *
+ * Production usage:
+ *   npx tsx scripts/db.ts --prod seed:all
+ *   npm run db:seed:all -- --prod
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -25,14 +32,18 @@ import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Check for --prod flag
+const isProd = process.argv.includes('--prod');
+const envFile = isProd ? '.env.prod' : '.env.local';
+
 // Load environment variables
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: envFile });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local');
+  console.error(`Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in ${envFile}`);
   process.exit(1);
 }
 
@@ -641,10 +652,14 @@ async function listDumps(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const command = process.argv[2];
-  const arg = process.argv[3];
+  // Filter out --prod flag to get command and args
+  const args = process.argv.slice(2).filter(a => a !== '--prod');
+  const command = args[0];
+  const arg = args[1];
 
-  console.log('🌱 Chuckbox Database Tool\n');
+  console.log('🌱 Chuckbox Database Tool');
+  console.log(`   Environment: ${isProd ? '🔴 PRODUCTION' : '🟢 Development'}`);
+  console.log(`   Database: ${supabaseUrl}\n`);
 
   switch (command) {
     case 'reset':
@@ -677,7 +692,7 @@ async function main(): Promise<void> {
       await listDumps();
       break;
     default:
-      console.log('Usage: npx tsx scripts/db.ts <command>');
+      console.log('Usage: npx tsx scripts/db.ts [--prod] <command>');
       console.log('');
       console.log('Commands:');
       console.log('  reset          - Clear all data from database');
@@ -687,6 +702,13 @@ async function main(): Promise<void> {
       console.log('  dump [name]    - Dump current database to JSON file');
       console.log('  restore <file> - Restore from a dump file');
       console.log('  list           - List available dump files');
+      console.log('');
+      console.log('Flags:');
+      console.log('  --prod         - Use production database (.env.prod)');
+      console.log('');
+      console.log('Examples:');
+      console.log('  npm run db:seed:all           # Seed dev database');
+      console.log('  npm run db:seed:all -- --prod # Seed prod database');
       process.exit(1);
   }
 }
