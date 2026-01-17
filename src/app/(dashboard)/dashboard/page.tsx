@@ -12,7 +12,7 @@ interface ScoutAccount {
     id: string
     first_name: string
     last_name: string
-    patrol: string | null
+    patrols: { name: string } | null
   } | null
 }
 
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
         id,
         first_name,
         last_name,
-        patrol
+        patrols ( name )
       )
     `
     )
@@ -285,8 +285,8 @@ export default async function DashboardPage() {
                         <p className="font-medium text-stone-900">
                           {account.scouts?.first_name} {account.scouts?.last_name}
                         </p>
-                        {account.scouts?.patrol && (
-                          <p className="text-sm text-stone-500">{account.scouts.patrol}</p>
+                        {account.scouts?.patrols?.name && (
+                          <p className="text-sm text-stone-500">{account.scouts.patrols?.name}</p>
                         )}
                       </div>
                       <span
@@ -433,8 +433,8 @@ export default async function DashboardPage() {
                       <p className="font-medium">
                         {account.scouts?.first_name} {account.scouts?.last_name}
                       </p>
-                      {account.scouts?.patrol && (
-                        <p className="text-xs text-stone-500">{account.scouts.patrol}</p>
+                      {account.scouts?.patrols?.name && (
+                        <p className="text-xs text-stone-500">{account.scouts.patrols?.name}</p>
                       )}
                     </div>
                     <span
