@@ -893,7 +893,6 @@ export async function inviteProfileToApp({
       email: email.toLowerCase(),
       invited_at: new Date().toISOString(),
       invited_by: currentProfile.id,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     })
     .eq('unit_id', unitId)
     .eq('profile_id', profileId)
