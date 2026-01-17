@@ -232,18 +232,19 @@ export async function syncFromScoutbook(
 
     // Phase 3: Extract individual profiles (if not roster-only)
     if (!opts.rosterOnly) {
-      const youthMembers = rosterMembers.filter((m) => m.type === 'YOUTH');
+      // Scouts = YOUTH + P 18+ (scouts who aged past 18)
+      const scoutMembers = rosterMembers.filter((m) => m.type === 'YOUTH' || m.type === 'P 18+');
 
       reportProgress(opts.onProgress, {
         phase: 'profiles',
-        message: `Extracting ${youthMembers.length} scout profiles...`,
+        message: `Extracting ${scoutMembers.length} scout profiles...`,
         current: 0,
-        total: youthMembers.length,
+        total: scoutMembers.length,
         percentComplete: 0,
       });
 
-      for (let i = 0; i < youthMembers.length; i++) {
-        const member = youthMembers[i];
+      for (let i = 0; i < scoutMembers.length; i++) {
+        const member = scoutMembers[i];
 
         try {
           // Navigate to youth profile
@@ -267,10 +268,10 @@ export async function syncFromScoutbook(
 
           reportProgress(opts.onProgress, {
             phase: 'profiles',
-            message: `Extracted ${i + 1} of ${youthMembers.length} profiles`,
+            message: `Extracted ${i + 1} of ${scoutMembers.length} profiles`,
             current: i + 1,
-            total: youthMembers.length,
-            percentComplete: Math.round(((i + 1) / youthMembers.length) * 100),
+            total: scoutMembers.length,
+            percentComplete: Math.round(((i + 1) / scoutMembers.length) * 100),
           });
         } catch (error) {
           // Log error but continue with other profiles

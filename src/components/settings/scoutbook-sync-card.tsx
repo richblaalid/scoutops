@@ -22,6 +22,11 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { SyncProgress } from '@/lib/sync/scoutbook/types'
 import { StagedMember } from '@/lib/sync/scoutbook'
 
@@ -84,10 +89,53 @@ export function ScoutbookSyncCard({
   const [isConfirming, setIsConfirming] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
 
-  // Check CLI status on mount
+  // Extension token state
+  const [extensionToken, setExtensionToken] = useState<string | null>(null)
+  const [tokenExpiresAt, setTokenExpiresAt] = useState<string | null>(null)
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false)
+  const [tokenCopied, setTokenCopied] = useState(false)
+
+  // Selection state for partial acceptance
+  const [selectedScoutIds, setSelectedScoutIds] = useState<Set<string>>(new Set())
+  const [selectedAdultIds, setSelectedAdultIds] = useState<Set<string>>(new Set())
+
+  // Check CLI status and pending syncs on mount
   useEffect(() => {
     checkCliStatus()
+    checkPendingSync()
   }, [])
+
+  // Initialize selections when staging data loads
+  useEffect(() => {
+    if (stagedMembers.length > 0) {
+      // Initialize scout selections
+      const scoutIds = stagedMembers
+        .filter((m) => (m.memberType === 'YOUTH' || m.memberType === 'P 18+') && m.changeType !== 'skip')
+        .map((m) => m.id)
+      setSelectedScoutIds(new Set(scoutIds))
+
+      // Initialize adult selections
+      const adultIds = stagedMembers
+        .filter((m) => m.memberType === 'LEADER' && m.changeType !== 'skip')
+        .map((m) => m.id)
+      setSelectedAdultIds(new Set(adultIds))
+    }
+  }, [stagedMembers])
+
+  async function checkPendingSync() {
+    try {
+      const response = await fetch('/api/scoutbook/sync/pending')
+      const data = await response.json()
+
+      if (data.hasPending) {
+        setSessionId(data.sessionId)
+        setStagedMembers(data.members)
+        setStagingSummary(data.summary)
+      }
+    } catch {
+      // Ignore errors - just means no pending sync
+    }
+  }
 
   async function checkCliStatus() {
     setIsCheckingCli(true)
@@ -157,6 +205,8 @@ export function ScoutbookSyncCard({
     setStagedMembers([])
     setStagingSummary(null)
     setSessionId(null)
+    setSelectedScoutIds(new Set())
+    setSelectedAdultIds(new Set())
     setProgress({
       phase: 'login',
       message: 'Starting sync...',
@@ -250,7 +300,11 @@ export function ScoutbookSyncCard({
       const response = await fetch('/api/scoutbook/sync/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
+        body: JSON.stringify({
+          sessionId,
+          selectedScoutIds: Array.from(selectedScoutIds),
+          selectedAdultIds: Array.from(selectedAdultIds),
+        }),
       })
 
       const data = await response.json()
@@ -272,6 +326,8 @@ export function ScoutbookSyncCard({
       setStagedMembers([])
       setStagingSummary(null)
       setSessionId(null)
+      setSelectedScoutIds(new Set())
+      setSelectedAdultIds(new Set())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to confirm import')
     } finally {
@@ -301,6 +357,8 @@ export function ScoutbookSyncCard({
       setStagedMembers([])
       setStagingSummary(null)
       setSessionId(null)
+      setSelectedScoutIds(new Set())
+      setSelectedAdultIds(new Set())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel sync')
     } finally {
@@ -308,9 +366,91 @@ export function ScoutbookSyncCard({
     }
   }
 
+  async function handleGenerateToken() {
+    setIsGeneratingToken(true)
+    setError(null)
+    setExtensionToken(null)
+    setTokenCopied(false)
+
+    try {
+      const response = await fetch('/api/scoutbook/extension-auth', {
+        method: 'POST',
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate token')
+      }
+
+      setExtensionToken(data.token)
+      setTokenExpiresAt(data.expiresAt)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate token')
+    } finally {
+      setIsGeneratingToken(false)
+    }
+  }
+
+  async function handleCopyToken() {
+    if (!extensionToken) return
+    try {
+      await navigator.clipboard.writeText(extensionToken)
+      setTokenCopied(true)
+      setTimeout(() => setTokenCopied(false), 3000)
+    } catch {
+      setError('Failed to copy token to clipboard')
+    }
+  }
+
   const isCliReady = cliStatus?.installed && cliStatus?.browsersInstalled
   const isServerless = cliStatus?.reason === 'serverless'
   const hasStaging = stagedMembers.length > 0
+
+  // Helper functions for scout selection
+  const importableScouts = stagedMembers.filter((m) => (m.memberType === 'YOUTH' || m.memberType === 'P 18+') && m.changeType !== 'skip')
+
+  function toggleScoutSelection(id: string) {
+    setSelectedScoutIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  function selectAllScouts() {
+    setSelectedScoutIds(new Set(importableScouts.map((m) => m.id)))
+  }
+
+  function selectNoScouts() {
+    setSelectedScoutIds(new Set())
+  }
+
+  // Helper functions for adult selection
+  const importableAdults = stagedMembers.filter((m) => m.memberType === 'LEADER' && m.changeType !== 'skip')
+
+  function toggleAdultSelection(id: string) {
+    setSelectedAdultIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  function selectAllAdults() {
+    setSelectedAdultIds(new Set(importableAdults.map((m) => m.id)))
+  }
+
+  function selectNoAdults() {
+    setSelectedAdultIds(new Set())
+  }
 
   return (
     <Card>
@@ -541,30 +681,74 @@ export function ScoutbookSyncCard({
                       </p>
                       <p className="text-xs text-blue-600">Updates</p>
                     </div>
-                    <div className="rounded-md bg-stone-100 p-3">
-                      <p className="text-2xl font-bold text-stone-500">
-                        {stagingSummary.toSkip}
+                    <div className="rounded-md bg-purple-100 p-3">
+                      <p className="text-2xl font-bold text-purple-700">
+                        {selectedScoutIds.size}
                       </p>
-                      <p className="text-xs text-stone-500">No Changes</p>
+                      <p className="text-xs text-purple-600">Selected</p>
                     </div>
                   </div>
+
+                  {/* Select all/none controls */}
+                  {importableScouts.length > 0 && (
+                    <div className="flex items-center gap-2 mb-2 text-xs">
+                      <span className="text-stone-500">Select:</span>
+                      <button
+                        type="button"
+                        onClick={selectAllScouts}
+                        className="text-primary hover:underline"
+                      >
+                        All
+                      </button>
+                      <span className="text-stone-300">|</span>
+                      <button
+                        type="button"
+                        onClick={selectNoScouts}
+                        className="text-primary hover:underline"
+                      >
+                        None
+                      </button>
+                      <span className="ml-2 text-stone-400">
+                        ({selectedScoutIds.size} of {importableScouts.length} selected)
+                      </span>
+                    </div>
+                  )}
 
                   <div className="max-h-72 overflow-y-auto rounded border border-amber-200 bg-white">
                     <table className="w-full text-sm">
                       <thead className="bg-stone-50 sticky top-0">
                         <tr>
+                          <th className="w-8 p-2"></th>
                           <th className="text-left p-2 font-medium">Name</th>
                           <th className="text-left p-2 font-medium">Action</th>
                           <th className="text-left p-2 font-medium">Details</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {stagedMembers
-                          .filter((m) => m.memberType === 'YOUTH' && m.changeType !== 'skip')
-                          .map((member) => (
-                            <tr key={member.id} className="border-t border-stone-100">
+                        {importableScouts.map((member) => (
+                            <tr
+                              key={member.id}
+                              className={`border-t border-stone-100 ${
+                                !selectedScoutIds.has(member.id) ? 'opacity-50' : ''
+                              }`}
+                            >
                               <td className="p-2">
-                                {member.firstName} {member.lastName}
+                                <input
+                                  type="checkbox"
+                                  checked={selectedScoutIds.has(member.id)}
+                                  onChange={() => toggleScoutSelection(member.id)}
+                                  className="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <div>
+                                  <span>{member.firstName} {member.lastName}</span>
+                                  {member.memberType === 'P 18+' && (
+                                    <span className="ml-1 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                                      18+
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-2">
                                 {member.changeType === 'create' && (
@@ -580,32 +764,127 @@ export function ScoutbookSyncCard({
                               </td>
                               <td className="p-2 text-xs text-stone-500">
                                 {member.changeType === 'create' && (
-                                  <div>
-                                    <span>{member.rank || 'No rank'} - {member.patrol || 'No patrol'}</span>
-                                    {(member.position || member.position2) && (
-                                      <span className="block text-stone-400">
-                                        {member.position}
-                                        {member.position && member.position2 && ', '}
-                                        {member.position2}
-                                      </span>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">BSA ID:</span>
+                                      <span className="font-mono">{member.bsaMemberId}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Type:</span>
+                                      <span>{member.memberType}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Age:</span>
+                                      <span>{member.age || '(none)'}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Rank:</span>
+                                      <span>{member.rank || '(none)'}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Patrol:</span>
+                                      <span>{member.patrol || '(none)'}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Position:</span>
+                                      <span>{member.position || '(none)'}</span>
+                                    </div>
+                                    {member.position2 && (
+                                      <div className="flex gap-1">
+                                        <span className="font-medium text-stone-600">Position 2:</span>
+                                        <span>{member.position2}</span>
+                                      </div>
                                     )}
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Status:</span>
+                                      <span>{member.renewalStatus || '(none)'}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Expires:</span>
+                                      <span>{member.expirationDate || '(none)'}</span>
+                                    </div>
                                   </div>
                                 )}
                                 {member.changeType === 'update' && member.changes && (
-                                  <span>
-                                    {Object.entries(member.changes)
-                                      .map(([field, change]) =>
-                                        `${field}: ${change.old || '(empty)'} → ${change.new || '(empty)'}`
-                                      )
-                                      .join(', ')}
-                                  </span>
+                                  <div className="space-y-0.5">
+                                    {Object.entries(member.changes).map(([field, change]) => (
+                                      <div key={field} className="flex gap-1">
+                                        <span className="font-medium text-stone-600">{field}:</span>
+                                        <span className="text-stone-400">{change.old || '(empty)'}</span>
+                                        <span className="text-stone-400">&rarr;</span>
+                                        <span className="text-stone-700">{change.new || '(empty)'}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {member.changeType === 'update' && (!member.changes || Object.keys(member.changes).length === 0) && (
+                                  <span className="text-stone-400">No field changes</span>
                                 )}
                               </td>
                             </tr>
                           ))}
+                        {importableScouts.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="p-4 text-center text-stone-500">
+                              No scout changes to import
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Skipped Scouts Section */}
+                  {stagingSummary.toSkip > 0 && (
+                    <Collapsible className="mt-3">
+                      <CollapsibleTrigger className="flex items-center gap-2 text-xs text-stone-500 hover:text-stone-700">
+                        <svg
+                          className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-90"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                        {stagingSummary.toSkip} scout{stagingSummary.toSkip !== 1 ? 's' : ''} unchanged (already up to date)
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="mt-2 max-h-48 overflow-y-auto rounded border border-stone-200 bg-stone-50">
+                          <table className="w-full text-xs">
+                            <thead className="bg-stone-100 sticky top-0">
+                              <tr>
+                                <th className="text-left p-2 font-medium text-stone-600">Name</th>
+                                <th className="text-left p-2 font-medium text-stone-600">BSA ID</th>
+                                <th className="text-left p-2 font-medium text-stone-600">Reason</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {stagedMembers
+                                .filter((m) => (m.memberType === 'YOUTH' || m.memberType === 'P 18+') && m.changeType === 'skip')
+                                .map((member) => (
+                                  <tr key={member.id} className="border-t border-stone-200">
+                                    <td className="p-2 text-stone-600">
+                                      {member.firstName} {member.lastName}
+                                    </td>
+                                    <td className="p-2 text-stone-500 font-mono">
+                                      {member.bsaMemberId}
+                                    </td>
+                                    <td className="p-2 text-stone-500">
+                                      {member.skipReason === 'no_changes' ? 'No changes detected' : member.skipReason || 'Already exists'}
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
                 </TabsContent>
 
                 {/* Adults Tab */}
@@ -625,49 +904,77 @@ export function ScoutbookSyncCard({
                     </div>
                     <div className="rounded-md bg-purple-100 p-3">
                       <p className="text-2xl font-bold text-purple-700">
-                        {stagedMembers.filter((m) => m.memberType !== 'YOUTH' && m.matchedProfileId).length}
+                        {selectedAdultIds.size}
                       </p>
-                      <p className="text-xs text-purple-600">Matched</p>
+                      <p className="text-xs text-purple-600">Selected</p>
                     </div>
                   </div>
+
+                  {/* Select all/none controls */}
+                  {importableAdults.length > 0 && (
+                    <div className="flex items-center gap-2 mb-2 text-xs">
+                      <span className="text-stone-500">Select:</span>
+                      <button
+                        type="button"
+                        onClick={selectAllAdults}
+                        className="text-primary hover:underline"
+                      >
+                        All
+                      </button>
+                      <span className="text-stone-300">|</span>
+                      <button
+                        type="button"
+                        onClick={selectNoAdults}
+                        className="text-primary hover:underline"
+                      >
+                        None
+                      </button>
+                      <span className="ml-2 text-stone-400">
+                        ({selectedAdultIds.size} of {importableAdults.length} selected)
+                      </span>
+                    </div>
+                  )}
 
                   <div className="max-h-72 overflow-y-auto rounded border border-amber-200 bg-white">
                     <table className="w-full text-sm">
                       <thead className="bg-stone-50 sticky top-0">
                         <tr>
+                          <th className="w-8 p-2"></th>
                           <th className="text-left p-2 font-medium">Name</th>
-                          <th className="text-left p-2 font-medium">Type</th>
-                          <th className="text-left p-2 font-medium">Position</th>
-                          <th className="text-left p-2 font-medium">Status</th>
+                          <th className="text-left p-2 font-medium">Action</th>
+                          <th className="text-left p-2 font-medium">Details</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {stagedMembers
-                          .filter((m) => m.memberType !== 'YOUTH' && m.changeType !== 'skip')
-                          .map((member) => (
-                            <tr key={member.id} className="border-t border-stone-100">
+                        {importableAdults.map((member) => (
+                            <tr
+                              key={member.id}
+                              className={`border-t border-stone-100 ${
+                                !selectedAdultIds.has(member.id) ? 'opacity-50' : ''
+                              }`}
+                            >
                               <td className="p-2">
-                                {member.firstName} {member.lastName}
+                                <input
+                                  type="checkbox"
+                                  checked={selectedAdultIds.has(member.id)}
+                                  onChange={() => toggleAdultSelection(member.id)}
+                                  className="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"
+                                />
                               </td>
                               <td className="p-2">
-                                <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
-                                  {member.memberType === 'LEADER' ? 'Leader' : 'Parent'}
-                                </span>
-                              </td>
-                              <td className="p-2 text-xs text-stone-500">
-                                {member.position ? (
-                                  <div>
-                                    <span>{member.position}</span>
-                                    {member.position2 && (
-                                      <span className="block text-stone-400">{member.position2}</span>
-                                    )}
-                                  </div>
-                                ) : '-'}
+                                <div>
+                                  <span>{member.firstName} {member.lastName}</span>
+                                  {member.matchedProfileId && (
+                                    <span className="ml-1 inline-flex items-center rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
+                                      {member.matchType === 'bsa_id' ? 'BSA ID Match' : 'Name Match'}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-2">
                                 {member.changeType === 'create' && (
                                   <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                                    New
+                                    Create
                                   </span>
                                 )}
                                 {member.changeType === 'update' && (
@@ -675,15 +982,57 @@ export function ScoutbookSyncCard({
                                     Update
                                   </span>
                                 )}
-                                {member.matchedProfileId && (
-                                  <span className="ml-1 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                                    {member.matchType === 'bsa_id' ? 'BSA ID' : 'Name'} Match
-                                  </span>
+                              </td>
+                              <td className="p-2 text-xs text-stone-500">
+                                {member.changeType === 'create' && (
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">BSA ID:</span>
+                                      <span className="font-mono">{member.bsaMemberId}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Type:</span>
+                                      <span>{member.memberType}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Position:</span>
+                                      <span>{member.position || '(none)'}</span>
+                                    </div>
+                                    {member.position2 && (
+                                      <div className="flex gap-1">
+                                        <span className="font-medium text-stone-600">Position 2:</span>
+                                        <span>{member.position2}</span>
+                                      </div>
+                                    )}
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Status:</span>
+                                      <span>{member.renewalStatus || '(none)'}</span>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <span className="font-medium text-stone-600">Expires:</span>
+                                      <span>{member.expirationDate || '(none)'}</span>
+                                    </div>
+                                  </div>
+                                )}
+                                {member.changeType === 'update' && member.changes && (
+                                  <div className="space-y-0.5">
+                                    {Object.entries(member.changes).map(([field, change]) => (
+                                      <div key={field} className="flex gap-1">
+                                        <span className="font-medium text-stone-600">{field}:</span>
+                                        <span className="text-stone-400">{change.old || '(empty)'}</span>
+                                        <span className="text-stone-400">&rarr;</span>
+                                        <span className="text-stone-700">{change.new || '(empty)'}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {member.changeType === 'update' && (!member.changes || Object.keys(member.changes).length === 0) && (
+                                  <span className="text-stone-400">No field changes</span>
                                 )}
                               </td>
                             </tr>
                           ))}
-                        {stagedMembers.filter((m) => m.memberType !== 'YOUTH' && m.changeType !== 'skip').length === 0 && (
+                        {importableAdults.length === 0 && (
                           <tr>
                             <td colSpan={4} className="p-4 text-center text-stone-500">
                               No adult changes to import
@@ -693,6 +1042,60 @@ export function ScoutbookSyncCard({
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Skipped Adults Section */}
+                  {(() => {
+                    const skippedAdults = stagedMembers.filter((m) => m.memberType === 'LEADER' && m.changeType === 'skip')
+                    if (skippedAdults.length === 0) return null
+                    return (
+                      <Collapsible className="mt-3">
+                        <CollapsibleTrigger className="flex items-center gap-2 text-xs text-stone-500 hover:text-stone-700">
+                          <svg
+                            className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-90"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                          {skippedAdults.length} adult{skippedAdults.length !== 1 ? 's' : ''} unchanged (already up to date)
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="mt-2 max-h-48 overflow-y-auto rounded border border-stone-200 bg-stone-50">
+                            <table className="w-full text-xs">
+                              <thead className="bg-stone-100 sticky top-0">
+                                <tr>
+                                  <th className="text-left p-2 font-medium text-stone-600">Name</th>
+                                  <th className="text-left p-2 font-medium text-stone-600">Type</th>
+                                  <th className="text-left p-2 font-medium text-stone-600">Reason</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {skippedAdults.map((member) => (
+                                  <tr key={member.id} className="border-t border-stone-200">
+                                    <td className="p-2 text-stone-600">
+                                      {member.firstName} {member.lastName}
+                                    </td>
+                                    <td className="p-2 text-stone-500">
+                                      {member.memberType === 'LEADER' ? 'Leader' : 'Parent'}
+                                    </td>
+                                    <td className="p-2 text-stone-500">
+                                      {member.skipReason === 'no_changes' ? 'No changes detected' : member.skipReason || 'Already exists'}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )
+                  })()}
 
                   <p className="mt-2 text-xs text-stone-500">
                     Adults will be added to the roster but not invited as app users.
@@ -816,6 +1219,117 @@ export function ScoutbookSyncCard({
               <li>Chuckbox extracts roster data for your review</li>
               <li>You confirm which scouts to create or update</li>
             </ol>
+          </div>
+        )}
+
+        {/* Browser Extension Section */}
+        {isAdmin && !hasStaging && (
+          <div className="mt-6 border-t border-stone-200 pt-4">
+            <h3 className="text-sm font-medium text-stone-700 mb-2">
+              Browser Extension
+            </h3>
+            <p className="text-xs text-stone-500 mb-3">
+              Use the Chuckbox Chrome extension to sync from production without local setup.
+              Generate a token below to authenticate the extension.
+            </p>
+
+            {extensionToken ? (
+              <div className="space-y-3">
+                <div className="rounded-md bg-success-light p-3">
+                  <p className="text-xs font-medium text-success mb-1">
+                    Token Generated - Copy Now
+                  </p>
+                  <p className="text-xs text-success/80 mb-2">
+                    This token will only be shown once. It expires{' '}
+                    {tokenExpiresAt &&
+                      new Date(tokenExpiresAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 rounded bg-white px-2 py-1 text-xs font-mono text-stone-700 truncate">
+                      {extensionToken}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCopyToken}
+                      className="shrink-0"
+                    >
+                      {tokenCopied ? 'Copied!' : 'Copy'}
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setExtensionToken(null)
+                    setTokenExpiresAt(null)
+                  }}
+                >
+                  Done
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isGeneratingToken}
+                    >
+                      {isGeneratingToken ? 'Generating...' : 'Generate Extension Token'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Generate Extension Token</AlertDialogTitle>
+                      <AlertDialogDescription asChild>
+                        <div className="space-y-3 text-left">
+                          <p>
+                            This will create a secure token for the Chuckbox browser extension.
+                          </p>
+                          <div className="rounded-md bg-stone-50 p-3 text-xs">
+                            <p className="font-medium text-stone-700">Token Details:</p>
+                            <ul className="mt-1 list-inside list-disc space-y-1 text-stone-600">
+                              <li>Expires in 24 hours</li>
+                              <li>Can be revoked at any time</li>
+                              <li>Only shown once - copy it immediately</li>
+                            </ul>
+                          </div>
+                          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs">
+                            <p className="font-medium text-amber-800">Security Note</p>
+                            <p className="mt-1 text-amber-700">
+                              Anyone with this token can sync your roster. Keep it secure and
+                              don&apos;t share it with others.
+                            </p>
+                          </div>
+                        </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleGenerateToken}>
+                        Generate Token
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <a
+                  href="https://chrome.google.com/webstore/category/extensions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Get Extension
+                </a>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

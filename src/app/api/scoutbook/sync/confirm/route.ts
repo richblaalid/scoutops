@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
-    const { sessionId } = body
+    const { sessionId, selectedScoutIds, selectedAdultIds } = body
 
     if (!sessionId) {
       return NextResponse.json(
@@ -109,6 +109,44 @@ export async function POST(request: NextRequest) {
 
     // Use service client for import (bypasses RLS)
     const serviceClient = getServiceClient()
+
+    // Update scout member selections if provided
+    if (selectedScoutIds && Array.isArray(selectedScoutIds)) {
+      // First, deselect all scout (YOUTH + P 18+) members for this session
+      await serviceClient
+        .from('sync_staged_members')
+        .update({ is_selected: false })
+        .eq('session_id', sessionId)
+        .in('member_type', ['YOUTH', 'P 18+'])
+
+      // Then, select only the specified scout members
+      if (selectedScoutIds.length > 0) {
+        await serviceClient
+          .from('sync_staged_members')
+          .update({ is_selected: true })
+          .eq('session_id', sessionId)
+          .in('id', selectedScoutIds)
+      }
+    }
+
+    // Update adult member selections if provided
+    if (selectedAdultIds && Array.isArray(selectedAdultIds)) {
+      // First, deselect all adult (LEADER) members for this session
+      await serviceClient
+        .from('sync_staged_members')
+        .update({ is_selected: false })
+        .eq('session_id', sessionId)
+        .eq('member_type', 'LEADER')
+
+      // Then, select only the specified adult members
+      if (selectedAdultIds.length > 0) {
+        await serviceClient
+          .from('sync_staged_members')
+          .update({ is_selected: true })
+          .eq('session_id', sessionId)
+          .in('id', selectedAdultIds)
+      }
+    }
 
     // Perform the import
     const result = await confirmStagedImport(

@@ -9,7 +9,9 @@
       "Bash(npx tsc:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(npm run test:coverage:*)",
+      "mcp__playwright__playwright_console_logs"
     ]
   }
 }

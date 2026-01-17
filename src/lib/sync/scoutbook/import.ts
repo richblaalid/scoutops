@@ -53,10 +53,13 @@ export interface StagedMember {
   firstName: string
   lastName: string
   memberType: string
+  age: string | null
   rank: string | null
   patrol: string | null
   position: string | null
   position2: string | null
+  renewalStatus: string | null
+  expirationDate: string | null
   changeType: 'create' | 'update' | 'skip'
   existingScoutId: string | null
   changes: Record<string, { old: string | null; new: string | null }> | null
@@ -66,8 +69,6 @@ export interface StagedMember {
   existingProfileId: string | null
   matchedProfileId: string | null
   matchType: 'bsa_id' | 'name_exact' | 'name_fuzzy' | 'none' | null
-  renewalStatus: string | null
-  expirationDate: string | null
 }
 
 /**
@@ -111,7 +112,7 @@ export async function stageRosterMembers(
   // Get existing scouts by BSA member ID for this unit
   const { data: existingScouts, error: scoutsError } = await supabase
     .from('scouts')
-    .select('id, bsa_member_id, first_name, last_name, rank, patrol_id, current_position, current_position_2')
+    .select('id, bsa_member_id, first_name, last_name, rank, patrol_id, current_position, current_position_2, renewal_status, expiration_date')
     .eq('unit_id', unitId)
     .not('bsa_member_id', 'is', null)
 
@@ -126,7 +127,7 @@ export async function stageRosterMembers(
     .select(`
       profile_id,
       profiles:profiles!unit_memberships_profile_id_fkey (
-        id, bsa_member_id, first_name, last_name, full_name, position, position_2, member_type
+        id, bsa_member_id, first_name, last_name, full_name, position, position_2, member_type, renewal_status, expiration_date
       )
     `)
     .eq('unit_id', unitId)
@@ -139,7 +140,7 @@ export async function stageRosterMembers(
   // Also get profiles directly by BSA member ID (may not have unit membership yet)
   const { data: profilesByBsa } = await supabase
     .from('profiles')
-    .select('id, bsa_member_id, first_name, last_name, full_name, position, position_2, member_type')
+    .select('id, bsa_member_id, first_name, last_name, full_name, position, position_2, member_type, renewal_status, expiration_date')
     .not('bsa_member_id', 'is', null)
 
   // Build map of existing adults by BSA member ID
@@ -150,6 +151,9 @@ export async function stageRosterMembers(
     last_name: string | null
     position: string | null
     position_2: string | null
+    member_type: string | null
+    renewal_status: string | null
+    expiration_date: string | null
   }
   const existingAdults: ExistingAdult[] = []
 
@@ -163,6 +167,8 @@ export async function stageRosterMembers(
       position: string | null
       position_2: string | null
       member_type: string | null
+      renewal_status: string | null
+      expiration_date: string | null
     }
     if (profile && profile.member_type && profile.bsa_member_id) {
       existingAdults.push({
@@ -172,6 +178,9 @@ export async function stageRosterMembers(
         last_name: profile.last_name,
         position: profile.position,
         position_2: profile.position_2,
+        member_type: profile.member_type,
+        renewal_status: profile.renewal_status,
+        expiration_date: profile.expiration_date,
       })
     }
   }
@@ -260,8 +269,8 @@ export async function stageRosterMembers(
   for (const member of rosterMembers) {
     const { firstName, lastName } = parseName(member.name)
 
-    // Handle adults (LEADER or P 18+)
-    if (member.type !== 'YOUTH') {
+    // Handle adult leaders only (LEADER) - P 18+ are scouts who aged past 18
+    if (member.type === 'LEADER') {
       const existingAdult = existingAdultsByBsaId.get(member.bsaMemberId)
       const { profileId, matchType } = matchAdultToProfile(member)
 
@@ -281,7 +290,18 @@ export async function stageRosterMembers(
         if (existingAdult.position_2 !== member.position2) {
           changes.position_2 = { old: existingAdult.position_2, new: member.position2 }
         }
-        // Note: Adults don't have patrol field in profiles anymore
+        // Check member type (LEADER vs P 18+)
+        if (existingAdult.member_type !== member.type) {
+          changes.member_type = { old: existingAdult.member_type, new: member.type }
+        }
+        // Check renewal/registration status (Current, Eligible for Renewal, Expired)
+        if (existingAdult.renewal_status !== member.renewalStatus) {
+          changes.renewal_status = { old: existingAdult.renewal_status, new: member.renewalStatus }
+        }
+        // Check expiration date
+        if (existingAdult.expiration_date !== member.expirationDate) {
+          changes.expiration_date = { old: existingAdult.expiration_date, new: member.expirationDate }
+        }
 
         const hasChanges = Object.keys(changes).length > 0
 
@@ -369,6 +389,14 @@ export async function stageRosterMembers(
       if (existingScout.current_position_2 !== member.position2) {
         changes.position_2 = { old: existingScout.current_position_2, new: member.position2 }
       }
+      // Check renewal/registration status (Current, Eligible for Renewal, Expired)
+      if (existingScout.renewal_status !== member.renewalStatus) {
+        changes.renewal_status = { old: existingScout.renewal_status, new: member.renewalStatus }
+      }
+      // Check expiration date
+      if (existingScout.expiration_date !== member.expirationDate) {
+        changes.expiration_date = { old: existingScout.expiration_date, new: member.expirationDate }
+      }
 
       const hasChanges = Object.keys(changes).length > 0
 
@@ -441,8 +469,9 @@ export async function stageRosterMembers(
     throw new Error(`Failed to stage members: ${insertError.message}`)
   }
 
-  const youthTotal = rosterMembers.filter((m) => m.type === 'YOUTH').length
-  const adultsTotal = rosterMembers.length - youthTotal
+  // Scouts = YOUTH + P 18+ (scouts who aged past 18), Adults = LEADER only
+  const scoutsTotal = rosterMembers.filter((m) => m.type === 'YOUTH' || m.type === 'P 18+').length
+  const adultsTotal = rosterMembers.filter((m) => m.type === 'LEADER').length
 
   console.log(
     `[Staging] Complete: Scouts (${toCreate} create, ${toUpdate} update, ${toSkip} skip), Adults (${adultsToCreate} create, ${adultsToUpdate} update)`
@@ -453,7 +482,7 @@ export async function stageRosterMembers(
     toCreate,
     toUpdate,
     toSkip,
-    total: youthTotal,
+    total: scoutsTotal,
     adultsToCreate,
     adultsToUpdate,
     adultsTotal,
@@ -486,10 +515,13 @@ export async function getStagedMembers(
     firstName: row.first_name,
     lastName: row.last_name,
     memberType: row.member_type,
+    age: row.age,
     rank: row.rank,
     patrol: row.patrol,
     position: row.position,
     position2: row.position_2,
+    renewalStatus: row.renewal_status,
+    expirationDate: row.expiration_date,
     changeType: row.change_type as 'create' | 'update' | 'skip',
     existingScoutId: row.existing_scout_id,
     changes: row.changes as Record<string, { old: string | null; new: string | null }> | null,
@@ -499,8 +531,6 @@ export async function getStagedMembers(
     existingProfileId: row.existing_profile_id,
     matchedProfileId: row.matched_profile_id,
     matchType: row.match_type as 'bsa_id' | 'name_exact' | 'name_fuzzy' | 'none' | null,
-    renewalStatus: row.renewal_status,
-    expirationDate: row.expiration_date,
   }))
 }
 
@@ -559,9 +589,9 @@ export async function confirmStagedImport(
     return result
   }
 
-  // Separate scouts and adults
-  const scoutMembers = stagedMembers.filter((m) => m.member_type === 'YOUTH')
-  const adultMembers = stagedMembers.filter((m) => m.member_type !== 'YOUTH')
+  // Separate scouts (YOUTH + P 18+) and adult leaders (LEADER only)
+  const scoutMembers = stagedMembers.filter((m) => m.member_type === 'YOUTH' || m.member_type === 'P 18+')
+  const adultMembers = stagedMembers.filter((m) => m.member_type === 'LEADER')
 
   // Get or create patrols for scouts
   const patrolNames = scoutMembers
@@ -585,6 +615,8 @@ export async function confirmStagedImport(
         patrol_id: patrolId,
         current_position: member.position,
         current_position_2: member.position_2,
+        renewal_status: member.renewal_status,
+        expiration_date: member.expiration_date,
         is_active: isRenewalStatusActive(member.renewal_status),
       })
 
@@ -617,6 +649,8 @@ export async function confirmStagedImport(
           patrol_id: patrolId,
           current_position: member.position,
           current_position_2: member.position_2,
+          renewal_status: member.renewal_status,
+          expiration_date: member.expiration_date,
           is_active: isRenewalStatusActive(member.renewal_status),
           updated_at: new Date().toISOString(),
         })
@@ -859,11 +893,11 @@ export async function importRosterMembers(
     adultsLinked: 0,
   }
 
-  // Filter to only youth members
-  const youthMembers = rosterMembers.filter((m) => m.type === 'YOUTH')
-  const adultCount = rosterMembers.length - youthMembers.length
-  if (adultCount > 0) {
-    console.log(`[Import] Skipping ${adultCount} adult members (LEADER/P 18+)`)
+  // Filter to scouts (YOUTH + P 18+), skip adult leaders (LEADER only)
+  const scoutMembers = rosterMembers.filter((m) => m.type === 'YOUTH' || m.type === 'P 18+')
+  const leaderCount = rosterMembers.filter((m) => m.type === 'LEADER').length
+  if (leaderCount > 0) {
+    console.log(`[Import] Skipping ${leaderCount} adult leader members (LEADER)`)
   }
 
   // Get existing scouts by BSA member ID for this unit
@@ -884,18 +918,18 @@ export async function importRosterMembers(
   )
 
   console.log(
-    `[Import] Processing ${youthMembers.length} youth members (${existingByBsaId.size} existing scouts in unit)`
+    `[Import] Processing ${scoutMembers.length} scout members (${existingByBsaId.size} existing scouts in unit)`
   )
 
   // Get or create patrols for this unit
   const patrolMap = await getOrCreatePatrols(
     supabase,
     unitId,
-    youthMembers.map((m) => m.patrol).filter((p): p is string => !!p && p !== 'unassigned')
+    scoutMembers.map((m) => m.patrol).filter((p): p is string => !!p && p !== 'unassigned')
   )
 
   // Process each youth member
-  for (const member of youthMembers) {
+  for (const member of scoutMembers) {
     try {
       const { firstName, lastName } = parseName(member.name)
       const existing = existingByBsaId.get(member.bsaMemberId)
@@ -950,7 +984,7 @@ export async function importRosterMembers(
     }
   }
 
-  result.skipped = adultCount
+  result.skipped = leaderCount
 
   console.log(
     `[Import] Complete: ${result.created} created, ${result.updated} updated, ${result.skipped} skipped, ${result.errors.length} errors`

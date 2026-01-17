@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       accounts: {
@@ -467,6 +442,54 @@ export type Database = {
           },
           {
             foreignKeyName: "events_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extension_auth_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_revoked: boolean | null
+          last_used_at: string | null
+          profile_id: string
+          token_hash: string
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_revoked?: boolean | null
+          last_used_at?: string | null
+          profile_id: string
+          token_hash: string
+          unit_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_revoked?: boolean | null
+          last_used_at?: string | null
+          profile_id?: string
+          token_hash?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extension_auth_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extension_auth_tokens_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
@@ -1349,6 +1372,7 @@ export type Database = {
           current_position_2: string | null
           date_joined: string | null
           date_of_birth: string | null
+          expiration_date: string | null
           first_name: string
           gender: Database["public"]["Enums"]["gender"] | null
           health_form_expires: string | null
@@ -1360,6 +1384,7 @@ export type Database = {
           patrol_id: string | null
           profile_id: string | null
           rank: string | null
+          renewal_status: string | null
           swim_class_date: string | null
           swim_classification:
             | Database["public"]["Enums"]["swim_classification"]
@@ -1374,6 +1399,7 @@ export type Database = {
           current_position_2?: string | null
           date_joined?: string | null
           date_of_birth?: string | null
+          expiration_date?: string | null
           first_name: string
           gender?: Database["public"]["Enums"]["gender"] | null
           health_form_expires?: string | null
@@ -1385,6 +1411,7 @@ export type Database = {
           patrol_id?: string | null
           profile_id?: string | null
           rank?: string | null
+          renewal_status?: string | null
           swim_class_date?: string | null
           swim_classification?:
             | Database["public"]["Enums"]["swim_classification"]
@@ -1399,6 +1426,7 @@ export type Database = {
           current_position_2?: string | null
           date_joined?: string | null
           date_of_birth?: string | null
+          expiration_date?: string | null
           first_name?: string
           gender?: Database["public"]["Enums"]["gender"] | null
           health_form_expires?: string | null
@@ -1410,6 +1438,7 @@ export type Database = {
           patrol_id?: string | null
           profile_id?: string | null
           rank?: string | null
+          renewal_status?: string | null
           swim_class_date?: string | null
           swim_classification?:
             | Database["public"]["Enums"]["swim_classification"]
@@ -1558,6 +1587,7 @@ export type Database = {
           records_extracted: number | null
           started_at: string | null
           status: Database["public"]["Enums"]["sync_status"]
+          sync_source: string | null
           unit_id: string
         }
         Insert: {
@@ -1570,6 +1600,7 @@ export type Database = {
           records_extracted?: number | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["sync_status"]
+          sync_source?: string | null
           unit_id: string
         }
         Update: {
@@ -1582,6 +1613,7 @@ export type Database = {
           records_extracted?: number | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["sync_status"]
+          sync_source?: string | null
           unit_id?: string
         }
         Relationships: [
@@ -1996,6 +2028,18 @@ export type Database = {
         Args: { p_amount: number; p_scout_account_id: string }
         Returns: undefined
       }
+      create_billing_with_journal: {
+        Args: {
+          p_billing_date: string
+          p_billing_type: string
+          p_description: string
+          p_per_scout_amount: number
+          p_scout_accounts: Json
+          p_total_amount: number
+          p_unit_id: string
+        }
+        Returns: Json
+      }
       create_default_accounts: {
         Args: { p_unit_id: string }
         Returns: undefined
@@ -2237,9 +2281,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       account_type: ["asset", "liability", "equity", "income", "expense"],
