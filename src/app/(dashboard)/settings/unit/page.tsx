@@ -1,12 +1,8 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { UnitInfoForm } from '@/components/settings/unit-info-form'
 import { PatrolList } from '@/components/settings/patrol-list'
 import { LogoUpload } from '@/components/settings/logo-upload'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Upload } from 'lucide-react'
 
 export default async function UnitSettingsPage() {
   const supabase = await createClient()
@@ -110,29 +106,6 @@ export default async function UnitSettingsPage() {
           unitId={membership.unit_id}
           currentLogoUrl={unit.logo_url}
         />
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Import Roster
-            </CardTitle>
-            <CardDescription>
-              Import scouts and adults from your BSA roster export
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-sm text-stone-600">
-              Export your roster from my.scouting.org and upload the CSV file to quickly onboard your unit members.
-            </p>
-            <Link href="/settings/import">
-              <Button>
-                <Upload className="mr-2 h-4 w-4" />
-                Import BSA Roster
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

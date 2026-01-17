@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -487,13 +488,13 @@ export function ScoutbookSyncCard({
             <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
               Review Required
             </span>
+          ) : isServerless ? (
+            <span className="inline-flex items-center rounded-full bg-success-light px-2 py-1 text-xs font-medium text-success">
+              Available
+            </span>
           ) : isCliReady ? (
             <span className="inline-flex items-center rounded-full bg-success-light px-2 py-1 text-xs font-medium text-success">
               Ready
-            </span>
-          ) : isServerless ? (
-            <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-500">
-              Local Only
             </span>
           ) : (
             <span className="inline-flex items-center rounded-full bg-warning-light px-2 py-1 text-xs font-medium text-warning">
@@ -505,9 +506,10 @@ export function ScoutbookSyncCard({
       <CardContent className="space-y-4">
         {!hasStaging && (
           <p className="text-sm text-stone-600">
-            Import scout roster and advancement data from Scoutbook Plus. A
-            browser window will open for you to log in securely - Chuckbox never
-            stores your Scoutbook password.
+            Import scout roster and advancement data from Scoutbook Plus.
+            {isServerless
+              ? ' Use the browser extension or CSV upload to sync your roster.'
+              : ' A browser window will open for you to log in securely - Chuckbox never stores your Scoutbook password.'}
           </p>
         )}
 
@@ -633,17 +635,6 @@ export function ScoutbookSyncCard({
           </div>
         )}
 
-        {/* Serverless Warning */}
-        {isServerless && !hasStaging && (
-          <div className="rounded-md bg-stone-100 p-3 text-sm text-stone-600">
-            <p className="font-medium">Local Environment Required</p>
-            <p className="text-xs mt-1">
-              Scoutbook sync requires running locally with{' '}
-              <code className="rounded bg-stone-200 px-1">npm run dev</code>{' '}
-              because it opens a browser window for secure login.
-            </p>
-          </div>
-        )}
 
         {/* Staging Preview */}
         {hasStaging && stagingSummary && (
@@ -1193,24 +1184,24 @@ export function ScoutbookSyncCard({
           </div>
         )}
 
-        {/* Sync Button */}
-        {!hasStaging && isAdmin ? (
+        {/* CLI Sync Button - only in local dev environment */}
+        {!hasStaging && !isServerless && isAdmin ? (
           <div className="flex gap-2">
             <Button
               onClick={handleSync}
-              disabled={isSyncing || !isCliReady || isServerless}
+              disabled={isSyncing || !isCliReady}
             >
               {isSyncing ? 'Syncing...' : 'Sync from Scoutbook'}
             </Button>
           </div>
-        ) : !hasStaging ? (
+        ) : !hasStaging && !isServerless && !isAdmin ? (
           <p className="text-sm text-stone-500">
             Only unit administrators can sync from Scoutbook.
           </p>
         ) : null}
 
-        {/* Requirements Info */}
-        {!hasStaging && (
+        {/* Requirements Info - only in local dev */}
+        {!hasStaging && !isServerless && (
           <div className="rounded-md bg-stone-50 p-3 text-xs text-stone-500">
             <p className="font-medium text-stone-600">How it works:</p>
             <ol className="mt-1 list-inside list-decimal space-y-1">
@@ -1222,114 +1213,124 @@ export function ScoutbookSyncCard({
           </div>
         )}
 
-        {/* Browser Extension Section */}
+        {/* Import Options Section */}
         {isAdmin && !hasStaging && (
-          <div className="mt-6 border-t border-stone-200 pt-4">
-            <h3 className="text-sm font-medium text-stone-700 mb-2">
-              Browser Extension
+          <div className={isServerless ? '' : 'mt-6 border-t border-stone-200 pt-4'}>
+            <h3 className="text-sm font-medium text-stone-700 mb-3">
+              Import Options
             </h3>
-            <p className="text-xs text-stone-500 mb-3">
-              Use the Chuckbox Chrome extension to sync from production without local setup.
-              Generate a token below to authenticate the extension.
-            </p>
 
-            {extensionToken ? (
-              <div className="space-y-3">
-                <div className="rounded-md bg-success-light p-3">
-                  <p className="text-xs font-medium text-success mb-1">
-                    Token Generated - Copy Now
-                  </p>
-                  <p className="text-xs text-success/80 mb-2">
-                    This token will only be shown once. It expires{' '}
-                    {tokenExpiresAt &&
-                      new Date(tokenExpiresAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 rounded bg-white px-2 py-1 text-xs font-mono text-stone-700 truncate">
-                      {extensionToken}
-                    </code>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleCopyToken}
-                      className="shrink-0"
-                    >
-                      {tokenCopied ? 'Copied!' : 'Copy'}
-                    </Button>
+            <div className="space-y-4">
+              {/* Browser Extension Option */}
+              <div className="rounded-md border border-stone-200 p-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-100 shrink-0">
+                    <svg className="h-4 w-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                   </div>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setExtensionToken(null)
-                    setTokenExpiresAt(null)
-                  }}
-                >
-                  Done
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={isGeneratingToken}
-                    >
-                      {isGeneratingToken ? 'Generating...' : 'Generate Extension Token'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Generate Extension Token</AlertDialogTitle>
-                      <AlertDialogDescription asChild>
-                        <div className="space-y-3 text-left">
-                          <p>
-                            This will create a secure token for the Chuckbox browser extension.
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-stone-700">Browser Extension</p>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      Sync directly from Scoutbook while browsing. Install the Chrome extension and generate a token.
+                    </p>
+                    {extensionToken ? (
+                      <div className="mt-3 space-y-2">
+                        <div className="rounded-md bg-success-light p-2">
+                          <p className="text-xs font-medium text-success">Token Generated - Copy Now</p>
+                          <p className="text-xs text-success/80">
+                            Expires {tokenExpiresAt && new Date(tokenExpiresAt).toLocaleDateString('en-US', {
+                              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                            })}
                           </p>
-                          <div className="rounded-md bg-stone-50 p-3 text-xs">
-                            <p className="font-medium text-stone-700">Token Details:</p>
-                            <ul className="mt-1 list-inside list-disc space-y-1 text-stone-600">
-                              <li>Expires in 24 hours</li>
-                              <li>Can be revoked at any time</li>
-                              <li>Only shown once - copy it immediately</li>
-                            </ul>
-                          </div>
-                          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs">
-                            <p className="font-medium text-amber-800">Security Note</p>
-                            <p className="mt-1 text-amber-700">
-                              Anyone with this token can sync your roster. Keep it secure and
-                              don&apos;t share it with others.
-                            </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <code className="flex-1 rounded bg-white px-2 py-1 text-xs font-mono text-stone-700 truncate">
+                              {extensionToken}
+                            </code>
+                            <Button size="sm" variant="outline" onClick={handleCopyToken} className="shrink-0 h-7 text-xs">
+                              {tokenCopied ? 'Copied!' : 'Copy'}
+                            </Button>
                           </div>
                         </div>
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleGenerateToken}>
-                        Generate Token
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-                <a
-                  href="https://chrome.google.com/webstore/category/extensions"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline"
-                >
-                  Get Extension
-                </a>
+                        <Button size="sm" variant="ghost" onClick={() => { setExtensionToken(null); setTokenExpiresAt(null) }} className="h-7 text-xs">
+                          Done
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-2">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline" disabled={isGeneratingToken} className="h-7 text-xs">
+                              {isGeneratingToken ? 'Generating...' : 'Generate Token'}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Generate Extension Token</AlertDialogTitle>
+                              <AlertDialogDescription asChild>
+                                <div className="space-y-3 text-left">
+                                  <p>This will create a secure token for the Chuckbox browser extension.</p>
+                                  <div className="rounded-md bg-stone-50 p-3 text-xs">
+                                    <p className="font-medium text-stone-700">Token Details:</p>
+                                    <ul className="mt-1 list-inside list-disc space-y-1 text-stone-600">
+                                      <li>Expires in 24 hours</li>
+                                      <li>Can be revoked at any time</li>
+                                      <li>Only shown once - copy it immediately</li>
+                                    </ul>
+                                  </div>
+                                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs">
+                                    <p className="font-medium text-amber-800">Security Note</p>
+                                    <p className="mt-1 text-amber-700">
+                                      Anyone with this token can sync your roster. Keep it secure.
+                                    </p>
+                                  </div>
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleGenerateToken}>Generate Token</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <a
+                          href="https://chrome.google.com/webstore/category/extensions"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Get Extension
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* CSV Upload Option */}
+              <div className="rounded-md border border-stone-200 p-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-forest-100 shrink-0">
+                    <svg className="h-4 w-4 text-forest-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-stone-700">CSV Upload</p>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      Export your roster from my.scouting.org and upload the CSV file directly.
+                    </p>
+                    <div className="mt-2">
+                      <Link href="/settings/import">
+                        <Button size="sm" variant="outline" className="h-7 text-xs">
+                          Upload CSV
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>

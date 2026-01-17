@@ -3,8 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { SquareConnectionCard } from '@/components/settings/square-connection-card'
-import { PaymentFeeSettingsCard } from '@/components/settings/payment-fee-settings-card'
+import { PaymentProcessingCard } from '@/components/settings/payment-processing-card'
 import { ScoutbookSyncCard } from '@/components/settings/scoutbook-sync-card'
 import { isFinancialRole } from '@/lib/roles'
 
@@ -138,23 +137,18 @@ export default async function IntegrationsPage({
       )}
 
       <div className="grid gap-6">
-        <SquareConnectionCard
+        <PaymentProcessingCard
           isConnected={!!squareCredentials}
           merchantId={squareCredentials?.merchant_id}
           connectedAt={squareCredentials?.connected_at}
           lastSyncAt={squareCredentials?.last_sync_at}
           environment={(process.env.SQUARE_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production'}
-          isAdmin={isAdmin}
-        />
-
-        <PaymentFeeSettingsCard
           unitId={membership.unit_id}
           processingFeePercent={Number(unit?.processing_fee_percent) || 0.026}
           processingFeeFixed={Number(unit?.processing_fee_fixed) || 0.1}
           passFeesToPayer={unit?.pass_fees_to_payer || false}
           effectiveRate={effectiveRate}
           isAdmin={isAdmin}
-          squareConnected={!!squareCredentials}
         />
 
         <ScoutbookSyncCard
