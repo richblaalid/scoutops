@@ -117,7 +117,7 @@ export function PatrolList({ unitId, patrols }: PatrolListProps) {
     // First, unassign any scouts from this patrol
     await supabase
       .from('scouts')
-      .update({ patrol_id: null, patrol: null })
+      .update({ patrol_id: null })
       .eq('patrol_id', deletingPatrol.id)
 
     // Then delete the patrol

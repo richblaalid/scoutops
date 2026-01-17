@@ -39,7 +39,6 @@ interface ScoutFormProps {
     id: string
     first_name: string
     last_name: string
-    patrol: string | null
     patrol_id: string | null
     rank: string | null
     date_of_birth: string | null
@@ -262,14 +261,10 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
     const formData = new FormData(e.currentTarget)
     const supabase = createClient()
 
-    // Get patrol name for the selected patrol (for backwards compatibility)
-    const selectedPatrol = patrols.find(p => p.id === selectedPatrolId)
-
     const scoutData = {
       first_name: formData.get('first_name') as string,
       last_name: formData.get('last_name') as string,
       patrol_id: selectedPatrolId || null,
-      patrol: selectedPatrol?.name || null, // Keep text field in sync for backwards compatibility
       rank: (formData.get('rank') as string) || null,
       date_of_birth: dateOfBirth || null,
       bsa_member_id: (formData.get('bsa_member_id') as string) || null,

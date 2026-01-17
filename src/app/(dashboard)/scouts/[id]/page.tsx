@@ -245,7 +245,6 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
                 id: scout.id,
                 first_name: scout.first_name,
                 last_name: scout.last_name,
-                patrol: scout.patrols?.name || null,
                 patrol_id: scout.patrol_id,
                 rank: scout.rank,
                 date_of_birth: scout.date_of_birth,

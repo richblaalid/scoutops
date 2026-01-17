@@ -31,7 +31,6 @@ interface EditScoutButtonProps {
     id: string
     first_name: string
     last_name: string
-    patrol: string | null
     patrol_id: string | null
     rank: string | null
     date_of_birth: string | null
