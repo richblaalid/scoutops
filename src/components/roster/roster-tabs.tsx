@@ -8,7 +8,6 @@ interface Scout {
   id: string
   first_name: string
   last_name: string
-  patrol: string | null
   patrol_id: string | null
   rank: string | null
   is_active: boolean | null
@@ -17,6 +16,7 @@ interface Scout {
   current_position: string | null
   current_position_2: string | null
   scout_accounts: { id: string; billing_balance: number | null } | null
+  patrols: { name: string } | null
 }
 
 interface RosterAdult {
@@ -27,7 +27,6 @@ interface RosterAdult {
   member_type: string | null
   position: string | null
   position_2: string | null
-  patrol: string | null
   bsa_member_id: string | null
   renewal_status: string | null
   expiration_date: string | null

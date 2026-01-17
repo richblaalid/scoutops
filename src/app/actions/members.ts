@@ -11,7 +11,6 @@ interface InviteMemberParams {
   unitId: string
   email: string
   role: MemberRole
-  scoutIds?: string[]
   linkedScoutId?: string
 }
 
@@ -23,7 +22,7 @@ interface ActionResult {
 
 // Invite a new member to the unit
 // Creates a membership record with status='invited'
-export async function inviteMember({ unitId, email, role, scoutIds, linkedScoutId }: InviteMemberParams): Promise<ActionResult> {
+export async function inviteMember({ unitId, email, role, linkedScoutId }: InviteMemberParams): Promise<ActionResult> {
   const supabase = await createClient()
 
   // Get current user
@@ -106,11 +105,9 @@ export async function inviteMember({ unitId, email, role, scoutIds, linkedScoutI
       email: email.toLowerCase(),
       role,
       status: 'invited',
-      scout_ids: role === 'parent' && scoutIds?.length ? scoutIds : null,
       linked_scout_id: role === 'scout' && linkedScoutId ? linkedScoutId : null,
       invited_by: profile.id,
       invited_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     })
 
   if (insertError) {
@@ -174,7 +171,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
   // Find invited memberships for this email
   const { data: invites, error: invitesError } = await adminSupabase
     .from('unit_memberships')
-    .select('id, unit_id, role, profile_id, scout_ids, linked_scout_id')
+    .select('id, unit_id, role, profile_id, linked_scout_id')
     .eq('email', user.email.toLowerCase())
     .eq('status', 'invited')
 
@@ -247,25 +244,8 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
       continue
     }
 
-    // Create scout_guardians records for parent role
-    if (invite.role === 'parent' && invite.scout_ids && invite.scout_ids.length > 0) {
-      const guardianRecords = invite.scout_ids.map((scoutId: string, index: number) => ({
-        scout_id: scoutId,
-        profile_id: finalProfileId,
-        is_primary: index === 0,
-        relationship: 'parent',
-      }))
-
-      const { error: guardianError } = await adminSupabase
-        .from('scout_guardians')
-        .insert(guardianRecords)
-
-      if (guardianError) {
-        console.error('Failed to create guardian links:', guardianError.message)
-      } else {
-        console.log(`Created ${guardianRecords.length} guardian link(s) for user ${user.email}`)
-      }
-    }
+    // Note: Guardian links for parent role are now created via the roster import
+    // or can be added manually by admin after the invite is accepted
 
     // Link profile to scout record for scout role
     if (invite.role === 'scout' && invite.linked_scout_id) {
@@ -528,10 +508,10 @@ export async function resendInvite(memberId: string): Promise<ActionResult> {
     return { success: false, error: 'Only admins can resend invites' }
   }
 
-  // Update expiration
+  // Update invited_at to mark when invite was resent
   const { error: updateError } = await supabase
     .from('unit_memberships')
-    .update({ expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
+    .update({ invited_at: new Date().toISOString() })
     .eq('id', memberId)
 
   if (updateError) {

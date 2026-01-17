@@ -26,7 +26,6 @@ interface RosterAdult {
   member_type: string | null
   position: string | null
   position_2: string | null
-  patrol: string | null
   bsa_member_id: string | null
   renewal_status: string | null
   expiration_date: string | null

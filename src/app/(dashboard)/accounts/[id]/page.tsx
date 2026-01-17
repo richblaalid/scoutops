@@ -81,9 +81,11 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
         id,
         first_name,
         last_name,
-        patrol,
         rank,
-        is_active
+        is_active,
+        patrols (
+          name
+        )
       )
     `)
     .eq('id', id)
@@ -103,9 +105,11 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
       id: string
       first_name: string
       last_name: string
-      patrol: string | null
       rank: string | null
       is_active: boolean | null
+      patrols: {
+        name: string
+      } | null
     } | null
   }
 
@@ -185,8 +189,8 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
         <div>
           <h1 className="text-3xl font-bold text-stone-900">{scoutName}</h1>
           <p className="mt-1 text-stone-600">
-            {account.scouts?.patrol && `${account.scouts.patrol} Patrol`}
-            {account.scouts?.patrol && account.scouts?.rank && ' • '}
+            {account.scouts?.patrols?.name && `${account.scouts.patrols.name} Patrol`}
+            {account.scouts?.patrols?.name && account.scouts?.rank && ' • '}
             {account.scouts?.rank}
           </p>
         </div>

@@ -14,7 +14,6 @@ interface Scout {
   id: string
   first_name: string
   last_name: string
-  patrol: string | null
   patrol_id: string | null
   rank: string | null
   is_active: boolean | null
@@ -23,6 +22,7 @@ interface Scout {
   current_position: string | null
   current_position_2: string | null
   scout_accounts: { id: string; billing_balance: number | null } | null
+  patrols: { name: string } | null
 }
 
 interface ScoutsListProps {
@@ -48,7 +48,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
   const patrols = useMemo(() => {
     const uniquePatrols = new Set<string>()
     scouts.forEach((s) => {
-      if (s.patrol) uniquePatrols.add(s.patrol)
+      if (s.patrols?.name) uniquePatrols.add(s.patrols?.name)
     })
     return Array.from(uniquePatrols).sort()
   }, [scouts])
@@ -107,7 +107,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
 
     // Filter by patrol
     if (selectedPatrols.size > 0) {
-      filtered = filtered.filter((scout) => scout.patrol && selectedPatrols.has(scout.patrol))
+      filtered = filtered.filter((scout) => scout.patrols?.name && selectedPatrols.has(scout.patrols?.name))
     }
 
     // Filter by rank
@@ -139,7 +139,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
           comparison = `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
           break
         case 'patrol':
-          comparison = (a.patrol || '').localeCompare(b.patrol || '')
+          comparison = (a.patrols?.name || '').localeCompare(b.patrols?.name || '')
           break
         case 'rank':
           comparison = (a.rank || '').localeCompare(b.rank || '')
@@ -306,12 +306,12 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                       <p className="text-xs text-stone-500">BSA# {scout.bsa_member_id}</p>
                     )}
                     {/* Show patrol on mobile under name */}
-                    {scout.patrol && (
-                      <p className="text-xs text-stone-500 sm:hidden">{scout.patrol}</p>
+                    {scout.patrols?.name && (
+                      <p className="text-xs text-stone-500 sm:hidden">{scout.patrols?.name}</p>
                     )}
                   </div>
                 </td>
-                <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">{scout.patrol || '—'}</td>
+                <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">{scout.patrols?.name || '—'}</td>
                 <td className="hidden py-3 pr-4 text-stone-600 md:table-cell">{scout.rank || '—'}</td>
                 <td className="hidden py-3 pr-4 text-stone-600 lg:table-cell">
                   {scout.current_position ? (
@@ -384,7 +384,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
             id: editingScout.id,
             first_name: editingScout.first_name,
             last_name: editingScout.last_name,
-            patrol: editingScout.patrol,
+            patrol: editingScout.patrols?.name || null,
             patrol_id: editingScout.patrol_id,
             rank: editingScout.rank,
             date_of_birth: editingScout.date_of_birth,

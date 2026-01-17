@@ -107,8 +107,10 @@ export default async function AdultDetailPage({ params }: AdultDetailPageProps) 
         id,
         first_name,
         last_name,
-        patrol,
-        is_active
+        is_active,
+        patrols (
+          name
+        )
       )
     `)
     .eq('profile_id', id)
@@ -117,7 +119,7 @@ export default async function AdultDetailPage({ params }: AdultDetailPageProps) 
     guardianshipId: g.id,
     relationship: g.relationship,
     is_primary: g.is_primary,
-    scout: g.scouts as { id: string; first_name: string; last_name: string; patrol: string | null; is_active: boolean | null }
+    scout: g.scouts as { id: string; first_name: string; last_name: string; is_active: boolean | null; patrols: { name: string } | null }
   })).filter(g => g.scout !== null)
 
   const displayName = adult.full_name || `${adult.first_name || ''} ${adult.last_name || ''}`.trim() || adult.email || 'Unknown'
@@ -369,10 +371,10 @@ export default async function AdultDetailPage({ params }: AdultDetailPageProps) 
                             <span className="text-amber-600">Primary</span>
                           </>
                         )}
-                        {g.scout.patrol && (
+                        {g.scout.patrols?.name && (
                           <>
                             <span>·</span>
-                            <span>{g.scout.patrol}</span>
+                            <span>{g.scout.patrols.name}</span>
                           </>
                         )}
                       </div>

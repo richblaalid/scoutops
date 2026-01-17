@@ -92,7 +92,7 @@ export function UnitInfoForm({
         .update({
           name: name.trim(),
           unit_number: unitNumber.trim(),
-          unit_type: unitType,
+          unit_type: unitType as 'troop' | 'pack' | 'crew' | 'ship',
           council: council.trim() || null,
           district: district.trim() || null,
           chartered_org: charteredOrg.trim() || null,

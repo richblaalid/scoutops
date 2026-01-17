@@ -17,8 +17,10 @@ interface ScoutAccount {
     id: string
     first_name: string
     last_name: string
-    patrol: string | null
     is_active: boolean | null
+    patrols: {
+      name: string
+    } | null
   } | null
 }
 
@@ -41,7 +43,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
   const patrols = useMemo(() => {
     const uniquePatrols = new Set<string>()
     accounts.forEach((a) => {
-      if (a.scouts?.patrol) uniquePatrols.add(a.scouts.patrol)
+      if (a.scouts?.patrols?.name) uniquePatrols.add(a.scouts.patrols.name)
     })
     return Array.from(uniquePatrols).sort()
   }, [accounts])
@@ -83,7 +85,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
 
     // Filter by patrol
     if (selectedPatrols.size > 0) {
-      filtered = filtered.filter((account) => account.scouts?.patrol && selectedPatrols.has(account.scouts.patrol))
+      filtered = filtered.filter((account) => account.scouts?.patrols?.name && selectedPatrols.has(account.scouts.patrols.name))
     }
 
     // Filter by status
@@ -115,7 +117,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
           comparison = nameA.localeCompare(nameB)
           break
         case 'patrol':
-          comparison = (a.scouts?.patrol || '').localeCompare(b.scouts?.patrol || '')
+          comparison = (a.scouts?.patrols?.name || '').localeCompare(b.scouts?.patrols?.name || '')
           break
         case 'status':
           const statusA = a.scouts?.is_active ? 1 : 0
@@ -238,12 +240,12 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                         {account.scouts?.first_name} {account.scouts?.last_name}
                       </p>
                       {/* Show patrol on mobile under name */}
-                      {account.scouts?.patrol && (
-                        <p className="text-xs text-stone-500 sm:hidden">{account.scouts.patrol}</p>
+                      {account.scouts?.patrols?.name && (
+                        <p className="text-xs text-stone-500 sm:hidden">{account.scouts.patrols.name}</p>
                       )}
                     </td>
                     <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">
-                      {account.scouts?.patrol || '—'}
+                      {account.scouts?.patrols?.name || '—'}
                     </td>
                     <td className="hidden py-3 pr-4 md:table-cell">
                       <span

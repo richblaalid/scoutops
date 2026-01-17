@@ -24,7 +24,25 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
   const { data: scoutData } = await supabase
     .from('scouts')
     .select(`
-      *,
+      id,
+      first_name,
+      last_name,
+      patrol_id,
+      rank,
+      current_position,
+      current_position_2,
+      is_active,
+      date_of_birth,
+      bsa_member_id,
+      gender,
+      date_joined,
+      health_form_status,
+      health_form_expires,
+      swim_classification,
+      swim_class_date,
+      created_at,
+      updated_at,
+      unit_id,
       scout_accounts (
         id,
         billing_balance,
@@ -34,6 +52,9 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         id,
         name,
         unit_number
+      ),
+      patrols (
+        name
       )
     `)
     .eq('id', id)
@@ -68,11 +89,10 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     id: string
     first_name: string
     last_name: string
-    middle_name: string | null
-    patrol: string | null
     patrol_id: string | null
     rank: string | null
     current_position: string | null
+    current_position_2: string | null
     is_active: boolean | null
     date_of_birth: string | null
     bsa_member_id: string | null
@@ -87,6 +107,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     unit_id: string
     scout_accounts: { id: string; billing_balance: number | null; funds_balance: number } | null
     units: { id: string; name: string; unit_number: string } | null
+    patrols: { name: string } | null
   }
 
   const scout = scoutData as Scout
@@ -224,7 +245,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
                 id: scout.id,
                 first_name: scout.first_name,
                 last_name: scout.last_name,
-                patrol: scout.patrol,
+                patrol: scout.patrols?.name || null,
                 patrol_id: scout.patrol_id,
                 rank: scout.rank,
                 date_of_birth: scout.date_of_birth,
@@ -271,7 +292,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-stone-500">Patrol</p>
-              <p className="font-medium">{scout.patrol || 'Not assigned'}</p>
+              <p className="font-medium">{scout.patrols?.name || 'Not assigned'}</p>
             </div>
             <div>
               <p className="text-sm text-stone-500">Rank</p>

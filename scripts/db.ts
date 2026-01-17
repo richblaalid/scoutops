@@ -320,38 +320,57 @@ async function seedTestData(): Promise<void> {
     else console.log(`  Created membership: ${role}`);
   }
 
-  // 4. Create patrols
+  // 4. Create patrols and get their IDs
   console.log('\nCreating patrols...');
-  const patrols = ['Eagle', 'Wolf', 'Bear'];
-  for (const patrol of patrols) {
-    const { error } = await supabase.from('patrols').upsert(
+  const patrolNames = ['Eagle', 'Wolf', 'Bear'];
+  const patrolIds: Record<string, string> = {};
+
+  for (const patrolName of patrolNames) {
+    const { data, error } = await supabase.from('patrols').upsert(
       {
         unit_id: UNIT_ID,
-        name: patrol,
+        name: patrolName,
       },
       { onConflict: 'unit_id,name' }
-    );
-    if (error && !error.message.includes('duplicate')) console.log(`  Warning: ${error.message}`);
-    else console.log(`  Created patrol: ${patrol}`);
+    ).select('id').single();
+    if (error && !error.message.includes('duplicate')) {
+      console.log(`  Warning: ${error.message}`);
+    } else {
+      // If upsert didn't return data, fetch it
+      if (data) {
+        patrolIds[patrolName] = data.id;
+      } else {
+        const { data: existing } = await supabase
+          .from('patrols')
+          .select('id')
+          .eq('unit_id', UNIT_ID)
+          .eq('name', patrolName)
+          .single();
+        if (existing) patrolIds[patrolName] = existing.id;
+      }
+      console.log(`  Created patrol: ${patrolName}`);
+    }
   }
 
-  // 5. Create scouts
+  // 5. Create scouts (using patrol_id instead of patrol name)
   console.log('\nCreating scouts...');
   const scouts = [
-    { id: '20000000-0000-4000-a000-000000000001', first_name: 'Alex', last_name: 'Anderson', patrol: 'Eagle', rank: 'First Class', bsa_member_id: '123456001' },
-    { id: '20000000-0000-4000-a000-000000000002', first_name: 'Ben', last_name: 'Baker', patrol: 'Eagle', rank: 'Star', bsa_member_id: '123456002' },
-    { id: '20000000-0000-4000-a000-000000000003', first_name: 'Charlie', last_name: 'Chen', patrol: 'Eagle', rank: 'Life', bsa_member_id: '123456003' },
-    { id: '20000000-0000-4000-a000-000000000004', first_name: 'David', last_name: 'Davis', patrol: 'Wolf', rank: 'Tenderfoot', bsa_member_id: '123456004' },
-    { id: '20000000-0000-4000-a000-000000000005', first_name: 'Ethan', last_name: 'Evans', patrol: 'Wolf', rank: 'Second Class', bsa_member_id: '123456005' },
-    { id: '20000000-0000-4000-a000-000000000006', first_name: 'Frank', last_name: 'Fisher', patrol: 'Wolf', rank: 'Scout', bsa_member_id: '123456006' },
-    { id: '20000000-0000-4000-a000-000000000007', first_name: 'George', last_name: 'Garcia', patrol: 'Bear', rank: 'First Class', bsa_member_id: '123456007' },
-    { id: '20000000-0000-4000-a000-000000000008', first_name: 'Henry', last_name: 'Harris', patrol: 'Bear', rank: 'Star', bsa_member_id: '123456008' },
+    { id: '20000000-0000-4000-a000-000000000001', first_name: 'Alex', last_name: 'Anderson', patrol_name: 'Eagle', rank: 'First Class', bsa_member_id: '123456001' },
+    { id: '20000000-0000-4000-a000-000000000002', first_name: 'Ben', last_name: 'Baker', patrol_name: 'Eagle', rank: 'Star', bsa_member_id: '123456002' },
+    { id: '20000000-0000-4000-a000-000000000003', first_name: 'Charlie', last_name: 'Chen', patrol_name: 'Eagle', rank: 'Life', bsa_member_id: '123456003' },
+    { id: '20000000-0000-4000-a000-000000000004', first_name: 'David', last_name: 'Davis', patrol_name: 'Wolf', rank: 'Tenderfoot', bsa_member_id: '123456004' },
+    { id: '20000000-0000-4000-a000-000000000005', first_name: 'Ethan', last_name: 'Evans', patrol_name: 'Wolf', rank: 'Second Class', bsa_member_id: '123456005' },
+    { id: '20000000-0000-4000-a000-000000000006', first_name: 'Frank', last_name: 'Fisher', patrol_name: 'Wolf', rank: 'Scout', bsa_member_id: '123456006' },
+    { id: '20000000-0000-4000-a000-000000000007', first_name: 'George', last_name: 'Garcia', patrol_name: 'Bear', rank: 'First Class', bsa_member_id: '123456007' },
+    { id: '20000000-0000-4000-a000-000000000008', first_name: 'Henry', last_name: 'Harris', patrol_name: 'Bear', rank: 'Star', bsa_member_id: '123456008' },
   ];
 
   for (const scout of scouts) {
+    const { patrol_name, ...scoutData } = scout;
     const { error } = await supabase.from('scouts').upsert({
-      ...scout,
+      ...scoutData,
       unit_id: UNIT_ID,
+      patrol_id: patrolIds[patrol_name] || null,
       is_active: true,
       date_of_birth: '2012-01-15',
     });

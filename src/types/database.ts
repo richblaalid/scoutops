@@ -41,7 +41,7 @@ export type Database = {
     Tables: {
       accounts: {
         Row: {
-          account_type: string
+          account_type: Database["public"]["Enums"]["account_type"]
           code: string
           created_at: string | null
           id: string
@@ -52,7 +52,7 @@ export type Database = {
           unit_id: string
         }
         Insert: {
-          account_type: string
+          account_type: Database["public"]["Enums"]["account_type"]
           code: string
           created_at?: string | null
           id?: string
@@ -63,7 +63,7 @@ export type Database = {
           unit_id: string
         }
         Update: {
-          account_type?: string
+          account_type?: Database["public"]["Enums"]["account_type"]
           code?: string
           created_at?: string | null
           id?: string
@@ -356,7 +356,7 @@ export type Database = {
           profile_id: string | null
           responded_at: string | null
           scout_id: string | null
-          status: string
+          status: Database["public"]["Enums"]["rsvp_status"]
           vehicle_seats: number | null
         }
         Insert: {
@@ -367,7 +367,7 @@ export type Database = {
           profile_id?: string | null
           responded_at?: string | null
           scout_id?: string | null
-          status: string
+          status: Database["public"]["Enums"]["rsvp_status"]
           vehicle_seats?: number | null
         }
         Update: {
@@ -378,7 +378,7 @@ export type Database = {
           profile_id?: string | null
           responded_at?: string | null
           scout_id?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["rsvp_status"]
           vehicle_seats?: number | null
         }
         Relationships: [
@@ -616,7 +616,7 @@ export type Database = {
           created_by: string | null
           description: string
           entry_date: string
-          entry_type: string | null
+          entry_type: Database["public"]["Enums"]["journal_entry_type"] | null
           fundraiser_type_id: string | null
           id: string
           is_posted: boolean | null
@@ -631,7 +631,7 @@ export type Database = {
           created_by?: string | null
           description: string
           entry_date: string
-          entry_type?: string | null
+          entry_type?: Database["public"]["Enums"]["journal_entry_type"] | null
           fundraiser_type_id?: string | null
           id?: string
           is_posted?: boolean | null
@@ -646,7 +646,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           entry_date?: string
-          entry_type?: string | null
+          entry_type?: Database["public"]["Enums"]["journal_entry_type"] | null
           fundraiser_type_id?: string | null
           id?: string
           is_posted?: boolean | null
@@ -787,7 +787,7 @@ export type Database = {
           id: string
           payment_id: string | null
           scout_account_id: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["payment_link_status"] | null
           token: string
           unit_id: string
           updated_at: string | null
@@ -805,7 +805,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           scout_account_id?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["payment_link_status"] | null
           token: string
           unit_id: string
           updated_at?: string | null
@@ -823,7 +823,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           scout_account_id?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["payment_link_status"] | null
           token?: string
           unit_id?: string
           updated_at?: string | null
@@ -872,7 +872,7 @@ export type Database = {
           scout_account_id: string | null
           square_payment_id: string | null
           square_receipt_url: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
           unit_id: string
           void_reason: string | null
           voided_at: string | null
@@ -890,7 +890,7 @@ export type Database = {
           scout_account_id?: string | null
           square_payment_id?: string | null
           square_receipt_url?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
           unit_id: string
           void_reason?: string | null
           voided_at?: string | null
@@ -908,7 +908,7 @@ export type Database = {
           scout_account_id?: string | null
           square_payment_id?: string | null
           square_receipt_url?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
           unit_id?: string
           void_reason?: string | null
           voided_at?: string | null
@@ -959,7 +959,7 @@ export type Database = {
           expiration_date: string | null
           first_name: string | null
           full_name: string | null
-          gender: string | null
+          gender: Database["public"]["Enums"]["gender"] | null
           health_form_expires: string | null
           health_form_status: string | null
           id: string
@@ -967,15 +967,15 @@ export type Database = {
           last_name: string | null
           last_synced_at: string | null
           member_type: string | null
-          middle_name: string | null
-          patrol: string | null
           phone_primary: string | null
           phone_secondary: string | null
           position: string | null
           position_2: string | null
           renewal_status: string | null
           swim_class_date: string | null
-          swim_classification: string | null
+          swim_classification:
+            | Database["public"]["Enums"]["swim_classification"]
+            | null
           sync_session_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -993,7 +993,7 @@ export type Database = {
           expiration_date?: string | null
           first_name?: string | null
           full_name?: string | null
-          gender?: string | null
+          gender?: Database["public"]["Enums"]["gender"] | null
           health_form_expires?: string | null
           health_form_status?: string | null
           id?: string
@@ -1001,15 +1001,15 @@ export type Database = {
           last_name?: string | null
           last_synced_at?: string | null
           member_type?: string | null
-          middle_name?: string | null
-          patrol?: string | null
           phone_primary?: string | null
           phone_secondary?: string | null
           position?: string | null
           position_2?: string | null
           renewal_status?: string | null
           swim_class_date?: string | null
-          swim_classification?: string | null
+          swim_classification?:
+            | Database["public"]["Enums"]["swim_classification"]
+            | null
           sync_session_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1027,7 +1027,7 @@ export type Database = {
           expiration_date?: string | null
           first_name?: string | null
           full_name?: string | null
-          gender?: string | null
+          gender?: Database["public"]["Enums"]["gender"] | null
           health_form_expires?: string | null
           health_form_status?: string | null
           id?: string
@@ -1035,15 +1035,15 @@ export type Database = {
           last_name?: string | null
           last_synced_at?: string | null
           member_type?: string | null
-          middle_name?: string | null
-          patrol?: string | null
           phone_primary?: string | null
           phone_secondary?: string | null
           position?: string | null
           position_2?: string | null
           renewal_status?: string | null
           swim_class_date?: string | null
-          swim_classification?: string | null
+          swim_classification?:
+            | Database["public"]["Enums"]["swim_classification"]
+            | null
           sync_session_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1350,19 +1350,20 @@ export type Database = {
           date_joined: string | null
           date_of_birth: string | null
           first_name: string
-          gender: string | null
+          gender: Database["public"]["Enums"]["gender"] | null
           health_form_expires: string | null
           health_form_status: string | null
           id: string
           is_active: boolean | null
           last_name: string
           middle_name: string | null
-          patrol: string | null
           patrol_id: string | null
           profile_id: string | null
           rank: string | null
           swim_class_date: string | null
-          swim_classification: string | null
+          swim_classification:
+            | Database["public"]["Enums"]["swim_classification"]
+            | null
           unit_id: string
           updated_at: string | null
         }
@@ -1374,19 +1375,20 @@ export type Database = {
           date_joined?: string | null
           date_of_birth?: string | null
           first_name: string
-          gender?: string | null
+          gender?: Database["public"]["Enums"]["gender"] | null
           health_form_expires?: string | null
           health_form_status?: string | null
           id?: string
           is_active?: boolean | null
           last_name: string
           middle_name?: string | null
-          patrol?: string | null
           patrol_id?: string | null
           profile_id?: string | null
           rank?: string | null
           swim_class_date?: string | null
-          swim_classification?: string | null
+          swim_classification?:
+            | Database["public"]["Enums"]["swim_classification"]
+            | null
           unit_id: string
           updated_at?: string | null
         }
@@ -1398,19 +1400,20 @@ export type Database = {
           date_joined?: string | null
           date_of_birth?: string | null
           first_name?: string
-          gender?: string | null
+          gender?: Database["public"]["Enums"]["gender"] | null
           health_form_expires?: string | null
           health_form_status?: string | null
           id?: string
           is_active?: boolean | null
           last_name?: string
           middle_name?: string | null
-          patrol?: string | null
           patrol_id?: string | null
           profile_id?: string | null
           rank?: string | null
           swim_class_date?: string | null
-          swim_classification?: string | null
+          swim_classification?:
+            | Database["public"]["Enums"]["swim_classification"]
+            | null
           unit_id?: string
           updated_at?: string | null
         }
@@ -1437,36 +1440,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      snapshot_fingerprints: {
-        Row: {
-          captured_at: string | null
-          id: string
-          key_elements: Json
-          page_type: string
-          sample_snapshot: Json | null
-          structure_hash: string
-          updated_at: string | null
-        }
-        Insert: {
-          captured_at?: string | null
-          id?: string
-          key_elements: Json
-          page_type: string
-          sample_snapshot?: Json | null
-          structure_hash: string
-          updated_at?: string | null
-        }
-        Update: {
-          captured_at?: string | null
-          id?: string
-          key_elements?: Json
-          page_type?: string
-          sample_snapshot?: Json | null
-          structure_hash?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       square_transactions: {
         Row: {
@@ -1584,7 +1557,7 @@ export type Database = {
           pages_visited: number | null
           records_extracted: number | null
           started_at: string | null
-          status: string
+          status: Database["public"]["Enums"]["sync_status"]
           unit_id: string
         }
         Insert: {
@@ -1596,7 +1569,7 @@ export type Database = {
           pages_visited?: number | null
           records_extracted?: number | null
           started_at?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["sync_status"]
           unit_id: string
         }
         Update: {
@@ -1608,7 +1581,7 @@ export type Database = {
           pages_visited?: number | null
           records_extracted?: number | null
           started_at?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["sync_status"]
           unit_id?: string
         }
         Relationships: [
@@ -1624,44 +1597,6 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sync_snapshots: {
-        Row: {
-          accessibility_tree: Json
-          captured_at: string | null
-          id: string
-          page_type: string
-          page_url: string
-          screenshot_url: string | null
-          sync_session_id: string
-        }
-        Insert: {
-          accessibility_tree: Json
-          captured_at?: string | null
-          id?: string
-          page_type: string
-          page_url: string
-          screenshot_url?: string | null
-          sync_session_id: string
-        }
-        Update: {
-          accessibility_tree?: Json
-          captured_at?: string | null
-          id?: string
-          page_type?: string
-          page_url?: string
-          screenshot_url?: string | null
-          sync_session_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sync_snapshots_sync_session_id_fkey"
-            columns: ["sync_session_id"]
-            isOneToOne: false
-            referencedRelation: "sync_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1691,6 +1626,7 @@ export type Database = {
           renewal_status: string | null
           session_id: string
           skip_reason: string | null
+          status: string | null
           unit_id: string
         }
         Insert: {
@@ -1717,6 +1653,7 @@ export type Database = {
           renewal_status?: string | null
           session_id: string
           skip_reason?: string | null
+          status?: string | null
           unit_id: string
         }
         Update: {
@@ -1743,6 +1680,7 @@ export type Database = {
           renewal_status?: string | null
           session_id?: string
           skip_reason?: string | null
+          status?: string | null
           unit_id?: string
         }
         Relationships: [
@@ -1783,113 +1721,66 @@ export type Database = {
           },
         ]
       }
-      unit_invites: {
+      unit_memberships: {
         Row: {
           accepted_at: string | null
-          created_at: string | null
-          email: string
-          expires_at: string | null
+          created_by: string | null
+          current_position: string | null
+          email: string | null
           id: string
-          invited_by: string
-          role: string
-          scout_ids: string[] | null
-          status: string
+          invite_expires_at: string | null
+          invited_at: string | null
+          invited_by: string | null
+          joined_at: string | null
+          linked_scout_id: string | null
+          profile_id: string | null
+          role: Database["public"]["Enums"]["membership_role"]
+          section_unit_id: string | null
+          status: Database["public"]["Enums"]["membership_status"] | null
           unit_id: string
         }
         Insert: {
           accepted_at?: string | null
-          created_at?: string | null
-          email: string
-          expires_at?: string | null
+          created_by?: string | null
+          current_position?: string | null
+          email?: string | null
           id?: string
-          invited_by: string
-          role: string
-          scout_ids?: string[] | null
-          status?: string
+          invite_expires_at?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          linked_scout_id?: string | null
+          profile_id?: string | null
+          role: Database["public"]["Enums"]["membership_role"]
+          section_unit_id?: string | null
+          status?: Database["public"]["Enums"]["membership_status"] | null
           unit_id: string
         }
         Update: {
           accepted_at?: string | null
-          created_at?: string | null
-          email?: string
-          expires_at?: string | null
+          created_by?: string | null
+          current_position?: string | null
+          email?: string | null
           id?: string
-          invited_by?: string
-          role?: string
-          scout_ids?: string[] | null
-          status?: string
+          invite_expires_at?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          linked_scout_id?: string | null
+          profile_id?: string | null
+          role?: Database["public"]["Enums"]["membership_role"]
+          section_unit_id?: string | null
+          status?: Database["public"]["Enums"]["membership_status"] | null
           unit_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "unit_invites_invited_by_fkey"
-            columns: ["invited_by"]
+            foreignKeyName: "unit_memberships_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "unit_invites_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      unit_memberships: {
-        Row: {
-          accepted_at: string | null
-          current_position: string | null
-          email: string | null
-          expires_at: string | null
-          id: string
-          invited_at: string | null
-          invited_by: string | null
-          is_active: boolean | null
-          joined_at: string | null
-          linked_scout_id: string | null
-          profile_id: string | null
-          role: string
-          scout_ids: string[] | null
-          status: string | null
-          unit_id: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          current_position?: string | null
-          email?: string | null
-          expires_at?: string | null
-          id?: string
-          invited_at?: string | null
-          invited_by?: string | null
-          is_active?: boolean | null
-          joined_at?: string | null
-          linked_scout_id?: string | null
-          profile_id?: string | null
-          role: string
-          scout_ids?: string[] | null
-          status?: string | null
-          unit_id: string
-        }
-        Update: {
-          accepted_at?: string | null
-          current_position?: string | null
-          email?: string | null
-          expires_at?: string | null
-          id?: string
-          invited_at?: string | null
-          invited_by?: string | null
-          is_active?: boolean | null
-          joined_at?: string | null
-          linked_scout_id?: string | null
-          profile_id?: string | null
-          role?: string
-          scout_ids?: string[] | null
-          status?: string | null
-          unit_id?: string
-        }
-        Relationships: [
           {
             foreignKeyName: "unit_memberships_invited_by_fkey"
             columns: ["invited_by"]
@@ -1909,6 +1800,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_memberships_section_unit_id_fkey"
+            columns: ["section_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           },
           {
@@ -1983,13 +1881,16 @@ export type Database = {
           created_at: string | null
           district: string | null
           id: string
+          is_section: boolean | null
           logo_url: string | null
           name: string
+          parent_unit_id: string | null
           pass_fees_to_payer: boolean | null
           processing_fee_fixed: number | null
           processing_fee_percent: number | null
+          unit_gender: Database["public"]["Enums"]["unit_gender"] | null
           unit_number: string
-          unit_type: string
+          unit_type: Database["public"]["Enums"]["unit_type"]
           updated_at: string | null
         }
         Insert: {
@@ -1998,13 +1899,16 @@ export type Database = {
           created_at?: string | null
           district?: string | null
           id?: string
+          is_section?: boolean | null
           logo_url?: string | null
           name: string
+          parent_unit_id?: string | null
           pass_fees_to_payer?: boolean | null
           processing_fee_fixed?: number | null
           processing_fee_percent?: number | null
+          unit_gender?: Database["public"]["Enums"]["unit_gender"] | null
           unit_number: string
-          unit_type: string
+          unit_type: Database["public"]["Enums"]["unit_type"]
           updated_at?: string | null
         }
         Update: {
@@ -2013,16 +1917,27 @@ export type Database = {
           created_at?: string | null
           district?: string | null
           id?: string
+          is_section?: boolean | null
           logo_url?: string | null
           name?: string
+          parent_unit_id?: string | null
           pass_fees_to_payer?: boolean | null
           processing_fee_fixed?: number | null
           processing_fee_percent?: number | null
+          unit_gender?: Database["public"]["Enums"]["unit_gender"] | null
           unit_number?: string
-          unit_type?: string
+          unit_type?: Database["public"]["Enums"]["unit_type"]
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "units_parent_unit_id_fkey"
+            columns: ["parent_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waitlist: {
         Row: {
@@ -2081,18 +1996,6 @@ export type Database = {
         Args: { p_amount: number; p_scout_account_id: string }
         Returns: undefined
       }
-      create_billing_with_journal: {
-        Args: {
-          p_billing_date: string
-          p_billing_type: string
-          p_description: string
-          p_per_scout_amount: number
-          p_scout_accounts: Json
-          p_total_amount: number
-          p_unit_id: string
-        }
-        Returns: Json
-      }
       create_default_accounts: {
         Args: { p_unit_id: string }
         Returns: undefined
@@ -2108,6 +2011,17 @@ export type Database = {
         }
         Returns: Json
       }
+      create_unit_sections: {
+        Args: {
+          p_boys_number?: string
+          p_girls_number?: string
+          p_parent_unit_id: string
+        }
+        Returns: {
+          boys_section_id: string
+          girls_section_id: string
+        }[]
+      }
       credit_fundraising_to_scout: {
         Args: {
           p_amount: number
@@ -2119,9 +2033,9 @@ export type Database = {
       }
       get_auth_user_email: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
+      get_parent_unit: { Args: { p_unit_id: string }; Returns: string }
+      get_unit_sections: { Args: { p_unit_id: string }; Returns: string[] }
       get_user_active_unit_ids: { Args: never; Returns: string[] }
-      get_user_unit_ids_secure: { Args: never; Returns: string[] }
-      get_user_units: { Args: never; Returns: string[] }
       process_payment_link_payment: {
         Args: {
           p_base_amount_cents: number
@@ -2154,7 +2068,10 @@ export type Database = {
         Returns: Json
       }
       user_has_role: {
-        Args: { required_roles: string[]; unit: string }
+        Args: {
+          required_roles: Database["public"]["Enums"]["membership_role"][]
+          unit: string
+        }
         Returns: boolean
       }
       user_is_unit_admin: { Args: { check_unit_id: string }; Returns: boolean }
@@ -2176,7 +2093,25 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      account_type: "asset" | "liability" | "equity" | "income" | "expense"
+      gender: "male" | "female" | "other" | "prefer_not_to_say"
+      journal_entry_type:
+        | "billing"
+        | "payment"
+        | "refund"
+        | "reversal"
+        | "adjustment"
+        | "funds_transfer"
+        | "fundraising_credit"
+      membership_role: "admin" | "treasurer" | "leader" | "parent" | "scout"
+      membership_status: "roster" | "invited" | "active" | "inactive"
+      payment_link_status: "pending" | "completed" | "expired" | "cancelled"
+      payment_status: "pending" | "completed" | "voided" | "refunded"
+      rsvp_status: "going" | "not_going" | "maybe"
+      swim_classification: "swimmer" | "beginner" | "non-swimmer"
+      sync_status: "running" | "staged" | "completed" | "failed" | "cancelled"
+      unit_gender: "boys" | "girls" | "coed"
+      unit_type: "troop" | "pack" | "crew" | "ship"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2306,6 +2241,27 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      account_type: ["asset", "liability", "equity", "income", "expense"],
+      gender: ["male", "female", "other", "prefer_not_to_say"],
+      journal_entry_type: [
+        "billing",
+        "payment",
+        "refund",
+        "reversal",
+        "adjustment",
+        "funds_transfer",
+        "fundraising_credit",
+      ],
+      membership_role: ["admin", "treasurer", "leader", "parent", "scout"],
+      membership_status: ["roster", "invited", "active", "inactive"],
+      payment_link_status: ["pending", "completed", "expired", "cancelled"],
+      payment_status: ["pending", "completed", "voided", "refunded"],
+      rsvp_status: ["going", "not_going", "maybe"],
+      swim_classification: ["swimmer", "beginner", "non-swimmer"],
+      sync_status: ["running", "staged", "completed", "failed", "cancelled"],
+      unit_gender: ["boys", "girls", "coed"],
+      unit_type: ["troop", "pack", "crew", "ship"],
+    },
   },
 } as const

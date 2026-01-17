@@ -38,9 +38,9 @@ interface Scout {
   id: string
   first_name: string
   last_name: string
-  patrol: string | null
   is_active: boolean | null
   scout_accounts: { id: string } | null
+  patrols: { name: string } | null
 }
 
 export default async function BillingPage() {
@@ -98,9 +98,9 @@ export default async function BillingPage() {
       id,
       first_name,
       last_name,
-      patrol,
       is_active,
-      scout_accounts (id)
+      scout_accounts (id),
+      patrols (name)
     `)
     .eq('unit_id', membership.unit_id)
     .eq('is_active', true)

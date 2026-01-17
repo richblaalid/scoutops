@@ -13,8 +13,8 @@ interface ScoutAccount {
     id: string
     first_name: string
     last_name: string
-    patrol: string | null
     is_active: boolean | null
+    patrols: { name: string } | null
   } | null
 }
 
@@ -92,8 +92,8 @@ export default async function ReportsPage() {
         id,
         first_name,
         last_name,
-        patrol,
-        is_active
+        is_active,
+        patrols (name)
       )
     `)
     .eq('unit_id', membership.unit_id)
@@ -136,7 +136,7 @@ export default async function ReportsPage() {
   // Group by patrol
   const patrolBalances = accounts.reduce(
     (groups, account) => {
-      const patrol = account.scouts?.patrol || 'No Patrol'
+      const patrol = account.scouts?.patrols?.name || 'No Patrol'
       if (!groups[patrol]) {
         groups[patrol] = { billing: 0, funds: 0, count: 0, owing: 0 }
       }
@@ -295,7 +295,7 @@ export default async function ReportsPage() {
                           </Link>
                         </td>
                         <td className="py-3 pr-4 text-stone-600">
-                          {account.scouts?.patrol || '—'}
+                          {account.scouts?.patrols?.name || '—'}
                         </td>
                         <td className="py-3 text-right font-medium text-error">
                           {formatCurrency(Math.abs(account.billing_balance || 0))}

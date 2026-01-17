@@ -63,11 +63,11 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
       return
     }
 
+    // Note: Parent-guardian links are now created separately after invite acceptance
     const result = await inviteMember({
       unitId,
       email: email.trim(),
       role,
-      scoutIds: role === 'parent' ? selectedScoutIds : undefined,
       linkedScoutId: role === 'scout' ? selectedScoutId : undefined,
     })
 

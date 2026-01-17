@@ -13,9 +13,11 @@ interface ScoutAccount {
     id: string
     first_name: string
     last_name: string
-    patrol: string | null
     is_active: boolean | null
     unit_id: string
+    patrols: {
+      name: string
+    } | null
   } | null
 }
 
@@ -97,9 +99,11 @@ export default async function AccountsPage() {
         id,
         first_name,
         last_name,
-        patrol,
         is_active,
-        unit_id
+        unit_id,
+        patrols (
+          name
+        )
       )
     `)
     .eq('unit_id', membership.unit_id)

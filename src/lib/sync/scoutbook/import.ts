@@ -111,7 +111,7 @@ export async function stageRosterMembers(
   // Get existing scouts by BSA member ID for this unit
   const { data: existingScouts, error: scoutsError } = await supabase
     .from('scouts')
-    .select('id, bsa_member_id, first_name, last_name, rank, patrol, current_position, current_position_2')
+    .select('id, bsa_member_id, first_name, last_name, rank, patrol_id, current_position, current_position_2')
     .eq('unit_id', unitId)
     .not('bsa_member_id', 'is', null)
 
@@ -126,7 +126,7 @@ export async function stageRosterMembers(
     .select(`
       profile_id,
       profiles:profiles!unit_memberships_profile_id_fkey (
-        id, bsa_member_id, first_name, last_name, full_name, position, position_2, patrol, member_type
+        id, bsa_member_id, first_name, last_name, full_name, position, position_2, member_type
       )
     `)
     .eq('unit_id', unitId)
@@ -139,7 +139,7 @@ export async function stageRosterMembers(
   // Also get profiles directly by BSA member ID (may not have unit membership yet)
   const { data: profilesByBsa } = await supabase
     .from('profiles')
-    .select('id, bsa_member_id, first_name, last_name, full_name, position, position_2, patrol, member_type')
+    .select('id, bsa_member_id, first_name, last_name, full_name, position, position_2, member_type')
     .not('bsa_member_id', 'is', null)
 
   // Build map of existing adults by BSA member ID
@@ -150,7 +150,6 @@ export async function stageRosterMembers(
     last_name: string | null
     position: string | null
     position_2: string | null
-    patrol: string | null
   }
   const existingAdults: ExistingAdult[] = []
 
@@ -163,7 +162,6 @@ export async function stageRosterMembers(
       last_name: string | null
       position: string | null
       position_2: string | null
-      patrol: string | null
       member_type: string | null
     }
     if (profile && profile.member_type && profile.bsa_member_id) {
@@ -174,7 +172,6 @@ export async function stageRosterMembers(
         last_name: profile.last_name,
         position: profile.position,
         position_2: profile.position_2,
-        patrol: profile.patrol,
       })
     }
   }
@@ -284,9 +281,7 @@ export async function stageRosterMembers(
         if (existingAdult.position_2 !== member.position2) {
           changes.position_2 = { old: existingAdult.position_2, new: member.position2 }
         }
-        if (existingAdult.patrol !== member.patrol) {
-          changes.patrol = { old: existingAdult.patrol, new: member.patrol }
-        }
+        // Note: Adults don't have patrol field in profiles anymore
 
         const hasChanges = Object.keys(changes).length > 0
 
@@ -367,9 +362,7 @@ export async function stageRosterMembers(
       if (existingScout.rank !== member.lastRankApproved) {
         changes.rank = { old: existingScout.rank, new: member.lastRankApproved }
       }
-      if (existingScout.patrol !== member.patrol) {
-        changes.patrol = { old: existingScout.patrol, new: member.patrol }
-      }
+      // Note: Patrol comparison skipped - will be updated via patrol_id during import
       if (existingScout.current_position !== member.position) {
         changes.position = { old: existingScout.current_position, new: member.position }
       }
@@ -589,7 +582,6 @@ export async function confirmStagedImport(
         first_name: member.first_name,
         last_name: member.last_name,
         rank: member.rank,
-        patrol: member.patrol,
         patrol_id: patrolId,
         current_position: member.position,
         current_position_2: member.position_2,
@@ -622,7 +614,6 @@ export async function confirmStagedImport(
           first_name: member.first_name,
           last_name: member.last_name,
           rank: member.rank,
-          patrol: member.patrol,
           patrol_id: patrolId,
           current_position: member.position,
           current_position_2: member.position_2,
@@ -667,7 +658,6 @@ export async function confirmStagedImport(
             last_name: member.last_name,
             full_name: member.full_name,
             member_type: member.member_type as 'LEADER' | 'P 18+',
-            patrol: member.patrol,
             position: member.position,
             position_2: member.position_2,
             renewal_status: member.renewal_status,
@@ -724,7 +714,6 @@ export async function confirmStagedImport(
             last_name: member.last_name,
             full_name: member.full_name,
             member_type: member.member_type as 'LEADER' | 'P 18+',
-            patrol: member.patrol,
             position: member.position,
             position_2: member.position_2,
             renewal_status: member.renewal_status,
@@ -774,7 +763,6 @@ export async function confirmStagedImport(
           first_name: member.first_name,
           last_name: member.last_name,
           full_name: member.full_name,
-          patrol: member.patrol,
           position: member.position,
           position_2: member.position_2,
           renewal_status: member.renewal_status,
@@ -923,7 +911,6 @@ export async function importRosterMembers(
             first_name: firstName,
             last_name: lastName,
             rank: member.lastRankApproved,
-            patrol: member.patrol || null,
             patrol_id: patrolId,
             current_position: member.position,
             is_active: isRenewalStatusActive(member.renewalStatus),
@@ -944,7 +931,6 @@ export async function importRosterMembers(
           first_name: firstName,
           last_name: lastName,
           rank: member.lastRankApproved,
-          patrol: member.patrol || null,
           patrol_id: patrolId,
           current_position: member.position,
           is_active: isRenewalStatusActive(member.renewalStatus),

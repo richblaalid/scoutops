@@ -53,7 +53,6 @@ export default async function RosterPage() {
     id: string
     first_name: string
     last_name: string
-    patrol: string | null
     patrol_id: string | null
     rank: string | null
     is_active: boolean | null
@@ -62,6 +61,7 @@ export default async function RosterPage() {
     current_position: string | null
     current_position_2: string | null
     scout_accounts: { id: string; billing_balance: number | null } | null
+    patrols: { name: string } | null
   }
 
   interface RosterAdult {
@@ -80,7 +80,6 @@ export default async function RosterPage() {
     member_type: string | null
     position: string | null
     position_2: string | null
-    patrol: string | null
     bsa_member_id: string | null
     renewal_status: string | null
     expiration_date: string | null
@@ -111,7 +110,6 @@ export default async function RosterPage() {
           id,
           first_name,
           last_name,
-          patrol,
           patrol_id,
           rank,
           is_active,
@@ -122,7 +120,8 @@ export default async function RosterPage() {
           scout_accounts (
             id,
             billing_balance
-          )
+          ),
+          patrols (name)
         `)
         .in('id', scoutIds)
         .eq('unit_id', membership.unit_id)
@@ -139,7 +138,6 @@ export default async function RosterPage() {
         id,
         first_name,
         last_name,
-        patrol,
         patrol_id,
         rank,
         is_active,
@@ -150,7 +148,8 @@ export default async function RosterPage() {
         scout_accounts (
           id,
           billing_balance
-        )
+        ),
+        patrols (name)
       `)
       .eq('unit_id', membership.unit_id)
       .order('last_name', { ascending: true })
@@ -188,7 +187,6 @@ export default async function RosterPage() {
           member_type,
           position,
           position_2,
-          patrol,
           bsa_member_id,
           renewal_status,
           expiration_date,

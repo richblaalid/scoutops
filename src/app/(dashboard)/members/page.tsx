@@ -12,8 +12,6 @@ interface Member {
   email: string | null
   joined_at: string | null
   invited_at: string | null
-  expires_at: string | null
-  scout_ids: string[] | null
   profiles: {
     id: string
     email: string
@@ -86,8 +84,6 @@ export default async function MembersPage() {
       email,
       joined_at,
       invited_at,
-      expires_at,
-      scout_ids,
       profiles!unit_memberships_profile_id_fkey (
         id,
         email,
@@ -151,11 +147,6 @@ export default async function MembersPage() {
           <CardContent>
             <div className="space-y-3">
               {pendingInvites.map((invite) => {
-                // Get scout names for parent invites
-                const linkedScouts = invite.scout_ids
-                  ? scouts.filter(s => invite.scout_ids?.includes(s.id))
-                  : []
-
                 return (
                   <div
                     key={invite.id}
@@ -165,18 +156,13 @@ export default async function MembersPage() {
                       <p className="font-medium text-stone-900">{invite.email}</p>
                       <p className="text-sm text-stone-500">
                         Role: <span className="capitalize">{invite.role}</span>
-                        {invite.expires_at && (
+                        {invite.invited_at && (
                           <>
                             {' • '}
-                            Expires: {new Date(invite.expires_at).toLocaleDateString()}
+                            Invited: {new Date(invite.invited_at).toLocaleDateString()}
                           </>
                         )}
                       </p>
-                      {linkedScouts.length > 0 && (
-                        <p className="text-sm text-stone-500">
-                          Scouts: {linkedScouts.map(s => `${s.first_name} ${s.last_name}`).join(', ')}
-                        </p>
-                      )}
                     </div>
                     <div className="flex gap-2">
                       <form action={async () => {
