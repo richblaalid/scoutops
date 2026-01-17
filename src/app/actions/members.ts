@@ -157,11 +157,17 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
   }
 
   // Get the user's profile (created by signup trigger)
-  const { data: userProfile } = await supabase
+  // Use admin client to bypass RLS - this is a trusted server action
+  const { data: userProfile, error: profileError } = await adminSupabase
     .from('profiles')
     .select('id')
     .eq('user_id', user.id)
     .maybeSingle()
+
+  if (profileError) {
+    console.error('Error fetching profile:', profileError.message)
+    return { accepted: 0 }
+  }
 
   if (!userProfile) {
     console.error('No profile found for user:', user.id)
