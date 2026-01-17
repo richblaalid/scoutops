@@ -14,32 +14,29 @@
 -- ============================================
 
 -- ============================================
--- CREATE PROFILES FROM AUTH USERS
+-- UPDATE PROFILES FROM AUTH USERS
+-- (Profiles are auto-created by handle_new_user trigger)
 -- ============================================
-INSERT INTO profiles (id, email, full_name, first_name, last_name, phone_primary)
-SELECT
-  id,
-  email,
-  CASE
-    WHEN email = 'richard.blaalid+admin@withcaldera.com' THEN 'Admin User'
-    WHEN email = 'richard.blaalid+treasurer@withcaldera.com' THEN 'Treasurer User'
-    WHEN email = 'richard.blaalid+parent@withcaldera.com' THEN 'Parent User'
-    ELSE split_part(email, '@', 1)
-  END,
-  CASE
-    WHEN email = 'richard.blaalid+admin@withcaldera.com' THEN 'Admin'
-    WHEN email = 'richard.blaalid+treasurer@withcaldera.com' THEN 'Treasurer'
-    WHEN email = 'richard.blaalid+parent@withcaldera.com' THEN 'Parent'
-    ELSE split_part(email, '@', 1)
-  END,
-  'User',
-  '555-123-4567'
-FROM auth.users
-WHERE email IN ('richard.blaalid+admin@withcaldera.com', 'richard.blaalid+treasurer@withcaldera.com', 'richard.blaalid+parent@withcaldera.com')
-ON CONFLICT (id) DO UPDATE SET
-  full_name = EXCLUDED.full_name,
-  first_name = EXCLUDED.first_name,
-  last_name = EXCLUDED.last_name;
+UPDATE profiles SET
+  full_name = 'Admin User',
+  first_name = 'Admin',
+  last_name = 'User',
+  phone_primary = '555-123-4567'
+WHERE email = 'richard.blaalid+admin@withcaldera.com';
+
+UPDATE profiles SET
+  full_name = 'Treasurer User',
+  first_name = 'Treasurer',
+  last_name = 'User',
+  phone_primary = '555-123-4567'
+WHERE email = 'richard.blaalid+treasurer@withcaldera.com';
+
+UPDATE profiles SET
+  full_name = 'Parent User',
+  first_name = 'Parent',
+  last_name = 'User',
+  phone_primary = '555-123-4567'
+WHERE email = 'richard.blaalid+parent@withcaldera.com';
 
 -- ============================================
 -- 1. CREATE TEST UNIT
@@ -60,22 +57,22 @@ VALUES (
 -- ============================================
 -- 1b. CREATE UNIT MEMBERSHIPS
 -- ============================================
--- Admin
+-- Admin (use profile.id, not auth.users.id)
 INSERT INTO unit_memberships (unit_id, profile_id, role, status)
-SELECT '10000000-0000-4000-a000-000000000001', id, 'admin', 'active'
-FROM auth.users WHERE email = 'richard.blaalid+admin@withcaldera.com'
+SELECT '10000000-0000-4000-a000-000000000001', p.id, 'admin', 'active'
+FROM profiles p WHERE p.email = 'richard.blaalid+admin@withcaldera.com'
 ON CONFLICT DO NOTHING;
 
 -- Treasurer
 INSERT INTO unit_memberships (unit_id, profile_id, role, status)
-SELECT '10000000-0000-4000-a000-000000000001', id, 'treasurer', 'active'
-FROM auth.users WHERE email = 'richard.blaalid+treasurer@withcaldera.com'
+SELECT '10000000-0000-4000-a000-000000000001', p.id, 'treasurer', 'active'
+FROM profiles p WHERE p.email = 'richard.blaalid+treasurer@withcaldera.com'
 ON CONFLICT DO NOTHING;
 
 -- Parent
 INSERT INTO unit_memberships (unit_id, profile_id, role, status)
-SELECT '10000000-0000-4000-a000-000000000001', id, 'parent', 'active'
-FROM auth.users WHERE email = 'richard.blaalid+parent@withcaldera.com'
+SELECT '10000000-0000-4000-a000-000000000001', p.id, 'parent', 'active'
+FROM profiles p WHERE p.email = 'richard.blaalid+parent@withcaldera.com'
 ON CONFLICT DO NOTHING;
 
 -- ============================================
@@ -108,13 +105,13 @@ ON CONFLICT DO NOTHING;
 -- 2b. LINK PARENT TO SCOUTS (Guardian relationships)
 -- ============================================
 INSERT INTO scout_guardians (scout_id, profile_id, relationship, is_primary)
-SELECT '20000000-0000-4000-a000-000000000001', id, 'parent', true
-FROM auth.users WHERE email = 'richard.blaalid+parent@withcaldera.com'
+SELECT '20000000-0000-4000-a000-000000000001', p.id, 'parent', true
+FROM profiles p WHERE p.email = 'richard.blaalid+parent@withcaldera.com'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO scout_guardians (scout_id, profile_id, relationship, is_primary)
-SELECT '20000000-0000-4000-a000-000000000002', id, 'parent', true
-FROM auth.users WHERE email = 'richard.blaalid+parent@withcaldera.com'
+SELECT '20000000-0000-4000-a000-000000000002', p.id, 'parent', true
+FROM profiles p WHERE p.email = 'richard.blaalid+parent@withcaldera.com'
 ON CONFLICT DO NOTHING;
 
 -- ============================================
