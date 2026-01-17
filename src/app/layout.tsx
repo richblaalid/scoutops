@@ -1,14 +1,23 @@
 import type { Metadata } from 'next'
-import { Nunito, Source_Serif_4 } from 'next/font/google'
+import { Bricolage_Grotesque, DM_Sans, Source_Serif_4 } from 'next/font/google'
 import { PostHogProvider } from '@/components/providers/posthog-provider'
 import './globals.css'
 
-const nunito = Nunito({
+// Primary display font - quirky geometric with unexpected details
+const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
-  variable: '--font-nunito',
+  variable: '--font-bricolage',
   display: 'swap',
 })
 
+// Body font - warm and highly readable
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+})
+
+// Editorial/serif font for special moments
 const sourceSerif = Source_Serif_4({
   subsets: ['latin'],
   variable: '--font-source-serif',
@@ -27,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${nunito.variable} ${sourceSerif.variable} font-sans`}>
+      <body className={`${bricolage.variable} ${dmSans.variable} ${sourceSerif.variable} font-sans antialiased`}>
         <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>

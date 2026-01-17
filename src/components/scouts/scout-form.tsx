@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,6 +57,13 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
   const [error, setError] = useState<string | null>(null)
   const [patrols, setPatrols] = useState<Patrol[]>([])
   const [selectedPatrolId, setSelectedPatrolId] = useState<string>(scout?.patrol_id || '')
+  const [mounted, setMounted] = useState(false)
+
+  // Track mount state for portal (SSR compatibility)
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   // Guardian data - can be passed in or fetched dynamically
   const [guardians, setGuardians] = useState<Guardian[]>(initialGuardians)
@@ -305,7 +313,10 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
     }
   }
 
-  return (
+  // Don't render until mounted (for SSR)
+  if (!mounted) return null
+
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-bold">
@@ -584,4 +595,8 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
       </div>
     </div>
   )
+
+  // Use portal to render modal at document body level
+  // This escapes any parent transforms that could affect fixed positioning
+  return createPortal(modalContent, document.body)
 }

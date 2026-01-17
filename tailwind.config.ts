@@ -10,7 +10,11 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-nunito)', 'Avenir Next', 'system-ui', 'sans-serif'],
+        // Display font - Bricolage Grotesque for headings and emphasis
+        display: ['var(--font-bricolage)', 'var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        // Body font - DM Sans for readable body text
+        sans: ['var(--font-dm-sans)', 'var(--font-bricolage)', 'system-ui', 'sans-serif'],
+        // Serif for editorial moments
         serif: ['var(--font-source-serif)', 'Georgia', 'serif'],
       },
       colors: {
@@ -125,8 +129,26 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       boxShadow: {
+        // Elevation system with forest-tinted shadows for brand consistency
+        'xs': '0 1px 2px rgba(35, 77, 62, 0.05)',
+        'sm': '0 1px 3px rgba(35, 77, 62, 0.08), 0 1px 2px rgba(35, 77, 62, 0.06)',
+        'md': '0 4px 6px rgba(35, 77, 62, 0.08), 0 2px 4px rgba(35, 77, 62, 0.06)',
+        'lg': '0 10px 15px rgba(35, 77, 62, 0.08), 0 4px 6px rgba(35, 77, 62, 0.05)',
+        'xl': '0 20px 25px rgba(35, 77, 62, 0.10), 0 8px 10px rgba(35, 77, 62, 0.04)',
+        '2xl': '0 25px 50px rgba(35, 77, 62, 0.15)',
+        // Brand-specific accent shadows
         'forest': '0 4px 12px rgba(35, 77, 62, 0.3)',   // Pine 800
         'tan': '0 4px 12px rgba(232, 93, 4, 0.3)',       // Campfire 500
+        // Campfire glow for success states
+        'glow': '0 0 20px rgba(232, 93, 4, 0.25)',
+        'glow-lg': '0 0 40px rgba(232, 93, 4, 0.3)',
+      },
+      backgroundImage: {
+        // Radial gradient for campfire glow effect
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        // Subtle warm gradients for depth
+        'gradient-warm': 'linear-gradient(180deg, hsl(33, 56%, 97%) 0%, hsl(33, 56%, 95%) 100%)',
+        'gradient-forest': 'linear-gradient(180deg, hsl(157, 39%, 25%) 0%, hsl(157, 39%, 22%) 100%)',
       },
     },
   },

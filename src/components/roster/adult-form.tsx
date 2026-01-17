@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +42,13 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Track mount state for portal (SSR compatibility)
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -77,7 +85,10 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
     }
   }
 
-  return (
+  // Don't render until mounted (for SSR)
+  if (!mounted) return null
+
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-bold">Edit Adult</h2>
@@ -283,4 +294,8 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
       </div>
     </div>
   )
+
+  // Use portal to render modal at document body level
+  // This escapes any parent transforms that could affect fixed positioning
+  return createPortal(modalContent, document.body)
 }

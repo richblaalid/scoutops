@@ -5,22 +5,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-[0.97] motion-reduce:transform-none",
   {
     variants: {
       variant: {
         // Primary - Forest green with branded shadow on hover
         default:
-          "bg-forest-700 text-white shadow-sm hover:bg-forest-800 hover:shadow-forest hover:-translate-y-0.5",
+          "bg-forest-700 text-white shadow-sm hover:bg-forest-800 hover:shadow-forest hover:-translate-y-0.5 active:translate-y-0",
         // Destructive - Error red
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-red-700",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-red-700 hover:-translate-y-0.5 active:translate-y-0",
         // Outline - Forest green border
         outline:
-          "border-2 border-forest-700 bg-transparent text-forest-700 hover:bg-forest-700 hover:text-white",
+          "border-2 border-forest-700 bg-transparent text-forest-700 hover:bg-forest-700 hover:text-white hover:-translate-y-0.5 active:translate-y-0",
         // Secondary - Tan/gold accent
         secondary:
-          "bg-tan-400 text-forest-900 shadow-sm hover:bg-tan-300 hover:shadow-tan hover:-translate-y-0.5",
+          "bg-tan-400 text-forest-900 shadow-sm hover:bg-tan-300 hover:shadow-tan hover:-translate-y-0.5 active:translate-y-0",
         // Ghost - Subtle hover
         ghost:
           "text-forest-700 hover:bg-stone-100 hover:text-forest-800",
@@ -29,10 +29,10 @@ const buttonVariants = cva(
           "text-forest-700 underline-offset-4 hover:underline",
         // Success - Green action
         success:
-          "bg-success text-white shadow-sm hover:bg-success-dark",
+          "bg-success text-white shadow-sm hover:bg-success-dark hover:-translate-y-0.5 active:translate-y-0",
         // Warning - Amber action
         warning:
-          "bg-warning text-white shadow-sm hover:bg-warning-dark",
+          "bg-warning text-white shadow-sm hover:bg-warning-dark hover:-translate-y-0.5 active:translate-y-0",
       },
       size: {
         default: "h-10 px-5 py-2",
