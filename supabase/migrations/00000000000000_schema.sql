@@ -2304,7 +2304,25 @@ GRANT EXECUTE ON FUNCTION process_payment_link_payment TO authenticated;
 GRANT EXECUTE ON FUNCTION process_payment_link_payment TO service_role;
 
 -- ============================================
--- SECTION 16: STORAGE BUCKET
+-- SECTION 16: TABLE AND SEQUENCE GRANTS
+-- ============================================
+-- Grant table access to Supabase roles (required for RLS to work)
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+
+-- Grant sequence access (for auto-generated IDs)
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+-- Grant schema usage
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT USAGE ON SCHEMA public TO anon;
+GRANT USAGE ON SCHEMA public TO service_role;
+
+-- ============================================
+-- SECTION 17: STORAGE BUCKET
 -- ============================================
 
 -- Create the storage bucket for unit logos
@@ -2326,5 +2344,5 @@ CREATE POLICY "Authenticated users can delete unit logos" ON storage.objects FOR
     USING (bucket_id = 'unit-logos' AND auth.role() = 'authenticated');
 
 -- ============================================
--- END OF INIT SCHEMA
+-- END OF SCHEMA
 -- ============================================
