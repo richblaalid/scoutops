@@ -83,7 +83,8 @@ export function AddFundsModal({
   }, [open, unitId, fundraiserTypes.length])
 
   const parsedAmount = parseFloat(amount) || 0
-  const isValid = parsedAmount > 0 && fundraiserTypeId
+  // Fundraiser type is optional - only required if types exist
+  const isValid = parsedAmount > 0
 
   const handleSubmit = async () => {
     if (!isValid) return
@@ -95,7 +96,7 @@ export function AddFundsModal({
       const result = await addFundsToScout(
         scoutAccountId,
         parsedAmount,
-        fundraiserTypeId,
+        fundraiserTypeId || undefined,
         notes.trim() || undefined
       )
 
@@ -193,12 +194,15 @@ export function AddFundsModal({
               </div>
             </div>
 
-            {/* Fundraiser Type */}
-            <div className="space-y-2">
-              <Label htmlFor="fundraiser-type">Fundraiser Type</Label>
-              {loading ? (
+            {/* Fundraiser Type - only show if types exist */}
+            {loading ? (
+              <div className="space-y-2">
+                <Label htmlFor="fundraiser-type">Fundraiser Type</Label>
                 <div className="h-10 rounded-md border bg-muted animate-pulse" />
-              ) : (
+              </div>
+            ) : fundraiserTypes.length > 0 ? (
+              <div className="space-y-2">
+                <Label htmlFor="fundraiser-type">Fundraiser Type (optional)</Label>
                 <Select
                   value={fundraiserTypeId}
                   onValueChange={setFundraiserTypeId}
@@ -215,8 +219,8 @@ export function AddFundsModal({
                     ))}
                   </SelectContent>
                 </Select>
-              )}
-            </div>
+              </div>
+            ) : null}
 
             {/* Notes */}
             <div className="space-y-2">

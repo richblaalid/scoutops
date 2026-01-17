@@ -94,12 +94,11 @@ export function AddFundsForm({
     ? { id: scoutAccountId!, funds_balance: currentFundsBalance || 0 }
     : selectedScout?.scout_accounts
 
-  // Validation
+  // Validation - fundraiser type is optional
   const parsedAmount = parseFloat(amount) || 0
   const isValid =
     (isSingleScoutMode || selectedScoutId) &&
-    parsedAmount > 0 &&
-    fundraiserTypeId
+    parsedAmount > 0
 
   const handleSubmit = async () => {
     if (!isValid || !scoutAccount) return
@@ -111,7 +110,7 @@ export function AddFundsForm({
       const result = await addFundsToScout(
         scoutAccount.id,
         parsedAmount,
-        fundraiserTypeId,
+        fundraiserTypeId || undefined,
         notes.trim() || undefined
       )
 
@@ -222,31 +221,33 @@ export function AddFundsForm({
         </div>
       </div>
 
-      {/* Fundraiser Type */}
-      <div className="space-y-2">
-        <Label htmlFor="fundraiser-type">Fundraiser Type</Label>
-        <Select
-          value={fundraiserTypeId}
-          onValueChange={setFundraiserTypeId}
-          disabled={isProcessing}
-        >
-          <SelectTrigger id="fundraiser-type">
-            <SelectValue placeholder="Select fundraiser type" />
-          </SelectTrigger>
-          <SelectContent>
-            {fundraiserTypes.map((type) => (
-              <SelectItem key={type.id} value={type.id}>
-                {type.name}
-                {type.description && (
-                  <span className="text-muted-foreground ml-2 text-xs">
-                    - {type.description}
-                  </span>
-                )}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Fundraiser Type - only show if types exist */}
+      {fundraiserTypes.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="fundraiser-type">Fundraiser Type (optional)</Label>
+          <Select
+            value={fundraiserTypeId}
+            onValueChange={setFundraiserTypeId}
+            disabled={isProcessing}
+          >
+            <SelectTrigger id="fundraiser-type">
+              <SelectValue placeholder="Select fundraiser type" />
+            </SelectTrigger>
+            <SelectContent>
+              {fundraiserTypes.map((type) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                  {type.description && (
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      - {type.description}
+                    </span>
+                  )}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Notes */}
       <div className="space-y-2">

@@ -12,7 +12,7 @@ interface ActionResult {
 export async function addFundsToScout(
   scoutAccountId: string,
   amount: number,
-  fundraiserTypeId: string,
+  fundraiserTypeId?: string,
   notes?: string
 ): Promise<ActionResult> {
   const supabase = await createClient()
@@ -75,39 +75,43 @@ export async function addFundsToScout(
     return { success: false, error: 'Amount must be greater than 0' }
   }
 
-  // Get fundraiser type name for description
-  const { data: fundraiserType, error: typeError } = await supabase
-    .from('fundraiser_types')
-    .select('name')
-    .eq('id', fundraiserTypeId)
-    .maybeSingle()
+  // Get fundraiser type name for description (if provided)
+  let fundraiserTypeName = 'Fundraising'
+  if (fundraiserTypeId) {
+    const { data: fundraiserType, error: typeError } = await supabase
+      .from('fundraiser_types')
+      .select('name')
+      .eq('id', fundraiserTypeId)
+      .maybeSingle()
 
-  if (typeError || !fundraiserType) {
-    return { success: false, error: 'Invalid fundraiser type' }
+    if (typeError || !fundraiserType) {
+      return { success: false, error: 'Invalid fundraiser type' }
+    }
+    fundraiserTypeName = fundraiserType.name
   }
 
   // Build description
   const scout = scoutAccount.scout as { first_name: string; last_name: string } | null
   const scoutName = scout ? `${scout.first_name} ${scout.last_name}` : 'Unknown Scout'
   const description = notes
-    ? `${fundraiserType.name}: ${notes} - ${scoutName}`
-    : `${fundraiserType.name} credit - ${scoutName}`
+    ? `${fundraiserTypeName}: ${notes} - ${scoutName}`
+    : `${fundraiserTypeName} credit - ${scoutName}`
 
   // Use the existing RPC function
   const { data, error } = await supabase.rpc('credit_fundraising_to_scout', {
     p_scout_account_id: scoutAccountId,
     p_amount: amount,
     p_description: description,
-    p_fundraiser_type: fundraiserType.name,
+    p_fundraiser_type: fundraiserTypeName,
   })
 
   if (error) {
     return { success: false, error: error.message }
   }
 
-  // Update the journal entry with fundraiser_type_id for tracking
+  // Update the journal entry with fundraiser_type_id for tracking (if provided)
   const result = data as { success: boolean; journal_entry_id?: string; error?: string }
-  if (result.success && result.journal_entry_id) {
+  if (result.success && result.journal_entry_id && fundraiserTypeId) {
     await supabase
       .from('journal_entries')
       .update({ fundraiser_type_id: fundraiserTypeId })
