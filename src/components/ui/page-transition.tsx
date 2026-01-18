@@ -8,26 +8,26 @@ import { usePathname } from 'next/navigation'
  * PageTransition wraps page content with fade animations
  * Uses opacity-only to avoid breaking fixed positioning of modals/dialogs
  * Respects prefers-reduced-motion for accessibility
+ *
+ * Note: Using simple fade without AnimatePresence mode="wait" to avoid
+ * conflicts with Next.js App Router's internal state management
  */
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={pathname}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{
-          duration: 0.15,
-          ease: 'easeOut',
-        }}
-        className="motion-reduce:transition-none"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{
+        duration: 0.15,
+        ease: 'easeOut',
+      }}
+      className="motion-reduce:transition-none"
+    >
+      {children}
+    </motion.div>
   )
 }
 

@@ -196,12 +196,12 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
   let availableProfiles: { id: string; first_name: string | null; last_name: string | null; full_name: string | null; email: string | null; member_type: string | null; user_id: string | null }[] = []
 
   if (canEditGuardians && membership) {
-    // Get profile IDs from unit memberships
+    // Get profile IDs from unit memberships (active, roster, or invited)
     const { data: membersData } = await supabase
       .from('unit_memberships')
       .select('profile_id')
       .eq('unit_id', membership.unit_id)
-      .eq('status', 'active')
+      .in('status', ['active', 'roster', 'invited'])
 
     const profileIds = (membersData || [])
       .map(m => m.profile_id)
@@ -212,6 +212,8 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         .from('profiles')
         .select('id, first_name, last_name, full_name, email, member_type, user_id')
         .in('id', profileIds)
+        .order('last_name', { ascending: true, nullsFirst: false })
+        .order('first_name', { ascending: true, nullsFirst: false })
 
       availableProfiles = (profilesData || []) as typeof availableProfiles
     }

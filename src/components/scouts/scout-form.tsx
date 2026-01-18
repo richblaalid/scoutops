@@ -71,7 +71,6 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
   const [guardiansLoaded, setGuardiansLoaded] = useState(initialGuardians.length > 0 || !scout)
 
   // Guardian management state
-  const [isAddingGuardian, setIsAddingGuardian] = useState(false)
   const [selectedProfileId, setSelectedProfileId] = useState('')
   const [relationship, setRelationship] = useState('parent')
   const [guardianLoadingId, setGuardianLoadingId] = useState<string | null>(null)
@@ -131,7 +130,7 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
         setGuardians(guardiansData as Guardian[])
       }
 
-      // Fetch available members (profiles with active unit memberships)
+      // Fetch available members (profiles with unit memberships - active, roster, or invited)
       const { data: membersData } = await supabase
         .from('unit_memberships')
         .select(`
@@ -144,7 +143,7 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
           )
         `)
         .eq('unit_id', unitId)
-        .eq('status', 'active')
+        .in('status', ['active', 'roster', 'invited'])
 
       if (membersData) {
         type MemberRow = { profiles: AvailableMember | null }
@@ -180,9 +179,18 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
     ? `${birthYear}-${birthMonth}-${birthDay.padStart(2, '0')}`
     : ''
 
-  // Filter out already-linked guardians from available members
+  // Filter out already-linked guardians from available members and sort by last name
   const linkedProfileIds = new Set(guardians.map(g => g.profiles.id))
-  const filteredAvailableMembers = availableMembers.filter(m => !linkedProfileIds.has(m.id))
+  const filteredAvailableMembers = availableMembers
+    .filter(m => !linkedProfileIds.has(m.id))
+    .sort((a, b) => {
+      const lastNameA = (a.last_name || '').toLowerCase()
+      const lastNameB = (b.last_name || '').toLowerCase()
+      if (lastNameA !== lastNameB) return lastNameA.localeCompare(lastNameB)
+      const firstNameA = (a.first_name || '').toLowerCase()
+      const firstNameB = (b.first_name || '').toLowerCase()
+      return firstNameA.localeCompare(firstNameB)
+    })
 
   const getGuardianName = (guardian: Guardian) => {
     const { first_name, last_name, email } = guardian.profiles
@@ -215,28 +223,6 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
     if (guardiansData) {
       setGuardians(guardiansData as Guardian[])
     }
-  }
-
-  const handleAddGuardian = async () => {
-    if (!selectedProfileId || !scout) return
-
-    setGuardianLoadingId('add')
-    setGuardianError(null)
-    setGuardianSuccess(null)
-
-    const result = await addScoutGuardian(unitId, selectedProfileId, scout.id, relationship)
-
-    if (result.success) {
-      setGuardianSuccess('Guardian added successfully')
-      setSelectedProfileId('')
-      setIsAddingGuardian(false)
-      // Refetch guardians to update local state
-      await refetchGuardians()
-    } else {
-      setGuardianError(result.error || 'Failed to add guardian')
-    }
-
-    setGuardianLoadingId(null)
   }
 
   const handleRemoveGuardian = async (guardianshipId: string, guardianName: string) => {
@@ -293,6 +279,15 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
           .eq('id', scout.id)
 
         if (updateError) throw updateError
+
+        // Add guardian if one is selected (saves with the scout update)
+        if (selectedProfileId) {
+          const result = await addScoutGuardian(unitId, selectedProfileId, scout.id, relationship)
+          if (!result.success) {
+            // Scout was saved but guardian failed - show warning but don't fail the whole operation
+            console.error('Failed to add guardian:', result.error)
+          }
+        }
       } else {
         const { error: insertError } = await (supabase as unknown as {
           from: (table: string) => {
@@ -447,18 +442,7 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
           {/* Guardian Management - only shown when editing */}
           {scout && (
             <div className="space-y-3 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <Label>Guardians</Label>
-                {guardiansLoaded && filteredAvailableMembers.length > 0 && !isAddingGuardian && (
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingGuardian(true)}
-                    className="text-sm text-forest-600 hover:text-forest-800"
-                  >
-                    Add Guardian
-                  </button>
-                )}
-              </div>
+              <Label>Guardians</Label>
 
               {!guardiansLoaded && (
                 <p className="text-sm text-stone-500">Loading guardians...</p>
@@ -476,61 +460,8 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
                 </div>
               )}
 
-              {/* Add Guardian Form */}
-              {guardiansLoaded && isAddingGuardian && (
-                <div className="rounded-lg border border-dashed border-stone-300 p-3">
-                  <div className="flex flex-wrap gap-2">
-                    <select
-                      value={selectedProfileId}
-                      onChange={(e) => setSelectedProfileId(e.target.value)}
-                      className="flex-1 min-w-0 rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
-                    >
-                      <option value="">Select member...</option>
-                      {filteredAvailableMembers.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.first_name || member.last_name
-                            ? `${member.first_name || ''} ${member.last_name || ''}`.trim()
-                            : member.email}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={relationship}
-                      onChange={(e) => setRelationship(e.target.value)}
-                      className="rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
-                    >
-                      <option value="parent">Parent</option>
-                      <option value="guardian">Guardian</option>
-                      <option value="grandparent">Grandparent</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleAddGuardian}
-                      disabled={!selectedProfileId || guardianLoadingId === 'add'}
-                    >
-                      {guardianLoadingId === 'add' ? 'Adding...' : 'Add'}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setIsAddingGuardian(false)
-                        setSelectedProfileId('')
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-
               {/* Guardian List */}
-              {guardiansLoaded && guardians.length > 0 ? (
+              {guardiansLoaded && guardians.length > 0 && (
                 <div className="space-y-2">
                   {guardians.map((guardian) => {
                     const guardianName = getGuardianName(guardian)
@@ -571,9 +502,44 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
                     )
                   })}
                 </div>
-              ) : guardiansLoaded ? (
+              )}
+
+              {guardiansLoaded && guardians.length === 0 && (
                 <p className="text-sm text-stone-500">No guardians linked</p>
-              ) : null}
+              )}
+
+              {/* Add Guardian - inline dropdown, saves with Update Scout */}
+              {guardiansLoaded && filteredAvailableMembers.length > 0 && (
+                <div className="rounded-lg border border-dashed border-stone-300 p-3">
+                  <p className="text-xs text-stone-500 mb-2">Add a guardian (will save when you click Update Scout)</p>
+                  <div className="flex flex-wrap gap-2">
+                    <select
+                      value={selectedProfileId}
+                      onChange={(e) => setSelectedProfileId(e.target.value)}
+                      className="flex-1 min-w-0 rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
+                    >
+                      <option value="">Select adult...</option>
+                      {filteredAvailableMembers.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.last_name || member.first_name
+                            ? `${member.last_name || ''}${member.last_name && member.first_name ? ', ' : ''}${member.first_name || ''}`.trim()
+                            : member.email}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={relationship}
+                      onChange={(e) => setRelationship(e.target.value)}
+                      className="rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
+                    >
+                      <option value="parent">Parent</option>
+                      <option value="guardian">Guardian</option>
+                      <option value="grandparent">Grandparent</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

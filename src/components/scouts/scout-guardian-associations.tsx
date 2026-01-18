@@ -57,9 +57,18 @@ export function ScoutGuardianAssociations({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  // Filter out already-linked guardians from available profiles
+  // Filter out already-linked guardians from available profiles and sort by last name
   const linkedProfileIds = new Set(guardians.map(g => g.profile_id))
-  const filteredAvailableProfiles = availableProfiles.filter(p => !linkedProfileIds.has(p.id))
+  const filteredAvailableProfiles = availableProfiles
+    .filter(p => !linkedProfileIds.has(p.id))
+    .sort((a, b) => {
+      const lastNameA = (a.last_name || '').toLowerCase()
+      const lastNameB = (b.last_name || '').toLowerCase()
+      if (lastNameA !== lastNameB) return lastNameA.localeCompare(lastNameB)
+      const firstNameA = (a.first_name || '').toLowerCase()
+      const firstNameB = (b.first_name || '').toLowerCase()
+      return firstNameA.localeCompare(firstNameB)
+    })
 
   const hasAvailableOptions = filteredAvailableProfiles.length > 0
 
@@ -173,8 +182,6 @@ export function ScoutGuardianAssociations({
                 {filteredAvailableProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {getProfileDisplayName(profile)}
-                    {profile.member_type ? ` (${profile.member_type})` : ''}
-                    {!profile.user_id && ' - Not yet invited'}
                   </option>
                 ))}
               </select>
