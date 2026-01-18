@@ -84,6 +84,6 @@ Place PNG icons in `public/icons/`:
 ## Security
 
 - Extension tokens are hashed before storage in the database
-- Tokens expire after 24 hours
+- Tokens expire after 60 days
 - Users can revoke tokens at any time from Chuckbox settings
 - The extension never stores or transmits Scoutbook credentials

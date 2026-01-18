@@ -16,7 +16,7 @@ CREATE TABLE extension_auth_tokens (
 
 COMMENT ON TABLE extension_auth_tokens IS 'Stores hashed tokens for browser extension authentication';
 COMMENT ON COLUMN extension_auth_tokens.token_hash IS 'SHA-256 hash of the actual token';
-COMMENT ON COLUMN extension_auth_tokens.expires_at IS '24 hour expiration from creation';
+COMMENT ON COLUMN extension_auth_tokens.expires_at IS '60 day expiration from creation';
 COMMENT ON COLUMN extension_auth_tokens.is_revoked IS 'User can manually revoke tokens';
 
 -- Indexes

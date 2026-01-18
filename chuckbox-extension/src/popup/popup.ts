@@ -202,19 +202,18 @@ async function handleSync() {
 
     // Show extraction complete and estimate pages
     const pageCount = (extractResponse.html.match(/<!-- PAGE BREAK -->/gi) || []).length + 1
-    setProgress(`Extracted ${pageCount} page(s). Processing with AI...`, 30)
+    setProgress(`Extracted ${pageCount} page(s). Processing...`, 30)
 
-    // Step 2: Send to Chuckbox API - this is the slow part
-    // Start a progress animation since server processing takes ~15s per page
+    // Step 2: Send to Chuckbox API
+    // Start a progress animation while server processes the data
     let progressValue = 30
     const progressInterval = setInterval(() => {
-      // Slowly increment progress to ~90% over expected processing time
-      // ~15 seconds per page, cap at 90%
+      // Slowly increment progress to ~90%
       if (progressValue < 90) {
-        progressValue += 0.5
-        setProgress(`Analyzing roster with AI (page ${Math.min(Math.ceil((progressValue - 30) / (60 / pageCount)), pageCount)} of ${pageCount})...`, Math.round(progressValue))
+        progressValue += 2
+        setProgress(`Processing roster data...`, Math.round(progressValue))
       }
-    }, 500)
+    }, 200)
 
     const syncResponse = await chrome.runtime.sendMessage({
       action: 'sync',

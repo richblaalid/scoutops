@@ -22,7 +22,7 @@ type ExtensionAuthToken = {
   is_revoked: boolean | null
 }
 
-const TOKEN_EXPIRY_HOURS = 24
+const TOKEN_EXPIRY_DAYS = 60
 
 /**
  * Generate a cryptographically secure random token
@@ -59,7 +59,7 @@ export async function createExtensionToken(
 ): Promise<{ token: string; expiresAt: Date }> {
   const token = generateToken()
   const tokenHash = hashToken(token)
-  const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
+  const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000)
 
   // Revoke any existing active tokens for this user/unit
   await getTokensTable(supabase)

@@ -181,6 +181,8 @@ CREATE TABLE scouts (
     health_form_expires DATE,
     swim_classification swim_classification,
     swim_class_date DATE,
+    renewal_status VARCHAR(50),
+    expiration_date VARCHAR(20),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -188,6 +190,8 @@ CREATE TABLE scouts (
 
 COMMENT ON COLUMN scouts.profile_id IS 'Links to user profile when a scout has their own login. One-to-one relationship.';
 COMMENT ON COLUMN scouts.current_position IS 'Current leadership position (e.g., Senior Patrol Leader, Patrol Leader)';
+COMMENT ON COLUMN scouts.renewal_status IS 'BSA registration status (Current, Eligible for Renewal, Expired)';
+COMMENT ON COLUMN scouts.expiration_date IS 'BSA membership expiration date';
 
 -- Scout-Guardian Relationships
 CREATE TABLE scout_guardians (
@@ -496,11 +500,13 @@ CREATE TABLE sync_sessions (
     pages_visited INTEGER DEFAULT 0,
     records_extracted INTEGER DEFAULT 0,
     error_log JSONB DEFAULT '[]'::jsonb,
+    sync_source TEXT DEFAULT 'local',
     created_by UUID REFERENCES profiles(id),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 COMMENT ON TABLE sync_sessions IS 'Tracks Scoutbook sync operations for auditing and debugging';
+COMMENT ON COLUMN sync_sessions.sync_source IS 'How sync was initiated: local or extension';
 
 -- Sync Staged Members
 CREATE TABLE sync_staged_members (
@@ -553,6 +559,23 @@ CREATE TABLE adult_trainings (
 );
 
 COMMENT ON TABLE adult_trainings IS 'Tracks BSA training completions for adult leaders';
+
+-- Extension Auth Tokens (for browser extension authentication)
+CREATE TABLE extension_auth_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_used_at TIMESTAMPTZ,
+    is_revoked BOOLEAN DEFAULT false
+);
+
+COMMENT ON TABLE extension_auth_tokens IS 'Stores hashed tokens for browser extension authentication';
+COMMENT ON COLUMN extension_auth_tokens.token_hash IS 'SHA-256 hash of the actual token';
+COMMENT ON COLUMN extension_auth_tokens.expires_at IS '60 day expiration from creation';
+COMMENT ON COLUMN extension_auth_tokens.is_revoked IS 'User can manually revoke tokens';
 
 -- ============================================
 -- SECTION 7: ADVANCEMENT TABLES
@@ -745,6 +768,12 @@ CREATE INDEX idx_sync_sessions_status ON sync_sessions(status);
 CREATE INDEX idx_sync_sessions_created_by ON sync_sessions(created_by);
 CREATE INDEX idx_sync_staged_session ON sync_staged_members(session_id);
 CREATE INDEX idx_sync_staged_unit ON sync_staged_members(unit_id);
+
+-- Extension auth tokens indexes
+CREATE INDEX idx_extension_auth_token_hash ON extension_auth_tokens(token_hash);
+CREATE INDEX idx_extension_auth_expires ON extension_auth_tokens(expires_at);
+CREATE INDEX idx_extension_auth_profile ON extension_auth_tokens(profile_id);
+CREATE INDEX idx_extension_auth_unit ON extension_auth_tokens(unit_id);
 
 -- Adult trainings indexes
 CREATE INDEX idx_adult_trainings_profile ON adult_trainings(profile_id);
@@ -1157,6 +1186,7 @@ ALTER TABLE unit_square_credentials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE square_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_staged_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE extension_auth_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE adult_trainings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scout_advancements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scout_rank_requirements ENABLE ROW LEVEL SECURITY;
@@ -1432,6 +1462,31 @@ CREATE POLICY "Admins can modify staged members" ON sync_staged_members FOR ALL
           AND unit_memberships.role IN ('admin', 'treasurer')
           AND unit_memberships.status = 'active'
     ));
+
+-- EXTENSION AUTH TOKENS POLICIES
+CREATE POLICY "Users can view their own tokens" ON extension_auth_tokens
+    FOR SELECT
+    USING (profile_id = get_current_profile_id());
+
+CREATE POLICY "Users can create tokens for units they admin" ON extension_auth_tokens
+    FOR INSERT
+    WITH CHECK (
+        profile_id = get_current_profile_id()
+        AND unit_id IN (
+            SELECT unit_id FROM unit_memberships
+            WHERE profile_id = get_current_profile_id()
+            AND status = 'active'
+            AND role IN ('admin', 'treasurer')
+        )
+    );
+
+CREATE POLICY "Users can update their own tokens" ON extension_auth_tokens
+    FOR UPDATE
+    USING (profile_id = get_current_profile_id());
+
+CREATE POLICY "Users can delete their own tokens" ON extension_auth_tokens
+    FOR DELETE
+    USING (profile_id = get_current_profile_id());
 
 -- ADULT TRAININGS POLICIES
 CREATE POLICY "Users can view trainings in their units" ON adult_trainings FOR SELECT

@@ -52,7 +52,7 @@ Extract all roster members and return as a JSON array with these fields:
 - type: Exactly "YOUTH", "LEADER", or "P 18+"
 - age: Age as string (e.g., "15", "21+")
 - lastRankApproved: Rank (e.g., "Life Scout", "First Class", null if none)
-- patrol: Patrol name - IMPORTANT: look in the Patrol column. Value might be just the name (e.g., "Cobra", "Flaring Phoenix") or with "Patrol" suffix. Return with "Patrol" suffix (e.g., "Cobra Patrol"). Return null if "unassigned" or empty.
+- patrol: Patrol name - IMPORTANT: look in the Patrol column. Return the value exactly as shown (e.g., "Cobra", "Flaring Phoenix", or "Eagle Patrol"). Do NOT add "Patrol" suffix. Return null if "unassigned" or empty.
 - position: Primary position (e.g., "Senior Patrol Leader", "Patrol Leader", null if none)
 - position2: Secondary position (null if none)
 - renewalStatus: "Current", "Eligible to Renew", "Expired", or "Dropped"
@@ -120,6 +120,12 @@ export async function parseRosterHtmlWithAI(html: string): Promise<AIParserResul
     return { members: [], usedAI: false, error: `HTML exceeds maximum size` }
   }
 
+  // AI parsing temporarily disabled - use HTML parser directly
+  // TODO: Re-enable AI parsing when ready for production
+  console.log('[Parser] Using HTML parser')
+  return parseRosterHtmlWithRegex(html)
+
+  /* AI parsing commented out for now
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     console.warn('[AI Parser] ANTHROPIC_API_KEY not set, using regex fallback')
@@ -163,6 +169,7 @@ export async function parseRosterHtmlWithAI(html: string): Promise<AIParserResul
     console.error('[AI Parser] Error:', error)
     return { ...parseRosterHtmlWithRegex(html), error: String(error) }
   }
+  */ // End of commented-out AI parsing
 }
 
 function normalizeType(type: string): 'YOUTH' | 'LEADER' | 'P 18+' {
@@ -345,7 +352,8 @@ function extractPatrol(text: string): string | null {
     if (/^\d+$/.test(patrolName)) {
       return null
     }
-    return patrolName + ' Patrol'
+    // Return just the patrol name without "Patrol" suffix to avoid duplicates
+    return patrolName
   }
 
   return null
@@ -390,7 +398,7 @@ const PATROL_KEYWORDS = [
 
 /**
  * Identify patrol from a cell value
- * Scoutbook patrol column may contain just the patrol name without "Patrol" suffix
+ * Returns the patrol name as-is from Scoutbook (without appending "Patrol" suffix)
  */
 function identifyPatrol(cellValue: string): string | null {
   const value = cellValue.trim()
@@ -398,8 +406,8 @@ function identifyPatrol(cellValue: string): string | null {
     return null
   }
 
-  // If already ends with "Patrol", return as-is
-  if (/patrol$/i.test(value)) {
+  // If it contains "Patrol" (like "Eagle Patrol" or ends with "Patrol"), it's likely a patrol
+  if (/patrol/i.test(value)) {
     return value
   }
 
@@ -410,7 +418,8 @@ function identifyPatrol(cellValue: string): string | null {
   const hasPatrolKeyword = words.some(word => PATROL_KEYWORDS.includes(word))
 
   if (hasPatrolKeyword) {
-    return value + ' Patrol'
+    // Return as-is without appending "Patrol" - avoids duplicates with existing patrols
+    return value
   }
 
   // Single word that's capitalized and not a common name/type/rank/status
@@ -634,8 +643,8 @@ function parseRosterHtmlWithRegex(html: string): AIParserResult {
         // Direct column access - most reliable
         const patrolCell = cells[columnMap.patrol].trim()
         if (patrolCell && patrolCell.toLowerCase() !== 'unassigned' && patrolCell !== '-') {
-          // Add "Patrol" suffix if not already present
-          patrol = /patrol$/i.test(patrolCell) ? patrolCell : patrolCell + ' Patrol'
+          // Use patrol name as-is from Scoutbook (don't append "Patrol" - causes duplicates)
+          patrol = patrolCell
         }
       }
       if (!patrol && isScout) {
