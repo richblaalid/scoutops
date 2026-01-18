@@ -125,6 +125,17 @@ export default async function Home({ searchParams }: HomeProps) {
       <footer className="bg-cream-300 dark:bg-stone-900 py-8">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <Logo variant="full" size="sm" className="mx-auto mb-4" />
+          <div className="flex justify-center gap-6 mb-4">
+            <Link href="/privacy" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+              Privacy
+            </Link>
+            <Link href="/terms" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+              Terms
+            </Link>
+            <Link href="/contact" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+              Contact
+            </Link>
+          </div>
           <p className="text-sm text-stone-500 dark:text-stone-400">
             &copy; {new Date().getFullYear()} ChuckBox. Built for Scouting America units.
           </p>

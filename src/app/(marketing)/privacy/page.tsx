@@ -131,14 +131,10 @@ export default function PrivacyPolicyPage() {
 
           <h2 className="text-xl font-semibold text-forest-800 mt-8 mb-4">Contact Us</h2>
           <p className="text-stone-600 mb-4">
-            If you have any questions about this privacy policy or our data practices, please
-            contact us at:
-          </p>
-          <p className="text-stone-600">
-            <strong>Email:</strong>{' '}
-            <a href="mailto:privacy@chuckbox.app" className="text-forest-600 hover:text-forest-700">
-              privacy@chuckbox.app
-            </a>
+            If you have any questions about this privacy policy or our data practices, please{' '}
+            <Link href="/contact" className="text-forest-600 hover:text-forest-700">
+              contact us
+            </Link>.
           </p>
         </div>
 
