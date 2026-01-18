@@ -56,5 +56,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl)
   }
 
+  // Redirect /signup to /early-access if self-signup is not enabled
+  if (pathname === '/signup' && process.env.NEXT_PUBLIC_ENABLE_SELF_SIGNUP !== 'true') {
+    const earlyAccessUrl = new URL('/early-access', request.url)
+    return NextResponse.redirect(earlyAccessUrl)
+  }
+
   return supabaseResponse
 }

@@ -180,15 +180,26 @@ export default function LoginPage() {
           </Suspense>
         </div>
 
-        {/* Create unit link */}
-        <div className="mt-8 text-center">
-          <p className="text-base text-stone-600 dark:text-stone-300">
-            Setting up a new unit?{' '}
-            <a href="/signup" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
-              Create your unit
-            </a>
-          </p>
-        </div>
+        {/* Create unit link - only show if self-signup is enabled */}
+        {process.env.NEXT_PUBLIC_ENABLE_SELF_SIGNUP === 'true' ? (
+          <div className="mt-8 text-center">
+            <p className="text-base text-stone-600 dark:text-stone-300">
+              Setting up a new unit?{' '}
+              <a href="/signup" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
+                Create your unit
+              </a>
+            </p>
+          </div>
+        ) : (
+          <div className="mt-8 text-center">
+            <p className="text-base text-stone-600 dark:text-stone-300">
+              Interested in ChuckBox for your unit?{' '}
+              <a href="/early-access" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
+                Join the waitlist
+              </a>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Footer - pushed to bottom */}
