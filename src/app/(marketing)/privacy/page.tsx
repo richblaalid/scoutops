@@ -138,8 +138,19 @@ export default function PrivacyPolicyPage() {
           </p>
         </div>
 
-        {/* Back link */}
-        <div className="text-center mt-6">
+        {/* Footer */}
+        <div className="text-center mt-8 pt-6 border-t border-cream-400">
+          <div className="flex justify-center gap-6 mb-4">
+            <Link href="/privacy" className="text-sm text-stone-500 hover:text-forest-600 font-medium">
+              Privacy
+            </Link>
+            <Link href="/terms" className="text-sm text-stone-500 hover:text-forest-600">
+              Terms
+            </Link>
+            <Link href="/contact" className="text-sm text-stone-500 hover:text-forest-600">
+              Contact
+            </Link>
+          </div>
           <Link href="/" className="text-sm text-forest-600 hover:text-forest-700 font-medium">
             &larr; Back to home
           </Link>

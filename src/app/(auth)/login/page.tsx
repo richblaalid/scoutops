@@ -198,9 +198,19 @@ export default function LoginPage() {
 
       {/* Footer - pushed to bottom */}
       <div className="text-center pt-8">
-        <Logo variant="full" size="sm" className="mx-auto mb-3" />
+        <div className="flex justify-center gap-6 mb-4">
+          <a href="/privacy" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+            Privacy
+          </a>
+          <a href="/terms" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+            Terms
+          </a>
+          <a href="/contact" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+            Contact
+          </a>
+        </div>
         <p className="text-sm text-stone-500 dark:text-stone-400">
-          chuckbox.app
+          &copy; {new Date().getFullYear()} ChuckBox
         </p>
       </div>
     </div>

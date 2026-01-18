@@ -70,10 +70,19 @@ export interface ParsedScout {
   guardians: ParsedGuardian[]
 }
 
+export interface UnitMetadata {
+  unitType: 'troop' | 'pack' | 'crew' | 'ship' | null
+  unitNumber: string | null
+  unitSuffix: string | null // e.g., "B" for "Troop 9297 B"
+  council: string | null
+  district: string | null
+}
+
 export interface ParsedRoster {
   adults: ParsedAdult[]
   scouts: ParsedScout[]
   errors: string[]
+  unitMetadata?: UnitMetadata
 }
 
 // ============================================
@@ -502,4 +511,159 @@ export function validateRoster(roster: ParsedRoster): string[] {
   }
 
   return errors
+}
+
+/**
+ * Parse unit type from a unit string like "Troop 9297 B"
+ */
+function parseUnitType(unitStr: string): 'troop' | 'pack' | 'crew' | 'ship' | null {
+  const lower = unitStr.toLowerCase()
+  if (lower.includes('troop')) return 'troop'
+  if (lower.includes('pack')) return 'pack'
+  if (lower.includes('crew')) return 'crew'
+  if (lower.includes('ship')) return 'ship'
+  return null
+}
+
+/**
+ * Parse unit number and suffix from a unit string like "Troop 9297 B"
+ * Returns { number: "9297", suffix: "B" }
+ */
+function parseUnitNumberAndSuffix(unitStr: string): { number: string | null; suffix: string | null } {
+  // Match pattern: "Troop 9297 B" or "Pack 123" or "Crew 42G"
+  const match = unitStr.match(/(?:troop|pack|crew|ship)\s+(\d+)\s*([A-Z])?/i)
+  if (match) {
+    return {
+      number: match[1],
+      suffix: match[2] || null,
+    }
+  }
+  return { number: null, suffix: null }
+}
+
+/**
+ * Clean council name - removes trailing council number if present
+ * "Northern Star Council 250" -> "Northern Star Council"
+ */
+function cleanCouncilName(council: string): string {
+  // Remove trailing council number (e.g., "Northern Star Council 250" -> "Northern Star Council")
+  return council.replace(/\s+\d+\s*$/, '').trim()
+}
+
+/**
+ * Extract unit metadata from BSA roster CSV content
+ * Parses the first adult or youth row to get unit info
+ */
+export function extractUnitMetadata(content: string): UnitMetadata {
+  const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+
+  // Find section markers
+  let adultStartIndex = -1
+  let youthStartIndex = -1
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('ADULT MEMBERS')) {
+      adultStartIndex = i
+    } else if (lines[i].includes('YOUTH MEMBERS')) {
+      youthStartIndex = i
+    }
+  }
+
+  const result: UnitMetadata = {
+    unitType: null,
+    unitNumber: null,
+    unitSuffix: null,
+    council: null,
+    district: null,
+  }
+
+  // Try to extract from adult section first (has more complete data)
+  if (adultStartIndex !== -1) {
+    const headerLine = lines[adultStartIndex + 1]
+    const dataLine = lines[adultStartIndex + 2]
+
+    if (headerLine && dataLine && !dataLine.startsWith('" "')) {
+      const headers = parseCSVLine(headerLine)
+      const values = parseCSVLine(dataLine)
+
+      const getVal = (header: string): string => {
+        const idx = headers.findIndex(h => h.toLowerCase().includes(header.toLowerCase()))
+        return idx !== -1 && values[idx] ? values[idx] : ''
+      }
+
+      // Get council (from "Council" column)
+      const council = getVal('Council')
+      if (council) {
+        result.council = cleanCouncilName(council)
+      }
+
+      // Get district
+      const district = getVal('District')
+      if (district) {
+        result.district = district
+      }
+
+      // Get unit info from "Unit Number" column (adult section) or "Unit" (youth section)
+      let unitStr = getVal('Unit Number')
+      if (!unitStr) {
+        unitStr = getVal('Unit')
+      }
+
+      if (unitStr) {
+        result.unitType = parseUnitType(unitStr)
+        const { number, suffix } = parseUnitNumberAndSuffix(unitStr)
+        result.unitNumber = number
+        result.unitSuffix = suffix
+      }
+    }
+  }
+
+  // Fallback to youth section if adult section didn't have data
+  if (!result.unitNumber && youthStartIndex !== -1) {
+    const headerLine = lines[youthStartIndex + 1]
+    const dataLine = lines[youthStartIndex + 2]
+
+    if (headerLine && dataLine && !dataLine.startsWith('" "')) {
+      const headers = parseCSVLine(headerLine)
+      const values = parseCSVLine(dataLine)
+
+      const getVal = (header: string): string => {
+        const idx = headers.findIndex(h => h.toLowerCase().includes(header.toLowerCase()))
+        return idx !== -1 && values[idx] ? values[idx] : ''
+      }
+
+      // Youth section has "Council" and "Unit" columns
+      const council = getVal('Council')
+      if (council && !result.council) {
+        result.council = cleanCouncilName(council)
+      }
+
+      const district = getVal('District')
+      if (district && !result.district) {
+        result.district = district
+      }
+
+      const unitStr = getVal('Unit')
+      if (unitStr) {
+        result.unitType = parseUnitType(unitStr)
+        const { number, suffix } = parseUnitNumberAndSuffix(unitStr)
+        result.unitNumber = number
+        result.unitSuffix = suffix
+      }
+    }
+  }
+
+  return result
+}
+
+/**
+ * Parse BSA roster CSV and extract both roster data and unit metadata
+ */
+export function parseRosterWithMetadata(content: string): ParsedRoster {
+  const roster = parseRosterCSV(content)
+  const unitMetadata = extractUnitMetadata(content)
+  return {
+    ...roster,
+    unitMetadata,
+  }
 }
