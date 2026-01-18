@@ -231,6 +231,8 @@ export function Sidebar({ user, userName, className }: SidebarProps) {
               variant="ghost"
               size="sm"
               onClick={toggleCollapsed}
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!isCollapsed}
               className={cn(
                 "w-full",
                 isCollapsed ? "justify-center px-0" : "justify-start gap-3"

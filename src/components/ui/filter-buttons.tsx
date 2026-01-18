@@ -1,5 +1,7 @@
 'use client'
 
+import { ToggleButtonGroup, type ToggleOption } from './toggle-button-group'
+
 export type StatusFilter = 'all' | 'active' | 'inactive'
 export type BalanceFilter = 'all' | 'owes' | 'has_funds' | 'settled'
 
@@ -8,32 +10,23 @@ interface StatusFilterButtonsProps {
   onChange: (value: StatusFilter) => void
 }
 
+const STATUS_OPTIONS: ToggleOption<StatusFilter>[] = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+]
+
 /**
  * A button group for filtering by active/inactive status.
  */
 export function StatusFilterButtons({ value, onChange }: StatusFilterButtonsProps) {
-  const options: { key: StatusFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'active', label: 'Active' },
-    { key: 'inactive', label: 'Inactive' },
-  ]
-
   return (
-    <div className="inline-flex rounded-lg border border-stone-300 bg-white p-0.5">
-      {options.map((option) => (
-        <button
-          key={option.key}
-          onClick={() => onChange(option.key)}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            value === option.key
-              ? 'bg-forest-800 text-white'
-              : 'text-stone-600 hover:text-stone-900'
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
+    <ToggleButtonGroup
+      options={STATUS_OPTIONS}
+      value={value}
+      onChange={onChange}
+      aria-label="Status filter"
+    />
   )
 }
 
@@ -42,32 +35,23 @@ interface BalanceFilterButtonsProps {
   onChange: (value: BalanceFilter) => void
 }
 
+const BALANCE_OPTIONS: ToggleOption<BalanceFilter>[] = [
+  { value: 'all', label: 'All' },
+  { value: 'owes', label: 'Owes' },
+  { value: 'has_funds', label: 'Has Funds' },
+  { value: 'settled', label: 'Settled' },
+]
+
 /**
  * A button group for filtering by balance status (owes, has funds, settled).
  */
 export function BalanceFilterButtons({ value, onChange }: BalanceFilterButtonsProps) {
-  const options: { key: BalanceFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'owes', label: 'Owes' },
-    { key: 'has_funds', label: 'Has Funds' },
-    { key: 'settled', label: 'Settled' },
-  ]
-
   return (
-    <div className="inline-flex rounded-lg border border-stone-300 bg-white p-0.5">
-      {options.map((option) => (
-        <button
-          key={option.key}
-          onClick={() => onChange(option.key)}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            value === option.key
-              ? 'bg-forest-800 text-white'
-              : 'text-stone-600 hover:text-stone-900'
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
+    <ToggleButtonGroup
+      options={BALANCE_OPTIONS}
+      value={value}
+      onChange={onChange}
+      aria-label="Balance filter"
+    />
   )
 }

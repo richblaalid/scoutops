@@ -458,7 +458,7 @@ export function ScoutbookSyncCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning">
               <svg
                 className="h-6 w-6 text-white"
                 fill="none"
@@ -485,7 +485,7 @@ export function ScoutbookSyncCard({
               Checking...
             </span>
           ) : hasStaging ? (
-            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+            <span className="inline-flex items-center rounded-full bg-change-skip-light px-2 py-1 text-xs font-medium text-change-skip-foreground">
               Review Required
             </span>
           ) : isServerless ? (
@@ -605,11 +605,11 @@ export function ScoutbookSyncCard({
                             </ul>
                           </div>
 
-                          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs">
-                            <p className="font-medium text-amber-800">
+                          <div className="rounded-md border border-warning/30 bg-warning-light p-3 text-xs">
+                            <p className="font-medium text-warning-dark">
                               Privacy & Security
                             </p>
-                            <p className="mt-1 text-amber-700">
+                            <p className="mt-1 text-warning-dark">
                               Your Scoutbook credentials are entered directly in
                               the browser window - Chuckbox never sees, stores,
                               or transmits your password. The browser session is
@@ -639,11 +639,11 @@ export function ScoutbookSyncCard({
         {/* Staging Preview */}
         {hasStaging && stagingSummary && (
           <div className="space-y-4">
-            <div className="rounded-md bg-amber-50 border border-amber-200 p-4">
-              <h3 className="font-medium text-amber-900 mb-2">
+            <div className="rounded-md bg-warning-light border border-warning/30 p-4">
+              <h3 className="font-medium text-warning-dark mb-2">
                 Review Import
               </h3>
-              <p className="text-sm text-amber-800 mb-3">
+              <p className="text-sm text-warning-dark mb-3">
                 The following changes will be made when you confirm:
               </p>
 
@@ -660,23 +660,23 @@ export function ScoutbookSyncCard({
                 {/* Scouts Tab */}
                 <TabsContent value="scouts">
                   <div className="grid grid-cols-3 gap-4 text-center mb-4">
-                    <div className="rounded-md bg-green-100 p-3">
-                      <p className="text-2xl font-bold text-green-700">
+                    <div className="rounded-md bg-change-create-light p-3">
+                      <p className="text-2xl font-bold text-change-create-foreground">
                         {stagingSummary.toCreate}
                       </p>
-                      <p className="text-xs text-green-600">New Scouts</p>
+                      <p className="text-xs text-change-create-dark">New Scouts</p>
                     </div>
-                    <div className="rounded-md bg-blue-100 p-3">
-                      <p className="text-2xl font-bold text-blue-700">
+                    <div className="rounded-md bg-change-update-light p-3">
+                      <p className="text-2xl font-bold text-change-update-foreground">
                         {stagingSummary.toUpdate}
                       </p>
-                      <p className="text-xs text-blue-600">Updates</p>
+                      <p className="text-xs text-change-update-dark">Updates</p>
                     </div>
-                    <div className="rounded-md bg-purple-100 p-3">
-                      <p className="text-2xl font-bold text-purple-700">
+                    <div className="rounded-md bg-change-match-light p-3">
+                      <p className="text-2xl font-bold text-change-match-foreground">
                         {selectedScoutIds.size}
                       </p>
-                      <p className="text-xs text-purple-600">Selected</p>
+                      <p className="text-xs text-change-match-dark">Selected</p>
                     </div>
                   </div>
 
@@ -705,7 +705,7 @@ export function ScoutbookSyncCard({
                     </div>
                   )}
 
-                  <div className="max-h-72 overflow-y-auto rounded border border-amber-200 bg-white">
+                  <div className="max-h-72 overflow-y-auto rounded border border-stone-200 bg-white">
                     <table className="w-full text-sm">
                       <thead className="bg-stone-50 sticky top-0">
                         <tr>
@@ -735,7 +735,7 @@ export function ScoutbookSyncCard({
                                 <div>
                                   <span>{member.firstName} {member.lastName}</span>
                                   {member.memberType === 'P 18+' && (
-                                    <span className="ml-1 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                                    <span className="ml-1 inline-flex items-center rounded-full bg-change-skip-light px-1.5 py-0.5 text-[10px] font-medium text-change-skip-foreground">
                                       18+
                                     </span>
                                   )}
@@ -743,12 +743,12 @@ export function ScoutbookSyncCard({
                               </td>
                               <td className="p-2">
                                 {member.changeType === 'create' && (
-                                  <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                                  <span className="inline-flex items-center rounded-full bg-change-create-light px-2 py-0.5 text-xs font-medium text-change-create-foreground">
                                     Create
                                   </span>
                                 )}
                                 {member.changeType === 'update' && (
-                                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                                  <span className="inline-flex items-center rounded-full bg-change-update-light px-2 py-0.5 text-xs font-medium text-change-update-foreground">
                                     Update
                                   </span>
                                 )}
@@ -881,23 +881,23 @@ export function ScoutbookSyncCard({
                 {/* Adults Tab */}
                 <TabsContent value="adults">
                   <div className="grid grid-cols-3 gap-4 text-center mb-4">
-                    <div className="rounded-md bg-green-100 p-3">
-                      <p className="text-2xl font-bold text-green-700">
+                    <div className="rounded-md bg-change-create-light p-3">
+                      <p className="text-2xl font-bold text-change-create-foreground">
                         {stagingSummary.adultsToCreate || 0}
                       </p>
-                      <p className="text-xs text-green-600">New Adults</p>
+                      <p className="text-xs text-change-create-dark">New Adults</p>
                     </div>
-                    <div className="rounded-md bg-blue-100 p-3">
-                      <p className="text-2xl font-bold text-blue-700">
+                    <div className="rounded-md bg-change-update-light p-3">
+                      <p className="text-2xl font-bold text-change-update-foreground">
                         {stagingSummary.adultsToUpdate || 0}
                       </p>
-                      <p className="text-xs text-blue-600">Updates</p>
+                      <p className="text-xs text-change-update-dark">Updates</p>
                     </div>
-                    <div className="rounded-md bg-purple-100 p-3">
-                      <p className="text-2xl font-bold text-purple-700">
+                    <div className="rounded-md bg-change-match-light p-3">
+                      <p className="text-2xl font-bold text-change-match-foreground">
                         {selectedAdultIds.size}
                       </p>
-                      <p className="text-xs text-purple-600">Selected</p>
+                      <p className="text-xs text-change-match-dark">Selected</p>
                     </div>
                   </div>
 
@@ -926,7 +926,7 @@ export function ScoutbookSyncCard({
                     </div>
                   )}
 
-                  <div className="max-h-72 overflow-y-auto rounded border border-amber-200 bg-white">
+                  <div className="max-h-72 overflow-y-auto rounded border border-stone-200 bg-white">
                     <table className="w-full text-sm">
                       <thead className="bg-stone-50 sticky top-0">
                         <tr>
@@ -956,7 +956,7 @@ export function ScoutbookSyncCard({
                                 <div>
                                   <span>{member.firstName} {member.lastName}</span>
                                   {member.matchedProfileId && (
-                                    <span className="ml-1 inline-flex items-center rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
+                                    <span className="ml-1 inline-flex items-center rounded-full bg-change-match-light px-1.5 py-0.5 text-[10px] font-medium text-change-match-foreground">
                                       {member.matchType === 'bsa_id' ? 'BSA ID Match' : 'Name Match'}
                                     </span>
                                   )}
@@ -964,12 +964,12 @@ export function ScoutbookSyncCard({
                               </td>
                               <td className="p-2">
                                 {member.changeType === 'create' && (
-                                  <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                                  <span className="inline-flex items-center rounded-full bg-change-create-light px-2 py-0.5 text-xs font-medium text-change-create-foreground">
                                     Create
                                   </span>
                                 )}
                                 {member.changeType === 'update' && (
-                                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                                  <span className="inline-flex items-center rounded-full bg-change-update-light px-2 py-0.5 text-xs font-medium text-change-update-foreground">
                                     Update
                                   </span>
                                 )}
@@ -1224,8 +1224,8 @@ export function ScoutbookSyncCard({
               {/* Browser Extension Option */}
               <div className="rounded-md border border-stone-200 p-3">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-100 shrink-0">
-                    <svg className="h-4 w-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-warning-light shrink-0">
+                    <svg className="h-4 w-4 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
@@ -1273,14 +1273,14 @@ export function ScoutbookSyncCard({
                                   <div className="rounded-md bg-stone-50 p-3 text-xs">
                                     <p className="font-medium text-stone-700">Token Details:</p>
                                     <ul className="mt-1 list-inside list-disc space-y-1 text-stone-600">
-                                      <li>Expires in 24 hours</li>
+                                      <li>Expires in 60 days</li>
                                       <li>Can be revoked at any time</li>
                                       <li>Only shown once - copy it immediately</li>
                                     </ul>
                                   </div>
-                                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs">
-                                    <p className="font-medium text-amber-800">Security Note</p>
-                                    <p className="mt-1 text-amber-700">
+                                  <div className="rounded-md border border-warning/30 bg-warning-light p-3 text-xs">
+                                    <p className="font-medium text-warning-dark">Security Note</p>
+                                    <p className="mt-1 text-warning-dark">
                                       Anyone with this token can sync your roster. Keep it secure.
                                     </p>
                                   </div>

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ToggleButtonGroup } from '@/components/ui/toggle-button-group'
 import { formatCurrency } from '@/lib/utils'
 import { trackBillingCreated } from '@/lib/analytics'
 
@@ -184,29 +185,16 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       {/* Billing Type Toggle */}
       <div className="space-y-2">
         <Label>Billing Type</Label>
-        <div className="ml-4 mt-3 inline-flex rounded-lg border border-stone-300 bg-white p-1">
-          <button
-            type="button"
-            onClick={() => setBillingType('fixed')}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              billingType === 'fixed'
-                ? 'bg-forest-700 text-white'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            Fixed Amount
-          </button>
-          <button
-            type="button"
-            onClick={() => setBillingType('split')}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              billingType === 'split'
-                ? 'bg-forest-700 text-white'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            Split Total
-          </button>
+        <div className="ml-4 mt-3">
+          <ToggleButtonGroup
+            options={[
+              { value: 'fixed', label: 'Fixed Amount' },
+              { value: 'split', label: 'Split Total' },
+            ]}
+            value={billingType}
+            onChange={setBillingType}
+            aria-label="Billing type"
+          />
         </div>
         <p className="text-sm text-stone-500">
           {billingType === 'split'

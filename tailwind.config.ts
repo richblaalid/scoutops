@@ -122,6 +122,38 @@ const config: Config = {
           light: '#E0F2FE',
           dark: '#0369A1',
         },
+
+        // Change-type semantic colors (for sync, diff, and status indicators)
+        'change-create': {
+          DEFAULT: '#16A34A',      // green-600
+          light: '#DCFCE7',        // green-100
+          dark: '#15803D',         // green-700
+          foreground: '#15803D',   // green-700 for text on light bg
+        },
+        'change-update': {
+          DEFAULT: '#2563EB',      // blue-600
+          light: '#DBEAFE',        // blue-100
+          dark: '#1D4ED8',         // blue-700
+          foreground: '#1D4ED8',   // blue-700 for text on light bg
+        },
+        'change-skip': {
+          DEFAULT: '#D97706',      // amber-600
+          light: '#FEF3C7',        // amber-100
+          dark: '#B45309',         // amber-700
+          foreground: '#B45309',   // amber-700 for text on light bg
+        },
+        'change-match': {
+          DEFAULT: '#9333EA',      // purple-600
+          light: '#F3E8FF',        // purple-100
+          dark: '#7E22CE',         // purple-700
+          foreground: '#7E22CE',   // purple-700 for text on light bg
+        },
+        'change-delete': {
+          DEFAULT: '#DC2626',      // red-600
+          light: '#FEE2E2',        // red-100
+          dark: '#B91C1C',         // red-700
+          foreground: '#B91C1C',   // red-700 for text on light bg
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

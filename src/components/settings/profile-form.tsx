@@ -5,6 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { updateProfile } from '@/app/actions/profile'
 
 type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
@@ -91,18 +98,17 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           {/* Gender Field */}
           <div className="space-y-2">
             <Label htmlFor="gender">Gender</Label>
-            <select
-              id="gender"
-              name="gender"
-              defaultValue={profile.gender || ''}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-xs"
-            >
-              <option value="">Select gender...</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
+            <Select name="gender" defaultValue={profile.gender || ''}>
+              <SelectTrigger id="gender" className="sm:max-w-xs">
+                <SelectValue placeholder="Select gender..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-xs text-stone-500">
               Used for assigning you to the appropriate section in coed troops
             </p>
