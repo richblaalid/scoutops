@@ -103,77 +103,110 @@ describe('BSA Roster Parser', () => {
   })
 
   describe('getScoutPosition', () => {
-    it('should return Senior Patrol Leader as highest priority', () => {
+    it('should return Senior Patrol Leader as primary, with secondary', () => {
       const positions = ['Patrol Leader', 'Senior Patrol Leader', 'Scribe']
-      expect(getScoutPosition(positions)).toBe('Senior Patrol Leader')
+      const result = getScoutPosition(positions)
+      expect(result.primary).toBe('Senior Patrol Leader')
+      expect(result.secondary).toBe('Patrol Leader')
     })
 
-    it('should return SPL abbreviation', () => {
+    it('should return SPL abbreviation as primary', () => {
       const positions = ['Scribe', 'SPL']
-      expect(getScoutPosition(positions)).toBe('SPL')
+      expect(getScoutPosition(positions).primary).toBe('SPL')
     })
 
-    it('should return ASPL abbreviation', () => {
+    it('should return ASPL abbreviation as primary', () => {
       const positions = ['Scribe', 'ASPL']
-      expect(getScoutPosition(positions)).toBe('ASPL')
+      expect(getScoutPosition(positions).primary).toBe('ASPL')
     })
 
-    it('should return Patrol Leader', () => {
+    it('should return Patrol Leader as primary', () => {
       const positions = ['Scribe', 'Patrol Leader']
-      expect(getScoutPosition(positions)).toBe('Patrol Leader')
+      const result = getScoutPosition(positions)
+      expect(result.primary).toBe('Patrol Leader')
+      expect(result.secondary).toBe('Scribe')
     })
 
-    it('should return Quartermaster', () => {
+    it('should return Quartermaster as primary, no secondary', () => {
       const positions = ['Quartermaster']
-      expect(getScoutPosition(positions)).toBe('Quartermaster')
+      const result = getScoutPosition(positions)
+      expect(result.primary).toBe('Quartermaster')
+      expect(result.secondary).toBeNull()
     })
 
-    it('should return Scribe', () => {
+    it('should return Scribe as primary', () => {
       const positions = ['Scribe']
-      expect(getScoutPosition(positions)).toBe('Scribe')
+      expect(getScoutPosition(positions).primary).toBe('Scribe')
     })
 
-    it('should return Den Chief', () => {
+    it('should return Den Chief as primary', () => {
       const positions = ['Den Chief']
-      expect(getScoutPosition(positions)).toBe('Den Chief')
+      expect(getScoutPosition(positions).primary).toBe('Den Chief')
     })
 
-    it('should return null for empty array', () => {
-      expect(getScoutPosition([])).toBeNull()
+    it('should return nulls for empty array', () => {
+      const result = getScoutPosition([])
+      expect(result.primary).toBeNull()
+      expect(result.secondary).toBeNull()
     })
 
-    it('should return null for null input', () => {
-      expect(getScoutPosition(null as unknown as string[])).toBeNull()
+    it('should return nulls for null input', () => {
+      const result = getScoutPosition(null as unknown as string[])
+      expect(result.primary).toBeNull()
+      expect(result.secondary).toBeNull()
     })
 
-    it('should return first position if no priority match', () => {
+    it('should return first position as primary if no priority match', () => {
       const positions = ['Custom Role', 'Another Role']
-      expect(getScoutPosition(positions)).toBe('Custom Role')
+      const result = getScoutPosition(positions)
+      expect(result.primary).toBe('Custom Role')
+      expect(result.secondary).toBe('Another Role')
     })
 
-    it('should return Troop Guide', () => {
+    it('should return Troop Guide as primary', () => {
       const positions = ['Scribe', 'Troop Guide']
-      expect(getScoutPosition(positions)).toBe('Troop Guide')
+      expect(getScoutPosition(positions).primary).toBe('Troop Guide')
     })
 
-    it('should return JASM', () => {
+    it('should return JASM as primary', () => {
       const positions = ['JASM']
-      expect(getScoutPosition(positions)).toBe('JASM')
+      expect(getScoutPosition(positions).primary).toBe('JASM')
     })
 
-    it('should return Librarian', () => {
+    it('should return Librarian as primary', () => {
       const positions = ['Librarian']
-      expect(getScoutPosition(positions)).toBe('Librarian')
+      expect(getScoutPosition(positions).primary).toBe('Librarian')
     })
 
-    it('should return Historian', () => {
+    it('should return Historian as primary', () => {
       const positions = ['Historian']
-      expect(getScoutPosition(positions)).toBe('Historian')
+      expect(getScoutPosition(positions).primary).toBe('Historian')
     })
 
-    it('should return Chaplain Aide', () => {
+    it('should return Chaplain Aide as primary', () => {
       const positions = ['Chaplain Aide']
-      expect(getScoutPosition(positions)).toBe('Chaplain Aide')
+      expect(getScoutPosition(positions).primary).toBe('Chaplain Aide')
+    })
+
+    it('should filter out Scouts BSA position', () => {
+      const positions = ['Scouts BSA', 'Patrol Leader']
+      const result = getScoutPosition(positions)
+      expect(result.primary).toBe('Patrol Leader')
+      expect(result.secondary).toBeNull()
+    })
+
+    it('should return nulls when only Scouts BSA', () => {
+      const positions = ['Scouts BSA']
+      const result = getScoutPosition(positions)
+      expect(result.primary).toBeNull()
+      expect(result.secondary).toBeNull()
+    })
+
+    it('should handle multiple positions with Scouts BSA filtered', () => {
+      const positions = ['Scouts BSA', 'Quartermaster', 'Scribe']
+      const result = getScoutPosition(positions)
+      expect(result.primary).toBe('Quartermaster')
+      expect(result.secondary).toBe('Scribe')
     })
   })
 

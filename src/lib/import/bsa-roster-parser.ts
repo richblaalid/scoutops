@@ -272,10 +272,23 @@ export function getCurrentPosition(positions: string[]): string | null {
 }
 
 /**
- * Get current position for scouts (most relevant leadership role)
+ * Get current positions for scouts (primary and secondary leadership roles)
+ * Filters out "Scouts BSA" as it's not a leadership position.
+ * Returns positions in priority order.
  */
-export function getScoutPosition(positions: string[]): string | null {
-  if (!positions || positions.length === 0) return null
+export function getScoutPosition(positions: string[]): { primary: string | null; secondary: string | null } {
+  if (!positions || positions.length === 0) {
+    return { primary: null, secondary: null }
+  }
+
+  // Filter out "Scouts BSA" - it's not a leadership position
+  const filteredPositions = positions.filter(
+    pos => !pos.toLowerCase().includes('scouts bsa')
+  )
+
+  if (filteredPositions.length === 0) {
+    return { primary: null, secondary: null }
+  }
 
   // Priority order for scout positions
   const priority = [
@@ -301,13 +314,24 @@ export function getScoutPosition(positions: string[]): string | null {
     'Outdoor Ethics Guide',
   ]
 
-  for (const p of priority) {
-    const found = positions.find(pos => pos.toLowerCase().includes(p.toLowerCase()))
-    if (found) return found
+  // Find all matching positions with their priority index
+  const rankedPositions: { position: string; priorityIndex: number }[] = []
+
+  for (const pos of filteredPositions) {
+    const priorityIndex = priority.findIndex(p => pos.toLowerCase().includes(p.toLowerCase()))
+    rankedPositions.push({
+      position: pos,
+      priorityIndex: priorityIndex === -1 ? priority.length : priorityIndex,
+    })
   }
 
-  // Return first position if any
-  return positions[0] || null
+  // Sort by priority (lower index = higher priority)
+  rankedPositions.sort((a, b) => a.priorityIndex - b.priorityIndex)
+
+  return {
+    primary: rankedPositions[0]?.position || null,
+    secondary: rankedPositions[1]?.position || null,
+  }
 }
 
 // ============================================

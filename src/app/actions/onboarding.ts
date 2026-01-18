@@ -670,7 +670,7 @@ async function importRosterData(
           scoutId = existingScout.id
 
           // Update existing scout
-          const scoutPosition = getScoutPosition(scout.positions)
+          const scoutPositions = getScoutPosition(scout.positions)
           const patrolId = scout.patrol ? patrolNameToId.get(scout.patrol.toLowerCase()) : null
           await adminSupabase
             .from('scouts')
@@ -680,7 +680,8 @@ async function importRosterData(
               rank: scout.rank,
               date_of_birth: scout.dateOfBirth,
               patrol_id: patrolId || null,
-              current_position: scoutPosition,
+              current_position: scoutPositions.primary,
+              current_position_2: scoutPositions.secondary,
               updated_at: new Date().toISOString(),
             })
             .eq('id', scoutId)
@@ -689,7 +690,7 @@ async function importRosterData(
 
       // Create new scout if not found
       if (!scoutId) {
-        const scoutPosition = getScoutPosition(scout.positions)
+        const scoutPositions = getScoutPosition(scout.positions)
         const patrolId = scout.patrol ? patrolNameToId.get(scout.patrol.toLowerCase()) : null
         const { data: newScout } = await adminSupabase
           .from('scouts')
@@ -701,7 +702,8 @@ async function importRosterData(
             rank: scout.rank,
             patrol_id: patrolId || null,
             date_of_birth: scout.dateOfBirth,
-            current_position: scoutPosition,
+            current_position: scoutPositions.primary,
+            current_position_2: scoutPositions.secondary,
             is_active: true,
           })
           .select('id')

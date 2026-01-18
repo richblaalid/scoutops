@@ -313,7 +313,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
           scoutId = existingScout.id
 
           // Update existing scout
-          const scoutPosition = getScoutPosition(scout.positions)
+          const scoutPositions = getScoutPosition(scout.positions)
           const patrolId = scout.patrol ? patrolNameToId.get(scout.patrol.toLowerCase()) : null
           await adminSupabase
             .from('scouts')
@@ -323,7 +323,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
               rank: scout.rank,
               date_of_birth: scout.dateOfBirth,
               patrol_id: patrolId || null,
-              current_position: scoutPosition,
+              current_position: scoutPositions.primary,
+              current_position_2: scoutPositions.secondary,
               updated_at: new Date().toISOString(),
             })
             .eq('id', scoutId)
@@ -335,7 +336,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
       // Create new scout if not found
       if (!scoutId) {
         // Insert scout
-        const scoutPosition = getScoutPosition(scout.positions)
+        const scoutPositions = getScoutPosition(scout.positions)
         const patrolId = scout.patrol ? patrolNameToId.get(scout.patrol.toLowerCase()) : null
         const { data: newScout, error: scoutError } = await adminSupabase
           .from('scouts')
@@ -347,7 +348,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
             rank: scout.rank,
             patrol_id: patrolId || null,
             date_of_birth: scout.dateOfBirth,
-            current_position: scoutPosition,
+            current_position: scoutPositions.primary,
+            current_position_2: scoutPositions.secondary,
             is_active: true,
           })
           .select('id')
