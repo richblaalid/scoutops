@@ -166,11 +166,6 @@ export default function LoginPage() {
           <p className="mt-6 max-w-md text-lg text-stone-600 dark:text-stone-300">
             The all-in-one platform for Scout unit finances, billing, and operations.
           </p>
-          <div className="mt-5">
-            <span className="inline-flex items-center rounded-full bg-forest-800/10 dark:bg-forest-400/20 px-4 py-1.5 text-sm font-medium text-forest-800 dark:text-forest-300">
-              Private Beta — Invited Users Only
-            </span>
-          </div>
         </div>
 
         <div className="w-full max-w-md">
@@ -185,12 +180,12 @@ export default function LoginPage() {
           </Suspense>
         </div>
 
-        {/* Request access link */}
+        {/* Create unit link */}
         <div className="mt-8 text-center">
           <p className="text-base text-stone-600 dark:text-stone-300">
-            Don&apos;t have access?{' '}
-            <a href="/early-access" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
-              Request an invite
+            Setting up a new unit?{' '}
+            <a href="/signup" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
+              Create your unit
             </a>
           </p>
         </div>

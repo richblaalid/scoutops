@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { acceptPendingInvites } from '@/app/actions/members'
+import { verifyProvisioningToken } from '@/app/actions/onboarding'
 import { trackLoginCompleted } from '@/lib/analytics'
 
 // Helper to safely check for pending invites (non-blocking)
@@ -15,6 +16,31 @@ async function tryAcceptInvites(): Promise<number> {
     // Log but don't block auth flow if invite check fails
     console.error('Failed to check pending invites:', err)
     return 0
+  }
+}
+
+// Helper to verify provisioning token if present
+async function tryVerifyProvisioning(token: string | null): Promise<{
+  verified: boolean
+  unitName?: string
+  importResult?: { adultsImported: number; scoutsImported: number; patrolsCreated: number }
+}> {
+  if (!token) return { verified: false }
+
+  try {
+    const result = await verifyProvisioningToken(token)
+    if (result.success) {
+      return {
+        verified: true,
+        unitName: result.unitName,
+        importResult: result.importResult,
+      }
+    }
+    console.error('Provisioning verification failed:', result.error)
+    return { verified: false }
+  } catch (err) {
+    console.error('Failed to verify provisioning token:', err)
+    return { verified: false }
   }
 }
 
@@ -54,6 +80,20 @@ function AuthConfirmContent() {
         // Track successful login
         trackLoginCompleted({ userId: session.user.id })
 
+        // Check for provisioning token first
+        const provisionToken = searchParams.get('provision_token')
+        if (provisionToken) {
+          setStatus('Activating your unit...')
+          const provisionResult = await tryVerifyProvisioning(provisionToken)
+          if (provisionResult.verified) {
+            setStatus(`Welcome to ${provisionResult.unitName || 'your unit'}!`)
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            router.push('/setup')
+            router.refresh()
+            return
+          }
+        }
+
         setStatus('Completing sign in...')
         const accepted = await tryAcceptInvites()
         if (accepted > 0) {
@@ -70,6 +110,7 @@ function AuthConfirmContent() {
       const code = searchParams.get('code')
       const tokenHash = searchParams.get('token_hash')
       const type = searchParams.get('type') as 'email' | 'magiclink' | 'invite' | 'signup' | null
+      const provisionToken = searchParams.get('provision_token')
       const next = searchParams.get('next') ?? '/dashboard'
 
       // Check for hash fragment params (from invite links)
@@ -84,6 +125,19 @@ function AuthConfirmContent() {
       // First check if we already have a session
       const { data: { session: existingSession } } = await supabase.auth.getSession()
       if (existingSession) {
+        // Check for provisioning token first
+        if (provisionToken) {
+          setStatus('Activating your unit...')
+          const provisionResult = await tryVerifyProvisioning(provisionToken)
+          if (provisionResult.verified) {
+            setStatus(`Welcome to ${provisionResult.unitName || 'your unit'}!`)
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            router.push('/setup')
+            router.refresh()
+            return
+          }
+        }
+
         setStatus('Completing sign in...')
         const accepted = await tryAcceptInvites()
         if (accepted > 0) {
@@ -108,7 +162,19 @@ function AuthConfirmContent() {
           return
         }
 
-        // Session set successfully - check for pending invites
+        // Session set successfully - check for provisioning token first
+        if (provisionToken) {
+          setStatus('Activating your unit...')
+          const provisionResult = await tryVerifyProvisioning(provisionToken)
+          if (provisionResult.verified) {
+            setStatus(`Welcome to ${provisionResult.unitName || 'your unit'}!`)
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            router.push('/setup')
+            router.refresh()
+            return
+          }
+        }
+
         setStatus('Completing sign in...')
         const accepted = await tryAcceptInvites()
         if (accepted > 0) {
@@ -135,7 +201,19 @@ function AuthConfirmContent() {
           return
         }
 
-        // Verification successful - check for pending invites
+        // Verification successful - check for provisioning token first
+        if (provisionToken) {
+          setStatus('Activating your unit...')
+          const provisionResult = await tryVerifyProvisioning(provisionToken)
+          if (provisionResult.verified) {
+            setStatus(`Welcome to ${provisionResult.unitName || 'your unit'}!`)
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            router.push('/setup')
+            router.refresh()
+            return
+          }
+        }
+
         setStatus('Completing sign in...')
         const accepted = await tryAcceptInvites()
         if (accepted > 0) {
@@ -155,6 +233,17 @@ function AuthConfirmContent() {
           // Check if we actually have a session despite the error
           const { data: { session: checkSession } } = await supabase.auth.getSession()
           if (checkSession) {
+            if (provisionToken) {
+              setStatus('Activating your unit...')
+              const provisionResult = await tryVerifyProvisioning(provisionToken)
+              if (provisionResult.verified) {
+                setStatus(`Welcome to ${provisionResult.unitName || 'your unit'}!`)
+                await new Promise(resolve => setTimeout(resolve, 1500))
+                router.push('/setup')
+                router.refresh()
+                return
+              }
+            }
             setStatus('Completing sign in...')
             const accepted = await tryAcceptInvites()
             if (accepted > 0) {
@@ -192,6 +281,17 @@ function AuthConfirmContent() {
           }
 
           // OTP verification successful
+          if (provisionToken) {
+            setStatus('Activating your unit...')
+            const provisionResult = await tryVerifyProvisioning(provisionToken)
+            if (provisionResult.verified) {
+              setStatus(`Welcome to ${provisionResult.unitName || 'your unit'}!`)
+              await new Promise(resolve => setTimeout(resolve, 1500))
+              router.push('/setup')
+              router.refresh()
+              return
+            }
+          }
           setStatus('Completing sign in...')
           const accepted = await tryAcceptInvites()
           if (accepted > 0) {
@@ -208,7 +308,19 @@ function AuthConfirmContent() {
           return
         }
 
-        // Session is set - check for pending invites
+        // Session is set - check for provisioning token first
+        if (provisionToken) {
+          setStatus('Activating your unit...')
+          const provisionResult = await tryVerifyProvisioning(provisionToken)
+          if (provisionResult.verified) {
+            setStatus(`Welcome to ${provisionResult.unitName || 'your unit'}!`)
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            router.push('/setup')
+            router.refresh()
+            return
+          }
+        }
+
         setStatus('Completing sign in...')
         const accepted = await tryAcceptInvites()
         if (accepted > 0) {

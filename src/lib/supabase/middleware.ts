@@ -36,6 +36,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     pathname === '/' ||
     pathname === '/login' ||
+    pathname === '/signup' ||
     pathname === '/early-access' ||
     pathname === '/privacy' ||
     pathname === '/terms' ||

@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       accounts: {
@@ -1470,6 +1495,36 @@ export type Database = {
           },
         ]
       }
+      signup_rate_limits: {
+        Row: {
+          attempts: number | null
+          blocked_until: string | null
+          email: string | null
+          first_attempt_at: string | null
+          id: string
+          ip_address: string
+          last_attempt_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          blocked_until?: string | null
+          email?: string | null
+          first_attempt_at?: string | null
+          id?: string
+          ip_address: string
+          last_attempt_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          blocked_until?: string | null
+          email?: string | null
+          first_attempt_at?: string | null
+          id?: string
+          ip_address?: string
+          last_attempt_at?: string | null
+        }
+        Relationships: []
+      }
       square_transactions: {
         Row: {
           amount_money: number
@@ -1572,6 +1627,41 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staged_roster_imports: {
+        Row: {
+          created_at: string | null
+          id: string
+          parsed_adults: Json
+          parsed_scouts: Json
+          provisioning_token_id: string
+          unit_metadata: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          parsed_adults: Json
+          parsed_scouts: Json
+          provisioning_token_id: string
+          unit_metadata?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          parsed_adults?: Json
+          parsed_scouts?: Json
+          provisioning_token_id?: string
+          unit_metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_roster_imports_provisioning_token_id_fkey"
+            columns: ["provisioning_token_id"]
+            isOneToOne: false
+            referencedRelation: "unit_provisioning_tokens"
             referencedColumns: ["id"]
           },
         ]
@@ -1850,6 +1940,54 @@ export type Database = {
           },
         ]
       }
+      unit_provisioning_tokens: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          profile_id: string
+          token_hash: string
+          unit_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          profile_id: string
+          token_hash: string
+          unit_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          profile_id?: string
+          token_hash?: string
+          unit_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_provisioning_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_provisioning_tokens_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_square_credentials: {
         Row: {
           access_token_encrypted: string
@@ -1920,6 +2058,8 @@ export type Database = {
           pass_fees_to_payer: boolean | null
           processing_fee_fixed: number | null
           processing_fee_percent: number | null
+          provisioning_status: string | null
+          setup_completed_at: string | null
           unit_gender: Database["public"]["Enums"]["unit_gender"] | null
           unit_number: string
           unit_type: Database["public"]["Enums"]["unit_type"]
@@ -1938,6 +2078,8 @@ export type Database = {
           pass_fees_to_payer?: boolean | null
           processing_fee_fixed?: number | null
           processing_fee_percent?: number | null
+          provisioning_status?: string | null
+          setup_completed_at?: string | null
           unit_gender?: Database["public"]["Enums"]["unit_gender"] | null
           unit_number: string
           unit_type: Database["public"]["Enums"]["unit_type"]
@@ -1956,6 +2098,8 @@ export type Database = {
           pass_fees_to_payer?: boolean | null
           processing_fee_fixed?: number | null
           processing_fee_percent?: number | null
+          provisioning_status?: string | null
+          setup_completed_at?: string | null
           unit_gender?: Database["public"]["Enums"]["unit_gender"] | null
           unit_number?: string
           unit_type?: Database["public"]["Enums"]["unit_type"]
@@ -2028,6 +2172,7 @@ export type Database = {
         Args: { p_amount: number; p_scout_account_id: string }
         Returns: undefined
       }
+      cleanup_expired_provisioning_tokens: { Args: never; Returns: undefined }
       create_billing_with_journal: {
         Args: {
           p_billing_date: string
@@ -2281,6 +2426,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       account_type: ["asset", "liability", "equity", "income", "expense"],

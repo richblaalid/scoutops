@@ -198,7 +198,11 @@ function parseTrainings(trainingStr: string, expirationStr: string): ParsedTrain
 }
 
 /**
- * Parse positions list - extract position name, remove tenure
+ * Parse positions list - extract position name, remove tenure and patrol info
+ * Input examples:
+ *   "Patrol Leader [ Blazing Bulls] Patrol (4m 4d)" -> "Patrol Leader"
+ *   "Scouts BSA [ Eagles] Patrol (10m 6d)" -> "Scouts BSA"
+ *   "Committee Member (8m 18d)" -> "Committee Member"
  */
 function parsePositions(positionsStr: string): string[] {
   if (!positionsStr) return []
@@ -206,7 +210,14 @@ function parsePositions(positionsStr: string): string[] {
     .split('|')
     .map(p => p.trim())
     .filter(Boolean)
-    .map(p => p.replace(/\s*\([^)]+\)\s*$/, '').trim()) // Remove tenure like "(3m 16d)"
+    .map(p => {
+      // Remove tenure like "(3m 16d)" at the end
+      let cleaned = p.replace(/\s*\([^)]+\)\s*$/, '').trim()
+      // Remove patrol info like "[ Patrol Name] Patrol" or "[Patrol Name] Patrol"
+      cleaned = cleaned.replace(/\s*\[\s*[^\]]+\]\s*Patrol\s*$/i, '').trim()
+      return cleaned
+    })
+    .filter(Boolean)
 }
 
 /**
