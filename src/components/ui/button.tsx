@@ -40,6 +40,8 @@ const buttonVariants = cva(
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-12 rounded-md px-8 text-base",
         icon: "h-10 w-10",
+        // Inline size for text-level links without height/padding constraints
+        inline: "h-auto p-0 text-sm font-normal",
       },
     },
     defaultVariants: {

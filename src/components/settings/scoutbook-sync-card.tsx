@@ -558,8 +558,8 @@ export function ScoutbookSyncCard({
                             that automates browser interactions.
                           </p>
 
-                          <div className="rounded-md bg-stone-50 p-3 text-xs">
-                            <p className="font-medium text-stone-700">
+                          <div className="rounded-md bg-stone-50 dark:bg-stone-900 p-3 text-xs">
+                            <p className="font-medium text-stone-700 dark:text-stone-200">
                               What is agent-browser?
                             </p>
                             <ul className="mt-1 list-inside list-disc space-y-1 text-stone-600">
@@ -588,8 +588,8 @@ export function ScoutbookSyncCard({
                             </ul>
                           </div>
 
-                          <div className="rounded-md bg-stone-50 p-3 text-xs">
-                            <p className="font-medium text-stone-700">
+                          <div className="rounded-md bg-stone-50 dark:bg-stone-900 p-3 text-xs">
+                            <p className="font-medium text-stone-700 dark:text-stone-200">
                               What will be installed?
                             </p>
                             <ul className="mt-1 list-inside list-disc space-y-1 text-stone-600">
@@ -684,30 +684,32 @@ export function ScoutbookSyncCard({
                   {importableScouts.length > 0 && (
                     <div className="flex items-center gap-2 mb-2 text-xs">
                       <span className="text-stone-500">Select:</span>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="inline"
                         onClick={selectAllScouts}
-                        className="text-primary hover:underline"
                       >
                         All
-                      </button>
+                      </Button>
                       <span className="text-stone-300">|</span>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="inline"
                         onClick={selectNoScouts}
-                        className="text-primary hover:underline"
                       >
                         None
-                      </button>
+                      </Button>
                       <span className="ml-2 text-stone-400">
                         ({selectedScoutIds.size} of {importableScouts.length} selected)
                       </span>
                     </div>
                   )}
 
-                  <div className="max-h-72 overflow-y-auto rounded border border-stone-200 bg-white">
+                  <div className="max-h-72 overflow-y-auto rounded border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-800">
                     <table className="w-full text-sm">
-                      <thead className="bg-stone-50 sticky top-0">
+                      <thead className="bg-stone-50 dark:bg-stone-900 sticky top-0">
                         <tr>
                           <th className="w-8 p-2"></th>
                           <th className="text-left p-2 font-medium">Name</th>
@@ -719,7 +721,7 @@ export function ScoutbookSyncCard({
                         {importableScouts.map((member) => (
                             <tr
                               key={member.id}
-                              className={`border-t border-stone-100 ${
+                              className={`border-t border-stone-100 dark:border-stone-700 ${
                                 !selectedScoutIds.has(member.id) ? 'opacity-50' : ''
                               }`}
                             >
@@ -757,41 +759,41 @@ export function ScoutbookSyncCard({
                                 {member.changeType === 'create' && (
                                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">BSA ID:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">BSA ID:</span>
                                       <span className="font-mono">{member.bsaMemberId}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Type:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Type:</span>
                                       <span>{member.memberType}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Age:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Age:</span>
                                       <span>{member.age || '(none)'}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Rank:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Rank:</span>
                                       <span>{member.rank || '(none)'}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Patrol:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Patrol:</span>
                                       <span>{member.patrol || '(none)'}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Position:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Position:</span>
                                       <span>{member.position || '(none)'}</span>
                                     </div>
                                     {member.position2 && (
                                       <div className="flex gap-1">
-                                        <span className="font-medium text-stone-600">Position 2:</span>
+                                        <span className="font-medium text-stone-600 dark:text-stone-300">Position 2:</span>
                                         <span>{member.position2}</span>
                                       </div>
                                     )}
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Status:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Status:</span>
                                       <span>{member.renewalStatus || '(none)'}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Expires:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Expires:</span>
                                       <span>{member.expirationDate || '(none)'}</span>
                                     </div>
                                   </div>
@@ -800,10 +802,10 @@ export function ScoutbookSyncCard({
                                   <div className="space-y-0.5">
                                     {Object.entries(member.changes).map(([field, change]) => (
                                       <div key={field} className="flex gap-1">
-                                        <span className="font-medium text-stone-600">{field}:</span>
+                                        <span className="font-medium text-stone-600 dark:text-stone-300">{field}:</span>
                                         <span className="text-stone-400">{change.old || '(empty)'}</span>
-                                        <span className="text-stone-400">&rarr;</span>
-                                        <span className="text-stone-700">{change.new || '(empty)'}</span>
+                                        <span className="text-stone-400 dark:text-stone-500">&rarr;</span>
+                                        <span className="text-stone-700 dark:text-stone-200">{change.new || '(empty)'}</span>
                                       </div>
                                     ))}
                                   </div>
@@ -845,13 +847,13 @@ export function ScoutbookSyncCard({
                         {stagingSummary.toSkip} scout{stagingSummary.toSkip !== 1 ? 's' : ''} unchanged (already up to date)
                       </CollapsibleTrigger>
                       <CollapsibleContent>
-                        <div className="mt-2 max-h-48 overflow-y-auto rounded border border-stone-200 bg-stone-50">
+                        <div className="mt-2 max-h-48 overflow-y-auto rounded border border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-900">
                           <table className="w-full text-xs">
                             <thead className="bg-stone-100 sticky top-0">
                               <tr>
-                                <th className="text-left p-2 font-medium text-stone-600">Name</th>
-                                <th className="text-left p-2 font-medium text-stone-600">BSA ID</th>
-                                <th className="text-left p-2 font-medium text-stone-600">Reason</th>
+                                <th className="text-left p-2 font-medium text-stone-600 dark:text-stone-300">Name</th>
+                                <th className="text-left p-2 font-medium text-stone-600 dark:text-stone-300">BSA ID</th>
+                                <th className="text-left p-2 font-medium text-stone-600 dark:text-stone-300">Reason</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -905,30 +907,32 @@ export function ScoutbookSyncCard({
                   {importableAdults.length > 0 && (
                     <div className="flex items-center gap-2 mb-2 text-xs">
                       <span className="text-stone-500">Select:</span>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="inline"
                         onClick={selectAllAdults}
-                        className="text-primary hover:underline"
                       >
                         All
-                      </button>
+                      </Button>
                       <span className="text-stone-300">|</span>
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="inline"
                         onClick={selectNoAdults}
-                        className="text-primary hover:underline"
                       >
                         None
-                      </button>
+                      </Button>
                       <span className="ml-2 text-stone-400">
                         ({selectedAdultIds.size} of {importableAdults.length} selected)
                       </span>
                     </div>
                   )}
 
-                  <div className="max-h-72 overflow-y-auto rounded border border-stone-200 bg-white">
+                  <div className="max-h-72 overflow-y-auto rounded border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-800">
                     <table className="w-full text-sm">
-                      <thead className="bg-stone-50 sticky top-0">
+                      <thead className="bg-stone-50 dark:bg-stone-900 sticky top-0">
                         <tr>
                           <th className="w-8 p-2"></th>
                           <th className="text-left p-2 font-medium">Name</th>
@@ -940,7 +944,7 @@ export function ScoutbookSyncCard({
                         {importableAdults.map((member) => (
                             <tr
                               key={member.id}
-                              className={`border-t border-stone-100 ${
+                              className={`border-t border-stone-100 dark:border-stone-700 ${
                                 !selectedAdultIds.has(member.id) ? 'opacity-50' : ''
                               }`}
                             >
@@ -978,29 +982,29 @@ export function ScoutbookSyncCard({
                                 {member.changeType === 'create' && (
                                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">BSA ID:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">BSA ID:</span>
                                       <span className="font-mono">{member.bsaMemberId}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Type:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Type:</span>
                                       <span>{member.memberType}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Position:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Position:</span>
                                       <span>{member.position || '(none)'}</span>
                                     </div>
                                     {member.position2 && (
                                       <div className="flex gap-1">
-                                        <span className="font-medium text-stone-600">Position 2:</span>
+                                        <span className="font-medium text-stone-600 dark:text-stone-300">Position 2:</span>
                                         <span>{member.position2}</span>
                                       </div>
                                     )}
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Status:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Status:</span>
                                       <span>{member.renewalStatus || '(none)'}</span>
                                     </div>
                                     <div className="flex gap-1">
-                                      <span className="font-medium text-stone-600">Expires:</span>
+                                      <span className="font-medium text-stone-600 dark:text-stone-300">Expires:</span>
                                       <span>{member.expirationDate || '(none)'}</span>
                                     </div>
                                   </div>
@@ -1009,10 +1013,10 @@ export function ScoutbookSyncCard({
                                   <div className="space-y-0.5">
                                     {Object.entries(member.changes).map(([field, change]) => (
                                       <div key={field} className="flex gap-1">
-                                        <span className="font-medium text-stone-600">{field}:</span>
+                                        <span className="font-medium text-stone-600 dark:text-stone-300">{field}:</span>
                                         <span className="text-stone-400">{change.old || '(empty)'}</span>
-                                        <span className="text-stone-400">&rarr;</span>
-                                        <span className="text-stone-700">{change.new || '(empty)'}</span>
+                                        <span className="text-stone-400 dark:text-stone-500">&rarr;</span>
+                                        <span className="text-stone-700 dark:text-stone-200">{change.new || '(empty)'}</span>
                                       </div>
                                     ))}
                                   </div>
@@ -1057,13 +1061,13 @@ export function ScoutbookSyncCard({
                           {skippedAdults.length} adult{skippedAdults.length !== 1 ? 's' : ''} unchanged (already up to date)
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <div className="mt-2 max-h-48 overflow-y-auto rounded border border-stone-200 bg-stone-50">
+                          <div className="mt-2 max-h-48 overflow-y-auto rounded border border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-900">
                             <table className="w-full text-xs">
                               <thead className="bg-stone-100 sticky top-0">
                                 <tr>
-                                  <th className="text-left p-2 font-medium text-stone-600">Name</th>
-                                  <th className="text-left p-2 font-medium text-stone-600">Type</th>
-                                  <th className="text-left p-2 font-medium text-stone-600">Reason</th>
+                                  <th className="text-left p-2 font-medium text-stone-600 dark:text-stone-300">Name</th>
+                                  <th className="text-left p-2 font-medium text-stone-600 dark:text-stone-300">Type</th>
+                                  <th className="text-left p-2 font-medium text-stone-600 dark:text-stone-300">Reason</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1202,8 +1206,8 @@ export function ScoutbookSyncCard({
 
         {/* Requirements Info - only in local dev */}
         {!hasStaging && !isServerless && (
-          <div className="rounded-md bg-stone-50 p-3 text-xs text-stone-500">
-            <p className="font-medium text-stone-600">How it works:</p>
+          <div className="rounded-md bg-stone-50 dark:bg-stone-900 p-3 text-xs text-stone-500">
+            <p className="font-medium text-stone-600 dark:text-stone-300">How it works:</p>
             <ol className="mt-1 list-inside list-decimal space-y-1">
               <li>A browser window opens to Scoutbook Plus</li>
               <li>You log in with your BSA credentials (we never see them)</li>
@@ -1216,7 +1220,7 @@ export function ScoutbookSyncCard({
         {/* Import Options Section */}
         {isAdmin && !hasStaging && (
           <div className={isServerless ? '' : 'mt-6 border-t border-stone-200 pt-4'}>
-            <h3 className="text-sm font-medium text-stone-700 mb-3">
+            <h3 className="text-sm font-medium text-stone-700 dark:text-stone-200 mb-3">
               Import Options
             </h3>
 
@@ -1230,7 +1234,7 @@ export function ScoutbookSyncCard({
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-stone-700">Browser Extension</p>
+                    <p className="text-sm font-medium text-stone-700 dark:text-stone-200">Browser Extension</p>
                     <p className="text-xs text-stone-500 mt-0.5">
                       Sync directly from Scoutbook while browsing. Install the Chrome extension and generate a token.
                     </p>
@@ -1270,8 +1274,8 @@ export function ScoutbookSyncCard({
                               <AlertDialogDescription asChild>
                                 <div className="space-y-3 text-left">
                                   <p>This will create a secure token for the Chuckbox browser extension.</p>
-                                  <div className="rounded-md bg-stone-50 p-3 text-xs">
-                                    <p className="font-medium text-stone-700">Token Details:</p>
+                                  <div className="rounded-md bg-stone-50 dark:bg-stone-900 p-3 text-xs">
+                                    <p className="font-medium text-stone-700 dark:text-stone-200">Token Details:</p>
                                     <ul className="mt-1 list-inside list-disc space-y-1 text-stone-600">
                                       <li>Expires in 60 days</li>
                                       <li>Can be revoked at any time</li>
@@ -1293,14 +1297,20 @@ export function ScoutbookSyncCard({
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                        <a
-                          href="https://chrome.google.com/webstore/category/extensions"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline"
+                        <Button
+                          variant="link"
+                          size="inline"
+                          asChild
+                          className="text-xs"
                         >
-                          Get Extension
-                        </a>
+                          <a
+                            href="https://chrome.google.com/webstore/category/extensions"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Get Extension
+                          </a>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1316,7 +1326,7 @@ export function ScoutbookSyncCard({
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-stone-700">CSV Upload</p>
+                    <p className="text-sm font-medium text-stone-700 dark:text-stone-200">CSV Upload</p>
                     <p className="text-xs text-stone-500 mt-0.5">
                       Export your roster from my.scouting.org and upload the CSV file directly.
                     </p>
