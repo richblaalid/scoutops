@@ -48,8 +48,8 @@ export default function EarlyAccessPage() {
     name: '',
     unit_type: '',
     unit_size: '',
-    current_software: '',
-    current_payment_platform: '',
+    current_software: [] as string[],
+    current_payment_platform: [] as string[],
     biggest_pain_point: '',
     additional_info: '',
   })
@@ -82,6 +82,17 @@ export default function EarlyAccessPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleMultiSelectChange = (field: 'current_software' | 'current_payment_platform', value: string) => {
+    setFormData(prev => {
+      const currentValues = prev[field]
+      if (currentValues.includes(value)) {
+        return { ...prev, [field]: currentValues.filter(v => v !== value) }
+      } else {
+        return { ...prev, [field]: [...currentValues, value] }
+      }
+    })
   }
 
   if (status === 'success') {
@@ -203,40 +214,42 @@ export default function EarlyAccessPage() {
           {/* Current Tools */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-forest-800 mb-4">Current Tools</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="current_software" className="block text-sm font-medium text-stone-700 mb-1">
-                  Unit Management Software
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  Unit Management Software <span className="text-stone-400 font-normal">(select all that apply)</span>
                 </label>
-                <select
-                  id="current_software"
-                  name="current_software"
-                  value={formData.current_software}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-stone-900 focus:border-forest-600 focus:outline-none focus:ring-2 focus:ring-forest-600/20"
-                >
-                  <option value="">Select software...</option>
+                <div className="space-y-2">
                   {softwareOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <label key={opt.value} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={formData.current_software.includes(opt.value)}
+                        onChange={() => handleMultiSelectChange('current_software', opt.value)}
+                        className="h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-600/20"
+                      />
+                      <span className="text-sm text-stone-700 group-hover:text-stone-900">{opt.label}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
               <div>
-                <label htmlFor="current_payment_platform" className="block text-sm font-medium text-stone-700 mb-1">
-                  Payment Platform
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  Payment Methods <span className="text-stone-400 font-normal">(select all that apply)</span>
                 </label>
-                <select
-                  id="current_payment_platform"
-                  name="current_payment_platform"
-                  value={formData.current_payment_platform}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-stone-900 focus:border-forest-600 focus:outline-none focus:ring-2 focus:ring-forest-600/20"
-                >
-                  <option value="">Select platform...</option>
+                <div className="space-y-2">
                   {paymentOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <label key={opt.value} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={formData.current_payment_platform.includes(opt.value)}
+                        onChange={() => handleMultiSelectChange('current_payment_platform', opt.value)}
+                        className="h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-600/20"
+                      />
+                      <span className="text-sm text-stone-700 group-hover:text-stone-900">{opt.label}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
             </div>
           </div>

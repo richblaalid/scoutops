@@ -14,8 +14,8 @@ const waitlistSchema = z.object({
   name: z.string().max(100, 'Name too long').optional(),
   unit_type: z.string().max(50, 'Unit type too long').optional(),
   unit_size: z.string().max(20, 'Unit size too long').optional(),
-  current_software: z.string().max(100, 'Software name too long').optional(),
-  current_payment_platform: z.string().max(100, 'Payment platform name too long').optional(),
+  current_software: z.array(z.string().max(50)).max(10).optional(),
+  current_payment_platform: z.array(z.string().max(50)).max(10).optional(),
   biggest_pain_point: z.string().max(1000, 'Pain point description too long').optional(),
   additional_info: z.string().max(2000, 'Additional info too long').optional(),
   referral_source: z.string().max(100, 'Referral source too long').optional(),
@@ -72,11 +72,11 @@ async function sendSlackNotification(data: WaitlistSubmission) {
         fields: [
           {
             type: 'mrkdwn',
-            text: `*Current Software:*\n${data.current_software || 'Not provided'}`
+            text: `*Current Software:*\n${data.current_software?.length ? data.current_software.join(', ') : 'Not provided'}`
           },
           {
             type: 'mrkdwn',
-            text: `*Payment Platform:*\n${data.current_payment_platform || 'Not provided'}`
+            text: `*Payment Platform:*\n${data.current_payment_platform?.length ? data.current_payment_platform.join(', ') : 'Not provided'}`
           }
         ]
       },
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
-    // Insert into database
+    // Insert into database (convert arrays to comma-separated strings)
     const { error } = await supabase
       .from('waitlist')
       .insert({
@@ -145,8 +145,8 @@ export async function POST(request: NextRequest) {
         name: body.name?.trim() || null,
         unit_type: body.unit_type || null,
         unit_size: body.unit_size || null,
-        current_software: body.current_software || null,
-        current_payment_platform: body.current_payment_platform || null,
+        current_software: body.current_software?.length ? body.current_software.join(', ') : null,
+        current_payment_platform: body.current_payment_platform?.length ? body.current_payment_platform.join(', ') : null,
         biggest_pain_point: body.biggest_pain_point?.trim() || null,
         additional_info: body.additional_info?.trim() || null,
         referral_source: body.referral_source || null,
