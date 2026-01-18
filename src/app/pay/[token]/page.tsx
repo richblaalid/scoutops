@@ -661,7 +661,7 @@ export default function PaymentCheckoutPage() {
                     }
                   }}
                   disabled={isProcessing || isProcessingBalance}
-                  className="mt-1 h-5 w-5 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
+                  className="checkbox-native mt-1 h-5 w-5"
                 />
                 <div className="flex-1">
                   <p className="font-medium text-stone-900 group-hover:text-forest-700">

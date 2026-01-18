@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useToast } from '@/components/ui/toast'
 import { updateProfile } from '@/app/actions/profile'
 
 type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
@@ -32,13 +33,14 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ profile }: ProfileFormProps) {
+  const { addToast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setIsLoading(true)
-    setMessage(null)
+    setError(null)
 
     const formData = new FormData(e.currentTarget)
 
@@ -59,9 +61,13 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     setIsLoading(false)
 
     if (result.success) {
-      setMessage({ type: 'success', text: 'Profile updated successfully!' })
+      addToast({
+        variant: 'success',
+        title: 'Profile updated',
+        description: 'Your personal information has been saved.',
+      })
     } else {
-      setMessage({ type: 'error', text: result.error || 'Failed to update profile' })
+      setError(result.error || 'Failed to update profile')
     }
   }
 
@@ -159,20 +165,14 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             </div>
           </div>
 
-          {message && (
-            <div
-              className={`rounded-md p-3 text-sm ${
-                message.type === 'success'
-                  ? 'bg-success-light text-success'
-                  : 'bg-error-light text-error'
-              }`}
-            >
-              {message.text}
+          {error && (
+            <div className="rounded-md bg-error-light p-3 text-sm text-error">
+              {error}
             </div>
           )}
 
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
+          <Button type="submit" loading={isLoading} loadingText="Saving...">
+            Save Changes
           </Button>
         </form>
       </CardContent>

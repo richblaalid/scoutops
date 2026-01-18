@@ -187,8 +187,8 @@ export function MemberContactForm({ unitId, membershipId, profile }: MemberConta
           </div>
 
           <div className="flex items-center gap-3 pt-2">
-            <Button type="submit" disabled={isLoading} size="sm">
-              {isLoading ? 'Saving...' : 'Save Changes'}
+            <Button type="submit" loading={isLoading} loadingText="Saving..." size="sm">
+              Save Changes
             </Button>
             {message && (
               <span

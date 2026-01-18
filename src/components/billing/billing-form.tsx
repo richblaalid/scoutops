@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ToggleButtonGroup } from '@/components/ui/toggle-button-group'
+import { useToast } from '@/components/ui/toast'
 import { formatCurrency } from '@/lib/utils'
 import { trackBillingCreated } from '@/lib/analytics'
 
@@ -28,9 +29,9 @@ type BillingType = 'split' | 'fixed'
 
 export function BillingForm({ unitId, scouts }: BillingFormProps) {
   const router = useRouter()
+  const { addToast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const [selectedScouts, setSelectedScouts] = useState<Set<string>>(new Set())
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -70,7 +71,6 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-    setSuccess(false)
 
     if (selectedScouts.size === 0) {
       setError('Please select at least one scout')
@@ -150,7 +150,11 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
         }
       }
 
-      setSuccess(true)
+      addToast({
+        variant: 'success',
+        title: 'Billing created',
+        description: `${formatCurrency(totalAmount)} charged to ${selectedScouts.size} scout${selectedScouts.size !== 1 ? 's' : ''}`,
+      })
       setAmount('')
       setDescription('')
       setSelectedScouts(new Set())
@@ -280,7 +284,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
                       type="checkbox"
                       checked={selectedScouts.has(scout.id)}
                       onChange={() => toggleScout(scout.id)}
-                      className="h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
+                      className="checkbox-native"
                     />
                     <span className="text-sm text-stone-700">
                       {scout.first_name} {scout.last_name}
@@ -336,16 +340,10 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
         </div>
       )}
 
-      {/* Error/Success Messages */}
+      {/* Error Message */}
       {error && (
         <div className="rounded-lg bg-error-light p-3 text-sm font-medium text-error-dark">
           {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="rounded-lg bg-success-light p-3 text-sm font-medium text-success-dark">
-          Billing created successfully! Refreshing...
         </div>
       )}
 
@@ -357,7 +355,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
               type="checkbox"
               checked={sendNotifications}
               onChange={(e) => setSendNotifications(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
+              className="checkbox-native mt-0.5"
             />
             <div>
               <span className="font-medium text-stone-900">Send payment notifications to parents</span>
@@ -372,10 +370,12 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
       {/* Submit */}
       <Button
         type="submit"
-        disabled={isLoading || selectedScouts.size === 0 || parsedAmount <= 0}
+        loading={isLoading}
+        loadingText="Creating..."
+        disabled={selectedScouts.size === 0 || parsedAmount <= 0}
         className="w-full"
       >
-        {isLoading ? 'Creating...' : 'Create Billing'}
+        Create Billing
       </Button>
     </form>
   )

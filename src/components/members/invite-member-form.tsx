@@ -151,7 +151,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
                         type="checkbox"
                         checked={selectedScoutIds.includes(scout.id)}
                         onChange={() => handleScoutToggle(scout.id)}
-                        className="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"
+                        className="checkbox-native"
                       />
                       <span className="text-sm">
                         {scout.first_name} {scout.last_name}
@@ -217,8 +217,8 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !email.trim()}>
-              {isLoading ? 'Sending...' : 'Send Invite'}
+            <Button type="submit" loading={isLoading} loadingText="Sending..." disabled={!email.trim()}>
+              Send Invite
             </Button>
           </div>
         </form>

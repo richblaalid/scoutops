@@ -113,9 +113,10 @@ export function ContactForm({ profile }: ContactFormProps) {
                 <Button
                   type="button"
                   onClick={handleEmailChange}
-                  disabled={isLoading}
+                  loading={isLoading}
+                  loadingText="Sending..."
                 >
-                  {isLoading ? 'Sending...' : 'Send Verification'}
+                  Send Verification
                 </Button>
                 <Button
                   type="button"
@@ -182,8 +183,8 @@ export function ContactForm({ profile }: ContactFormProps) {
             </div>
           )}
 
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Contact Info'}
+          <Button type="submit" loading={isLoading} loadingText="Saving...">
+            Save Contact Info
           </Button>
         </form>
       </CardContent>

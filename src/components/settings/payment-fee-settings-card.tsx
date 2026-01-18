@@ -290,9 +290,11 @@ export function PaymentFeeSettingsCard({
                 <div className="flex gap-2">
                   <Button
                     onClick={handleSaveClick}
-                    disabled={isLoading || !hasChanges}
+                    loading={isLoading}
+                    loadingText="Saving..."
+                    disabled={!hasChanges}
                   >
-                    {isLoading ? 'Saving...' : 'Save Changes'}
+                    Save Changes
                   </Button>
                   <Button
                     variant="outline"

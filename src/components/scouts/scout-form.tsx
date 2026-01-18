@@ -434,7 +434,7 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
               name="is_active"
               type="checkbox"
               defaultChecked={scout?.is_active ?? true}
-              className="h-4 w-4 rounded border-gray-300"
+              className="checkbox-native"
             />
             <Label htmlFor="is_active">Active Scout</Label>
           </div>
@@ -553,8 +553,8 @@ export function ScoutForm({ unitId, scout, guardians: initialGuardians = [], ava
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Saving...' : scout ? 'Update Scout' : 'Add Scout'}
+            <Button type="submit" loading={isLoading} loadingText="Saving...">
+              {scout ? 'Update Scout' : 'Add Scout'}
             </Button>
           </div>
         </form>

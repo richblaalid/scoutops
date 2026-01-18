@@ -7,6 +7,7 @@ import { MultiSelectDropdown } from '@/components/ui/multi-select-dropdown'
 import { StatusFilterButtons, BalanceFilterButtons, type StatusFilter, type BalanceFilter } from '@/components/ui/filter-buttons'
 import { SearchInput } from '@/components/ui/search-input'
 import { SortIcon, type SortDirection } from '@/components/ui/sort-icon'
+import { ResponsiveTable, MobileSubInfo } from '@/components/ui/responsive-table'
 
 interface ScoutAccount {
   id: string
@@ -195,7 +196,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <ResponsiveTable>
         <table className="w-full">
           <thead>
             <tr className="border-b text-left text-sm font-medium text-stone-500">
@@ -241,7 +242,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                       </p>
                       {/* Show patrol on mobile under name */}
                       {account.scouts?.patrols?.name && (
-                        <p className="text-xs text-stone-500 sm:hidden">{account.scouts.patrols.name}</p>
+                        <MobileSubInfo>{account.scouts.patrols.name}</MobileSubInfo>
                       )}
                     </td>
                     <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">
@@ -292,7 +293,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
             )}
           </tbody>
         </table>
-      </div>
+      </ResponsiveTable>
     </div>
   )
 }

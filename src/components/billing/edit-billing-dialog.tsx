@@ -117,9 +117,11 @@ export function EditBillingDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isLoading || !description.trim()}
+            loading={isLoading}
+            loadingText="Saving..."
+            disabled={!description.trim()}
           >
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>

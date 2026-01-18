@@ -271,13 +271,13 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
               name="is_active"
               type="checkbox"
               defaultChecked={adult.is_active !== false}
-              className="h-4 w-4 rounded border-gray-300"
+              className="checkbox-native"
             />
             <Label htmlFor="is_active">Active Member</Label>
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-md bg-error-light p-3 text-sm text-error">
               {error}
             </div>
           )}
@@ -286,8 +286,8 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Update Adult'}
+            <Button type="submit" loading={isLoading} loadingText="Saving...">
+              Update Adult
             </Button>
           </div>
         </form>

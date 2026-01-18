@@ -242,9 +242,11 @@ export function SendChargeNotificationDialog({
           </Button>
           <Button
             onClick={handleSend}
-            disabled={isLoading || guardians.length === 0 || !selectedGuardian}
+            loading={isLoading}
+            loadingText="Sending..."
+            disabled={guardians.length === 0 || !selectedGuardian}
           >
-            {isLoading ? 'Sending...' : 'Send Notification'}
+            Send Notification
           </Button>
         </DialogFooter>
       </DialogContent>

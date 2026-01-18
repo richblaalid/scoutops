@@ -728,7 +728,7 @@ export function ScoutbookSyncCard({
                                   type="checkbox"
                                   checked={selectedScoutIds.has(member.id)}
                                   onChange={() => toggleScoutSelection(member.id)}
-                                  className="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"
+                                  className="checkbox-native"
                                 />
                               </td>
                               <td className="p-2">
@@ -949,7 +949,7 @@ export function ScoutbookSyncCard({
                                   type="checkbox"
                                   checked={selectedAdultIds.has(member.id)}
                                   onChange={() => toggleAdultSelection(member.id)}
-                                  className="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"
+                                  className="checkbox-native"
                                 />
                               </td>
                               <td className="p-2">

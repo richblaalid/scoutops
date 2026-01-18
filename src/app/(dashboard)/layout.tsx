@@ -10,6 +10,7 @@ import { MainContent } from '@/components/dashboard/main-content'
 import { PostHogIdentify } from '@/components/providers/posthog-identify'
 import { UnitProvider, UnitMembership, UnitGroup } from '@/components/providers/unit-context'
 import { SidebarProvider } from '@/components/providers/sidebar-context'
+import { ToastProvider } from '@/components/ui/toast'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -78,22 +79,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
         unitName={primaryUnit?.name}
       />
       <Suspense fallback={null}>
-        <SidebarProvider>
-          <UnitProvider
-            memberships={memberships}
-            groupMemberships={groupMemberships}
-            initialUnitId={primaryUnit?.id}
-          >
-            {/* Desktop Sidebar - hidden on mobile */}
-            <Sidebar user={user} userName={userName} className="hidden md:flex" />
+        <ToastProvider>
+          <SidebarProvider>
+            <UnitProvider
+              memberships={memberships}
+              groupMemberships={groupMemberships}
+              initialUnitId={primaryUnit?.id}
+            >
+              {/* Desktop Sidebar - hidden on mobile */}
+              <Sidebar user={user} userName={userName} className="hidden md:flex" />
 
-            {/* Mobile Header - hidden on desktop */}
-            <MobileNav user={user} userName={userName} className="md:hidden" />
+              {/* Mobile Header - hidden on desktop */}
+              <MobileNav user={user} userName={userName} className="md:hidden" />
 
-            {/* Main Content - offset on desktop for sidebar */}
-            <MainContent>{children}</MainContent>
-          </UnitProvider>
-        </SidebarProvider>
+              {/* Main Content - offset on desktop for sidebar */}
+              <MainContent>{children}</MainContent>
+            </UnitProvider>
+          </SidebarProvider>
+        </ToastProvider>
       </Suspense>
     </div>
   )

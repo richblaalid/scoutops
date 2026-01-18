@@ -190,8 +190,8 @@ export function InviteRosterAdultDialog({
             <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !email.trim()}>
-              {isLoading ? 'Sending...' : 'Send Invite'}
+            <Button type="submit" loading={isLoading} loadingText="Sending..." disabled={!email.trim()}>
+              Send Invite
             </Button>
           </DialogFooter>
         </form>

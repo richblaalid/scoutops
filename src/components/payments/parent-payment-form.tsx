@@ -462,7 +462,7 @@ export function ParentPaymentForm({
                             type="checkbox"
                             checked={selectedChargeIds.has(charge.id)}
                             onChange={() => toggleCharge(charge.id)}
-                            className="h-4 w-4 rounded border-stone-300 text-forest-600 focus:ring-forest-500"
+                            className="checkbox-native"
                           />
                           <div>
                             <p className="text-sm font-medium text-stone-900">

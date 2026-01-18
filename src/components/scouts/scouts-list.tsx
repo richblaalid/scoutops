@@ -9,6 +9,7 @@ import { MultiSelectDropdown } from '@/components/ui/multi-select-dropdown'
 import { StatusFilterButtons, type StatusFilter } from '@/components/ui/filter-buttons'
 import { SearchInput } from '@/components/ui/search-input'
 import { SortIcon, type SortDirection } from '@/components/ui/sort-icon'
+import { ResponsiveTable, MobileSubInfo } from '@/components/ui/responsive-table'
 
 interface Scout {
   id: string
@@ -240,7 +241,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <ResponsiveTable>
         <table className="w-full">
         <thead>
           <tr className="border-b text-left text-sm text-stone-500">
@@ -307,7 +308,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                     )}
                     {/* Show patrol on mobile under name */}
                     {scout.patrols?.name && (
-                      <p className="text-xs text-stone-500 sm:hidden">{scout.patrols?.name}</p>
+                      <MobileSubInfo>{scout.patrols.name}</MobileSubInfo>
                     )}
                   </div>
                 </td>
@@ -375,7 +376,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
           )}
         </tbody>
       </table>
-      </div>
+      </ResponsiveTable>
 
       {editingScout && (
         <ScoutForm

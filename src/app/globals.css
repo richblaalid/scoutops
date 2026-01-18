@@ -196,3 +196,82 @@
     appearance: textfield;
   }
 }
+
+/*
+ * Typography Utility Classes
+ * Semantic text styles for consistent typography across the app
+ */
+@layer utilities {
+  /* Page titles - main headings */
+  .text-page-title {
+    @apply text-3xl font-bold tracking-tight text-foreground;
+  }
+
+  /* Section titles - card headers, major sections */
+  .text-section-title {
+    @apply text-xl font-semibold tracking-tight text-foreground;
+  }
+
+  /* Subsection titles - minor headings within cards */
+  .text-subsection-title {
+    @apply text-lg font-medium text-foreground;
+  }
+
+  /* Card titles - consistent with CardTitle component */
+  .text-card-title {
+    @apply text-lg font-semibold leading-none tracking-tight text-foreground;
+  }
+
+  /* Body text - standard readable content */
+  .text-body {
+    @apply text-sm text-foreground leading-relaxed;
+  }
+
+  /* Body large - emphasized body text */
+  .text-body-lg {
+    @apply text-base text-foreground leading-relaxed;
+  }
+
+  /* Muted text - secondary information */
+  .text-muted-sm {
+    @apply text-sm text-muted-foreground;
+  }
+
+  /* Caption text - labels, hints, metadata */
+  .text-caption {
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* Label text - form labels */
+  .text-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  /* Data display - numbers, stats, values */
+  .text-data {
+    @apply text-2xl font-bold tabular-nums text-foreground;
+  }
+
+  /* Data small - smaller metrics */
+  .text-data-sm {
+    @apply text-lg font-semibold tabular-nums text-foreground;
+  }
+
+  /* Link text */
+  .text-link {
+    @apply text-sm font-medium text-primary hover:underline;
+  }
+}
+
+/*
+ * Form Element Utilities
+ * Consistent styling for native form elements
+ */
+@layer components {
+  /* Native checkbox styling - use when Radix Checkbox isn't suitable */
+  .checkbox-native {
+    @apply h-4 w-4 rounded border-stone-300 text-forest-700
+           focus:ring-2 focus:ring-forest-600 focus:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
