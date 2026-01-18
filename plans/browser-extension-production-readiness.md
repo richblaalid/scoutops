@@ -24,12 +24,13 @@ Make the Chuckbox browser extension easier to use and production-ready for users
 
 ### Phase 1: Improve Chuckbox Settings UI
 
-#### 1.1 Promote Extension to Primary Option
+#### 1.1 Keep CSV as Primary, Extension as Alternative
 **File:** `src/components/settings/scoutbook-sync-card.tsx`
 
-- Move "Browser Extension" section above CLI sync (when in serverless/production mode)
-- Add visual emphasis: "Recommended" badge
-- Clearer benefit text: "Sync directly from Scoutbook - no setup required"
+- CSV upload remains the primary/recommended import option
+- Browser extension positioned as alternative for users who prefer real-time sync
+- Clearer benefit text: "Sync directly from Scoutbook while browsing"
+- Note: Extension becomes primary option once two-way sync (Chuckbox → Scoutbook) is implemented
 
 #### 1.2 Better Token Generation UX
 **File:** `src/components/settings/scoutbook-sync-card.tsx`
@@ -184,3 +185,4 @@ This order lets us test the core UX improvements quickly before polishing the on
 - Multi-unit token switching
 - Self-hosted instance support
 - OAuth-style token flow (redirect-based)
+- Two-way sync (Chuckbox → Scoutbook) - when implemented, extension becomes primary option

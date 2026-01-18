@@ -5,7 +5,10 @@
  */
 
 // DOM Elements
-const connectionDot = document.getElementById('connectionDot') as HTMLElement
+const headerSubtitle = document.getElementById('headerSubtitle') as HTMLElement
+const unitCard = document.getElementById('unitCard') as HTMLElement
+const unitName = document.getElementById('unitName') as HTMLElement
+const notConnectedCard = document.getElementById('notConnectedCard') as HTMLElement
 const connectionStatus = document.getElementById('connectionStatus') as HTMLElement
 const pageDot = document.getElementById('pageDot') as HTMLElement
 const pageStatus = document.getElementById('pageStatus') as HTMLElement
@@ -21,28 +24,27 @@ const syncSpinner = document.getElementById('syncSpinner') as HTMLElement
 const viewInChuckbox = document.getElementById('viewInChuckbox') as HTMLAnchorElement
 const infoText = document.getElementById('infoText') as HTMLElement
 const tokenInput = document.getElementById('tokenInput') as HTMLInputElement
+const tokenSpinner = document.getElementById('tokenSpinner') as HTMLElement
 const clearTokenBtn = document.getElementById('clearTokenBtn') as HTMLButtonElement
+const tokenInfoText = document.getElementById('tokenInfoText') as HTMLElement
 
 // State
 let isOnRosterPage = false
 let isConnected = false
 let currentTabId: number | null = null
+let currentUnitName: string | null = null
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   await checkStatus()
   await checkCurrentPage()
 
-  // Load saved token
-  const status = await chrome.runtime.sendMessage({ action: 'getStatus' })
-  if (status.hasToken) {
-    tokenInput.value = '••••••••••••••••'
-    tokenInput.disabled = true
-    clearTokenBtn.classList.remove('hidden')
-  }
-
-  // Token input handler
-  tokenInput.addEventListener('change', handleTokenChange)
+  // Token input handler - validate on paste/change
+  tokenInput.addEventListener('input', handleTokenInput)
+  tokenInput.addEventListener('paste', () => {
+    // Small delay to let paste complete
+    setTimeout(handleTokenInput, 50)
+  })
 
   // Clear token button handler
   clearTokenBtn.addEventListener('click', handleClearToken)
@@ -55,30 +57,55 @@ async function checkStatus() {
   try {
     const response = await chrome.runtime.sendMessage({ action: 'checkAuth' })
 
-    if (response.authenticated) {
-      connectionDot.className = 'status-dot green'
-      connectionStatus.textContent = 'Connected'
-      isConnected = true
+    if (response.authenticated && response.unitName) {
+      setConnected(response.unitName)
     } else {
-      // Check if we have a token
+      // Check if we have a token that might be invalid
       const status = await chrome.runtime.sendMessage({ action: 'getStatus' })
       if (status.hasToken) {
-        connectionDot.className = 'status-dot yellow'
-        connectionStatus.textContent = 'Token Set'
-        isConnected = true
+        // Token exists but validation failed - show as invalid
+        setNotConnected('Token invalid or expired')
       } else {
-        connectionDot.className = 'status-dot red'
-        connectionStatus.textContent = 'Not Connected'
-        isConnected = false
+        setNotConnected('Not Connected')
       }
     }
   } catch {
-    connectionDot.className = 'status-dot red'
-    connectionStatus.textContent = 'Error'
-    isConnected = false
+    setNotConnected('Connection Error')
   }
 
   updateSyncButton()
+}
+
+function setConnected(unitDisplayName: string) {
+  isConnected = true
+  currentUnitName = unitDisplayName
+
+  // Show connected card, hide not connected
+  unitCard.style.display = 'block'
+  notConnectedCard.style.display = 'none'
+  unitName.textContent = unitDisplayName
+
+  // Update token input area
+  tokenInput.value = '••••••••••••••••'
+  tokenInput.disabled = true
+  clearTokenBtn.classList.remove('hidden')
+  tokenInfoText.innerHTML = `Connected to <strong>${unitDisplayName}</strong>`
+}
+
+function setNotConnected(status: string) {
+  isConnected = false
+  currentUnitName = null
+
+  // Show not connected card, hide connected
+  unitCard.style.display = 'none'
+  notConnectedCard.style.display = 'block'
+  connectionStatus.textContent = status
+
+  // Update token input area
+  tokenInput.value = ''
+  tokenInput.disabled = false
+  clearTokenBtn.classList.add('hidden')
+  tokenInfoText.innerHTML = 'Get a token from <a href="https://chuckbox.app/settings/integrations" target="_blank" class="link">Chuckbox Settings</a>'
 }
 
 async function checkCurrentPage() {
@@ -99,29 +126,58 @@ async function checkCurrentPage() {
       return
     }
 
-    // Ping content script
-    try {
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'ping' })
+    // Try to ping content script, inject if needed
+    const pingSuccess = await pingOrInjectContentScript(tab.id)
 
-      if (response.isRosterPage) {
-        pageDot.className = 'status-dot green'
-        pageStatus.textContent = 'Ready'
-        isOnRosterPage = true
-        infoText.textContent = 'Click "Sync Roster" to import your roster to Chuckbox.'
-      } else {
-        setPageNotReady('Navigate to roster')
-      }
-    } catch {
-      // Content script not loaded yet
-      setPageNotReady('Loading...')
-      // Retry after a short delay
-      setTimeout(checkCurrentPage, 1000)
+    if (pingSuccess) {
+      // On Scoutbook with content script ready - enable sync
+      pageDot.className = 'status-dot green'
+      pageStatus.textContent = 'Ready'
+      isOnRosterPage = true // Enable sync button
+      infoText.textContent = 'Click "Sync Roster" to import your roster to Chuckbox.'
+    } else {
+      setPageNotReady('Unable to connect')
     }
   } catch {
     setPageNotReady('Error')
   }
 
   updateSyncButton()
+}
+
+async function pingOrInjectContentScript(tabId: number): Promise<boolean> {
+  // First, try to ping the content script
+  try {
+    await chrome.tabs.sendMessage(tabId, { action: 'ping' })
+    return true
+  } catch {
+    // Content script not loaded, try to inject it
+    console.log('[Chuckbox] Content script not found, injecting...')
+  }
+
+  // Inject the content script programmatically
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['content.js'],
+    })
+    console.log('[Chuckbox] Content script injected successfully')
+
+    // Wait a moment for the script to initialize
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    // Verify it's working
+    try {
+      await chrome.tabs.sendMessage(tabId, { action: 'ping' })
+      return true
+    } catch {
+      console.error('[Chuckbox] Content script injected but not responding')
+      return false
+    }
+  } catch (error) {
+    console.error('[Chuckbox] Failed to inject content script:', error)
+    return false
+  }
 }
 
 function setPageNotReady(status: string) {
@@ -146,22 +202,42 @@ function updateSyncButton() {
   }
 }
 
-async function handleTokenChange() {
+async function handleTokenInput() {
   const token = tokenInput.value.trim()
 
-  if (!token || token.includes('•')) {
+  // Ignore if empty, masked, or too short
+  if (!token || token.includes('•') || token.length < 20) {
     return
   }
 
+  // Show validating state
+  tokenSpinner.classList.remove('hidden')
+  tokenInput.disabled = true
+  hideError()
+
   try {
+    // Save token first
     await chrome.runtime.sendMessage({ action: 'setToken', token })
-    tokenInput.value = '••••••••••••••••'
-    tokenInput.disabled = true
-    clearTokenBtn.classList.remove('hidden')
-    showSuccess('Token saved successfully')
-    await checkStatus()
+
+    // Then validate it
+    const response = await chrome.runtime.sendMessage({ action: 'checkAuth' })
+
+    if (response.authenticated && response.unitName) {
+      setConnected(response.unitName)
+      showSuccess(`Connected to ${response.unitName}`)
+    } else {
+      // Token is invalid
+      setNotConnected('Token invalid or expired')
+      showError('Token is invalid or expired. Generate a new one in Chuckbox Settings.')
+      // Clear the invalid token
+      await chrome.runtime.sendMessage({ action: 'setToken', token: '' })
+    }
   } catch (error) {
-    showError('Failed to save token')
+    showError('Failed to validate token. Check your connection.')
+    setNotConnected('Connection Error')
+  } finally {
+    tokenSpinner.classList.add('hidden')
+    updateSyncButton()
   }
 }
 
@@ -169,13 +245,12 @@ async function handleClearToken() {
   try {
     // Clear token from storage
     await chrome.runtime.sendMessage({ action: 'setToken', token: '' })
-    tokenInput.value = ''
-    tokenInput.disabled = false
+    setNotConnected('Not Connected')
     tokenInput.focus()
-    clearTokenBtn.classList.add('hidden')
+    hideSuccess()
     await checkStatus()
   } catch (error) {
-    showError('Failed to clear token')
+    showError('Failed to disconnect')
   }
 }
 
@@ -188,12 +263,27 @@ async function handleSync() {
   // Reset UI
   hideError()
   hideSuccess()
-  showProgress('Extracting roster data...', 10)
+  showProgress('Preparing...', 5)
   setSyncing(true)
 
   try {
-    // Step 1: Extract HTML from content script
-    setProgress('Navigating to first page...', 15)
+    // Step 1: Check if on roster page, navigate if needed
+    const pingResponse = await chrome.tabs.sendMessage(currentTabId, { action: 'ping' })
+
+    if (!pingResponse.isRosterPage) {
+      setProgress('Navigating to roster...', 10)
+      const navResponse = await chrome.tabs.sendMessage(currentTabId, { action: 'navigateToRoster' })
+
+      if (!navResponse.success) {
+        throw new Error(navResponse.error || 'Could not navigate to roster page')
+      }
+
+      // Wait a moment for page to fully load after navigation
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+
+    // Step 2: Extract HTML from content script
+    setProgress('Extracting roster data...', 15)
     const extractResponse = await chrome.tabs.sendMessage(currentTabId, { action: 'extract' })
 
     if (!extractResponse.success) {
@@ -204,7 +294,7 @@ async function handleSync() {
     const pageCount = (extractResponse.html.match(/<!-- PAGE BREAK -->/gi) || []).length + 1
     setProgress(`Extracted ${pageCount} page(s). Processing...`, 30)
 
-    // Step 2: Send to Chuckbox API
+    // Step 3: Send to Chuckbox API
     // Start a progress animation while server processes the data
     let progressValue = 30
     const progressInterval = setInterval(() => {
@@ -247,8 +337,9 @@ async function handleSync() {
       if (staging.adultsToUpdate > 0) parts.push(`${staging.adultsToUpdate} adult updates`)
 
       showSuccess(
-        `Found: <strong>${parts.join(', ')}</strong><br>` +
-          `<a href="${baseUrlForLinks}/settings" target="_blank" class="link">Review in Chuckbox</a>`
+        `<strong>Sync complete!</strong><br>` +
+          `${parts.join(', ')}<br><br>` +
+          `<a href="${baseUrlForLinks}/settings/integrations" target="_blank" class="link" style="font-weight: 500;">Review changes in Chuckbox →</a>`
       )
     }
 
@@ -256,10 +347,20 @@ async function handleSync() {
     const status = await chrome.runtime.sendMessage({ action: 'getStatus' })
     const apiUrl = status.apiUrl || 'https://chuckbox.app/api'
     const baseUrl = apiUrl.replace('/api', '')
-    viewInChuckbox.href = `${baseUrl}/settings`
+    viewInChuckbox.href = `${baseUrl}/settings/integrations`
     viewInChuckbox.classList.remove('hidden')
   } catch (error) {
-    showError(error instanceof Error ? error.message : 'Sync failed')
+    const message = error instanceof Error ? error.message : 'Sync failed'
+    // Improve error messages
+    if (message.includes('Rate limit')) {
+      showError('Too many syncs. Please wait an hour before syncing again.')
+    } else if (message.includes('Invalid') || message.includes('expired')) {
+      showError('Token is invalid or expired. Generate a new one in Chuckbox Settings.')
+    } else if (message.includes('roster')) {
+      showError('Navigate to your Scoutbook roster page, then click Sync.')
+    } else {
+      showError(message)
+    }
   } finally {
     setSyncing(false)
     hideProgress()

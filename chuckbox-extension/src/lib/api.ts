@@ -34,6 +34,14 @@ interface ErrorResponse {
   details?: string
 }
 
+interface AuthStatusResponse {
+  authenticated: boolean
+  unitId?: string
+  unitName?: string
+  unitFullName?: string
+  error?: string
+}
+
 export class ChuckboxAPI {
   private baseUrl: string
   private token: string | null = null
@@ -92,14 +100,14 @@ export class ChuckboxAPI {
   }
 
   /**
-   * Check if the user has an active session with Chuckbox
+   * Check if the token is valid and get unit info
    */
-  async checkSession(): Promise<{ authenticated: boolean; unitName?: string }> {
+  async checkSession(): Promise<AuthStatusResponse> {
     try {
-      const response = await this.request<{ tokens: unknown[] }>('/scoutbook/extension-auth', {
+      const response = await this.request<AuthStatusResponse>('/scoutbook/extension-auth', {
         method: 'GET',
       })
-      return { authenticated: true }
+      return response
     } catch {
       return { authenticated: false }
     }

@@ -1,18 +1,64 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { Database } from '@/types/database'
 import {
   createExtensionToken,
   revokeExtensionToken,
   getActiveTokens,
+  validateExtensionToken,
 } from '@/lib/auth/extension-auth'
+
+function getServiceClient() {
+  return createServiceClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 /**
  * GET /api/scoutbook/extension-auth
  *
- * Get active extension tokens for the current user
+ * Two modes:
+ * 1. With session cookie: Get active extension tokens for the current user
+ * 2. With Bearer token: Validate token and return unit info (for extension status check)
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Check for Bearer token first (extension calling to validate its token)
+    const authHeader = request.headers.get('authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7)
+      const serviceClient = getServiceClient()
+      const tokenData = await validateExtensionToken(serviceClient, token)
+
+      if (!tokenData) {
+        return NextResponse.json(
+          { authenticated: false, error: 'Invalid or expired token' },
+          { status: 401 }
+        )
+      }
+
+      // Get unit name for display
+      const { data: unit } = await serviceClient
+        .from('units')
+        .select('id, name, unit_number, unit_type')
+        .eq('id', tokenData.unitId)
+        .single()
+
+      const unitName = unit
+        ? `${unit.unit_type.charAt(0).toUpperCase() + unit.unit_type.slice(1)} ${unit.unit_number}`
+        : 'Unknown Unit'
+
+      return NextResponse.json({
+        authenticated: true,
+        unitId: tokenData.unitId,
+        unitName,
+        unitFullName: unit?.name || unitName,
+      })
+    }
+
+    // Session-based auth (Chuckbox UI calling to list tokens)
     const supabase = await createClient()
 
     const {

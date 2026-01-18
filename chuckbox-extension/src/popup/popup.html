@@ -282,21 +282,30 @@
     <div class="logo">C</div>
     <div>
       <div class="title">Chuckbox Sync</div>
-      <div class="subtitle">Scoutbook Roster Import</div>
+      <div class="subtitle" id="headerSubtitle">Scoutbook Roster Import</div>
     </div>
   </div>
 
-  <!-- Status Card -->
-  <div class="status-card">
+  <!-- Connected Unit Display -->
+  <div class="status-card" id="unitCard" style="display: none;">
     <div class="status-row">
-      <div class="status-dot" id="connectionDot"></div>
-      <span class="status-label">Connection</span>
-      <span class="status-value" id="connectionStatus">Checking...</span>
+      <div class="status-dot green"></div>
+      <span class="status-label">Connected to</span>
+      <span class="status-value" id="unitName" style="color: #059669;"></span>
     </div>
     <div class="status-row">
       <div class="status-dot" id="pageDot"></div>
       <span class="status-label">Roster Page</span>
       <span class="status-value" id="pageStatus">Checking...</span>
+    </div>
+  </div>
+
+  <!-- Not Connected Card -->
+  <div class="status-card" id="notConnectedCard">
+    <div class="status-row">
+      <div class="status-dot red"></div>
+      <span class="status-label">Status</span>
+      <span class="status-value" id="connectionStatus" style="color: #dc2626;">Not Connected</span>
     </div>
   </div>
 
@@ -331,17 +340,18 @@
   </p>
 
   <!-- Settings Section -->
-  <div class="settings">
+  <div class="settings" id="settingsSection">
     <div class="settings-title">Settings</div>
     <div class="input-group">
       <label class="input-label" for="tokenInput">Extension Token</label>
-      <div style="display: flex; gap: 8px;">
+      <div style="display: flex; gap: 8px; align-items: center;">
         <input type="password" class="input" id="tokenInput" placeholder="Paste token from Chuckbox" style="flex: 1;">
-        <button class="btn-clear hidden" id="clearTokenBtn" type="button">Clear</button>
+        <div class="spinner hidden" id="tokenSpinner" style="flex-shrink: 0;"></div>
+        <button class="btn-clear hidden" id="clearTokenBtn" type="button">Disconnect</button>
       </div>
     </div>
-    <p class="info-text">
-      Get a token from <a href="https://chuckbox.app/settings" target="_blank" class="link">Chuckbox Settings</a>
+    <p class="info-text" id="tokenInfoText">
+      Get a token from <a href="https://chuckbox.app/settings/integrations" target="_blank" class="link">Chuckbox Settings</a>
     </p>
   </div>
 

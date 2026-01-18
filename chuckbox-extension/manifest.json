@@ -1,11 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Chuckbox Sync",
+  "short_name": "Chuckbox",
   "version": "1.0.0",
-  "description": "Sync your Scoutbook roster to Chuckbox",
+  "description": "Sync your Scoutbook roster to Chuckbox - the financial management app for Scout units.",
+  "homepage_url": "https://chuckbox.app",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
   "host_permissions": [
     "https://advancements.scouting.org/*",
