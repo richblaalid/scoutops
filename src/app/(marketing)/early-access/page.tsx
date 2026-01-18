@@ -21,7 +21,7 @@ const unitSizes = [
 ]
 
 const softwareOptions = [
-  { value: 'scoutbook-only', label: 'Scoutbook only' },
+  { value: 'scoutbook', label: 'Scoutbook' },
   { value: 'trooptrack', label: 'TroopTrack' },
   { value: 'troopwebhost', label: 'TroopWebHost' },
   { value: 'scouttrax', label: 'ScoutTrax' },
@@ -37,7 +37,7 @@ const paymentOptions = [
   { value: 'paypal', label: 'PayPal' },
   { value: 'venmo', label: 'Venmo' },
   { value: 'zelle', label: 'Zelle' },
-  { value: 'cash-check', label: 'Cash/Check only' },
+  { value: 'cash-check', label: 'Cash/Check' },
   { value: 'none', label: 'We don\'t collect payments' },
   { value: 'other', label: 'Other' },
 ]
