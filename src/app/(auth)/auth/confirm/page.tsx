@@ -243,10 +243,10 @@ function AuthConfirmContent() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4">
-        <div className="w-full max-w-md rounded-lg border bg-white p-8 shadow-sm">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 dark:bg-stone-900 px-4">
+        <div className="w-full max-w-md rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-8 shadow-sm">
           <h1 className="text-xl font-bold text-error">Authentication Failed</h1>
-          <p className="mt-2 text-stone-600">{error}</p>
+          <p className="mt-2 text-stone-600 dark:text-stone-300">{error}</p>
           <a
             href="/login"
             className="mt-4 block w-full rounded-md bg-primary px-4 py-2 text-center text-white hover:bg-primary/90"
@@ -259,10 +259,10 @@ function AuthConfirmContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4">
-      <div className="w-full max-w-md rounded-lg border bg-white p-8 shadow-sm text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 dark:bg-stone-900 px-4">
+      <div className="w-full max-w-md rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-8 shadow-sm text-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-        <p className="mt-4 text-stone-600">{status}</p>
+        <p className="mt-4 text-stone-600 dark:text-stone-300">{status}</p>
       </div>
     </div>
   )
@@ -272,10 +272,10 @@ export default function AuthConfirmPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4">
-          <div className="w-full max-w-md rounded-lg border bg-white p-8 shadow-sm text-center">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 dark:bg-stone-900 px-4">
+          <div className="w-full max-w-md rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-8 shadow-sm text-center">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-            <p className="mt-4 text-stone-600">Loading...</p>
+            <p className="mt-4 text-stone-600 dark:text-stone-300">Loading...</p>
           </div>
         </div>
       }

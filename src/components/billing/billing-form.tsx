@@ -200,7 +200,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             aria-label="Billing type"
           />
         </div>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-stone-500 dark:text-stone-400">
           {billingType === 'split'
             ? 'Enter a total amount to split equally among selected scouts (e.g., camping trip costs)'
             : 'Enter an amount to charge each selected scout (e.g., annual dues)'}
@@ -214,7 +214,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             {billingType === 'split' ? 'Total Amount' : 'Per Scout'} *
           </Label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 dark:text-stone-400">
               $
             </span>
             <Input
@@ -251,33 +251,33 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
             <button
               type="button"
               onClick={selectAll}
-              className="text-sm text-forest-600 hover:text-forest-800"
+              className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300"
             >
               Select All
             </button>
-            <span className="text-stone-300">|</span>
+            <span className="text-stone-300 dark:text-stone-600">|</span>
             <button
               type="button"
               onClick={selectNone}
-              className="text-sm text-forest-600 hover:text-forest-800"
+              className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300"
             >
               Clear
             </button>
           </div>
         </div>
 
-        <div className="max-h-64 overflow-y-auto rounded-lg border border-stone-200 p-4">
+        <div className="max-h-64 overflow-y-auto rounded-lg border border-stone-200 dark:border-stone-700 p-4">
           {Object.entries(patrolGroups).map(([patrol, patrolScouts]) => (
             <div key={patrol} className="mb-4 last:mb-0">
-              <h4 className="mb-2 text-sm font-medium text-stone-500">{patrol}</h4>
+              <h4 className="mb-2 text-sm font-medium text-stone-500 dark:text-stone-400">{patrol}</h4>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {patrolScouts.map((scout) => (
                   <label
                     key={scout.id}
                     className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-colors ${
                       selectedScouts.has(scout.id)
-                        ? 'border-forest-600 bg-forest-50'
-                        : 'border-stone-200 hover:bg-stone-50'
+                        ? 'border-forest-600 bg-forest-50 dark:border-forest-500 dark:bg-forest-900/30'
+                        : 'border-stone-200 hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800'
                     }`}
                   >
                     <input
@@ -286,7 +286,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
                       onChange={() => toggleScout(scout.id)}
                       className="checkbox-native"
                     />
-                    <span className="text-sm text-stone-700">
+                    <span className="text-sm text-stone-700 dark:text-stone-200">
                       {scout.first_name} {scout.last_name}
                     </span>
                   </label>
@@ -299,40 +299,40 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
 
       {/* Summary */}
       {selectedScouts.size > 0 && parsedAmount > 0 && (
-        <div className="rounded-lg bg-stone-50 p-4">
-          <h4 className="font-medium text-stone-900">Billing Summary</h4>
+        <div className="rounded-lg bg-stone-50 dark:bg-stone-800 p-4">
+          <h4 className="font-medium text-stone-900 dark:text-stone-100">Billing Summary</h4>
           <div className="mt-3 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-stone-500">Billing Type:</span>
-              <span className="font-medium text-stone-700">
+              <span className="text-stone-500 dark:text-stone-400">Billing Type:</span>
+              <span className="font-medium text-stone-700 dark:text-stone-200">
                 {billingType === 'split' ? 'Split Total' : 'Fixed Amount Per Scout'}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-stone-500">Scouts Selected:</span>
-              <span className="font-medium text-stone-700">{selectedScouts.size}</span>
+              <span className="text-stone-500 dark:text-stone-400">Scouts Selected:</span>
+              <span className="font-medium text-stone-700 dark:text-stone-200">{selectedScouts.size}</span>
             </div>
-            <div className="border-t border-stone-200 pt-2">
+            <div className="border-t border-stone-200 dark:border-stone-700 pt-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Amount Per Scout:</span>
-                <span className={`font-medium ${billingType === 'fixed' ? 'text-stone-900' : 'text-forest-700'}`}>
+                <span className="text-stone-500 dark:text-stone-400">Amount Per Scout:</span>
+                <span className={`font-medium ${billingType === 'fixed' ? 'text-stone-900 dark:text-stone-100' : 'text-forest-700 dark:text-forest-400'}`}>
                   {formatCurrency(perScoutAmount)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Total Amount:</span>
-                <span className={`font-medium ${billingType === 'split' ? 'text-stone-900' : 'text-forest-700'}`}>
+                <span className="text-stone-500 dark:text-stone-400">Total Amount:</span>
+                <span className={`font-medium ${billingType === 'split' ? 'text-stone-900 dark:text-stone-100' : 'text-forest-700 dark:text-forest-400'}`}>
                   {formatCurrency(totalAmount)}
                 </span>
               </div>
             </div>
             {billingType === 'split' && (
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-stone-500 dark:text-stone-400">
                 {formatCurrency(parsedAmount)} ÷ {selectedScouts.size} scouts = {formatCurrency(perScoutAmount)} each
               </p>
             )}
             {billingType === 'fixed' && (
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-stone-500 dark:text-stone-400">
                 {formatCurrency(parsedAmount)} × {selectedScouts.size} scouts = {formatCurrency(totalAmount)} total
               </p>
             )}
@@ -349,7 +349,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
 
       {/* Notification Option */}
       {selectedScouts.size > 0 && parsedAmount > 0 && (
-        <div className="rounded-lg border border-stone-200 p-4">
+        <div className="rounded-lg border border-stone-200 dark:border-stone-700 p-4">
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -358,8 +358,8 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
               className="checkbox-native mt-0.5"
             />
             <div>
-              <span className="font-medium text-stone-900">Send payment notifications to parents</span>
-              <p className="text-sm text-stone-500 mt-0.5">
+              <span className="font-medium text-stone-900 dark:text-stone-100">Send payment notifications to parents</span>
+              <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
                 Each parent will receive an email with the charge details and a payment link
               </p>
             </div>

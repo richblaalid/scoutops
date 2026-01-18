@@ -226,7 +226,7 @@ function CommandPalette() {
           >
             {/* Search input */}
             <div className="flex items-center gap-3 border-b border-stone-200 px-4 dark:border-stone-700">
-              <Search className="h-5 w-5 text-stone-400" />
+              <Search className="h-5 w-5 text-stone-400 dark:text-stone-500" />
               <input
                 ref={inputRef}
                 type="text"
@@ -244,7 +244,7 @@ function CommandPalette() {
             {/* Results */}
             <div className="max-h-[300px] overflow-y-auto p-2">
               {filteredCommands.length === 0 ? (
-                <div className="py-8 text-center text-sm text-stone-500">
+                <div className="py-8 text-center text-sm text-stone-500 dark:text-stone-400">
                   No results found for &ldquo;{query}&rdquo;
                 </div>
               ) : (
@@ -294,7 +294,7 @@ function CommandPalette() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between border-t border-stone-200 px-4 py-2 text-xs text-stone-500 dark:border-stone-700">
+            <div className="flex items-center justify-between border-t border-stone-200 px-4 py-2 text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
                   <kbd className="rounded border border-stone-200 bg-stone-100 px-1.5 py-0.5 dark:border-stone-600 dark:bg-stone-700">↑</kbd>

@@ -36,8 +36,8 @@ export default async function RosterPage() {
   if (!membership) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-2xl font-bold text-stone-900">No Unit Access</h1>
-        <p className="mt-2 text-stone-600">
+        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">No Unit Access</h1>
+        <p className="mt-2 text-stone-600 dark:text-stone-300">
           You are not currently a member of any unit.
         </p>
       </div>
@@ -207,8 +207,8 @@ export default async function RosterPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-stone-900">Roster</h1>
-          <p className="mt-1 text-stone-600">
+          <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">Roster</h1>
+          <p className="mt-1 text-stone-600 dark:text-stone-300">
             {isParent ? 'Your linked scouts' : 'Manage your unit\'s roster'}
           </p>
         </div>
@@ -230,7 +230,7 @@ export default async function RosterPage() {
             <div className="space-y-4">
               {scouts.length === 0 ? (
                 <div className="py-12 text-center">
-                  <p className="text-stone-500">No scouts linked to your account.</p>
+                  <p className="text-stone-500 dark:text-stone-400">No scouts linked to your account.</p>
                 </div>
               ) : (
                 <RosterTabs

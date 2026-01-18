@@ -71,12 +71,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-xl border border-cream-400 bg-white px-8 py-8 shadow-lg">
-      <p className="mb-6 text-center text-sm text-stone-600">Sign in with your email to continue</p>
+    <div className="rounded-xl border border-cream-400 dark:border-stone-700 bg-white dark:bg-stone-800 px-8 py-8 shadow-lg">
+      <p className="mb-6 text-center text-sm text-stone-600 dark:text-stone-300">Sign in with your email to continue</p>
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-stone-700">
+          <label htmlFor="email" className="block text-sm font-medium text-stone-700 dark:text-stone-200">
             Email address
           </label>
           <input
@@ -86,7 +86,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="mt-1 block w-full rounded-lg border border-stone-300 px-4 py-2.5 text-stone-900 shadow-sm placeholder:text-stone-400 focus:border-forest-600 focus:outline-none focus:ring-2 focus:ring-forest-600/20"
+            className="mt-1 block w-full rounded-lg border border-stone-300 dark:border-stone-600 px-4 py-2.5 text-stone-900 dark:text-stone-50 bg-white dark:bg-stone-900 shadow-sm placeholder:text-stone-400 focus:border-forest-600 dark:focus:border-forest-500 focus:outline-none focus:ring-2 focus:ring-forest-600/20 dark:focus:ring-forest-500/30"
           />
         </div>
 
@@ -105,7 +105,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-lg bg-forest-800 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-700 hover:shadow-forest hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+          className="flex w-full items-center justify-center rounded-lg bg-forest-800 dark:bg-forest-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-700 dark:hover:bg-forest-600 hover:shadow-forest hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:ring-offset-2 dark:focus:ring-offset-stone-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
         >
           {loading ? (
             <svg
@@ -154,20 +154,20 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-cream-300 px-4 py-12">
+    <div className="flex min-h-screen flex-col bg-cream-300 dark:bg-stone-900 px-4 py-12">
       {/* Main content - centered */}
       <div className="flex flex-1 flex-col items-center justify-center">
         {/* Hero branding section */}
         <div className="mb-10 flex flex-col items-center text-center">
           <Logo variant="full" size="lg" className="mb-4 scale-125" />
-          <p className="text-2xl font-medium text-forest-600 italic">
+          <p className="text-2xl font-medium text-forest-600 dark:text-forest-400 italic">
             Your unit, organized.
           </p>
-          <p className="mt-6 max-w-md text-lg text-stone-600">
+          <p className="mt-6 max-w-md text-lg text-stone-600 dark:text-stone-300">
             The all-in-one platform for Scout unit finances, billing, and operations.
           </p>
           <div className="mt-5">
-            <span className="inline-flex items-center rounded-full bg-forest-800/10 px-4 py-1.5 text-sm font-medium text-forest-800">
+            <span className="inline-flex items-center rounded-full bg-forest-800/10 dark:bg-forest-400/20 px-4 py-1.5 text-sm font-medium text-forest-800 dark:text-forest-300">
               Private Beta — Invited Users Only
             </span>
           </div>
@@ -175,9 +175,9 @@ export default function LoginPage() {
 
         <div className="w-full max-w-md">
           <Suspense fallback={
-            <div className="rounded-xl border border-stone-200 bg-white px-8 py-10 shadow-md">
+            <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 px-8 py-10 shadow-md">
               <div className="flex flex-col items-center text-center">
-                <p className="text-sm text-stone-500">Loading...</p>
+                <p className="text-sm text-stone-500 dark:text-stone-400">Loading...</p>
               </div>
             </div>
           }>
@@ -187,9 +187,9 @@ export default function LoginPage() {
 
         {/* Request access link */}
         <div className="mt-8 text-center">
-          <p className="text-base text-stone-600">
+          <p className="text-base text-stone-600 dark:text-stone-300">
             Don&apos;t have access?{' '}
-            <a href="/early-access" className="font-semibold text-forest-600 hover:text-forest-700">
+            <a href="/early-access" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
               Request an invite
             </a>
           </p>
@@ -199,7 +199,7 @@ export default function LoginPage() {
       {/* Footer - pushed to bottom */}
       <div className="text-center pt-8">
         <Logo variant="full" size="sm" className="mx-auto mb-3" />
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-stone-500 dark:text-stone-400">
           chuckbox.app
         </p>
       </div>

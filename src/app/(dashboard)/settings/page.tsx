@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { ContactForm } from '@/components/settings/contact-form'
+// Theme settings temporarily disabled - dark mode needs more accessibility work
+// import { ThemeSettingsCard } from '@/components/settings/theme-settings-card'
 import { DangerZone } from '@/components/settings/danger-zone'
 
 type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say'
@@ -55,6 +57,9 @@ export default async function SettingsPage() {
             phone_secondary: profile.phone_secondary,
           }}
         />
+
+        {/* Theme settings temporarily disabled - dark mode needs more accessibility work */}
+        {/* <ThemeSettingsCard /> */}
 
         <DangerZone />
       </div>

@@ -52,11 +52,11 @@ export function ResponsiveTable({ children, className }: ResponsiveTableProps) {
  */
 export const tableStyles = {
   table: "w-full",
-  thead: "text-left text-sm text-stone-500",
+  thead: "text-left text-sm text-stone-500 dark:text-stone-400",
   th: "pb-3 pr-4 font-medium",
-  thSortable: "pb-3 pr-4 font-medium cursor-pointer select-none hover:text-stone-700 transition-colors",
+  thSortable: "pb-3 pr-4 font-medium cursor-pointer select-none hover:text-stone-700 dark:hover:text-stone-300 transition-colors",
   tbody: "",
-  tr: "border-b last:border-0",
+  tr: "border-b border-stone-200 dark:border-stone-700 last:border-0",
   td: "py-3 pr-4",
   tdActions: "py-3 pl-4 sm:pl-6 whitespace-nowrap",
   // Responsive visibility helpers
@@ -89,7 +89,7 @@ export function MobileSubInfo({
   }[hideAbove]
 
   return (
-    <p className={cn("text-xs text-stone-500 mt-0.5", hideClass)}>
+    <p className={cn("text-xs text-stone-500 dark:text-stone-400 mt-0.5", hideClass)}>
       {children}
     </p>
   )

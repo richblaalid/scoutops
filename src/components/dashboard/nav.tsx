@@ -21,7 +21,7 @@ export function DashboardNav({ user, userName }: DashboardNavProps) {
   const navItems = currentRole ? getVisibleNavItems(currentRole) : []
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-900">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-3">
@@ -40,7 +40,7 @@ export function DashboardNav({ user, userName }: DashboardNavProps) {
                   className="h-8 w-8 rounded object-contain"
                 />
               ) : (
-                <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
+                <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300">
                   {currentUnit.name}
                 </span>
               )}
@@ -55,8 +55,8 @@ export function DashboardNav({ user, userName }: DashboardNavProps) {
                 className={cn(
                   'rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   pathname === item.href
-                    ? 'bg-forest-50 text-forest-700'
-                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                    ? 'bg-forest-50 text-forest-700 dark:bg-forest-900/40 dark:text-forest-300'
+                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100'
                 )}
               >
                 {item.label}

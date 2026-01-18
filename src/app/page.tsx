@@ -49,13 +49,13 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   return (
-    <main className="min-h-screen bg-cream-300 flex flex-col">
+    <main className="min-h-screen bg-cream-300 dark:bg-stone-900 flex flex-col">
       {/* Hero Section */}
       <div className="flex-1 flex flex-col justify-center mx-auto max-w-6xl px-6 py-12 lg:py-16">
         {/* Logo & Tagline - Full Width Header */}
         <div className="text-center mb-12">
           <Logo variant="full" size="lg" className="mx-auto mb-4 scale-125" />
-          <p className="text-2xl font-medium text-forest-600 italic">
+          <p className="text-2xl font-medium text-forest-600 dark:text-forest-400 italic">
             Your unit, organized.
           </p>
         </div>
@@ -64,17 +64,17 @@ export default async function Home({ searchParams }: HomeProps) {
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-start">
           {/* Left Column - Value Prop & CTA */}
           <div className="text-center">
-            <h2 className="text-2xl lg:text-3xl font-bold text-forest-800 leading-tight">
+            <h2 className="text-2xl lg:text-3xl font-bold text-forest-800 dark:text-forest-200 leading-tight">
               Financial management built for Scout units
             </h2>
-            <p className="mt-4 text-lg text-stone-600">
+            <p className="mt-4 text-lg text-stone-600 dark:text-stone-300">
               Stop wrestling with spreadsheets. Track accounts, collect payments,
               and generate reports—so you can focus on the program, not the paperwork.
             </p>
 
             {/* CTA Section */}
             <div className="mt-8">
-              <span className="inline-flex items-center rounded-full bg-forest-800/10 px-4 py-1.5 text-sm font-medium text-forest-800 mb-4">
+              <span className="inline-flex items-center rounded-full bg-forest-800/10 dark:bg-forest-400/20 px-4 py-1.5 text-sm font-medium text-forest-800 dark:text-forest-300 mb-4">
                 Currently in Private Beta
               </span>
               <div>
@@ -85,7 +85,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   Request Early Access
                 </Link>
               </div>
-              <p className="mt-3 text-sm text-stone-500">
+              <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
                 Join the waitlist for your unit.
               </p>
             </div>
@@ -98,13 +98,13 @@ export default async function Home({ searchParams }: HomeProps) {
               return (
                 <div
                   key={feature.title}
-                  className="rounded-xl border border-cream-400 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+                  className="rounded-xl border border-cream-400 dark:border-stone-700 bg-white dark:bg-stone-800 p-5 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-forest-800/10 mb-3">
-                    <Icon className="h-5 w-5 text-forest-800" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-forest-800/10 dark:bg-forest-400/20 mb-3">
+                    <Icon className="h-5 w-5 text-forest-800 dark:text-forest-300" />
                   </div>
-                  <h3 className="text-base font-semibold text-forest-800">{feature.title}</h3>
-                  <p className="mt-1 text-sm text-stone-600">{feature.description}</p>
+                  <h3 className="text-base font-semibold text-forest-800 dark:text-forest-200">{feature.title}</h3>
+                  <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">{feature.description}</p>
                 </div>
               )
             })}
@@ -113,7 +113,7 @@ export default async function Home({ searchParams }: HomeProps) {
       </div>
 
       {/* Quote Section - Full Width */}
-      <div className="bg-forest-800 py-10">
+      <div className="bg-forest-800 dark:bg-forest-900 py-10">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <blockquote className="text-xl font-medium text-white italic">
             &ldquo;Scoutbook is for the Council. ChuckBox is for the Unit.&rdquo;
@@ -122,10 +122,10 @@ export default async function Home({ searchParams }: HomeProps) {
       </div>
 
       {/* Footer - Full Width */}
-      <footer className="bg-cream-300 py-8">
+      <footer className="bg-cream-300 dark:bg-stone-900 py-8">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <Logo variant="full" size="sm" className="mx-auto mb-4" />
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-stone-500 dark:text-stone-400">
             &copy; {new Date().getFullYear()} ChuckBox. Built for Scouting America units.
           </p>
         </div>

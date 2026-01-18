@@ -2,7 +2,7 @@
 
 function SearchIcon() {
   return (
-    <svg className="h-5 w-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="h-5 w-5 text-stone-400 dark:text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
   )
@@ -50,12 +50,12 @@ export function SearchInput({
         aria-label={ariaLabel}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="block w-full rounded-lg border border-stone-300 bg-white py-2 pl-10 pr-10 text-sm placeholder-stone-500 focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
+        className="block w-full rounded-lg border border-stone-300 bg-white py-2 pl-10 pr-10 text-sm text-stone-900 placeholder-stone-500 focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50 dark:placeholder-stone-400 dark:focus:border-forest-500 dark:focus:ring-forest-500"
       />
       {value && (
         <button
           onClick={() => onChange('')}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-stone-400 hover:text-stone-600"
+          className="absolute inset-y-0 right-0 flex items-center pr-3 text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
           aria-label="Clear search"
         >
           <ClearIcon />

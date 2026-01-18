@@ -165,9 +165,9 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
   if (scouts.length === 0) {
     return (
       <div className="py-12 text-center">
-        <p className="text-stone-500">No scouts in your unit yet.</p>
+        <p className="text-stone-500 dark:text-stone-400">No scouts in your unit yet.</p>
         {canManage && (
-          <p className="mt-2 text-sm text-stone-400">
+          <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
             Click &quot;Add Scout&quot; to add your first scout.
           </p>
         )}
@@ -176,7 +176,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
   }
 
   const headerClass = "pb-3 pr-4"
-  const headerButtonClass = "inline-flex items-center gap-1 cursor-pointer select-none hover:text-stone-700 transition-colors text-left font-medium"
+  const headerButtonClass = "inline-flex items-center gap-1 cursor-pointer select-none hover:text-stone-700 dark:hover:text-stone-300 transition-colors text-left font-medium"
 
   const getAriaSort = (column: SortColumn): 'ascending' | 'descending' | 'none' => {
     if (sortColumn !== column) return 'none'
@@ -224,7 +224,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
         {(hasActiveFilters || searchQuery) && (
           <button
             onClick={clearAllFilters}
-            className="text-sm text-stone-500 hover:text-stone-700"
+            className="text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
           >
             Clear all
           </button>
@@ -233,7 +233,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
 
       {/* Results count */}
       {(searchQuery || hasActiveFilters) && (
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-stone-500 dark:text-stone-400">
           {filteredAndSortedScouts.length === 0
             ? 'No scouts found'
             : `${filteredAndSortedScouts.length} of ${scouts.length} scout${scouts.length !== 1 ? 's' : ''}`}
@@ -244,7 +244,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
       <ResponsiveTable>
         <table className="w-full">
         <thead>
-          <tr className="border-b text-left text-sm text-stone-500">
+          <tr className="border-b border-stone-200 dark:border-stone-700 text-left text-sm text-stone-500 dark:text-stone-400">
             <th className={headerClass} aria-sort={getAriaSort('name')}>
               <button type="button" onClick={() => handleSort('name')} className={headerButtonClass}>
                 Name
@@ -287,7 +287,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
         <tbody>
           {filteredAndSortedScouts.length === 0 ? (
             <tr>
-              <td colSpan={canManage ? 7 : 6} className="py-8 text-center text-stone-500">
+              <td colSpan={canManage ? 7 : 6} className="py-8 text-center text-stone-500 dark:text-stone-400">
                 No scouts match your filters
               </td>
             </tr>
@@ -297,14 +297,14 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
             const accountId = scout.scout_accounts?.id
 
             return (
-              <tr key={scout.id} className="border-b last:border-0">
+              <tr key={scout.id} className="border-b border-stone-200 dark:border-stone-700 last:border-0">
                 <td className="py-3 pr-4">
                   <div>
-                    <p className="font-medium text-stone-900">
+                    <p className="font-medium text-stone-900 dark:text-stone-100">
                       {scout.first_name} {scout.last_name}
                     </p>
                     {scout.bsa_member_id && (
-                      <p className="text-xs text-stone-500">BSA# {scout.bsa_member_id}</p>
+                      <p className="text-xs text-stone-500 dark:text-stone-400">BSA# {scout.bsa_member_id}</p>
                     )}
                     {/* Show patrol on mobile under name */}
                     {scout.patrols?.name && (
@@ -312,14 +312,14 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                     )}
                   </div>
                 </td>
-                <td className="hidden py-3 pr-4 text-stone-600 sm:table-cell">{scout.patrols?.name || '—'}</td>
-                <td className="hidden py-3 pr-4 text-stone-600 md:table-cell">{scout.rank || '—'}</td>
-                <td className="hidden py-3 pr-4 text-stone-600 lg:table-cell">
+                <td className="hidden py-3 pr-4 text-stone-600 dark:text-stone-300 sm:table-cell">{scout.patrols?.name || '—'}</td>
+                <td className="hidden py-3 pr-4 text-stone-600 dark:text-stone-300 md:table-cell">{scout.rank || '—'}</td>
+                <td className="hidden py-3 pr-4 text-stone-600 dark:text-stone-300 lg:table-cell">
                   {scout.current_position ? (
                     <div>
                       <span>{scout.current_position}</span>
                       {scout.current_position_2 && (
-                        <span className="block text-xs text-stone-500">{scout.current_position_2}</span>
+                        <span className="block text-xs text-stone-500 dark:text-stone-400">{scout.current_position_2}</span>
                       )}
                     </div>
                   ) : '—'}
@@ -329,7 +329,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                       scout.is_active
                         ? 'bg-success-light text-success'
-                        : 'bg-stone-100 text-stone-600'
+                        : 'bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-300'
                     }`}
                   >
                     {scout.is_active ? 'Active' : 'Inactive'}
@@ -338,7 +338,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                 <td className="py-3 pr-2 text-right whitespace-nowrap">
                   <span
                     className={`font-medium ${
-                      balance < 0 ? 'text-error' : 'text-stone-900'
+                      balance < 0 ? 'text-error' : 'text-stone-900 dark:text-stone-100'
                     }`}
                   >
                     {balance < 0 ? formatCurrency(Math.abs(balance)) : '$0.00'}
@@ -349,13 +349,13 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                     <div className="flex gap-2">
                       <Link
                         href={`/scouts/${scout.id}`}
-                        className="text-sm text-forest-600 hover:text-forest-800"
+                        className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300"
                       >
                         View
                       </Link>
                       <button
                         onClick={() => setEditingScout(scout)}
-                        className="text-sm text-forest-600 hover:text-forest-800"
+                        className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300"
                       >
                         Edit
                       </button>
