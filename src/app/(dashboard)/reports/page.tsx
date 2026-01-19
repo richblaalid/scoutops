@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
 import { canAccessPage } from '@/lib/roles'
+import { AgingReport } from '@/components/reports/aging-report'
+import { CollectionSummary } from '@/components/reports/collection-summary'
 import Link from 'next/link'
 
 interface ScoutAccount {
@@ -123,6 +125,92 @@ export default async function ReportsPage() {
 
   const entries = (entriesData as JournalEntry[]) || []
 
+  // Get unpaid billing charges for aging report
+  const { data: unpaidChargesData } = await supabase
+    .from('billing_charges')
+    .select(`
+      id,
+      amount,
+      billing_records!inner (
+        billing_date,
+        description,
+        unit_id
+      ),
+      scout_accounts!inner (
+        id,
+        scouts!inner (
+          first_name,
+          last_name,
+          patrols (name)
+        )
+      )
+    `)
+    .eq('billing_records.unit_id', membership.unit_id)
+    .eq('is_paid', false)
+    .or('is_void.is.null,is_void.eq.false')
+
+  interface UnpaidChargeRow {
+    id: string
+    amount: number
+    billing_records: {
+      billing_date: string
+      description: string
+      unit_id: string
+    }
+    scout_accounts: {
+      id: string
+      scouts: {
+        first_name: string
+        last_name: string
+        patrols: { name: string } | null
+      }
+    }
+  }
+
+  const agingCharges = ((unpaidChargesData as UnpaidChargeRow[]) || []).map(charge => ({
+    id: charge.id,
+    amount: charge.amount,
+    billing_date: charge.billing_records.billing_date,
+    description: charge.billing_records.description,
+    scout_name: `${charge.scout_accounts.scouts.first_name} ${charge.scout_accounts.scouts.last_name}`,
+    scout_account_id: charge.scout_accounts.id,
+    patrol: charge.scout_accounts.scouts.patrols?.name || null,
+  }))
+
+  // Get payments for collection summary
+  const { data: paymentsData } = await supabase
+    .from('payments')
+    .select('id, amount, net_amount, fee_amount, payment_method, created_at')
+    .eq('unit_id', membership.unit_id)
+    .eq('status', 'completed')
+    .is('voided_at', null)
+
+  interface PaymentRow {
+    id: string
+    amount: number
+    net_amount: number
+    fee_amount: number | null
+    payment_method: string | null
+    created_at: string
+  }
+
+  const paymentsForReport = (paymentsData as PaymentRow[]) || []
+
+  // Get billing records for collection rate calculation
+  const { data: allBillingData } = await supabase
+    .from('billing_records')
+    .select('id, total_amount, billing_date')
+    .eq('unit_id', membership.unit_id)
+    .or('is_void.is.null,is_void.eq.false')
+
+  interface BillingRow {
+    id: string
+    total_amount: number
+    billing_date: string
+  }
+
+  const billingForReport = (allBillingData as BillingRow[]) || []
+
   // Calculate totals
   const totalOwed = accounts
     .filter((a) => (a.billing_balance || 0) < 0)
@@ -131,6 +219,25 @@ export default async function ReportsPage() {
   const totalFunds = accounts
     .reduce((sum, a) => sum + (a.funds_balance || 0), 0)
 
+  // Calculate overdue amount (31+ days)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const overdueAmount = agingCharges
+    .filter(charge => {
+      const billingDate = new Date(charge.billing_date)
+      billingDate.setHours(0, 0, 0, 0)
+      const daysOld = Math.floor((today.getTime() - billingDate.getTime()) / (1000 * 60 * 60 * 24))
+      return daysOld >= 31
+    })
+    .reduce((sum, charge) => sum + charge.amount, 0)
+
+  // Calculate this month's collections
+  const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  const collectedThisMonth = paymentsForReport
+    .filter(payment => new Date(payment.created_at) >= thisMonthStart)
+    .reduce((sum, payment) => sum + payment.amount, 0)
+
+  // Net billing for patrol table
   const netBilling = accounts.reduce((sum, a) => sum + (a.billing_balance || 0), 0)
 
   // Group by patrol
@@ -164,13 +271,6 @@ export default async function ReportsPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total Scouts</CardDescription>
-            <CardTitle className="text-2xl">{accounts.length}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
             <CardDescription>Total Owed</CardDescription>
             <CardTitle className="text-2xl text-error">
               {formatCurrency(totalOwed)}
@@ -180,8 +280,17 @@ export default async function ReportsPage() {
 
         <Card>
           <CardHeader className="pb-2">
+            <CardDescription>Overdue (31+ days)</CardDescription>
+            <CardTitle className={`text-2xl ${overdueAmount > 0 ? 'text-warning' : 'text-stone-400'}`}>
+              {overdueAmount > 0 ? formatCurrency(overdueAmount) : '—'}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
             <CardDescription>Scout Funds Held</CardDescription>
-            <CardTitle className="text-2xl text-success">
+            <CardTitle className="text-2xl text-stone-700">
               {formatCurrency(totalFunds)}
             </CardTitle>
           </CardHeader>
@@ -189,15 +298,19 @@ export default async function ReportsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Net Billing</CardDescription>
-            <CardTitle
-              className={`text-2xl ${netBilling < 0 ? 'text-error' : 'text-success'}`}
-            >
-              {formatCurrency(netBilling)}
+            <CardDescription>Collected This Month</CardDescription>
+            <CardTitle className={`text-2xl ${collectedThisMonth > 0 ? 'text-success' : 'text-stone-400'}`}>
+              {collectedThisMonth > 0 ? formatCurrency(collectedThisMonth) : '—'}
             </CardTitle>
           </CardHeader>
         </Card>
       </div>
+
+      {/* Aging Report */}
+      <AgingReport charges={agingCharges} />
+
+      {/* Collection & Cash Flow */}
+      <CollectionSummary payments={paymentsForReport} billingRecords={billingForReport} />
 
       {/* Balance by Patrol */}
       <Card>
