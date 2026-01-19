@@ -347,23 +347,23 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-t-2 border-t-amber-500">
+        <Card>
           <CardHeader className="pb-2">
             <CardDescription>Troop Funds</CardDescription>
-            <CardTitle className="text-3xl text-success">$4,285</CardTitle>
+            <CardTitle className="text-xl text-stone-400">—</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Available balance</p>
+            <p className="text-xs text-amber-600 font-medium">Coming soon</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Next Event</CardDescription>
-            <CardTitle className="text-xl">Winter Campout</CardTitle>
+            <CardTitle className="text-xl text-stone-400">—</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Feb 14-16 · 18 registered</p>
+            <p className="text-xs text-amber-600 font-medium">Coming soon</p>
           </CardContent>
         </Card>
       </div>
