@@ -366,27 +366,29 @@ async function seedTestData(): Promise<void> {
   // 5. Create scouts (using patrol_id instead of patrol name)
   console.log('\nCreating scouts...');
   const scouts = [
-    { id: '20000000-0000-4000-a000-000000000001', first_name: 'Alex', last_name: 'Anderson', patrol_name: 'Eagle', rank: 'First Class', bsa_member_id: '123456001' },
-    { id: '20000000-0000-4000-a000-000000000002', first_name: 'Ben', last_name: 'Baker', patrol_name: 'Eagle', rank: 'Star', bsa_member_id: '123456002' },
-    { id: '20000000-0000-4000-a000-000000000003', first_name: 'Charlie', last_name: 'Chen', patrol_name: 'Eagle', rank: 'Life', bsa_member_id: '123456003' },
-    { id: '20000000-0000-4000-a000-000000000004', first_name: 'David', last_name: 'Davis', patrol_name: 'Wolf', rank: 'Tenderfoot', bsa_member_id: '123456004' },
-    { id: '20000000-0000-4000-a000-000000000005', first_name: 'Ethan', last_name: 'Evans', patrol_name: 'Wolf', rank: 'Second Class', bsa_member_id: '123456005' },
-    { id: '20000000-0000-4000-a000-000000000006', first_name: 'Frank', last_name: 'Fisher', patrol_name: 'Wolf', rank: 'Scout', bsa_member_id: '123456006' },
-    { id: '20000000-0000-4000-a000-000000000007', first_name: 'George', last_name: 'Garcia', patrol_name: 'Bear', rank: 'First Class', bsa_member_id: '123456007' },
-    { id: '20000000-0000-4000-a000-000000000008', first_name: 'Henry', last_name: 'Harris', patrol_name: 'Bear', rank: 'Star', bsa_member_id: '123456008' },
+    { id: '20000000-0000-4000-a000-000000000001', first_name: 'Alex', last_name: 'A.', patrol_name: 'Eagle', rank: 'First Class', bsa_member_id: '123456001', current_position: 'Senior Patrol Leader', current_position_2: null },
+    { id: '20000000-0000-4000-a000-000000000002', first_name: 'Ben', last_name: 'B.', patrol_name: 'Eagle', rank: 'Star', bsa_member_id: '123456002', current_position: 'Patrol Leader', current_position_2: 'Outdoor Ethics Guide' },
+    { id: '20000000-0000-4000-a000-000000000003', first_name: 'Charlie', last_name: 'C.', patrol_name: 'Eagle', rank: 'Life', bsa_member_id: '123456003', current_position: 'Quartermaster', current_position_2: null },
+    { id: '20000000-0000-4000-a000-000000000004', first_name: 'David', last_name: 'D.', patrol_name: 'Wolf', rank: 'Tenderfoot', bsa_member_id: '123456004', current_position: null, current_position_2: null },
+    { id: '20000000-0000-4000-a000-000000000005', first_name: 'Ethan', last_name: 'E.', patrol_name: 'Wolf', rank: 'Second Class', bsa_member_id: '123456005', current_position: 'Patrol Leader', current_position_2: null },
+    { id: '20000000-0000-4000-a000-000000000006', first_name: 'Frank', last_name: 'F.', patrol_name: 'Wolf', rank: 'Scout', bsa_member_id: '123456006', current_position: 'Assistant Patrol Leader', current_position_2: null },
+    { id: '20000000-0000-4000-a000-000000000007', first_name: 'George', last_name: 'G.', patrol_name: 'Bear', rank: 'First Class', bsa_member_id: '123456007', current_position: 'Patrol Leader', current_position_2: 'Historian' },
+    { id: '20000000-0000-4000-a000-000000000008', first_name: 'Henry', last_name: 'H.', patrol_name: 'Bear', rank: 'Star', bsa_member_id: '123456008', current_position: 'Scribe', current_position_2: null },
   ];
 
   for (const scout of scouts) {
-    const { patrol_name, ...scoutData } = scout;
+    const { patrol_name, current_position, current_position_2, ...scoutData } = scout;
     const { error } = await supabase.from('scouts').upsert({
       ...scoutData,
       unit_id: UNIT_ID,
       patrol_id: patrolIds[patrol_name] || null,
+      current_position: current_position,
+      current_position_2: current_position_2,
       is_active: true,
       date_of_birth: '2012-01-15',
     });
     if (error) console.log(`  Warning: ${error.message}`);
-    else console.log(`  Created scout: ${scout.first_name} ${scout.last_name}`);
+    else console.log(`  Created scout: ${scout.first_name} ${scout.last_name}${current_position ? ` (${current_position})` : ''}`);
   }
 
   // 6. Link parent user to scouts as guardian (use profile_id, not user_id)
@@ -420,6 +422,245 @@ async function seedTestData(): Promise<void> {
     if (error) console.log(`  Warning: ${error.message}`);
     else console.log(`  Linked scout user to: Charlie Chen`);
   }
+
+  // 8. Get scout account IDs for financial data
+  console.log('\nFetching scout account IDs...');
+  const { data: scoutAccounts } = await supabase
+    .from('scout_accounts')
+    .select('id, scout_id')
+    .in('scout_id', scouts.map(s => s.id));
+
+  const scoutAccountMap = new Map(scoutAccounts?.map(sa => [sa.scout_id, sa.id]) || []);
+
+  // 9. Create billing records
+  console.log('\nCreating billing records...');
+  const billingRecords = [
+    { id: '40000000-0000-4000-a000-000000000001', description: 'January Dues', total_amount: 200.00, billing_date: '2026-01-01' },
+    { id: '40000000-0000-4000-a000-000000000002', description: 'Winter Campout - Camp Strake', total_amount: 320.00, billing_date: '2026-01-05' },
+    { id: '40000000-0000-4000-a000-000000000003', description: 'February Dues', total_amount: 200.00, billing_date: '2026-02-01' },
+    { id: '40000000-0000-4000-a000-000000000004', description: 'Merit Badge Day Registration', total_amount: 120.00, billing_date: '2026-02-10' },
+  ];
+
+  for (const record of billingRecords) {
+    const { error } = await supabase.from('billing_records').insert({
+      ...record,
+      unit_id: UNIT_ID,
+    });
+    if (error) console.log(`  Warning: ${error.message}`);
+    else console.log(`  Created billing: ${record.description}`);
+  }
+
+  // 10. Create billing charges for each scout
+  console.log('\nCreating billing charges...');
+  const chargeAmounts: Record<string, number[]> = {
+    '40000000-0000-4000-a000-000000000001': [25, 25, 25, 25, 25, 25, 25, 25], // Jan Dues: $25 each
+    '40000000-0000-4000-a000-000000000002': [40, 40, 40, 40, 40, 40, 40, 40], // Winter Campout: $40 each
+    '40000000-0000-4000-a000-000000000003': [25, 25, 25, 25, 25, 25, 25, 25], // Feb Dues: $25 each
+    '40000000-0000-4000-a000-000000000004': [15, 15, 15, 15, 15, 15, 15, 15], // Merit Badge Day: $15 each
+  };
+
+  // Track which charges are paid for each scout
+  const paidCharges: Record<string, string[]> = {
+    '20000000-0000-4000-a000-000000000001': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004'], // Alex - all paid
+    '20000000-0000-4000-a000-000000000002': ['40000000-0000-4000-a000-000000000001'], // Ben - only Jan dues paid
+    '20000000-0000-4000-a000-000000000003': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002'], // Charlie - Jan + campout paid
+    '20000000-0000-4000-a000-000000000005': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004'], // Ethan - all paid
+    '20000000-0000-4000-a000-000000000007': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004'], // George - all paid + overpaid
+  };
+
+  let chargeCount = 0;
+  for (const [billingId, amounts] of Object.entries(chargeAmounts)) {
+    for (let i = 0; i < scouts.length; i++) {
+      const scoutId = scouts[i].id;
+      const scoutAccountId = scoutAccountMap.get(scoutId);
+      if (!scoutAccountId) continue;
+
+      const isPaid = paidCharges[scoutId]?.includes(billingId) || false;
+
+      const { error } = await supabase.from('billing_charges').insert({
+        billing_record_id: billingId,
+        scout_account_id: scoutAccountId,
+        amount: amounts[i],
+        is_paid: isPaid,
+      });
+      if (!error) chargeCount++;
+    }
+  }
+  console.log(`  Created ${chargeCount} billing charges`);
+
+  // 11. Create payments
+  console.log('\nCreating payments...');
+  const payments = [
+    // Alex A. - paid everything
+    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 65.00, fee_amount: 0, net_amount: 65.00, payment_method: 'cash', status: 'completed', notes: 'Jan dues + campout', created_at: '2026-01-08' },
+    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 40.00, fee_amount: 1.34, net_amount: 38.66, payment_method: 'card', status: 'completed', notes: 'Feb dues + Merit Badge Day', created_at: '2026-02-12', square_payment_id: 'sq_pay_alex_001' },
+    // Ben B. - partial payment
+    { scout_id: '20000000-0000-4000-a000-000000000002', amount: 25.00, fee_amount: 0, net_amount: 25.00, payment_method: 'check', status: 'completed', notes: 'Check #1042', created_at: '2026-01-10' },
+    // Charlie C. - partial payment via Square
+    { scout_id: '20000000-0000-4000-a000-000000000003', amount: 65.00, fee_amount: 2.19, net_amount: 62.81, payment_method: 'card', status: 'completed', notes: 'Square payment', created_at: '2026-01-15', square_payment_id: 'sq_pay_charlie_001' },
+    // Ethan E. - all paid via multiple methods
+    { scout_id: '20000000-0000-4000-a000-000000000005', amount: 50.00, fee_amount: 0, net_amount: 50.00, payment_method: 'cash', status: 'completed', notes: 'Cash payment', created_at: '2026-01-06' },
+    { scout_id: '20000000-0000-4000-a000-000000000005', amount: 55.00, fee_amount: 1.83, net_amount: 53.17, payment_method: 'card', status: 'completed', notes: 'Remaining balance', created_at: '2026-02-15', square_payment_id: 'sq_pay_ethan_001' },
+    // George G. - overpaid
+    { scout_id: '20000000-0000-4000-a000-000000000007', amount: 150.00, fee_amount: 0, net_amount: 150.00, payment_method: 'check', status: 'completed', notes: 'Check #2001 - Prepayment', created_at: '2026-01-02' },
+    // Henry H. - partial payment
+    { scout_id: '20000000-0000-4000-a000-000000000008', amount: 50.00, fee_amount: 1.65, net_amount: 48.35, payment_method: 'card', status: 'completed', notes: 'Partial payment', created_at: '2026-01-20', square_payment_id: 'sq_pay_henry_001' },
+  ];
+
+  for (const payment of payments) {
+    const scoutAccountId = scoutAccountMap.get(payment.scout_id);
+    if (!scoutAccountId) continue;
+
+    const { error } = await supabase.from('payments').insert({
+      unit_id: UNIT_ID,
+      scout_account_id: scoutAccountId,
+      amount: payment.amount,
+      fee_amount: payment.fee_amount,
+      net_amount: payment.net_amount,
+      payment_method: payment.payment_method,
+      status: payment.status,
+      notes: payment.notes,
+      created_at: payment.created_at,
+      square_payment_id: payment.square_payment_id || null,
+    });
+    if (error) console.log(`  Warning: ${error.message}`);
+  }
+  console.log(`  Created ${payments.length} payments`);
+
+  // 12. Create Square transactions
+  console.log('\nCreating Square transactions...');
+  const squareTransactions = [
+    {
+      square_payment_id: 'sq_pay_alex_001',
+      scout_id: '20000000-0000-4000-a000-000000000001',
+      amount_money: 4000, // in cents
+      fee_money: 134,
+      net_money: 3866,
+      status: 'COMPLETED',
+      source_type: 'CARD',
+      card_brand: 'VISA',
+      last_4: '4242',
+      receipt_number: 'RCPT-001',
+      receipt_url: 'https://squareup.com/receipt/preview/sq_pay_alex_001',
+      square_created_at: '2026-02-12T14:30:00Z',
+      note: 'Feb dues + Merit Badge Day - Alex A.',
+    },
+    {
+      square_payment_id: 'sq_pay_charlie_001',
+      scout_id: '20000000-0000-4000-a000-000000000003',
+      amount_money: 6500,
+      fee_money: 219,
+      net_money: 6281,
+      status: 'COMPLETED',
+      source_type: 'CARD',
+      card_brand: 'MASTERCARD',
+      last_4: '5555',
+      receipt_number: 'RCPT-002',
+      receipt_url: 'https://squareup.com/receipt/preview/sq_pay_charlie_001',
+      square_created_at: '2026-01-15T10:15:00Z',
+      note: 'Jan dues + campout - Charlie C.',
+    },
+    {
+      square_payment_id: 'sq_pay_ethan_001',
+      scout_id: '20000000-0000-4000-a000-000000000005',
+      amount_money: 5500,
+      fee_money: 183,
+      net_money: 5317,
+      status: 'COMPLETED',
+      source_type: 'CARD',
+      card_brand: 'AMEX',
+      last_4: '1234',
+      receipt_number: 'RCPT-003',
+      receipt_url: 'https://squareup.com/receipt/preview/sq_pay_ethan_001',
+      square_created_at: '2026-02-15T16:45:00Z',
+      note: 'Remaining balance - Ethan E.',
+    },
+    {
+      square_payment_id: 'sq_pay_henry_001',
+      scout_id: '20000000-0000-4000-a000-000000000008',
+      amount_money: 5000,
+      fee_money: 165,
+      net_money: 4835,
+      status: 'COMPLETED',
+      source_type: 'CARD',
+      card_brand: 'DISCOVER',
+      last_4: '6789',
+      receipt_number: 'RCPT-004',
+      receipt_url: 'https://squareup.com/receipt/preview/sq_pay_henry_001',
+      square_created_at: '2026-01-20T09:30:00Z',
+      note: 'Partial payment - Henry H.',
+    },
+    // Unreconciled transaction (not linked to a scout yet)
+    {
+      square_payment_id: 'sq_pay_unlinked_001',
+      scout_id: null,
+      amount_money: 7500,
+      fee_money: 248,
+      net_money: 7252,
+      status: 'COMPLETED',
+      source_type: 'CARD',
+      card_brand: 'VISA',
+      last_4: '9999',
+      receipt_number: 'RCPT-005',
+      receipt_url: 'https://squareup.com/receipt/preview/sq_pay_unlinked_001',
+      square_created_at: '2026-01-18T11:00:00Z',
+      note: 'Payment from parent - needs reconciliation',
+      buyer_email_address: 'parent@example.com',
+    },
+  ];
+
+  for (const txn of squareTransactions) {
+    const scoutAccountId = txn.scout_id ? scoutAccountMap.get(txn.scout_id) : null;
+
+    const { error } = await supabase.from('square_transactions').insert({
+      unit_id: UNIT_ID,
+      square_payment_id: txn.square_payment_id,
+      scout_account_id: scoutAccountId,
+      amount_money: txn.amount_money,
+      fee_money: txn.fee_money,
+      net_money: txn.net_money,
+      status: txn.status,
+      source_type: txn.source_type,
+      card_brand: txn.card_brand,
+      last_4: txn.last_4,
+      receipt_number: txn.receipt_number,
+      receipt_url: txn.receipt_url,
+      square_created_at: txn.square_created_at,
+      note: txn.note,
+      buyer_email_address: txn.buyer_email_address || null,
+      is_reconciled: txn.scout_id !== null,
+      currency: 'USD',
+    });
+    if (error) console.log(`  Warning: ${error.message}`);
+  }
+  console.log(`  Created ${squareTransactions.length} Square transactions`);
+
+  // 13. Update scout account balances based on charges and payments
+  // billing_balance: negative = owes money, positive = credit
+  // funds_balance: scout's savings from fundraising (always >= 0)
+  console.log('\nUpdating scout account balances...');
+  const accountBalances = [
+    { scout_id: '20000000-0000-4000-a000-000000000001', billing_balance: 0, funds_balance: 45.00 },      // Alex - all paid, has fundraising credit
+    { scout_id: '20000000-0000-4000-a000-000000000002', billing_balance: -80.00, funds_balance: 0 },    // Ben - owes campout + Feb + MB day
+    { scout_id: '20000000-0000-4000-a000-000000000003', billing_balance: -40.00, funds_balance: 50.00 }, // Charlie - owes Feb + MB day, has fundraising
+    { scout_id: '20000000-0000-4000-a000-000000000004', billing_balance: -105.00, funds_balance: 0 },   // David - owes everything
+    { scout_id: '20000000-0000-4000-a000-000000000005', billing_balance: 0, funds_balance: 0 },         // Ethan - all paid
+    { scout_id: '20000000-0000-4000-a000-000000000006', billing_balance: -105.00, funds_balance: 25.00 }, // Frank - owes everything, has some fundraising
+    { scout_id: '20000000-0000-4000-a000-000000000007', billing_balance: 45.00, funds_balance: 100.00 }, // George - $45 credit (overpaid), $100 fundraising
+    { scout_id: '20000000-0000-4000-a000-000000000008', billing_balance: -55.00, funds_balance: 75.00 }, // Henry - partial payment, has fundraising
+  ];
+
+  for (const balance of accountBalances) {
+    const { error } = await supabase
+      .from('scout_accounts')
+      .update({
+        billing_balance: balance.billing_balance,
+        funds_balance: balance.funds_balance,
+      })
+      .eq('scout_id', balance.scout_id);
+    if (error) console.log(`  Warning: ${error.message}`);
+  }
+  console.log(`  Updated ${accountBalances.length} scout account balances`);
 
   console.log('\n✅ Test data seed complete!');
   console.log('\nTest user credentials (all use same password):');

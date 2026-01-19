@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
 import { canAccessPage, canPerformAction, isAdmin } from '@/lib/roles'
@@ -241,25 +242,20 @@ export default async function PaymentsPage() {
 
       {/* Record Payment */}
       {canRecordPayment && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Record Payment</CardTitle>
-            <CardDescription>
-              {isSquareConnected
-                ? 'Accept card payments or record cash/check payments'
-                : 'Record cash, check, or other payments'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PaymentEntry
-              unitId={membership.unit_id}
-              applicationId={squareApplicationId}
-              locationId={squareCredentials?.location_id || null}
-              environment={squareEnvironment}
-              scouts={scouts}
-            />
-          </CardContent>
-        </Card>
+        <CollapsibleCard
+          title="Record Payment"
+          description={isSquareConnected
+            ? 'Accept card payments or record cash/check payments'
+            : 'Record cash, check, or other payments'}
+        >
+          <PaymentEntry
+            unitId={membership.unit_id}
+            applicationId={squareApplicationId}
+            locationId={squareCredentials?.location_id || null}
+            environment={squareEnvironment}
+            scouts={scouts}
+          />
+        </CollapsibleCard>
       )}
 
       {/* Payment History */}
@@ -300,27 +296,26 @@ export default async function PaymentsPage() {
   // Content for Add Funds tab
   const addFundsContent = (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Scout Funds</CardTitle>
-          <CardDescription>
-            Credit fundraising earnings to scout accounts (e.g., wreath sales, popcorn sales)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {canRecordPayment ? (
-            <AddFundsForm
-              unitId={membership.unit_id}
-              scouts={scouts}
-              fundraiserTypes={fundraiserTypes}
-            />
-          ) : (
+      {canRecordPayment ? (
+        <CollapsibleCard
+          title="Add Scout Funds"
+          description="Credit fundraising earnings to scout accounts (e.g., wreath sales, popcorn sales)"
+        >
+          <AddFundsForm
+            unitId={membership.unit_id}
+            scouts={scouts}
+            fundraiserTypes={fundraiserTypes}
+          />
+        </CollapsibleCard>
+      ) : (
+        <Card>
+          <CardContent className="py-6">
             <p className="text-stone-500">
               You don&apos;t have permission to add funds to scout accounts.
             </p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 

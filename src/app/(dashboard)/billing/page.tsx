@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
 import { canAccessPage, canPerformAction } from '@/lib/roles'
@@ -155,17 +156,12 @@ export default async function BillingPage() {
 
       {/* Create New Billing */}
       {canCreateBilling && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Billing</CardTitle>
-            <CardDescription>
-              Split costs among scouts or apply fixed charges
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BillingForm unitId={membership.unit_id} scouts={scouts} />
-          </CardContent>
-        </Card>
+        <CollapsibleCard
+          title="Create New Billing"
+          description="Split costs among scouts or apply fixed charges"
+        >
+          <BillingForm unitId={membership.unit_id} scouts={scouts} />
+        </CollapsibleCard>
       )}
 
       {/* Recent Billing Records */}

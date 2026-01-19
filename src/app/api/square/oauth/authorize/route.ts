@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { getOAuthAuthorizeUrl } from '@/lib/square/client'
+import { getOAuthAuthorizeUrl, saveSquareCredentials } from '@/lib/square/client'
 import { randomBytes } from 'crypto'
 
 export async function GET() {
@@ -46,6 +46,36 @@ export async function GET() {
         { error: 'Only unit admins can connect Square' },
         { status: 403 }
       )
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const settingsUrl = `${baseUrl}/settings/integrations`
+
+    // Check for test Square credentials (bypasses OAuth in development)
+    const testAccessToken = process.env.SQUARE_TEST_ACCESS_TOKEN
+    const testMerchantId = process.env.SQUARE_TEST_MERCHANT_ID
+    const testRefreshToken = process.env.SQUARE_TEST_REFRESH_TOKEN
+
+    if (testAccessToken && testMerchantId) {
+      // Bypass OAuth and directly save test credentials
+      console.log('Using test Square credentials (SQUARE_TEST_ACCESS_TOKEN)')
+
+      // Set expiration to 30 days from now (test tokens don't expire but we need a value)
+      const expiresAt = new Date()
+      expiresAt.setDate(expiresAt.getDate() + 30)
+
+      await saveSquareCredentials(
+        membership.unit_id,
+        testMerchantId,
+        testAccessToken,
+        testRefreshToken || testAccessToken, // Use access token as refresh if not provided
+        expiresAt.toISOString()
+      )
+
+      // Redirect back to settings with success message
+      const successUrl = new URL(settingsUrl)
+      successUrl.searchParams.set('success', 'Square connected successfully (test mode)')
+      return NextResponse.redirect(successUrl)
     }
 
     // Generate a secure state token that includes the unit_id
