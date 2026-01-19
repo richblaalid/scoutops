@@ -144,7 +144,7 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-xl font-semibold text-forest-800 mt-8 mb-4">Contact Us</h2>
           <p className="text-stone-600 mb-4">
             If you have any questions about this privacy policy or our data practices, please{' '}
-            <Link href="/contact" className="text-forest-600 hover:text-forest-700">
+            <Link href="/contact" className="text-green-700 underline hover:text-green-800">
               contact us
             </Link>.
           </p>
@@ -161,7 +161,7 @@ export default function PrivacyPolicyPage() {
           <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
             Contact
           </Link>
-          <span className="text-sm text-stone-400">
+          <span className="text-sm text-stone-500">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
         </div>

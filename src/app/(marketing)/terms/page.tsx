@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-semibold text-forest-800 mt-8 mb-4">1. Acceptance of Terms</h2>
           <p className="text-stone-600 mb-4">
             By accessing or using Chuckbox (&quot;the Service&quot;), you agree to be bound by these Terms of Service
-            and our <Link href="/privacy" className="text-forest-600 hover:text-forest-700">Privacy Policy</Link>.
+            and our <Link href="/privacy" className="text-green-700 underline hover:text-green-800">Privacy Policy</Link>.
             If you do not agree to these terms, do not use the Service.
           </p>
 
@@ -175,7 +175,7 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-semibold text-forest-800 mt-8 mb-4">14. Contact</h2>
           <p className="text-stone-600 mb-4">
             If you have questions about these Terms, please{' '}
-            <Link href="/contact" className="text-forest-600 hover:text-forest-700">contact us</Link>.
+            <Link href="/contact" className="text-green-700 underline hover:text-green-800">contact us</Link>.
           </p>
         </div>
 
@@ -190,7 +190,7 @@ export default function TermsOfServicePage() {
           <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
             Contact
           </Link>
-          <span className="text-sm text-stone-400">
+          <span className="text-sm text-stone-500">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
         </div>

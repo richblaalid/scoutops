@@ -143,7 +143,7 @@ export default async function Home({ searchParams }: HomeProps) {
               {/* Floating accent card */}
               <div className="absolute -bottom-6 -left-6 bg-amber-700 text-white p-4 rounded-xl shadow-xl shadow-amber-800/30">
                 <div className="text-2xl font-bold">Zero</div>
-                <div className="text-amber-200 text-sm">spreadsheets</div>
+                <div className="text-white text-sm">spreadsheets</div>
               </div>
             </div>
           </div>
@@ -434,7 +434,7 @@ export default async function Home({ searchParams }: HomeProps) {
               </Link>
             </div>
 
-            <p className="text-sm text-stone-400">
+            <p className="text-sm text-stone-500">
               &copy; {new Date().getFullYear()} ChuckBox
             </p>
           </div>

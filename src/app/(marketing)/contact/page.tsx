@@ -219,7 +219,7 @@ export default function ContactPage() {
           <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors font-medium">
             Contact
           </Link>
-          <span className="text-sm text-stone-400">
+          <span className="text-sm text-stone-500">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
         </div>

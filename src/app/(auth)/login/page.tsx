@@ -233,7 +233,7 @@ export default function LoginPage() {
           <Link href="/contact" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Contact
           </Link>
-          <span className="text-sm text-stone-400 dark:text-stone-500">
+          <span className="text-sm text-stone-500 dark:text-stone-400">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
         </div>

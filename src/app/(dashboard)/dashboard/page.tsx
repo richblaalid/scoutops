@@ -353,7 +353,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-xl text-stone-400">—</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-amber-600 font-medium">Coming soon</p>
+            <p className="text-xs text-amber-700 font-medium">Coming soon</p>
           </CardContent>
         </Card>
 
@@ -363,7 +363,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-xl text-stone-400">—</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-amber-600 font-medium">Coming soon</p>
+            <p className="text-xs text-amber-700 font-medium">Coming soon</p>
           </CardContent>
         </Card>
       </div>
@@ -378,7 +378,7 @@ export default async function DashboardPage() {
             {isFinancialRole(role) && (
               <Link
                 href="/settings/import"
-                className="inline-flex items-center gap-2.5 rounded-lg bg-forest-600 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-forest-700 shadow-sm"
+                className="inline-flex items-center gap-2.5 rounded-lg bg-green-700 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-green-800 shadow-sm"
               >
                 <RefreshCw className="h-5 w-5" />
                 Sync Scoutbook
@@ -393,7 +393,7 @@ export default async function DashboardPage() {
               >
                 <Mail className="h-5 w-5" />
                 Send Reminders
-                <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
+                <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Soon</span>
               </button>
             )}
             {/* Future: Record Attendance */}
@@ -404,7 +404,7 @@ export default async function DashboardPage() {
             >
               <CalendarCheck className="h-5 w-5" />
               Record Attendance
-              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
+              <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Soon</span>
             </button>
             {/* Future: Advancement Tracking */}
             <button
@@ -414,7 +414,7 @@ export default async function DashboardPage() {
             >
               <Award className="h-5 w-5" />
               Advancement
-              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
+              <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Soon</span>
             </button>
           </div>
         </CardContent>
