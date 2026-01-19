@@ -11,28 +11,27 @@
     :root {
       /* ═══════════════════════════════════════════════════════════
          CHUCKBOX BRAND COLORS - January 2026
+
+         Color Hierarchy:
+         • AMBER = Primary Action (CTAs, links, emphasis, focus states)
+         • GREEN = Brand Foundation (logo, icons, trust, identity)
          ═══════════════════════════════════════════════════════════ */
 
-      /* Primary Brand - Forest/Pine Greens */
-      --pine-900: #14532d;    /* Deep pine - logo primary */
-      --pine-800: #166534;    /* Forest green - logo compartments */
-      --pine-700: #15803d;    /* Green-700 */
-      --pine-600: #16a34a;    /* Green-600 */
-      --forest-800: #234D3E;  /* App brand primary */
-      --forest-700: #2D6A4F;
-      --forest-600: #3D8B6A;
-      --green-800: #166534;   /* Feature cards */
-      --green-700: #15803d;
-
-      /* Accent - Amber/Campfire */
+      /* Primary Action - Amber */
       --amber-800: #92400e;
-      --amber-700: #b45309;   /* Marketing primary accent */
-      --amber-600: #d97706;
+      --amber-700: #b45309;   /* PRIMARY: buttons, links, emphasis */
+      --amber-600: #d97706;   /* Dark mode accent */
       --amber-200: #fde68a;
       --amber-100: #fef3c7;
       --amber-50: #fffbeb;
-      --campfire-500: #E85D04; /* App accent (legacy) */
-      --campfire-400: #F48C06;
+
+      /* Brand Foundation - Forest/Pine Greens */
+      --pine-900: #14532d;    /* Deep pine - logo body */
+      --pine-800: #166534;    /* Forest green - logo compartments, "Chuck" text */
+      --pine-700: #15803d;    /* Green-700 */
+      --pine-600: #16a34a;    /* Green-600 */
+      --green-800: #166534;   /* Feature card icons, section backgrounds */
+      --green-700: #15803d;
 
       /* Backgrounds - Warm Whites */
       --warm-white: #FEFCF8;  /* Marketing hero bg */
@@ -1025,11 +1024,40 @@
         <h2>Color System</h2>
       </div>
 
-      <p>ChuckBox uses a warm, outdoorsy color palette inspired by Scout camp aesthetics. The primary accent is amber (honey/autumn leaves), paired with deep forest greens and warm whites.</p>
+      <p>ChuckBox uses a warm, outdoorsy color palette inspired by Scout camp aesthetics. The system has a clear hierarchy: <strong>amber for action</strong>, <strong>green for identity</strong>.</p>
+
+      <div class="color-section" style="background: var(--amber-50); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+        <h3 style="margin-top: 0;">Color Hierarchy</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--amber-700);">Amber — Primary Action</strong></p>
+            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.875rem; color: var(--stone-600);">
+              <li>All CTA buttons</li>
+              <li>Links and interactive elements</li>
+              <li>Headline highlights ("toolkit", "organized")</li>
+              <li>Focus states and hover accents</li>
+              <li>Badges and visual emphasis</li>
+              <li>Logo "Box" text and work surface</li>
+            </ul>
+          </div>
+          <div>
+            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--green-800);">Green — Brand Foundation</strong></p>
+            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.875rem; color: var(--stone-600);">
+              <li>Logo body and compartments</li>
+              <li>Logo "Chuck" text</li>
+              <li>Feature card icon backgrounds</li>
+              <li>Section backgrounds (value props)</li>
+              <li>Trust indicators (checkmarks)</li>
+              <li>Brand identity and recognition</li>
+            </ul>
+          </div>
+        </div>
+        <p style="font-size: 0.875rem; color: var(--stone-500); margin-top: 1rem; margin-bottom: 0;"><em>Amber draws the eye to actions and emphasis. Green provides grounding and connects to Scout heritage.</em></p>
+      </div>
 
       <div class="color-section">
-        <h3>Primary Accent — Amber</h3>
-        <p>The primary accent color for CTAs, highlights, and brand moments.</p>
+        <h3>Primary Action — Amber</h3>
+        <p>The primary color for buttons, links, focus states, and visual emphasis. Use amber when you want users to take action or notice something important.</p>
         <div class="color-row">
           <div class="swatch dark-text" style="background: #fffbeb;">50</div>
           <div class="swatch dark-text" style="background: #fef3c7;">100</div>
@@ -1046,8 +1074,8 @@
       </div>
 
       <div class="color-section">
-        <h3>Brand Greens — Forest/Pine</h3>
-        <p>Deep, natural greens that evoke the outdoors and Scout heritage.</p>
+        <h3>Brand Foundation — Forest/Pine</h3>
+        <p>Deep, natural greens that anchor the brand identity. Use for the logo, icon backgrounds, section backgrounds, and trust indicators. Green provides stability while amber drives action.</p>
         <div class="color-row">
           <div class="swatch dark-text" style="background: #f0fdf4;">50</div>
           <div class="swatch dark-text" style="background: #dcfce7;">100</div>

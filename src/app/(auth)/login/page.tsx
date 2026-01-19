@@ -2,6 +2,8 @@
 
 import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/logo'
 import { trackLoginAttempted } from '@/lib/analytics'
@@ -71,12 +73,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-xl border border-cream-400 dark:border-stone-700 bg-white dark:bg-stone-800 px-8 py-8 shadow-lg">
-      <p className="mb-6 text-center text-sm text-stone-600 dark:text-stone-300">Sign in with your email to continue</p>
+    <div className="rounded-xl border border-stone-200 dark:border-stone-700 border-t-4 border-t-amber-600 bg-white dark:bg-stone-800 px-10 py-10 shadow-xl shadow-stone-900/10">
+      <p className="mb-6 text-center text-base text-slate-600 dark:text-stone-300">Sign in with your email to continue</p>
 
-      <form onSubmit={handleLogin} className="space-y-5">
+      <form onSubmit={handleLogin} className="space-y-6">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-stone-700 dark:text-stone-200">
+          <label htmlFor="email" className="block text-base font-medium text-stone-700 dark:text-stone-200">
             Email address
           </label>
           <input
@@ -86,7 +88,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="mt-1 block w-full rounded-lg border border-stone-300 dark:border-stone-600 px-4 py-2.5 text-stone-900 dark:text-stone-50 bg-white dark:bg-stone-900 shadow-sm placeholder:text-stone-400 focus:border-forest-600 dark:focus:border-forest-500 focus:outline-none focus:ring-2 focus:ring-forest-600/20 dark:focus:ring-forest-500/30"
+            className="mt-1.5 block w-full rounded-lg border border-stone-300 dark:border-stone-600 px-4 py-3 text-base text-stone-900 dark:text-stone-50 bg-white dark:bg-stone-900 shadow-sm placeholder:text-stone-400 focus:border-amber-600 dark:focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-600/20 dark:focus:ring-amber-500/30"
           />
         </div>
 
@@ -105,7 +107,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-lg bg-forest-800 dark:bg-forest-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-700 dark:hover:bg-forest-600 hover:shadow-forest hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:ring-offset-2 dark:focus:ring-offset-stone-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+          className="flex w-full items-center justify-center rounded-lg bg-amber-700 dark:bg-amber-600 px-4 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-amber-800 dark:hover:bg-amber-700 hover:shadow-lg hover:shadow-amber-800/25 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 dark:focus:ring-offset-stone-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
         >
           {loading ? (
             <svg
@@ -154,25 +156,44 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-cream-300 dark:bg-stone-900 px-4 py-12">
+    <div className="min-h-screen bg-[#FEFCF8] dark:bg-stone-900">
+      {/* Top nav bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 dark:bg-stone-900/80 backdrop-blur-md border-b border-stone-200/60 dark:border-stone-700/60">
+        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
+          <Logo variant="full" size="md" />
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-200 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+        </div>
+      </nav>
+
       {/* Main content - centered */}
-      <div className="flex flex-1 flex-col items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 pt-28">
         {/* Hero branding section */}
         <div className="mb-10 flex flex-col items-center text-center">
-          <Logo variant="full" size="lg" className="mb-4 scale-125" />
-          <p className="text-2xl font-medium text-forest-600 dark:text-forest-400 italic">
-            Your unit, organized.
+          {/* Eyebrow badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium mb-6">
+            <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
+            Private Beta
+          </div>
+
+          <p className="text-3xl font-semibold tracking-tight text-stone-800 dark:text-stone-200">
+            <span className="text-green-800 dark:text-green-500">Your unit,</span> <span className="text-amber-700 dark:text-amber-500">organized.</span>
           </p>
-          <p className="mt-6 max-w-md text-lg text-stone-600 dark:text-stone-300">
+          <p className="mt-4 max-w-lg text-xl text-slate-600 dark:text-stone-400">
             The all-in-one platform for Scout unit finances, billing, and operations.
           </p>
         </div>
 
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-lg">
           <Suspense fallback={
-            <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 px-8 py-10 shadow-md">
+            <div className="rounded-xl border border-stone-200 dark:border-stone-700 border-t-4 border-t-amber-600 bg-white dark:bg-stone-800 px-10 py-10 shadow-xl shadow-stone-900/10">
               <div className="flex flex-col items-center text-center">
-                <p className="text-sm text-stone-500 dark:text-stone-400">Loading...</p>
+                <p className="text-base text-stone-500 dark:text-stone-400">Loading...</p>
               </div>
             </div>
           }>
@@ -183,41 +204,39 @@ export default function LoginPage() {
         {/* Create unit link - only show if self-signup is enabled */}
         {process.env.NEXT_PUBLIC_ENABLE_SELF_SIGNUP === 'true' ? (
           <div className="mt-8 text-center">
-            <p className="text-base text-stone-600 dark:text-stone-300">
+            <p className="text-lg text-slate-600 dark:text-stone-400">
               Setting up a new unit?{' '}
-              <a href="/signup" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
+              <Link href="/signup" className="font-semibold text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 Create your unit
-              </a>
+              </Link>
             </p>
           </div>
         ) : (
           <div className="mt-8 text-center">
-            <p className="text-base text-stone-600 dark:text-stone-300">
+            <p className="text-lg text-slate-600 dark:text-stone-400">
               Interested in ChuckBox for your unit?{' '}
-              <a href="/early-access" className="font-semibold text-forest-600 hover:text-forest-700 dark:text-forest-400 dark:hover:text-forest-300">
+              <Link href="/early-access" className="font-semibold text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 Join the waitlist
-              </a>
+              </Link>
             </p>
           </div>
         )}
-      </div>
 
-      {/* Footer - pushed to bottom */}
-      <div className="text-center pt-8">
-        <div className="flex justify-center gap-6 mb-4">
-          <a href="/privacy" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+        {/* Footer */}
+        <div className="mt-12 flex items-center justify-center gap-6">
+          <Link href="/privacy" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Privacy
-          </a>
-          <a href="/terms" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+          </Link>
+          <Link href="/terms" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Terms
-          </a>
-          <a href="/contact" className="text-sm text-stone-500 dark:text-stone-400 hover:text-forest-600 dark:hover:text-forest-400">
+          </Link>
+          <Link href="/contact" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Contact
-          </a>
+          </Link>
+          <span className="text-sm text-stone-400 dark:text-stone-500">
+            &copy; {new Date().getFullYear()} ChuckBox
+          </span>
         </div>
-        <p className="text-sm text-stone-500 dark:text-stone-400">
-          &copy; {new Date().getFullYear()} ChuckBox
-        </p>
       </div>
     </div>
   )

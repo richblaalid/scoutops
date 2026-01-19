@@ -16,8 +16,8 @@ function Logo({
   variant?: 'default' | 'amber'
   size?: 'sm' | 'md' | 'lg'
 }) {
-  const sizes = { sm: 28, md: 36, lg: 48 }
-  const textSizes = { sm: 'text-xl', md: 'text-2xl', lg: 'text-3xl' }
+  const sizes = { sm: 32, md: 40, lg: 64 }
+  const textSizes = { sm: 'text-2xl', md: 'text-3xl', lg: 'text-5xl' }
   const iconSize = sizes[size]
 
   const boxBody = '#14532d'  // Deep pine
