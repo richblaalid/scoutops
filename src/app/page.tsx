@@ -14,10 +14,10 @@ function Logo({
   size = 'md'
 }: {
   variant?: 'default' | 'amber'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }) {
-  const sizes = { sm: 32, md: 40, lg: 64 }
-  const textSizes = { sm: 'text-2xl', md: 'text-3xl', lg: 'text-5xl' }
+  const sizes = { sm: 32, md: 40, lg: 48, xl: 64 }
+  const textSizes = { sm: 'text-2xl', md: 'text-3xl', lg: 'text-4xl', xl: 'text-5xl' }
   const iconSize = sizes[size]
 
   const boxBody = '#14532d'  // Deep pine
@@ -70,11 +70,11 @@ export default async function Home({ searchParams }: HomeProps) {
     <main className="min-h-screen bg-[#FEFCF8]">
       {/* Navigation - Clean, minimal */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
-        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-          <Logo variant="amber" size="md" />
+        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+          <Logo variant="amber" size="lg" />
           <Link
             href="/login"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
             Sign in
           </Link>

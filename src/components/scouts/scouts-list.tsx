@@ -164,10 +164,10 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
 
   if (scouts.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-stone-500 dark:text-stone-400">No scouts in your unit yet.</p>
+      <div className="py-12 text-center rounded-lg border border-dashed border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/30">
+        <p className="text-stone-600 dark:text-stone-300">No scouts in your unit yet.</p>
         {canManage && (
-          <p className="mt-2 text-sm text-stone-400 dark:text-stone-500">
+          <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
             Click &quot;Add Scout&quot; to add your first scout.
           </p>
         )}

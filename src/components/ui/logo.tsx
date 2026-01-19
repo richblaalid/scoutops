@@ -4,17 +4,19 @@ interface LogoProps {
   className?: string
   variant?: 'full' | 'icon' | 'wordmark'
   theme?: 'light' | 'dark'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 // Text sizes are calibrated to match icon height (icon uses 66/72 aspect ratio)
 // sm: 32px icon → ~29px height → text-2xl (24px) + leading
 // md: 40px icon → ~37px height → text-3xl (30px) + leading
-// lg: 64px icon → ~59px height → text-5xl (48px) + leading
+// lg: 48px icon → ~44px height → text-4xl (36px) + leading - for headers
+// xl: 64px icon → ~59px height → text-5xl (48px) + leading - for hero sections
 const sizes = {
   sm: { icon: 32, wordmark: 'text-2xl leading-none' },
   md: { icon: 40, wordmark: 'text-3xl leading-none' },
-  lg: { icon: 64, wordmark: 'text-5xl leading-none' },
+  lg: { icon: 48, wordmark: 'text-4xl leading-none' },
+  xl: { icon: 64, wordmark: 'text-5xl leading-none' },
 }
 
 // Chuckbox brand colors - Updated January 2026

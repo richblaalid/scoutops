@@ -162,7 +162,7 @@ export default async function AccountsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-t-2 border-t-amber-500">
             <CardHeader className="pb-2">
               <CardDescription>Scout Funds Held</CardDescription>
               <CardTitle className="text-2xl text-success">

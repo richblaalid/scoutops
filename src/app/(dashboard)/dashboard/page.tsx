@@ -229,9 +229,9 @@ export default async function DashboardPage() {
             </Card>
           </>
         ) : (
-          <Card>
+          <Card className="border-dashed border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/30">
             <CardContent className="py-8 text-center">
-              <p className="text-stone-500">No account found. Please contact your unit administrator.</p>
+              <p className="text-stone-600 dark:text-stone-300">No account found. Please contact your unit administrator.</p>
             </CardContent>
           </Card>
         )}
@@ -279,7 +279,7 @@ export default async function DashboardPage() {
                     <Link
                       key={account.id}
                       href={`/accounts/${account.id}`}
-                      className="flex items-center justify-between rounded-lg border p-4 hover:bg-stone-50"
+                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-amber-50/50 hover:border-amber-200 dark:hover:bg-amber-900/10 dark:hover:border-amber-700/30"
                     >
                       <div>
                         <p className="font-medium text-stone-900">
@@ -303,9 +303,9 @@ export default async function DashboardPage() {
             </Card>
           </>
         ) : (
-          <Card>
+          <Card className="border-dashed border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/30">
             <CardContent className="py-8 text-center">
-              <p className="text-stone-500">No scouts linked to your account. Please contact your unit administrator.</p>
+              <p className="text-stone-600 dark:text-stone-300">No scouts linked to your account. Please contact your unit administrator.</p>
             </CardContent>
           </Card>
         )}
@@ -347,7 +347,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-t-2 border-t-amber-500">
           <CardHeader className="pb-2">
             <CardDescription>Troop Funds</CardDescription>
             <CardTitle className="text-3xl text-success">$4,285</CardTitle>
@@ -388,33 +388,33 @@ export default async function DashboardPage() {
             {isFinancialRole(role) && scoutsOwing > 0 && (
               <button
                 disabled
-                className="inline-flex items-center gap-2.5 rounded-lg border-2 border-forest-200 bg-forest-50 px-5 py-3 text-base font-semibold text-forest-400 cursor-not-allowed"
+                className="inline-flex items-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed"
                 title="Coming soon"
               >
                 <Mail className="h-5 w-5" />
                 Send Reminders
-                <span className="text-xs bg-forest-100 text-forest-600 px-1.5 py-0.5 rounded font-medium">Soon</span>
+                <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
               </button>
             )}
             {/* Future: Record Attendance */}
             <button
               disabled
-              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-forest-200 bg-forest-50 px-5 py-3 text-base font-semibold text-forest-400 cursor-not-allowed"
+              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed"
               title="Coming soon"
             >
               <CalendarCheck className="h-5 w-5" />
               Record Attendance
-              <span className="text-xs bg-forest-100 text-forest-600 px-1.5 py-0.5 rounded font-medium">Soon</span>
+              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
             </button>
             {/* Future: Advancement Tracking */}
             <button
               disabled
-              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-forest-200 bg-forest-50 px-5 py-3 text-base font-semibold text-forest-400 cursor-not-allowed"
+              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed"
               title="Coming soon"
             >
               <Award className="h-5 w-5" />
               Advancement
-              <span className="text-xs bg-forest-100 text-forest-600 px-1.5 py-0.5 rounded font-medium">Soon</span>
+              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Soon</span>
             </button>
           </div>
         </CardContent>

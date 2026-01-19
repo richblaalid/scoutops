@@ -56,7 +56,7 @@ export function BillingRecordCard({
   const perScoutAmount = activeCharges.length > 0 ? collectibleTotal / activeCharges.length : 0
 
   return (
-    <div className={`rounded-lg border ${isVoid ? 'border-stone-200 bg-stone-50' : 'border-stone-200 bg-white'}`}>
+    <div className={`rounded-lg border transition-colors ${isVoid ? 'border-stone-200 bg-stone-50' : 'border-stone-200 bg-white hover:border-amber-200'}`}>
       {/* Clickable Header - using div with role="button" to allow nested interactive elements */}
       <div
         role="button"

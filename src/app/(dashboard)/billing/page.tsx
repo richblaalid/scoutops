@@ -166,7 +166,7 @@ export default async function BillingPage() {
 
       {/* Recent Billing Records */}
       <div>
-        <h2 className="text-lg font-semibold text-stone-900 mb-3">Recent Billing Records</h2>
+        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-3 pb-2 border-b-2 border-amber-200 dark:border-amber-700/50">Recent Billing Records</h2>
         {billingRecords.length > 0 ? (
           <div className="space-y-3">
             {billingRecords.map((record) => (
@@ -186,11 +186,11 @@ export default async function BillingPage() {
             ))}
           </div>
         ) : (
-          <Card>
+          <Card className="border-dashed border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/30">
             <CardContent className="py-12 text-center">
-              <p className="text-stone-500">No billing records yet</p>
+              <p className="text-stone-600 dark:text-stone-300">No billing records yet</p>
               {canCreateBilling && (
-                <p className="mt-2 text-sm text-stone-400">
+                <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
                   Create your first billing record above
                 </p>
               )}

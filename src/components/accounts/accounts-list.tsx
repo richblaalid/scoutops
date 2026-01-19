@@ -139,8 +139,8 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
 
   if (accounts.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-stone-500">No scout accounts yet.</p>
+      <div className="py-12 text-center rounded-lg border border-dashed border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/30">
+        <p className="text-stone-600 dark:text-stone-300">No scout accounts yet.</p>
       </div>
     )
   }

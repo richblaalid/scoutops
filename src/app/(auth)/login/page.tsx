@@ -159,13 +159,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#FEFCF8] dark:bg-stone-900">
       {/* Top nav bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 dark:bg-stone-900/80 backdrop-blur-md border-b border-stone-200/60 dark:border-stone-700/60">
-        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-          <Logo variant="full" size="md" />
+        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+          <Logo variant="full" size="lg" />
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-200 transition-colors"
+            className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-200 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
             Back to home
           </Link>
         </div>

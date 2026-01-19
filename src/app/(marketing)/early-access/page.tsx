@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
 
 const unitTypes = [
@@ -97,20 +98,37 @@ export default function EarlyAccessPage() {
 
   if (status === 'success') {
     return (
-      <main className="min-h-screen bg-cream-300 flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full text-center">
-          <div className="bg-white rounded-xl border border-cream-400 p-8 shadow-lg">
-            <div className="text-5xl mb-4">🎉</div>
-            <h1 className="text-2xl font-bold text-forest-800 mb-2">You&apos;re on the list!</h1>
-            <p className="text-stone-600 mb-6">
-              Thanks for your interest in ChuckBox. We&apos;ll be in touch soon with early access details.
-            </p>
+      <main className="min-h-screen bg-[#FEFCF8]">
+        {/* Top nav bar */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
+          <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+            <Logo variant="full" size="lg" />
             <Link
               href="/"
-              className="inline-flex items-center text-forest-600 hover:text-forest-700 font-medium"
+              className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
-              ← Back to home
+              <ArrowLeft className="w-5 h-5" />
+              Back to home
             </Link>
+          </div>
+        </nav>
+
+        <div className="flex min-h-screen flex-col items-center justify-center px-4 pt-20">
+          <div className="max-w-md w-full text-center">
+            <div className="bg-white rounded-xl border border-stone-200 p-8 shadow-lg">
+              <div className="text-5xl mb-4">🎉</div>
+              <h1 className="text-2xl font-bold text-green-800 mb-2">You&apos;re on the list!</h1>
+              <p className="text-stone-600 mb-6">
+                Thanks for your interest in ChuckBox. We&apos;ll be in touch soon with early access details.
+              </p>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-green-800 hover:text-green-900 font-medium transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to home
+              </Link>
+            </div>
           </div>
         </div>
       </main>
@@ -118,14 +136,25 @@ export default function EarlyAccessPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream-300 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <main className="min-h-screen bg-[#FEFCF8]">
+      {/* Top nav bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
+        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+          <Logo variant="full" size="lg" />
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to home
+          </Link>
+        </div>
+      </nav>
+
+      <div className="max-w-2xl mx-auto px-4 pt-32 pb-12">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-6">
-            <Logo variant="full" size="md" />
-          </Link>
-          <h1 className="text-3xl font-bold text-forest-800 mb-2">Request Early Access</h1>
+          <h1 className="text-3xl font-bold text-green-800 mb-2">Request Early Access</h1>
           <p className="text-stone-600">
             Help us build the perfect tool for your unit. Share a bit about your needs and
             we&apos;ll reach out when we&apos;re ready for you.
@@ -300,7 +329,7 @@ export default function EarlyAccessPage() {
           <button
             type="submit"
             disabled={status === 'submitting'}
-            className="w-full rounded-lg bg-tan-500 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-tan-400 hover:shadow-tan hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-tan-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+            className="w-full rounded-lg bg-green-800 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-900 hover:shadow-lg hover:shadow-green-900/25 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
           >
             {status === 'submitting' ? 'Submitting...' : 'Request Early Access'}
           </button>
@@ -311,21 +340,19 @@ export default function EarlyAccessPage() {
         </form>
 
         {/* Footer */}
-        <div className="text-center mt-8 pt-6 border-t border-cream-400">
-          <div className="flex justify-center gap-6 mb-4">
-            <Link href="/privacy" className="text-sm text-stone-500 hover:text-forest-600">
-              Privacy
-            </Link>
-            <Link href="/terms" className="text-sm text-stone-500 hover:text-forest-600">
-              Terms
-            </Link>
-            <Link href="/contact" className="text-sm text-stone-500 hover:text-forest-600">
-              Contact
-            </Link>
-          </div>
-          <Link href="/" className="text-sm text-forest-600 hover:text-forest-700 font-medium">
-            &larr; Back to home
+        <div className="mt-12 flex items-center justify-center gap-6">
+          <Link href="/privacy" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+            Privacy
           </Link>
+          <Link href="/terms" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+            Terms
+          </Link>
+          <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+            Contact
+          </Link>
+          <span className="text-sm text-stone-400">
+            &copy; {new Date().getFullYear()} ChuckBox
+          </span>
         </div>
       </div>
     </main>
