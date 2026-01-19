@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
 
 export const metadata = {
@@ -8,19 +9,30 @@ export const metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <main className="min-h-screen bg-cream-300 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
+    <main className="min-h-screen bg-[#FEFCF8]">
+      {/* Top nav bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
+        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+          <Logo variant="full" size="lg" />
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to home
+          </Link>
+        </div>
+      </nav>
+
+      <div className="max-w-3xl mx-auto px-4 pt-32 pb-12">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-6">
-            <Logo variant="full" size="md" />
-          </Link>
-          <h1 className="text-3xl font-bold text-forest-800 mb-2">Terms of Service</h1>
+          <h1 className="text-3xl font-bold text-green-800 mb-2">Terms of Service</h1>
           <p className="text-stone-500 text-sm">Last updated: January 18, 2025</p>
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-xl border border-cream-400 p-6 sm:p-8 shadow-lg prose prose-stone max-w-none">
+        <div className="bg-white rounded-xl border border-stone-200 p-6 sm:p-8 shadow-lg prose prose-stone max-w-none">
           <p className="lead text-stone-600">
             Welcome to Chuckbox. By using our service, you agree to these terms. Please read them carefully.
           </p>
@@ -168,21 +180,19 @@ export default function TermsOfServicePage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 pt-6 border-t border-cream-400">
-          <div className="flex justify-center gap-6 mb-4">
-            <Link href="/privacy" className="text-sm text-stone-500 hover:text-forest-600">
-              Privacy
-            </Link>
-            <Link href="/terms" className="text-sm text-stone-500 hover:text-forest-600 font-medium">
-              Terms
-            </Link>
-            <Link href="/contact" className="text-sm text-stone-500 hover:text-forest-600">
-              Contact
-            </Link>
-          </div>
-          <Link href="/" className="text-sm text-forest-600 hover:text-forest-700 font-medium">
-            &larr; Back to home
+        <div className="mt-12 flex items-center justify-center gap-6">
+          <Link href="/privacy" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+            Privacy
           </Link>
+          <Link href="/terms" className="text-sm text-stone-500 hover:text-stone-700 transition-colors font-medium">
+            Terms
+          </Link>
+          <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+            Contact
+          </Link>
+          <span className="text-sm text-stone-400">
+            &copy; {new Date().getFullYear()} ChuckBox
+          </span>
         </div>
       </div>
     </main>
