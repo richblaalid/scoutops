@@ -172,7 +172,7 @@ export default function LoginPage() {
       </nav>
 
       {/* Main content - centered */}
-      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 pt-28">
+      <main className="flex min-h-screen flex-col items-center justify-center px-4 py-12 pt-28">
         {/* Hero branding section */}
         <div className="mb-10 flex flex-col items-center text-center">
           {/* Eyebrow badge */}
@@ -181,9 +181,9 @@ export default function LoginPage() {
             Private Beta
           </div>
 
-          <p className="text-3xl font-semibold tracking-tight text-stone-800 dark:text-stone-200">
+          <h1 className="text-3xl font-semibold tracking-tight text-stone-800 dark:text-stone-200">
             <span className="text-green-800 dark:text-green-500">Your unit,</span> <span className="text-amber-700 dark:text-amber-500">organized.</span>
-          </p>
+          </h1>
           <p className="mt-4 max-w-lg text-xl text-slate-600 dark:text-stone-400">
             The all-in-one platform for Scout unit finances, billing, and operations.
           </p>
@@ -223,7 +223,7 @@ export default function LoginPage() {
         )}
 
         {/* Footer */}
-        <div className="mt-12 flex items-center justify-center gap-6">
+        <footer className="mt-12 flex items-center justify-center gap-6">
           <Link href="/privacy" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Privacy
           </Link>
@@ -236,8 +236,8 @@ export default function LoginPage() {
           <span className="text-sm text-stone-500 dark:text-stone-400">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
-        </div>
-      </div>
+        </footer>
+      </main>
     </div>
   )
 }
