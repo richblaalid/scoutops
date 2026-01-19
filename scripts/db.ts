@@ -432,13 +432,16 @@ async function seedTestData(): Promise<void> {
 
   const scoutAccountMap = new Map(scoutAccounts?.map(sa => [sa.scout_id, sa.id]) || []);
 
-  // 9. Create billing records
+  // 9. Create billing records (spread over 90+ days for aging report testing)
+  // Today is 2026-01-18, so dates go back to October 2025
   console.log('\nCreating billing records...');
   const billingRecords = [
-    { id: '40000000-0000-4000-a000-000000000001', description: 'January Dues', total_amount: 200.00, billing_date: '2026-01-01' },
-    { id: '40000000-0000-4000-a000-000000000002', description: 'Winter Campout - Camp Strake', total_amount: 320.00, billing_date: '2026-01-05' },
-    { id: '40000000-0000-4000-a000-000000000003', description: 'February Dues', total_amount: 200.00, billing_date: '2026-02-01' },
-    { id: '40000000-0000-4000-a000-000000000004', description: 'Merit Badge Day Registration', total_amount: 120.00, billing_date: '2026-02-10' },
+    { id: '40000000-0000-4000-a000-000000000001', description: 'October Dues', total_amount: 200.00, billing_date: '2025-10-01' },       // 109 days old -> 90+ bucket
+    { id: '40000000-0000-4000-a000-000000000002', description: 'November Dues', total_amount: 200.00, billing_date: '2025-11-01' },      // 78 days old -> 61-90 bucket
+    { id: '40000000-0000-4000-a000-000000000003', description: 'Fall Campout - Lost Pines', total_amount: 320.00, billing_date: '2025-11-15' }, // 64 days old -> 61-90 bucket
+    { id: '40000000-0000-4000-a000-000000000004', description: 'December Dues', total_amount: 200.00, billing_date: '2025-12-01' },      // 48 days old -> 31-60 bucket
+    { id: '40000000-0000-4000-a000-000000000005', description: 'January Dues', total_amount: 200.00, billing_date: '2026-01-01' },       // 17 days old -> Current bucket
+    { id: '40000000-0000-4000-a000-000000000006', description: 'Merit Badge Day Registration', total_amount: 120.00, billing_date: '2026-01-10' }, // 8 days old -> Current bucket
   ];
 
   for (const record of billingRecords) {
@@ -453,19 +456,30 @@ async function seedTestData(): Promise<void> {
   // 10. Create billing charges for each scout
   console.log('\nCreating billing charges...');
   const chargeAmounts: Record<string, number[]> = {
-    '40000000-0000-4000-a000-000000000001': [25, 25, 25, 25, 25, 25, 25, 25], // Jan Dues: $25 each
-    '40000000-0000-4000-a000-000000000002': [40, 40, 40, 40, 40, 40, 40, 40], // Winter Campout: $40 each
-    '40000000-0000-4000-a000-000000000003': [25, 25, 25, 25, 25, 25, 25, 25], // Feb Dues: $25 each
-    '40000000-0000-4000-a000-000000000004': [15, 15, 15, 15, 15, 15, 15, 15], // Merit Badge Day: $15 each
+    '40000000-0000-4000-a000-000000000001': [25, 25, 25, 25, 25, 25, 25, 25], // Oct Dues: $25 each
+    '40000000-0000-4000-a000-000000000002': [25, 25, 25, 25, 25, 25, 25, 25], // Nov Dues: $25 each
+    '40000000-0000-4000-a000-000000000003': [40, 40, 40, 40, 40, 40, 40, 40], // Fall Campout: $40 each
+    '40000000-0000-4000-a000-000000000004': [25, 25, 25, 25, 25, 25, 25, 25], // Dec Dues: $25 each
+    '40000000-0000-4000-a000-000000000005': [25, 25, 25, 25, 25, 25, 25, 25], // Jan Dues: $25 each
+    '40000000-0000-4000-a000-000000000006': [15, 15, 15, 15, 15, 15, 15, 15], // Merit Badge Day: $15 each
   };
 
-  // Track which charges are paid for each scout
+  // Track which charges are paid for each scout (mix of payment patterns for testing)
   const paidCharges: Record<string, string[]> = {
-    '20000000-0000-4000-a000-000000000001': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004'], // Alex - all paid
-    '20000000-0000-4000-a000-000000000002': ['40000000-0000-4000-a000-000000000001'], // Ben - only Jan dues paid
-    '20000000-0000-4000-a000-000000000003': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002'], // Charlie - Jan + campout paid
-    '20000000-0000-4000-a000-000000000005': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004'], // Ethan - all paid
-    '20000000-0000-4000-a000-000000000007': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004'], // George - all paid + overpaid
+    // Alex - all paid up (fully current)
+    '20000000-0000-4000-a000-000000000001': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004', '40000000-0000-4000-a000-000000000005', '40000000-0000-4000-a000-000000000006'],
+    // Ben - only Oct paid (owes Nov, campout, Dec, Jan, MB day = $130)
+    '20000000-0000-4000-a000-000000000002': ['40000000-0000-4000-a000-000000000001'],
+    // Charlie - Oct + Nov paid (owes campout, Dec, Jan, MB day = $105)
+    '20000000-0000-4000-a000-000000000003': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002'],
+    // David - nothing paid (owes everything = $155)
+    // Ethan - all paid (fully current)
+    '20000000-0000-4000-a000-000000000005': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004', '40000000-0000-4000-a000-000000000005', '40000000-0000-4000-a000-000000000006'],
+    // Frank - nothing paid (owes everything = $155)
+    // George - all paid + overpaid (has credit)
+    '20000000-0000-4000-a000-000000000007': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003', '40000000-0000-4000-a000-000000000004', '40000000-0000-4000-a000-000000000005', '40000000-0000-4000-a000-000000000006'],
+    // Henry - Oct + Nov + campout paid (owes Dec, Jan, MB day = $65)
+    '20000000-0000-4000-a000-000000000008': ['40000000-0000-4000-a000-000000000001', '40000000-0000-4000-a000-000000000002', '40000000-0000-4000-a000-000000000003'],
   };
 
   let chargeCount = 0;
@@ -488,23 +502,27 @@ async function seedTestData(): Promise<void> {
   }
   console.log(`  Created ${chargeCount} billing charges`);
 
-  // 11. Create payments
+  // 11. Create payments (spread over 90+ days)
   console.log('\nCreating payments...');
   const payments = [
-    // Alex A. - paid everything
-    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 65.00, fee_amount: 0, net_amount: 65.00, payment_method: 'cash', status: 'completed', notes: 'Jan dues + campout', created_at: '2026-01-08' },
-    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 40.00, fee_amount: 1.34, net_amount: 38.66, payment_method: 'card', status: 'completed', notes: 'Feb dues + Merit Badge Day', created_at: '2026-02-12', square_payment_id: 'sq_pay_alex_001' },
-    // Ben B. - partial payment
-    { scout_id: '20000000-0000-4000-a000-000000000002', amount: 25.00, fee_amount: 0, net_amount: 25.00, payment_method: 'check', status: 'completed', notes: 'Check #1042', created_at: '2026-01-10' },
-    // Charlie C. - partial payment via Square
-    { scout_id: '20000000-0000-4000-a000-000000000003', amount: 65.00, fee_amount: 2.19, net_amount: 62.81, payment_method: 'card', status: 'completed', notes: 'Square payment', created_at: '2026-01-15', square_payment_id: 'sq_pay_charlie_001' },
+    // Alex A. - paid everything over time
+    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 25.00, fee_amount: 0, net_amount: 25.00, payment_method: 'cash', status: 'completed', notes: 'October dues', created_at: '2025-10-05' },
+    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 25.00, fee_amount: 0, net_amount: 25.00, payment_method: 'check', status: 'completed', notes: 'November dues - Check #101', created_at: '2025-11-03' },
+    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 40.00, fee_amount: 1.34, net_amount: 38.66, payment_method: 'card', status: 'completed', notes: 'Fall campout', created_at: '2025-11-18', square_payment_id: 'sq_pay_alex_001' },
+    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 25.00, fee_amount: 0, net_amount: 25.00, payment_method: 'cash', status: 'completed', notes: 'December dues', created_at: '2025-12-08' },
+    { scout_id: '20000000-0000-4000-a000-000000000001', amount: 40.00, fee_amount: 1.34, net_amount: 38.66, payment_method: 'card', status: 'completed', notes: 'Jan dues + MB day', created_at: '2026-01-12', square_payment_id: 'sq_pay_alex_002' },
+    // Ben B. - only paid October
+    { scout_id: '20000000-0000-4000-a000-000000000002', amount: 25.00, fee_amount: 0, net_amount: 25.00, payment_method: 'check', status: 'completed', notes: 'Check #1042', created_at: '2025-10-10' },
+    // Charlie C. - paid Oct + Nov
+    { scout_id: '20000000-0000-4000-a000-000000000003', amount: 50.00, fee_amount: 1.65, net_amount: 48.35, payment_method: 'card', status: 'completed', notes: 'Oct + Nov dues', created_at: '2025-11-05', square_payment_id: 'sq_pay_charlie_001' },
     // Ethan E. - all paid via multiple methods
-    { scout_id: '20000000-0000-4000-a000-000000000005', amount: 50.00, fee_amount: 0, net_amount: 50.00, payment_method: 'cash', status: 'completed', notes: 'Cash payment', created_at: '2026-01-06' },
-    { scout_id: '20000000-0000-4000-a000-000000000005', amount: 55.00, fee_amount: 1.83, net_amount: 53.17, payment_method: 'card', status: 'completed', notes: 'Remaining balance', created_at: '2026-02-15', square_payment_id: 'sq_pay_ethan_001' },
-    // George G. - overpaid
-    { scout_id: '20000000-0000-4000-a000-000000000007', amount: 150.00, fee_amount: 0, net_amount: 150.00, payment_method: 'check', status: 'completed', notes: 'Check #2001 - Prepayment', created_at: '2026-01-02' },
-    // Henry H. - partial payment
-    { scout_id: '20000000-0000-4000-a000-000000000008', amount: 50.00, fee_amount: 1.65, net_amount: 48.35, payment_method: 'card', status: 'completed', notes: 'Partial payment', created_at: '2026-01-20', square_payment_id: 'sq_pay_henry_001' },
+    { scout_id: '20000000-0000-4000-a000-000000000005', amount: 90.00, fee_amount: 0, net_amount: 90.00, payment_method: 'check', status: 'completed', notes: 'Check #500 - Oct/Nov/Campout', created_at: '2025-11-20' },
+    { scout_id: '20000000-0000-4000-a000-000000000005', amount: 65.00, fee_amount: 2.09, net_amount: 62.91, payment_method: 'card', status: 'completed', notes: 'Dec/Jan/MB day', created_at: '2026-01-08', square_payment_id: 'sq_pay_ethan_001' },
+    // George G. - prepaid everything with check
+    { scout_id: '20000000-0000-4000-a000-000000000007', amount: 200.00, fee_amount: 0, net_amount: 200.00, payment_method: 'check', status: 'completed', notes: 'Check #2001 - Full year prepay', created_at: '2025-10-02' },
+    // Henry H. - paid through campout
+    { scout_id: '20000000-0000-4000-a000-000000000008', amount: 50.00, fee_amount: 1.65, net_amount: 48.35, payment_method: 'card', status: 'completed', notes: 'Oct + Nov dues', created_at: '2025-11-08', square_payment_id: 'sq_pay_henry_001' },
+    { scout_id: '20000000-0000-4000-a000-000000000008', amount: 40.00, fee_amount: 1.34, net_amount: 38.66, payment_method: 'card', status: 'completed', notes: 'Fall campout', created_at: '2025-11-20', square_payment_id: 'sq_pay_henry_002' },
   ];
 
   for (const payment of payments) {
@@ -527,7 +545,7 @@ async function seedTestData(): Promise<void> {
   }
   console.log(`  Created ${payments.length} payments`);
 
-  // 12. Create Square transactions
+  // 12. Create Square transactions (matching payment dates)
   console.log('\nCreating Square transactions...');
   const squareTransactions = [
     {
@@ -542,38 +560,53 @@ async function seedTestData(): Promise<void> {
       last_4: '4242',
       receipt_number: 'RCPT-001',
       receipt_url: 'https://squareup.com/receipt/preview/sq_pay_alex_001',
-      square_created_at: '2026-02-12T14:30:00Z',
-      note: 'Feb dues + Merit Badge Day - Alex A.',
+      square_created_at: '2025-11-18T14:30:00Z',
+      note: 'Fall campout - Alex A.',
+    },
+    {
+      square_payment_id: 'sq_pay_alex_002',
+      scout_id: '20000000-0000-4000-a000-000000000001',
+      amount_money: 4000,
+      fee_money: 134,
+      net_money: 3866,
+      status: 'COMPLETED',
+      source_type: 'CARD',
+      card_brand: 'VISA',
+      last_4: '4242',
+      receipt_number: 'RCPT-002',
+      receipt_url: 'https://squareup.com/receipt/preview/sq_pay_alex_002',
+      square_created_at: '2026-01-12T10:00:00Z',
+      note: 'Jan dues + MB day - Alex A.',
     },
     {
       square_payment_id: 'sq_pay_charlie_001',
       scout_id: '20000000-0000-4000-a000-000000000003',
-      amount_money: 6500,
-      fee_money: 219,
-      net_money: 6281,
+      amount_money: 5000,
+      fee_money: 165,
+      net_money: 4835,
       status: 'COMPLETED',
       source_type: 'CARD',
       card_brand: 'MASTERCARD',
       last_4: '5555',
-      receipt_number: 'RCPT-002',
+      receipt_number: 'RCPT-003',
       receipt_url: 'https://squareup.com/receipt/preview/sq_pay_charlie_001',
-      square_created_at: '2026-01-15T10:15:00Z',
-      note: 'Jan dues + campout - Charlie C.',
+      square_created_at: '2025-11-05T10:15:00Z',
+      note: 'Oct + Nov dues - Charlie C.',
     },
     {
       square_payment_id: 'sq_pay_ethan_001',
       scout_id: '20000000-0000-4000-a000-000000000005',
-      amount_money: 5500,
-      fee_money: 183,
-      net_money: 5317,
+      amount_money: 6500,
+      fee_money: 209,
+      net_money: 6291,
       status: 'COMPLETED',
       source_type: 'CARD',
       card_brand: 'AMEX',
       last_4: '1234',
-      receipt_number: 'RCPT-003',
+      receipt_number: 'RCPT-004',
       receipt_url: 'https://squareup.com/receipt/preview/sq_pay_ethan_001',
-      square_created_at: '2026-02-15T16:45:00Z',
-      note: 'Remaining balance - Ethan E.',
+      square_created_at: '2026-01-08T16:45:00Z',
+      note: 'Dec/Jan/MB day - Ethan E.',
     },
     {
       square_payment_id: 'sq_pay_henry_001',
@@ -585,10 +618,25 @@ async function seedTestData(): Promise<void> {
       source_type: 'CARD',
       card_brand: 'DISCOVER',
       last_4: '6789',
-      receipt_number: 'RCPT-004',
+      receipt_number: 'RCPT-005',
       receipt_url: 'https://squareup.com/receipt/preview/sq_pay_henry_001',
-      square_created_at: '2026-01-20T09:30:00Z',
-      note: 'Partial payment - Henry H.',
+      square_created_at: '2025-11-08T09:30:00Z',
+      note: 'Oct + Nov dues - Henry H.',
+    },
+    {
+      square_payment_id: 'sq_pay_henry_002',
+      scout_id: '20000000-0000-4000-a000-000000000008',
+      amount_money: 4000,
+      fee_money: 134,
+      net_money: 3866,
+      status: 'COMPLETED',
+      source_type: 'CARD',
+      card_brand: 'DISCOVER',
+      last_4: '6789',
+      receipt_number: 'RCPT-006',
+      receipt_url: 'https://squareup.com/receipt/preview/sq_pay_henry_002',
+      square_created_at: '2025-11-20T11:00:00Z',
+      note: 'Fall campout - Henry H.',
     },
     // Unreconciled transaction (not linked to a scout yet)
     {
@@ -601,9 +649,9 @@ async function seedTestData(): Promise<void> {
       source_type: 'CARD',
       card_brand: 'VISA',
       last_4: '9999',
-      receipt_number: 'RCPT-005',
+      receipt_number: 'RCPT-007',
       receipt_url: 'https://squareup.com/receipt/preview/sq_pay_unlinked_001',
-      square_created_at: '2026-01-18T11:00:00Z',
+      square_created_at: '2026-01-15T11:00:00Z',
       note: 'Payment from parent - needs reconciliation',
       buyer_email_address: 'parent@example.com',
     },
@@ -635,19 +683,125 @@ async function seedTestData(): Promise<void> {
   }
   console.log(`  Created ${squareTransactions.length} Square transactions`);
 
-  // 13. Update scout account balances based on charges and payments
+  // 13. Create journal entries for transactions
+  console.log('\nCreating journal entries...');
+
+  // Get account IDs
+  const { data: accountsData } = await supabase
+    .from('accounts')
+    .select('id, code')
+    .eq('unit_id', UNIT_ID);
+
+  const accountMap = new Map(accountsData?.map(a => [a.code, a.id]) || []);
+  const bankAccountId = accountMap.get('1000');
+  const arAccountId = accountMap.get('1200');
+  const feeAccountId = accountMap.get('5600');
+  const duesIncomeId = accountMap.get('4000');
+  const campingIncomeId = accountMap.get('4100');
+
+  if (!bankAccountId || !arAccountId) {
+    console.log('  Warning: Required accounts not found, skipping journal entries');
+  } else {
+    // Create journal entries for billing records (matching billing dates)
+    const billingEntries = [
+      { date: '2025-10-01', description: 'October Dues - All Scouts', amount: 200.00, type: 'billing', incomeAccount: duesIncomeId },
+      { date: '2025-11-01', description: 'November Dues - All Scouts', amount: 200.00, type: 'billing', incomeAccount: duesIncomeId },
+      { date: '2025-11-15', description: 'Fall Campout Fees', amount: 320.00, type: 'billing', incomeAccount: campingIncomeId },
+      { date: '2025-12-01', description: 'December Dues - All Scouts', amount: 200.00, type: 'billing', incomeAccount: duesIncomeId },
+      { date: '2026-01-01', description: 'January Dues - All Scouts', amount: 200.00, type: 'billing', incomeAccount: duesIncomeId },
+      { date: '2026-01-10', description: 'Merit Badge Day Registration', amount: 120.00, type: 'billing', incomeAccount: campingIncomeId },
+    ];
+
+    for (const entry of billingEntries) {
+      const { data: journalEntry, error: jeError } = await supabase
+        .from('journal_entries')
+        .insert({
+          unit_id: UNIT_ID,
+          entry_date: entry.date,
+          description: entry.description,
+          entry_type: entry.type,
+          is_posted: true,
+          posted_at: entry.date,
+        })
+        .select()
+        .single();
+
+      if (jeError || !journalEntry) {
+        console.log(`  Warning: Failed to create billing journal entry: ${jeError?.message}`);
+        continue;
+      }
+
+      // Create journal lines: Debit AR, Credit Income
+      await supabase.from('journal_lines').insert([
+        { journal_entry_id: journalEntry.id, account_id: arAccountId, debit: entry.amount, credit: 0 },
+        { journal_entry_id: journalEntry.id, account_id: entry.incomeAccount || duesIncomeId, debit: 0, credit: entry.amount },
+      ]);
+    }
+    console.log(`  Created ${billingEntries.length} billing journal entries`);
+
+    // Create journal entries for payments (matching payment dates)
+    const paymentEntries = [
+      { date: '2025-10-02', description: 'Payment from George G. - Check #2001', amount: 200.00, fee: 0, method: 'check' },
+      { date: '2025-10-05', description: 'Payment from Alex A. - Cash', amount: 25.00, fee: 0, method: 'cash' },
+      { date: '2025-10-10', description: 'Payment from Ben B. - Check #1042', amount: 25.00, fee: 0, method: 'check' },
+      { date: '2025-11-03', description: 'Payment from Alex A. - Check #101', amount: 25.00, fee: 0, method: 'check' },
+      { date: '2025-11-05', description: 'Payment from Charlie C. - Square', amount: 50.00, fee: 1.65, method: 'card' },
+      { date: '2025-11-08', description: 'Payment from Henry H. - Square', amount: 50.00, fee: 1.65, method: 'card' },
+      { date: '2025-11-18', description: 'Payment from Alex A. - Square', amount: 40.00, fee: 1.34, method: 'card' },
+      { date: '2025-11-20', description: 'Payment from Ethan E. - Check #500', amount: 90.00, fee: 0, method: 'check' },
+      { date: '2025-11-20', description: 'Payment from Henry H. - Square', amount: 40.00, fee: 1.34, method: 'card' },
+      { date: '2025-12-08', description: 'Payment from Alex A. - Cash', amount: 25.00, fee: 0, method: 'cash' },
+      { date: '2026-01-08', description: 'Payment from Ethan E. - Square', amount: 65.00, fee: 2.09, method: 'card' },
+      { date: '2026-01-12', description: 'Payment from Alex A. - Square', amount: 40.00, fee: 1.34, method: 'card' },
+    ];
+
+    for (const entry of paymentEntries) {
+      const { data: journalEntry, error: jeError } = await supabase
+        .from('journal_entries')
+        .insert({
+          unit_id: UNIT_ID,
+          entry_date: entry.date,
+          description: entry.description,
+          entry_type: 'payment',
+          is_posted: true,
+          posted_at: entry.date,
+        })
+        .select()
+        .single();
+
+      if (jeError || !journalEntry) {
+        console.log(`  Warning: Failed to create payment journal entry: ${jeError?.message}`);
+        continue;
+      }
+
+      // Create journal lines
+      const netAmount = entry.amount - entry.fee;
+      const lines = [
+        { journal_entry_id: journalEntry.id, account_id: bankAccountId, debit: netAmount, credit: 0 },
+        { journal_entry_id: journalEntry.id, account_id: arAccountId, debit: 0, credit: entry.amount },
+      ];
+      if (entry.fee > 0 && feeAccountId) {
+        lines.push({ journal_entry_id: journalEntry.id, account_id: feeAccountId, debit: entry.fee, credit: 0 });
+      }
+      await supabase.from('journal_lines').insert(lines);
+    }
+    console.log(`  Created ${paymentEntries.length} payment journal entries`);
+  }
+
+  // 15. Update scout account balances based on charges and payments
+  // Each scout was billed: $25 (Oct) + $25 (Nov) + $40 (Campout) + $25 (Dec) + $25 (Jan) + $15 (MB) = $155
   // billing_balance: negative = owes money, positive = credit
   // funds_balance: scout's savings from fundraising (always >= 0)
   console.log('\nUpdating scout account balances...');
   const accountBalances = [
-    { scout_id: '20000000-0000-4000-a000-000000000001', billing_balance: 0, funds_balance: 45.00 },      // Alex - all paid, has fundraising credit
-    { scout_id: '20000000-0000-4000-a000-000000000002', billing_balance: -80.00, funds_balance: 0 },    // Ben - owes campout + Feb + MB day
-    { scout_id: '20000000-0000-4000-a000-000000000003', billing_balance: -40.00, funds_balance: 50.00 }, // Charlie - owes Feb + MB day, has fundraising
-    { scout_id: '20000000-0000-4000-a000-000000000004', billing_balance: -105.00, funds_balance: 0 },   // David - owes everything
-    { scout_id: '20000000-0000-4000-a000-000000000005', billing_balance: 0, funds_balance: 0 },         // Ethan - all paid
-    { scout_id: '20000000-0000-4000-a000-000000000006', billing_balance: -105.00, funds_balance: 25.00 }, // Frank - owes everything, has some fundraising
-    { scout_id: '20000000-0000-4000-a000-000000000007', billing_balance: 45.00, funds_balance: 100.00 }, // George - $45 credit (overpaid), $100 fundraising
-    { scout_id: '20000000-0000-4000-a000-000000000008', billing_balance: -55.00, funds_balance: 75.00 }, // Henry - partial payment, has fundraising
+    { scout_id: '20000000-0000-4000-a000-000000000001', billing_balance: 0, funds_balance: 45.00 },      // Alex - all paid ($155), has fundraising
+    { scout_id: '20000000-0000-4000-a000-000000000002', billing_balance: -130.00, funds_balance: 0 },   // Ben - only Oct paid, owes $130 (Nov+Camp+Dec+Jan+MB)
+    { scout_id: '20000000-0000-4000-a000-000000000003', billing_balance: -105.00, funds_balance: 50.00 }, // Charlie - Oct+Nov paid, owes $105 (Camp+Dec+Jan+MB)
+    { scout_id: '20000000-0000-4000-a000-000000000004', billing_balance: -155.00, funds_balance: 0 },   // David - nothing paid, owes everything
+    { scout_id: '20000000-0000-4000-a000-000000000005', billing_balance: 0, funds_balance: 0 },         // Ethan - all paid ($155)
+    { scout_id: '20000000-0000-4000-a000-000000000006', billing_balance: -155.00, funds_balance: 25.00 }, // Frank - nothing paid, owes everything
+    { scout_id: '20000000-0000-4000-a000-000000000007', billing_balance: 45.00, funds_balance: 100.00 }, // George - prepaid $200, has $45 credit
+    { scout_id: '20000000-0000-4000-a000-000000000008', billing_balance: -65.00, funds_balance: 75.00 }, // Henry - Oct+Nov+Camp paid, owes $65 (Dec+Jan+MB)
   ];
 
   for (const balance of accountBalances) {
