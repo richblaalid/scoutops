@@ -17,21 +17,22 @@ const sizes = {
   lg: { icon: 64, wordmark: 'text-5xl leading-none' },
 }
 
-// Chuckbox brand colors
+// Chuckbox brand colors - Updated January 2026
+// Aligned with marketing landing page: amber accent, deep forest greens
 const brandColors = {
   light: {
-    boxBody: '#234D3E',      // Pine 800
-    compartments: '#3D8B6A', // Pine 600
-    accent: '#E85D04',       // Campfire 500
-    wordPrimary: '#234D3E',
-    wordAccent: '#E85D04',
+    boxBody: '#14532d',      // Deep Pine (green-900)
+    compartments: '#166534', // Forest Green (green-800)
+    accent: '#b45309',       // Amber 700 - Primary accent
+    wordPrimary: '#166534',  // Forest Green for "Chuck"
+    wordAccent: '#b45309',   // Amber 700 for "Box"
   },
   dark: {
-    boxBody: '#3D8B6A',      // Pine 600
-    compartments: '#52A07E', // Pine 500
-    accent: '#F48C06',       // Campfire 400
+    boxBody: '#166534',      // Forest Green (green-800)
+    compartments: '#22c55e', // Green 500
+    accent: '#d97706',       // Amber 600
     wordPrimary: 'white',
-    wordAccent: '#F48C06',
+    wordAccent: '#d97706',   // Amber 600
   }
 }
 

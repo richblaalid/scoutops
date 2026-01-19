@@ -53,33 +53,35 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
 
-        // Chuckbox Brand Colors - Pine (keeping 'forest' name for compatibility)
+        // Chuckbox Brand Colors - Forest Greens (Updated January 2026)
+        // Aligned with Tailwind's green palette for consistency
         forest: {
-          50: '#E8F5EE',
-          100: '#D1EBDD',
-          200: '#A3D7BB',
-          300: '#75C399',
-          400: '#52796F',
-          500: '#52A07E',   // Pine 500
-          600: '#3D8B6A',   // Pine 600
-          700: '#2D6A4F',   // Pine 700
-          800: '#234D3E',   // Pine 800 - Primary brand
-          900: '#1A3A2F',   // Pine 900
-          DEFAULT: '#234D3E',
+          50: '#f0fdf4',    // green-50
+          100: '#dcfce7',   // green-100
+          200: '#bbf7d0',   // green-200
+          300: '#86efac',   // green-300
+          400: '#4ade80',   // green-400
+          500: '#22c55e',   // green-500
+          600: '#16a34a',   // green-600
+          700: '#15803d',   // green-700
+          800: '#166534',   // green-800 - Logo compartments
+          900: '#14532d',   // green-900 - Deep pine, logo body
+          DEFAULT: '#166534',
         },
-        // Chuckbox Brand Colors - Campfire (keeping 'tan' name for compatibility)
+        // Chuckbox Brand Colors - Amber Accent (Updated January 2026)
+        // Renamed from 'campfire' to align with amber palette
         tan: {
-          50: '#FFF7ED',
-          100: '#FFEDD5',
-          200: '#FED7AA',
-          300: '#FAA307',   // Campfire 300
-          400: '#F48C06',   // Campfire 400
-          500: '#E85D04',   // Campfire 500 - Primary accent
-          600: '#C2410C',
-          700: '#9A3412',
-          800: '#7C2D12',
-          900: '#431407',
-          DEFAULT: '#E85D04',
+          50: '#fffbeb',    // amber-50
+          100: '#fef3c7',   // amber-100
+          200: '#fde68a',   // amber-200
+          300: '#fcd34d',   // amber-300
+          400: '#fbbf24',   // amber-400
+          500: '#f59e0b',   // amber-500
+          600: '#d97706',   // amber-600
+          700: '#b45309',   // amber-700 - Primary accent
+          800: '#92400e',   // amber-800
+          900: '#78350f',   // amber-900
+          DEFAULT: '#b45309',
         },
         // Chuckbox Brand Colors - Cream backgrounds
         cream: {
@@ -162,18 +164,18 @@ const config: Config = {
       },
       boxShadow: {
         // Elevation system with forest-tinted shadows for brand consistency
-        'xs': '0 1px 2px rgba(35, 77, 62, 0.05)',
-        'sm': '0 1px 3px rgba(35, 77, 62, 0.08), 0 1px 2px rgba(35, 77, 62, 0.06)',
-        'md': '0 4px 6px rgba(35, 77, 62, 0.08), 0 2px 4px rgba(35, 77, 62, 0.06)',
-        'lg': '0 10px 15px rgba(35, 77, 62, 0.08), 0 4px 6px rgba(35, 77, 62, 0.05)',
-        'xl': '0 20px 25px rgba(35, 77, 62, 0.10), 0 8px 10px rgba(35, 77, 62, 0.04)',
-        '2xl': '0 25px 50px rgba(35, 77, 62, 0.15)',
+        'xs': '0 1px 2px rgba(20, 83, 45, 0.05)',
+        'sm': '0 1px 3px rgba(20, 83, 45, 0.08), 0 1px 2px rgba(20, 83, 45, 0.06)',
+        'md': '0 4px 6px rgba(20, 83, 45, 0.08), 0 2px 4px rgba(20, 83, 45, 0.06)',
+        'lg': '0 10px 15px rgba(20, 83, 45, 0.08), 0 4px 6px rgba(20, 83, 45, 0.05)',
+        'xl': '0 20px 25px rgba(20, 83, 45, 0.10), 0 8px 10px rgba(20, 83, 45, 0.04)',
+        '2xl': '0 25px 50px rgba(20, 83, 45, 0.15)',
         // Brand-specific accent shadows
-        'forest': '0 4px 12px rgba(35, 77, 62, 0.3)',   // Pine 800
-        'tan': '0 4px 12px rgba(232, 93, 4, 0.3)',       // Campfire 500
-        // Campfire glow for success states
-        'glow': '0 0 20px rgba(232, 93, 4, 0.25)',
-        'glow-lg': '0 0 40px rgba(232, 93, 4, 0.3)',
+        'forest': '0 4px 12px rgba(20, 83, 45, 0.3)',    // green-900
+        'tan': '0 4px 12px rgba(180, 83, 9, 0.3)',       // amber-700
+        // Amber glow for success/accent states
+        'glow': '0 0 20px rgba(180, 83, 9, 0.25)',
+        'glow-lg': '0 0 40px rgba(180, 83, 9, 0.3)',
       },
       backgroundImage: {
         // Radial gradient for campfire glow effect
