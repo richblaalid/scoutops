@@ -88,7 +88,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="mt-1.5 block w-full rounded-lg border border-stone-300 dark:border-stone-600 px-4 py-3 text-base text-stone-900 dark:text-stone-50 bg-white dark:bg-stone-900 shadow-sm placeholder:text-stone-400 focus:border-amber-600 dark:focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-600/20 dark:focus:ring-amber-500/30"
+            className="mt-1.5 block w-full rounded-lg border border-stone-300 dark:border-stone-600 px-4 py-3 text-base text-stone-900 dark:text-stone-50 bg-white dark:bg-stone-900 shadow-sm placeholder:text-stone-400 focus:border-green-700 dark:focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-700/20 dark:focus:ring-green-600/30"
           />
         </div>
 
@@ -107,7 +107,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-lg bg-amber-700 dark:bg-amber-600 px-4 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-amber-800 dark:hover:bg-amber-700 hover:shadow-lg hover:shadow-amber-800/25 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 dark:focus:ring-offset-stone-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+          className="flex w-full items-center justify-center rounded-lg bg-green-800 dark:bg-green-700 px-4 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-900 dark:hover:bg-green-800 hover:shadow-lg hover:shadow-green-900/25 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 dark:focus:ring-offset-stone-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
         >
           {loading ? (
             <svg
@@ -206,7 +206,7 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <p className="text-lg text-slate-600 dark:text-stone-400">
               Setting up a new unit?{' '}
-              <Link href="/signup" className="font-semibold text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <Link href="/signup" className="font-semibold text-green-800 hover:text-green-900 dark:text-green-500 dark:hover:text-green-400 transition-colors">
                 Create your unit
               </Link>
             </p>
@@ -215,7 +215,7 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <p className="text-lg text-slate-600 dark:text-stone-400">
               Interested in ChuckBox for your unit?{' '}
-              <Link href="/early-access" className="font-semibold text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <Link href="/early-access" className="font-semibold text-green-800 hover:text-green-900 dark:text-green-500 dark:hover:text-green-400 transition-colors">
                 Join the waitlist
               </Link>
             </p>

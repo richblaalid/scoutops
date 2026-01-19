@@ -112,7 +112,7 @@ export default async function Home({ searchParams }: HomeProps) {
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/early-access"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-amber-700 text-white font-semibold rounded-lg hover:bg-amber-800 transition-all hover:shadow-lg hover:shadow-amber-800/25 hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-green-800 text-white font-semibold rounded-lg hover:bg-green-900 transition-all hover:shadow-lg hover:shadow-green-900/25 hover:-translate-y-0.5"
                 >
                   Request Early Access
                   <ArrowRight className="w-4 h-4" />
@@ -407,7 +407,7 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="mt-8">
             <Link
               href="/early-access"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-amber-700 text-white text-lg font-semibold rounded-lg hover:bg-amber-800 transition-all hover:shadow-lg hover:shadow-amber-800/25 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-800 text-white text-lg font-semibold rounded-lg hover:bg-green-900 transition-all hover:shadow-lg hover:shadow-green-900/25 hover:-translate-y-0.5"
             >
               Request Early Access
               <ArrowRight className="w-5 h-5" />

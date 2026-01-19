@@ -13,25 +13,25 @@
          CHUCKBOX BRAND COLORS - January 2026
 
          Color Hierarchy:
-         • AMBER = Primary Action (CTAs, links, emphasis, focus states)
-         • GREEN = Brand Foundation (logo, icons, trust, identity)
+         • GREEN = Primary Action (CTAs, buttons, links, focus states)
+         • AMBER = Accent & Emphasis (highlights, badges, decorative)
          ═══════════════════════════════════════════════════════════ */
 
-      /* Primary Action - Amber */
+      /* Primary Action - Forest/Pine Greens */
+      --pine-900: #14532d;    /* Deep pine - logo body, dark sections */
+      --pine-800: #166534;    /* PRIMARY: buttons, links, active states */
+      --pine-700: #15803d;    /* Green-700 - hover states */
+      --pine-600: #16a34a;    /* Green-600 */
+      --green-800: #166534;   /* Feature card icons */
+      --green-700: #15803d;
+
+      /* Accent & Emphasis - Amber */
       --amber-800: #92400e;
-      --amber-700: #b45309;   /* PRIMARY: buttons, links, emphasis */
+      --amber-700: #b45309;   /* ACCENT: headline highlights, badges, decorative */
       --amber-600: #d97706;   /* Dark mode accent */
       --amber-200: #fde68a;
       --amber-100: #fef3c7;
       --amber-50: #fffbeb;
-
-      /* Brand Foundation - Forest/Pine Greens */
-      --pine-900: #14532d;    /* Deep pine - logo body */
-      --pine-800: #166534;    /* Forest green - logo compartments, "Chuck" text */
-      --pine-700: #15803d;    /* Green-700 */
-      --pine-600: #16a34a;    /* Green-600 */
-      --green-800: #166534;   /* Feature card icons, section backgrounds */
-      --green-700: #15803d;
 
       /* Backgrounds - Warm Whites */
       --warm-white: #FEFCF8;  /* Marketing hero bg */
@@ -1024,58 +1024,40 @@
         <h2>Color System</h2>
       </div>
 
-      <p>ChuckBox uses a warm, outdoorsy color palette inspired by Scout camp aesthetics. The system has a clear hierarchy: <strong>amber for action</strong>, <strong>green for identity</strong>.</p>
+      <p>ChuckBox uses a warm, outdoorsy color palette inspired by Scout camp aesthetics. The system has a clear hierarchy: <strong>green for action</strong>, <strong>amber for accent</strong>.</p>
 
-      <div class="color-section" style="background: var(--amber-50); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+      <div class="color-section" style="background: #f0fdf4; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
         <h3 style="margin-top: 0;">Color Hierarchy</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
           <div>
-            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--amber-700);">Amber — Primary Action</strong></p>
+            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--green-800);">Green — Primary Action</strong></p>
             <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.875rem; color: var(--stone-600);">
               <li>All CTA buttons</li>
               <li>Links and interactive elements</li>
-              <li>Headline highlights ("toolkit", "organized")</li>
-              <li>Focus states and hover accents</li>
-              <li>Badges and visual emphasis</li>
-              <li>Logo "Box" text and work surface</li>
+              <li>Focus states and active navigation</li>
+              <li>Primary badges and indicators</li>
+              <li>Logo "Chuck" text</li>
+              <li>Feature card icon backgrounds</li>
             </ul>
           </div>
           <div>
-            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--green-800);">Green — Brand Foundation</strong></p>
+            <p style="margin-bottom: 0.5rem;"><strong style="color: var(--amber-700);">Amber — Accent & Emphasis</strong></p>
             <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.875rem; color: var(--stone-600);">
-              <li>Logo body and compartments</li>
-              <li>Logo "Chuck" text</li>
-              <li>Feature card icon backgrounds</li>
-              <li>Section backgrounds (value props)</li>
-              <li>Trust indicators (checkmarks)</li>
-              <li>Brand identity and recognition</li>
+              <li>Headline highlights ("toolkit", "organized")</li>
+              <li>Decorative elements and badges</li>
+              <li>Logo "Box" text and work surface</li>
+              <li>Floating accent cards</li>
+              <li>Warm visual accents</li>
+              <li>Secondary emphasis</li>
             </ul>
           </div>
         </div>
-        <p style="font-size: 0.875rem; color: var(--stone-500); margin-top: 1rem; margin-bottom: 0;"><em>Amber draws the eye to actions and emphasis. Green provides grounding and connects to Scout heritage.</em></p>
+        <p style="font-size: 0.875rem; color: var(--stone-500); margin-top: 1rem; margin-bottom: 0;"><em>Green drives action and connects to Scout heritage. Amber provides warmth and visual interest.</em></p>
       </div>
 
       <div class="color-section">
-        <h3>Primary Action — Amber</h3>
-        <p>The primary color for buttons, links, focus states, and visual emphasis. Use amber when you want users to take action or notice something important.</p>
-        <div class="color-row">
-          <div class="swatch dark-text" style="background: #fffbeb;">50</div>
-          <div class="swatch dark-text" style="background: #fef3c7;">100</div>
-          <div class="swatch dark-text" style="background: #fde68a;">200</div>
-          <div class="swatch dark-text" style="background: #fcd34d;">300</div>
-          <div class="swatch dark-text" style="background: #fbbf24;">400</div>
-          <div class="swatch dark-text" style="background: #f59e0b;">500</div>
-          <div class="swatch light-text" style="background: #d97706;">600</div>
-          <div class="swatch light-text" style="background: #b45309; flex: 1.5;"><strong>700</strong></div>
-          <div class="swatch light-text" style="background: #92400e;">800</div>
-          <div class="swatch light-text" style="background: #78350f;">900</div>
-        </div>
-        <p style="font-size: 0.875rem; color: var(--stone-500);"><strong>Amber 700 (#b45309)</strong> is the primary accent for buttons, links, and emphasis.</p>
-      </div>
-
-      <div class="color-section">
-        <h3>Brand Foundation — Forest/Pine</h3>
-        <p>Deep, natural greens that anchor the brand identity. Use for the logo, icon backgrounds, section backgrounds, and trust indicators. Green provides stability while amber drives action.</p>
+        <h3>Primary Action — Forest Green</h3>
+        <p>The primary color for buttons, links, and interactive elements. Use green when you want users to take action. Forest green (#166534) is the default for all CTAs.</p>
         <div class="color-row">
           <div class="swatch dark-text" style="background: #f0fdf4;">50</div>
           <div class="swatch dark-text" style="background: #dcfce7;">100</div>
@@ -1088,7 +1070,25 @@
           <div class="swatch light-text" style="background: #166534; flex: 1.5;"><strong>800</strong></div>
           <div class="swatch light-text" style="background: #14532d;">900</div>
         </div>
-        <p style="font-size: 0.875rem; color: var(--stone-500);"><strong>Green 800 (#166534)</strong> for icon backgrounds. <strong>Green 900 (#14532d)</strong> for dark sections.</p>
+        <p style="font-size: 0.875rem; color: var(--stone-500);"><strong>Green 800 (#166534)</strong> for buttons and CTAs. <strong>Green 900 (#14532d)</strong> for logo and dark sections.</p>
+      </div>
+
+      <div class="color-section">
+        <h3>Accent & Emphasis — Amber</h3>
+        <p>Warm accent color for headline highlights, decorative elements, and visual emphasis. Amber provides warmth and draws attention to key content without competing with action elements.</p>
+        <div class="color-row">
+          <div class="swatch dark-text" style="background: #fffbeb;">50</div>
+          <div class="swatch dark-text" style="background: #fef3c7;">100</div>
+          <div class="swatch dark-text" style="background: #fde68a;">200</div>
+          <div class="swatch dark-text" style="background: #fcd34d;">300</div>
+          <div class="swatch dark-text" style="background: #fbbf24;">400</div>
+          <div class="swatch dark-text" style="background: #f59e0b;">500</div>
+          <div class="swatch light-text" style="background: #d97706;">600</div>
+          <div class="swatch light-text" style="background: #b45309; flex: 1.5;"><strong>700</strong></div>
+          <div class="swatch light-text" style="background: #92400e;">800</div>
+          <div class="swatch light-text" style="background: #78350f;">900</div>
+        </div>
+        <p style="font-size: 0.875rem; color: var(--stone-500);"><strong>Amber 700 (#b45309)</strong> for headline highlights, logo "Box" text, and decorative accents.</p>
       </div>
 
       <div class="color-section">
