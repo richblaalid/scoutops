@@ -371,7 +371,7 @@ export default function PaymentCheckoutPage() {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forest-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-800 mx-auto"></div>
           <p className="mt-4 text-stone-600">Loading payment details...</p>
         </div>
       </div>
@@ -591,7 +591,7 @@ export default function PaymentCheckoutPage() {
         {/* Payment Card */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Balance Header */}
-          <div className="bg-forest-600 text-white p-6 text-center">
+          <div className="bg-green-800 text-white p-6 text-center">
             <p className="text-sm opacity-90 mb-1">Amount Due</p>
             <p className="text-4xl font-bold">{formatCurrency(linkData.currentBillingCents)}</p>
             <p className="text-sm opacity-75 mt-1">for {linkData.scoutName}</p>
@@ -700,7 +700,7 @@ export default function PaymentCheckoutPage() {
                 <Button
                   onClick={() => handlePayWithBalance(fundsCalculation.fundsToApply)}
                   disabled={isProcessingBalance || isProcessing}
-                  className="w-full mt-4 bg-forest-600 hover:bg-forest-700"
+                  className="w-full mt-4 bg-green-800 hover:bg-green-900"
                 >
                   {isProcessingBalance
                     ? 'Processing...'
@@ -836,7 +836,7 @@ export default function PaymentCheckoutPage() {
                   <Button
                     type="submit"
                     disabled={cardLoading || isProcessing || !paymentCalculation?.isValid}
-                    className="w-full bg-forest-600 hover:bg-forest-700 text-white py-3 text-lg"
+                    className="w-full bg-green-800 hover:bg-green-900 text-white py-3 text-lg"
                   >
                     {isProcessing
                       ? 'Processing...'
