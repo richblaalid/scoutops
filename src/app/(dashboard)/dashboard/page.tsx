@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { formatCurrency } from '@/lib/utils'
 import { isFinancialRole, isManagementRole, hasFilteredView } from '@/lib/roles'
 import Link from 'next/link'
+import { RefreshCw, Mail, CalendarCheck, Award } from 'lucide-react'
 
 interface ScoutAccount {
   id: string
@@ -131,11 +132,10 @@ export default async function DashboardPage() {
   const { data: scoutAccountsData } = await scoutAccountsQuery
   const scoutAccounts = scoutAccountsData as ScoutAccount[] | null
 
-  // Calculate summary stats (for management roles)
+  // Calculate summary stats
   const totalScouts = scoutAccounts?.length || 0
   const totalBalance = scoutAccounts?.reduce((sum, acc) => sum + (acc.billing_balance || 0), 0) || 0
   const scoutsOwing = scoutAccounts?.filter((acc) => (acc.billing_balance || 0) < 0).length || 0
-  const scoutsWithCredit = scoutAccounts?.filter((acc) => (acc.billing_balance || 0) > 0).length || 0
 
   // Get recent journal entries (for management roles)
   let recentTransactions: JournalEntry[] | null = null
@@ -322,7 +322,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-2 gap-4 ${isFinancialRole(role) ? 'lg:grid-cols-4' : ''}`}>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Scouts</CardDescription>
@@ -333,58 +333,92 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {isFinancialRole(role) && (
-          <>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Net Balance</CardDescription>
-                <CardTitle
-                  className={`text-3xl ${totalBalance < 0 ? 'text-error' : 'text-success'}`}
-                >
-                  {formatCurrency(totalBalance)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  {totalBalance >= 0 ? 'Credit' : 'Owed'} across all scouts
-                </p>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Scouts Owing</CardDescription>
+            <CardTitle className={`text-3xl ${scoutsOwing > 0 ? 'text-error' : 'text-success'}`}>
+              {scoutsOwing}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">
+              {scoutsOwing > 0 ? 'Need follow-up' : 'All current'}
+            </p>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Scouts Owing</CardDescription>
-                <CardTitle className="text-3xl text-error">{scoutsOwing}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">Negative balance</p>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Troop Funds</CardDescription>
+            <CardTitle className="text-3xl text-success">$4,285</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Available balance</p>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Scouts with Credit</CardDescription>
-                <CardTitle className="text-3xl text-success">{scoutsWithCredit}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">Positive balance</p>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {!isFinancialRole(role) && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Scouts Owing</CardDescription>
-              <CardTitle className="text-3xl text-error">{scoutsOwing}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">With negative balance</p>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Next Event</CardDescription>
+            <CardTitle className="text-xl">Winter Campout</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Feb 14-16 · 18 registered</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            {isFinancialRole(role) && (
+              <Link
+                href="/settings/import"
+                className="inline-flex items-center gap-2.5 rounded-lg bg-forest-600 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-forest-700 shadow-sm"
+              >
+                <RefreshCw className="h-5 w-5" />
+                Sync Scoutbook
+              </Link>
+            )}
+            {/* Future: Send Payment Reminders */}
+            {isFinancialRole(role) && scoutsOwing > 0 && (
+              <button
+                disabled
+                className="inline-flex items-center gap-2.5 rounded-lg border-2 border-forest-200 bg-forest-50 px-5 py-3 text-base font-semibold text-forest-400 cursor-not-allowed"
+                title="Coming soon"
+              >
+                <Mail className="h-5 w-5" />
+                Send Reminders
+                <span className="text-xs bg-forest-100 text-forest-600 px-1.5 py-0.5 rounded font-medium">Soon</span>
+              </button>
+            )}
+            {/* Future: Record Attendance */}
+            <button
+              disabled
+              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-forest-200 bg-forest-50 px-5 py-3 text-base font-semibold text-forest-400 cursor-not-allowed"
+              title="Coming soon"
+            >
+              <CalendarCheck className="h-5 w-5" />
+              Record Attendance
+              <span className="text-xs bg-forest-100 text-forest-600 px-1.5 py-0.5 rounded font-medium">Soon</span>
+            </button>
+            {/* Future: Advancement Tracking */}
+            <button
+              disabled
+              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-forest-200 bg-forest-50 px-5 py-3 text-base font-semibold text-forest-400 cursor-not-allowed"
+              title="Coming soon"
+            >
+              <Award className="h-5 w-5" />
+              Advancement
+              <span className="text-xs bg-forest-100 text-forest-600 px-1.5 py-0.5 rounded font-medium">Soon</span>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <div className="grid gap-4 lg:grid-cols-2">
