@@ -21,7 +21,7 @@ function Logo({
   const iconSize = sizes[size]
 
   const boxBody = '#14532d'  // Deep pine
-  const compartments = '#166534'  // Forest green
+  const compartments = '#22c55e'  // Green 500 - Lighter to show CB structure
   const accent = variant === 'amber' ? '#b45309' : '#ea580c'
 
   return (
