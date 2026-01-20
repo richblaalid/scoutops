@@ -2,36 +2,6 @@
 
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
-import { useState } from 'react'
-import {
-  Tent,
-  Flag,
-  Globe,
-  Heart,
-  Leaf,
-  Flame,
-  Compass,
-  Mountain,
-  Fish,
-  Bird,
-  TreePine,
-  Bike,
-  Waves,
-  Shield,
-  Wrench,
-  Camera,
-  Music,
-  Palette,
-  BookOpen,
-  Calculator,
-  Microscope,
-  Rocket,
-  Cpu,
-  Radio,
-  Hammer,
-  Award,
-  type LucideIcon,
-} from 'lucide-react'
 
 interface MeritBadge {
   id: string
@@ -52,7 +22,7 @@ interface MeritBadgeIconProps {
   showBorder?: boolean
 }
 
-// Category-based color schemes
+// Category-based color schemes (kept for getCategoryColors export)
 const categoryColors: Record<string, { bg: string; border: string; text: string; icon: string }> = {
   'Outdoor Skills': {
     bg: 'bg-gradient-to-br from-emerald-100 to-emerald-200',
@@ -129,80 +99,11 @@ const defaultColors = {
   icon: 'text-stone-600',
 }
 
-// Badge code to icon mapping
-const iconMap: Record<string, LucideIcon> = {
-  camping: Tent,
-  hiking: Mountain,
-  swimming: Waves,
-  cycling: Bike,
-  fishing: Fish,
-  bird_study: Bird,
-  environmental_science: Leaf,
-  forestry: TreePine,
-  fire_safety: Flame,
-  orienteering: Compass,
-  citizenship_community: Flag,
-  citizenship_nation: Flag,
-  citizenship_world: Globe,
-  citizenship_society: Flag,
-  first_aid: Heart,
-  emergency_preparedness: Shield,
-  lifesaving: Heart,
-  personal_fitness: Heart,
-  personal_management: BookOpen,
-  family_life: Heart,
-  communication: Radio,
-  cooking: Flame,
-  photography: Camera,
-  music: Music,
-  art: Palette,
-  reading: BookOpen,
-  scholarship: BookOpen,
-  entrepreneurship: Calculator,
-  chemistry: Microscope,
-  astronomy: Rocket,
-  electricity: Cpu,
-  electronics: Cpu,
-  robotics: Cpu,
-  programming: Cpu,
-  digital_technology: Cpu,
-  woodwork: Hammer,
-  metalwork: Wrench,
-  plumbing: Wrench,
-  automotive_maintenance: Wrench,
-}
-
 const sizeClasses = {
   sm: 'h-10 w-10',
   md: 'h-14 w-14',
   lg: 'h-20 w-20',
   xl: 'h-28 w-28',
-}
-
-const iconSizeClasses = {
-  sm: 'h-5 w-5',
-  md: 'h-7 w-7',
-  lg: 'h-10 w-10',
-  xl: 'h-14 w-14',
-}
-
-const borderClasses = {
-  sm: 'border-2',
-  md: 'border-2',
-  lg: 'border-3',
-  xl: 'border-4',
-}
-
-// Helper component to render the badge icon
-function BadgeIconDisplay({
-  code,
-  iconClassName
-}: {
-  code: string
-  iconClassName: string
-}) {
-  const Icon = iconMap[code] || Award
-  return <Icon className={iconClassName} />
 }
 
 export function MeritBadgeIcon({
@@ -211,53 +112,40 @@ export function MeritBadgeIcon({
   className,
   showBorder = true,
 }: MeritBadgeIconProps) {
-  const [imageError, setImageError] = useState(false)
-  const colors = categoryColors[badge.category || ''] || defaultColors
-
-  // If we have an image URL and it hasn't errored, show the image
-  if (badge.image_url && !imageError) {
+  // All merit badges should have images - if not, show a placeholder
+  if (!badge.image_url) {
     return (
       <div
         className={cn(
-          'relative overflow-hidden rounded-full',
+          'relative flex items-center justify-center overflow-hidden rounded-full bg-stone-200',
           sizeClasses[size],
           showBorder && 'ring-2 ring-stone-200',
           badge.is_eagle_required && 'ring-amber-400',
           className
         )}
       >
-        <Image
-          src={badge.image_url}
-          alt={badge.name}
-          fill
-          className="object-cover"
-          onError={() => setImageError(true)}
-        />
+        <span className="text-xs font-medium text-stone-500">
+          {badge.name.charAt(0)}
+        </span>
       </div>
     )
   }
 
-  // Fallback: Beautiful generated icon
   return (
     <div
       className={cn(
-        'relative flex items-center justify-center rounded-full',
+        'relative overflow-hidden rounded-full',
         sizeClasses[size],
-        colors.bg,
-        showBorder && borderClasses[size],
-        showBorder && colors.border,
-        badge.is_eagle_required && showBorder && 'border-amber-400 ring-2 ring-amber-200',
-        'shadow-sm',
+        showBorder && 'ring-2 ring-stone-200',
+        badge.is_eagle_required && 'ring-amber-400',
         className
       )}
     >
-      {/* Inner circle effect */}
-      <div className="absolute inset-1 rounded-full bg-white/40" />
-
-      {/* Icon */}
-      <BadgeIconDisplay
-        code={badge.code}
-        iconClassName={cn(iconSizeClasses[size], colors.icon, 'relative z-10')}
+      <Image
+        src={badge.image_url}
+        alt={badge.name}
+        fill
+        className="object-cover"
       />
     </div>
   )

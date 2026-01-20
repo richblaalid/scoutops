@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { EditScoutButton } from '@/components/scouts/edit-scout-button'
 import { ScoutGuardianAssociations } from '@/components/scouts/scout-guardian-associations'
+import { ScoutAdvancementSection } from '@/components/advancement'
+import { getScoutAdvancementProgress } from '@/app/actions/advancement'
+import { isFeatureEnabled, FeatureFlag } from '@/lib/feature-flags'
 
 interface ScoutPageProps {
   params: Promise<{ id: string }>
@@ -219,6 +222,24 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     }
   }
 
+  // Fetch advancement data if feature is enabled
+  const advancementEnabled = isFeatureEnabled(FeatureFlag.ADVANCEMENT_TRACKING)
+  type AdvancementData = Awaited<ReturnType<typeof getScoutAdvancementProgress>>
+  const defaultAdvancementData: NonNullable<AdvancementData> = {
+    rankProgress: [],
+    meritBadgeProgress: [],
+    leadershipHistory: [],
+    activityEntries: [],
+    activityTotals: { camping: 0, hiking: 0, service: 0, conservation: 0 },
+  }
+  let advancementData: NonNullable<AdvancementData> = defaultAdvancementData
+  if (advancementEnabled && membership) {
+    const fetchedData = await getScoutAdvancementProgress(id)
+    if (fetchedData) {
+      advancementData = fetchedData
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -381,6 +402,22 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         availableProfiles={availableProfiles}
         canEdit={canEditGuardians || false}
       />
+
+      {/* Advancement Section */}
+      {advancementEnabled && (
+        <ScoutAdvancementSection
+          scoutId={scout.id}
+          unitId={scout.unit_id}
+          scoutName={`${scout.first_name} ${scout.last_name}`}
+          currentRank={scout.rank}
+          rankProgress={advancementData.rankProgress}
+          meritBadgeProgress={advancementData.meritBadgeProgress}
+          leadershipHistory={advancementData.leadershipHistory}
+          activityEntries={advancementData.activityEntries}
+          activityTotals={advancementData.activityTotals}
+          canEdit={canEditScout || false}
+        />
+      )}
 
       {/* Health & Safety */}
       {(scout.health_form_status || scout.swim_classification) && (

@@ -12,15 +12,15 @@ interface RankTrailVisualizationProps {
   className?: string
 }
 
-// All BSA ranks in order for the trail
-const ALL_RANKS: Array<{ code: string; name: string; display_order: number }> = [
-  { code: 'scout', name: 'Scout', display_order: 1 },
-  { code: 'tenderfoot', name: 'Tenderfoot', display_order: 2 },
-  { code: 'second_class', name: 'Second Class', display_order: 3 },
-  { code: 'first_class', name: 'First Class', display_order: 4 },
-  { code: 'star', name: 'Star', display_order: 5 },
-  { code: 'life', name: 'Life', display_order: 6 },
-  { code: 'eagle', name: 'Eagle', display_order: 7 },
+// All BSA ranks in order for the trail with image URLs
+const ALL_RANKS: Array<{ code: string; name: string; display_order: number; image_url: string }> = [
+  { code: 'scout', name: 'Scout', display_order: 1, image_url: '/images/ranks/scout100.png' },
+  { code: 'tenderfoot', name: 'Tenderfoot', display_order: 2, image_url: '/images/ranks/tenderfoot100.png' },
+  { code: 'second_class', name: 'Second Class', display_order: 3, image_url: '/images/ranks/secondclass100.png' },
+  { code: 'first_class', name: 'First Class', display_order: 4, image_url: '/images/ranks/firstclass100.png' },
+  { code: 'star', name: 'Star', display_order: 5, image_url: '/images/ranks/star100.png' },
+  { code: 'life', name: 'Life', display_order: 6, image_url: '/images/ranks/life100.png' },
+  { code: 'eagle', name: 'Eagle', display_order: 7, image_url: '/images/ranks/eagle.png' },
 ]
 
 type RankState = 'awarded' | 'in_progress' | 'future'
@@ -208,7 +208,7 @@ export function RankTrailVisualization({
                           rank={{
                             code: rank.code,
                             name: rank.name,
-                            image_url: rank.progress?.bsa_ranks?.image_url || null,
+                            image_url: rank.image_url,
                           }}
                           size={rank.state === 'in_progress' ? 'lg' : 'md'}
                         />

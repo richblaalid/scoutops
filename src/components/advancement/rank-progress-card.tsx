@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { RankIcon } from './rank-icon'
-import { RequirementApprovalRow } from './requirement-approval-row'
+import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
 import { BulkApprovalSheet } from './bulk-approval-sheet'
 import type { AdvancementStatus } from '@/types/advancement'
 
@@ -203,29 +203,22 @@ export function RankProgressCard({ rank, scoutId, unitId, canEdit }: RankProgres
             )}
 
             {/* Requirements List */}
-            <div className="divide-y divide-stone-100 px-2 py-2">
-              {sortedRequirements.length > 0 ? (
-                sortedRequirements.map((req) => (
-                  <RequirementApprovalRow
-                    key={req.id}
-                    id={req.bsa_rank_requirements.id}
-                    requirementProgressId={req.id}
-                    requirementNumber={req.bsa_rank_requirements.requirement_number}
-                    description={req.bsa_rank_requirements.description}
-                    status={req.status as AdvancementStatus}
-                    completedAt={req.completed_at}
-                    completedBy={req.completed_by}
-                    notes={req.notes}
-                    approvalStatus={req.approval_status}
-                    unitId={unitId}
-                    canEdit={canEdit}
-                  />
-                ))
-              ) : (
-                <p className="py-4 text-center text-sm text-stone-500">
-                  No requirements loaded
-                </p>
-              )}
+            <div className="px-2 py-2">
+              <HierarchicalRequirementsList
+                requirements={sortedRequirements.map(req => ({
+                  id: req.bsa_rank_requirements.id,
+                  requirementProgressId: req.id,
+                  requirementNumber: req.bsa_rank_requirements.requirement_number,
+                  description: req.bsa_rank_requirements.description,
+                  status: req.status as AdvancementStatus,
+                  completedAt: req.completed_at,
+                  completedBy: req.completed_by,
+                  notes: req.notes,
+                  approvalStatus: req.approval_status,
+                }))}
+                unitId={unitId}
+                canEdit={canEdit}
+              />
             </div>
 
             {/* Footer Actions */}

@@ -11,7 +11,6 @@ import { LeadershipTimeline } from './leadership-timeline'
 import { ActivityStats } from './activity-stats'
 import { RankTrailVisualization } from './rank-trail-visualization'
 import { WhatsNextCard } from './whats-next-card'
-import { isFeatureEnabled, FeatureFlag } from '@/lib/feature-flags'
 import {
   Award,
   Medal,
@@ -133,11 +132,6 @@ export function ScoutAdvancementSection({
   canEdit,
 }: ScoutAdvancementSectionProps) {
   const [activeTab, setActiveTab] = useState('rank')
-
-  // Check if feature is enabled
-  if (!isFeatureEnabled(FeatureFlag.ADVANCEMENT_TRACKING)) {
-    return null
-  }
 
   // Calculate progress statistics
   const inProgressBadges = meritBadgeProgress.filter((b) => b.status === 'in_progress')
