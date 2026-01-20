@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       accounts: {
@@ -346,6 +321,272 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bsa_leadership_positions: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_patrol_level: boolean | null
+          is_troop_level: boolean | null
+          min_tenure_months: number | null
+          name: string
+          qualifies_for_eagle: boolean | null
+          qualifies_for_life: boolean | null
+          qualifies_for_star: boolean | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_patrol_level?: boolean | null
+          is_troop_level?: boolean | null
+          min_tenure_months?: number | null
+          name: string
+          qualifies_for_eagle?: boolean | null
+          qualifies_for_life?: boolean | null
+          qualifies_for_star?: boolean | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_patrol_level?: boolean | null
+          is_troop_level?: boolean | null
+          min_tenure_months?: number | null
+          name?: string
+          qualifies_for_eagle?: boolean | null
+          qualifies_for_life?: boolean | null
+          qualifies_for_star?: boolean | null
+        }
+        Relationships: []
+      }
+      bsa_merit_badge_requirements: {
+        Row: {
+          created_at: string | null
+          description: string
+          display_order: number
+          id: string
+          merit_badge_id: string
+          parent_requirement_id: string | null
+          requirement_number: string
+          sub_requirement_letter: string | null
+          version_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          display_order: number
+          id?: string
+          merit_badge_id: string
+          parent_requirement_id?: string | null
+          requirement_number: string
+          sub_requirement_letter?: string | null
+          version_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          display_order?: number
+          id?: string
+          merit_badge_id?: string
+          parent_requirement_id?: string | null
+          requirement_number?: string
+          sub_requirement_letter?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bsa_merit_badge_requirements_merit_badge_id_fkey"
+            columns: ["merit_badge_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_merit_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bsa_merit_badge_requirements_parent_requirement_id_fkey"
+            columns: ["parent_requirement_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_merit_badge_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bsa_merit_badge_requirements_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_requirement_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bsa_merit_badges: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_eagle_required: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_eagle_required?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_eagle_required?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      bsa_rank_requirements: {
+        Row: {
+          alternatives_group: string | null
+          created_at: string | null
+          description: string
+          display_order: number
+          id: string
+          is_alternative: boolean | null
+          parent_requirement_id: string | null
+          rank_id: string
+          requirement_number: string
+          sub_requirement_letter: string | null
+          version_id: string
+        }
+        Insert: {
+          alternatives_group?: string | null
+          created_at?: string | null
+          description: string
+          display_order: number
+          id?: string
+          is_alternative?: boolean | null
+          parent_requirement_id?: string | null
+          rank_id: string
+          requirement_number: string
+          sub_requirement_letter?: string | null
+          version_id: string
+        }
+        Update: {
+          alternatives_group?: string | null
+          created_at?: string | null
+          description?: string
+          display_order?: number
+          id?: string
+          is_alternative?: boolean | null
+          parent_requirement_id?: string | null
+          rank_id?: string
+          requirement_number?: string
+          sub_requirement_letter?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bsa_rank_requirements_parent_requirement_id_fkey"
+            columns: ["parent_requirement_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_rank_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bsa_rank_requirements_rank_id_fkey"
+            columns: ["rank_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_ranks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bsa_rank_requirements_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_requirement_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bsa_ranks: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_eagle_required: boolean | null
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          display_order: number
+          id?: string
+          is_eagle_required?: boolean | null
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_eagle_required?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      bsa_requirement_versions: {
+        Row: {
+          created_at: string | null
+          effective_date: string
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          sunset_date: string | null
+          updated_at: string | null
+          version_year: number
+        }
+        Insert: {
+          created_at?: string | null
+          effective_date: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          sunset_date?: string | null
+          updated_at?: string | null
+          version_year: number
+        }
+        Update: {
+          created_at?: string | null
+          effective_date?: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          sunset_date?: string | null
+          updated_at?: string | null
+          version_year?: number
+        }
+        Relationships: []
       }
       event_rsvps: {
         Row: {
@@ -783,6 +1024,61 @@ export type Database = {
           },
         ]
       }
+      merit_badge_counselors: {
+        Row: {
+          approved_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          merit_badge_id: string
+          notes: string | null
+          profile_id: string
+          unit_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          merit_badge_id: string
+          notes?: string | null
+          profile_id: string
+          unit_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          merit_badge_id?: string
+          notes?: string | null
+          profile_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merit_badge_counselors_merit_badge_id_fkey"
+            columns: ["merit_badge_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_merit_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merit_badge_counselors_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merit_badge_counselors_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patrols: {
         Row: {
           created_at: string | null
@@ -1143,6 +1439,83 @@ export type Database = {
           },
         ]
       }
+      scout_activity_entries: {
+        Row: {
+          activity_date: string
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at: string | null
+          description: string | null
+          event_id: string | null
+          id: string
+          location: string | null
+          scout_id: string
+          sync_session_id: string | null
+          synced_at: string | null
+          value: number
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          activity_date: string
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          location?: string | null
+          scout_id: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+          value: number
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          activity_date?: string
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          location?: string | null
+          scout_id?: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+          value?: number
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_activity_entries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_activity_entries_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_activity_entries_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_activity_entries_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scout_activity_logs: {
         Row: {
           camping_nights: number | null
@@ -1284,6 +1657,77 @@ export type Database = {
           },
         ]
       }
+      scout_leadership_history: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          notes: string | null
+          position_id: string
+          scout_id: string
+          start_date: string
+          sync_session_id: string | null
+          synced_at: string | null
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          position_id: string
+          scout_id: string
+          start_date: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          position_id?: string
+          scout_id?: string
+          start_date?: string
+          sync_session_id?: string | null
+          synced_at?: string | null
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_leadership_history_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_leadership_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_leadership_history_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_leadership_history_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_leadership_history_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scout_leadership_positions: {
         Row: {
           date_range: string | null
@@ -1328,6 +1772,376 @@ export type Database = {
           },
           {
             foreignKeyName: "scout_leadership_positions_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_merit_badge_progress: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          awarded_at: string | null
+          completed_at: string | null
+          counselor_bsa_id: string | null
+          counselor_name: string | null
+          counselor_profile_id: string | null
+          counselor_signed_at: string | null
+          created_at: string | null
+          id: string
+          merit_badge_id: string
+          scout_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["advancement_status"]
+          sync_session_id: string | null
+          synced_at: string | null
+          updated_at: string | null
+          version_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_at?: string | null
+          completed_at?: string | null
+          counselor_bsa_id?: string | null
+          counselor_name?: string | null
+          counselor_profile_id?: string | null
+          counselor_signed_at?: string | null
+          created_at?: string | null
+          id?: string
+          merit_badge_id: string
+          scout_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["advancement_status"]
+          sync_session_id?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+          version_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_at?: string | null
+          completed_at?: string | null
+          counselor_bsa_id?: string | null
+          counselor_name?: string | null
+          counselor_profile_id?: string | null
+          counselor_signed_at?: string | null
+          created_at?: string | null
+          id?: string
+          merit_badge_id?: string
+          scout_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["advancement_status"]
+          sync_session_id?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_merit_badge_progress_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_merit_badge_progress_counselor_profile_id_fkey"
+            columns: ["counselor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_merit_badge_progress_merit_badge_id_fkey"
+            columns: ["merit_badge_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_merit_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_merit_badge_progress_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_merit_badge_progress_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_merit_badge_progress_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_requirement_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_merit_badge_requirement_progress: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          requirement_id: string
+          scout_merit_badge_progress_id: string
+          status: Database["public"]["Enums"]["advancement_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          requirement_id: string
+          scout_merit_badge_progress_id: string
+          status?: Database["public"]["Enums"]["advancement_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          requirement_id?: string
+          scout_merit_badge_progress_id?: string
+          status?: Database["public"]["Enums"]["advancement_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_merit_badge_requirement_progress_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_merit_badge_requirement_progress_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_merit_badge_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_merit_badge_requirement_scout_merit_badge_progress_i_fkey"
+            columns: ["scout_merit_badge_progress_id"]
+            isOneToOne: false
+            referencedRelation: "scout_merit_badge_progress"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_rank_progress: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          awarded_at: string | null
+          awarded_by: string | null
+          completed_at: string | null
+          created_at: string | null
+          external_status: string | null
+          id: string
+          rank_id: string
+          scout_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["advancement_status"]
+          sync_session_id: string | null
+          synced_at: string | null
+          updated_at: string | null
+          version_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_at?: string | null
+          awarded_by?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          external_status?: string | null
+          id?: string
+          rank_id: string
+          scout_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["advancement_status"]
+          sync_session_id?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+          version_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_at?: string | null
+          awarded_by?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          external_status?: string | null
+          id?: string
+          rank_id?: string
+          scout_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["advancement_status"]
+          sync_session_id?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_rank_progress_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_progress_awarded_by_fkey"
+            columns: ["awarded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_progress_rank_id_fkey"
+            columns: ["rank_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_ranks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_progress_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_progress_sync_session_id_fkey"
+            columns: ["sync_session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_progress_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_requirement_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_rank_requirement_progress: {
+        Row: {
+          approval_status: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          denial_reason: string | null
+          id: string
+          notes: string | null
+          requirement_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scout_rank_progress_id: string
+          status: Database["public"]["Enums"]["advancement_status"]
+          submission_notes: string | null
+          submitted_at: string | null
+          submitted_by: string | null
+          sync_session_id: string | null
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          approval_status?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          denial_reason?: string | null
+          id?: string
+          notes?: string | null
+          requirement_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scout_rank_progress_id: string
+          status?: Database["public"]["Enums"]["advancement_status"]
+          submission_notes?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          sync_session_id?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          approval_status?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          denial_reason?: string | null
+          id?: string
+          notes?: string | null
+          requirement_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scout_rank_progress_id?: string
+          status?: Database["public"]["Enums"]["advancement_status"]
+          submission_notes?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          sync_session_id?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_rank_requirement_progress_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_requirement_progress_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_rank_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_requirement_progress_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_requirement_progress_scout_rank_progress_id_fkey"
+            columns: ["scout_rank_progress_id"]
+            isOneToOne: false
+            referencedRelation: "scout_rank_progress"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_requirement_progress_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_rank_requirement_progress_sync_session_id_fkey"
             columns: ["sync_session_id"]
             isOneToOne: false
             referencedRelation: "sync_sessions"
@@ -1723,6 +2537,66 @@ export type Database = {
           },
         ]
       }
+      sync_staged_advancement: {
+        Row: {
+          change_type: string
+          changes: Json | null
+          conflict_details: string | null
+          conflict_detected: boolean | null
+          created_at: string | null
+          data_type: string
+          existing_record_id: string | null
+          id: string
+          is_selected: boolean | null
+          scout_id: string
+          session_id: string
+          staged_data: Json
+        }
+        Insert: {
+          change_type: string
+          changes?: Json | null
+          conflict_details?: string | null
+          conflict_detected?: boolean | null
+          created_at?: string | null
+          data_type: string
+          existing_record_id?: string | null
+          id?: string
+          is_selected?: boolean | null
+          scout_id: string
+          session_id: string
+          staged_data: Json
+        }
+        Update: {
+          change_type?: string
+          changes?: Json | null
+          conflict_details?: string | null
+          conflict_detected?: boolean | null
+          created_at?: string | null
+          data_type?: string
+          existing_record_id?: string | null
+          id?: string
+          is_selected?: boolean | null
+          scout_id?: string
+          session_id?: string
+          staged_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_staged_advancement_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_staged_advancement_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sync_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sync_staged_members: {
         Row: {
           age: string | null
@@ -1853,6 +2727,7 @@ export type Database = {
           invite_expires_at: string | null
           invited_at: string | null
           invited_by: string | null
+          is_merit_badge_counselor: boolean | null
           joined_at: string | null
           linked_scout_id: string | null
           profile_id: string | null
@@ -1870,6 +2745,7 @@ export type Database = {
           invite_expires_at?: string | null
           invited_at?: string | null
           invited_by?: string | null
+          is_merit_badge_counselor?: boolean | null
           joined_at?: string | null
           linked_scout_id?: string | null
           profile_id?: string | null
@@ -1887,6 +2763,7 @@ export type Database = {
           invite_expires_at?: string | null
           invited_at?: string | null
           invited_by?: string | null
+          is_merit_badge_counselor?: boolean | null
           joined_at?: string | null
           linked_scout_id?: string | null
           profile_id?: string | null
@@ -2172,6 +3049,14 @@ export type Database = {
         Args: { p_amount: number; p_scout_account_id: string }
         Returns: undefined
       }
+      calculate_days_served: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: number
+      }
+      calculate_rank_progress_percentage: {
+        Args: { p_scout_rank_progress_id: string }
+        Returns: number
+      }
       cleanup_expired_provisioning_tokens: { Args: never; Returns: undefined }
       create_billing_with_journal: {
         Args: {
@@ -2220,11 +3105,20 @@ export type Database = {
         }
         Returns: Json
       }
+      get_active_requirement_version: { Args: never; Returns: string }
       get_auth_user_email: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
       get_parent_unit: { Args: { p_unit_id: string }; Returns: string }
       get_unit_sections: { Args: { p_unit_id: string }; Returns: string[] }
       get_user_active_unit_ids: { Args: never; Returns: string[] }
+      initialize_scout_rank_progress: {
+        Args: { p_rank_id: string; p_scout_id: string; p_version_id?: string }
+        Returns: string
+      }
+      is_leadership_position_current: {
+        Args: { p_end_date: string }
+        Returns: boolean
+      }
       process_payment_link_payment: {
         Args: {
           p_base_amount_cents: number
@@ -2283,6 +3177,14 @@ export type Database = {
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "income" | "expense"
+      activity_type: "camping" | "hiking" | "service" | "conservation"
+      advancement_status:
+        | "not_started"
+        | "in_progress"
+        | "completed"
+        | "pending_approval"
+        | "approved"
+        | "awarded"
       gender: "male" | "female" | "other" | "prefer_not_to_say"
       journal_entry_type:
         | "billing"
@@ -2426,12 +3328,18 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       account_type: ["asset", "liability", "equity", "income", "expense"],
+      activity_type: ["camping", "hiking", "service", "conservation"],
+      advancement_status: [
+        "not_started",
+        "in_progress",
+        "completed",
+        "pending_approval",
+        "approved",
+        "awarded",
+      ],
       gender: ["male", "female", "other", "prefer_not_to_say"],
       journal_entry_type: [
         "billing",
