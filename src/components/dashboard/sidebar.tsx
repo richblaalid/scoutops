@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Settings, LogOut, Plug, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { Settings, LogOut, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getVisibleNavItems, isAdmin, isFinancialRole } from '@/lib/roles'
+import { getVisibleNavItems, isFinancialRole } from '@/lib/roles'
 import { Logo } from '@/components/ui/logo'
 import { UnitLogo } from './unit-logo'
 import { useUnit } from '@/components/providers/unit-context'
@@ -80,8 +80,7 @@ export function Sidebar({ user, userName, className }: SidebarProps) {
   const initials = getInitials(user.email || '', userName)
   const userRole = currentRole || 'parent'
 
-  const showUnitSettings = isAdmin(userRole)
-  const showIntegrations = isFinancialRole(userRole)
+  const showSettings = isFinancialRole(userRole)
 
   return (
     <TooltipProvider>
@@ -145,59 +144,39 @@ export function Sidebar({ user, userName, className }: SidebarProps) {
         </nav>
 
         {/* Admin/Treasurer Settings Section */}
-        {(showUnitSettings || showIntegrations) && (
+        {showSettings && (
           <div className="border-t border-sidebar-border px-2 py-3">
             <ul className="space-y-1">
-              {showUnitSettings && (
-                <li>
-                  <NavTooltip label="Unit Settings" isCollapsed={isCollapsed}>
-                    <Link
-                      href="/settings/unit"
-                      className={cn(
-                        "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        isCollapsed ? "justify-center" : "gap-3",
-                        pathname === '/settings/unit'
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                      )}
-                    >
-                      <Settings className="h-4 w-4 shrink-0" />
-                      {!isCollapsed && "Unit Settings"}
-                    </Link>
-                  </NavTooltip>
-                </li>
-              )}
-              {showIntegrations && (
-                <li>
-                  <NavTooltip label="Integrations" isCollapsed={isCollapsed}>
-                    <Link
-                      href="/settings/integrations"
-                      className={cn(
-                        "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        isCollapsed ? "justify-center" : "gap-3",
-                        pathname === '/settings/integrations'
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                      )}
-                    >
-                      <Plug className="h-4 w-4 shrink-0" />
-                      {!isCollapsed && "Integrations"}
-                    </Link>
-                  </NavTooltip>
-                </li>
-              )}
+              <li>
+                <NavTooltip label="Settings" isCollapsed={isCollapsed}>
+                  <Link
+                    href="/settings"
+                    className={cn(
+                      "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      isCollapsed ? "justify-center" : "gap-3",
+                      pathname === '/settings' || pathname.startsWith('/settings/')
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    )}
+                  >
+                    <Settings className="h-4 w-4 shrink-0" />
+                    {!isCollapsed && "Settings"}
+                  </Link>
+                </NavTooltip>
+              </li>
             </ul>
           </div>
         )}
 
-        {/* User Section - avatar links to profile settings */}
+        {/* User Section - avatar links to profile */}
         <div className="border-t border-sidebar-border px-2 py-3">
           <NavTooltip label="Profile" isCollapsed={isCollapsed}>
             <Link
-              href="/settings"
+              href="/profile"
               className={cn(
                 "flex items-center rounded-md px-3 py-2 transition-colors hover:bg-sidebar-accent/50",
-                isCollapsed ? "justify-center" : "gap-3"
+                isCollapsed ? "justify-center" : "gap-3",
+                pathname === '/profile' && "bg-sidebar-accent/50"
               )}
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">

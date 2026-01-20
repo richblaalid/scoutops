@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { User, Settings, Plug, LogOut } from 'lucide-react'
+import { User, Settings, LogOut } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { isAdmin, isFinancialRole } from '@/lib/roles'
+import { isFinancialRole } from '@/lib/roles'
 
 interface UserMenuProps {
   email: string
@@ -45,24 +45,16 @@ export function UserMenu({ email, name, role }: UserMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuItem asChild>
-          <Link href="/settings" className="cursor-pointer flex items-center gap-2">
+          <Link href="/profile" className="cursor-pointer flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
           </Link>
         </DropdownMenuItem>
-        {isAdmin(userRole) && (
-          <DropdownMenuItem asChild>
-            <Link href="/settings/unit" className="cursor-pointer flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Unit Settings
-            </Link>
-          </DropdownMenuItem>
-        )}
         {isFinancialRole(userRole) && (
           <DropdownMenuItem asChild>
-            <Link href="/settings/integrations" className="cursor-pointer flex items-center gap-2">
-              <Plug className="h-4 w-4" />
-              Integrations
+            <Link href="/settings" className="cursor-pointer flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
             </Link>
           </DropdownMenuItem>
         )}

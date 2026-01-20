@@ -78,7 +78,7 @@ export default function ImportPage() {
   }
 
   const handleDone = () => {
-    router.push('/settings')
+    router.push('/settings?tab=data')
     router.refresh()
   }
 
@@ -93,7 +93,7 @@ export default function ImportPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/settings">
+        <Link href="/settings?tab=data">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Settings
