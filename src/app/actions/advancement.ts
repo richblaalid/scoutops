@@ -244,6 +244,136 @@ export async function bulkMarkRequirementsComplete(
 }
 
 /**
+ * Bulk approve requirements for a single scout (for quick bulk approval on scout profile)
+ * Takes an array of requirement progress IDs and approves them all with the same date/notes
+ */
+export async function bulkApproveRequirements(
+  requirementProgressIds: string[],
+  unitId: string,
+  completedAt?: string,
+  notes?: string
+): Promise<ActionResult<{ successCount: number; failedCount: number }>> {
+  const featureCheck = checkFeatureEnabled<{ successCount: number; failedCount: number }>()
+  if (featureCheck) return featureCheck
+
+  if (requirementProgressIds.length === 0) {
+    return { success: true, data: { successCount: 0, failedCount: 0 } }
+  }
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+  const timestamp = completedAt || new Date().toISOString()
+
+  // Use a single update query for efficiency
+  const { data, error } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .update({
+      status: 'completed',
+      completed_at: timestamp,
+      completed_by: auth.profileId,
+      notes: notes || null,
+      updated_at: new Date().toISOString(),
+    })
+    .in('id', requirementProgressIds)
+    .not('status', 'in', '("approved","awarded")')
+    .select('id')
+
+  if (error) {
+    console.error('Error bulk approving requirements:', error)
+    return { success: false, error: 'Failed to approve requirements' }
+  }
+
+  const successCount = data?.length || 0
+  const failedCount = requirementProgressIds.length - successCount
+
+  revalidatePath('/advancement')
+  return { success: true, data: { successCount, failedCount } }
+}
+
+/**
+ * Add or update notes on a requirement without changing its status
+ */
+export async function updateRequirementNotes(
+  requirementProgressId: string,
+  unitId: string,
+  notes: string
+): Promise<ActionResult> {
+  const featureCheck = checkFeatureEnabled<void>()
+  if (featureCheck) return featureCheck
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+
+  const { error } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .update({
+      notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', requirementProgressId)
+
+  if (error) {
+    console.error('Error updating requirement notes:', error)
+    return { success: false, error: 'Failed to update notes' }
+  }
+
+  revalidatePath('/advancement')
+  return { success: true }
+}
+
+/**
+ * Bulk approve merit badge requirements for a single scout
+ */
+export async function bulkApproveMeritBadgeRequirements(
+  requirementProgressIds: string[],
+  unitId: string,
+  completedAt?: string,
+  notes?: string
+): Promise<ActionResult<{ successCount: number; failedCount: number }>> {
+  const featureCheck = checkFeatureEnabled<{ successCount: number; failedCount: number }>()
+  if (featureCheck) return featureCheck
+
+  if (requirementProgressIds.length === 0) {
+    return { success: true, data: { successCount: 0, failedCount: 0 } }
+  }
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+  const timestamp = completedAt || new Date().toISOString()
+
+  // Use a single update query for efficiency
+  const { data, error } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .update({
+      status: 'completed',
+      completed_at: timestamp,
+      completed_by: auth.profileId,
+      notes: notes || null,
+      updated_at: new Date().toISOString(),
+    })
+    .in('id', requirementProgressIds)
+    .not('status', 'in', '("approved")')
+    .select('id')
+
+  if (error) {
+    console.error('Error bulk approving MB requirements:', error)
+    return { success: false, error: 'Failed to approve requirements' }
+  }
+
+  const successCount = data?.length || 0
+  const failedCount = requirementProgressIds.length - successCount
+
+  revalidatePath('/advancement')
+  return { success: true, data: { successCount, failedCount } }
+}
+
+/**
  * Submit requirement completion for leader approval (parent action)
  */
 export async function submitRequirementForApproval(

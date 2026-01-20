@@ -178,21 +178,21 @@ describe('roles', () => {
     it('should return all nav items for admin', () => {
       const items = getVisibleNavItems('admin')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts', 'billing', 'payments', 'reports', 'members'
+        'dashboard', 'scouts', 'accounts', 'billing', 'payments', 'advancement', 'reports', 'members'
       ])
     })
 
     it('should return correct items for treasurer', () => {
       const items = getVisibleNavItems('treasurer')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts', 'billing', 'payments', 'reports'
+        'dashboard', 'scouts', 'accounts', 'billing', 'payments', 'advancement', 'reports'
       ])
     })
 
     it('should return correct items for leader', () => {
       const items = getVisibleNavItems('leader')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts', 'reports'
+        'dashboard', 'scouts', 'accounts', 'advancement', 'reports'
       ])
     })
 

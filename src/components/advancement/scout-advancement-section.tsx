@@ -4,22 +4,26 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { RankProgressCard } from './rank-progress-card'
 import { MeritBadgeCard } from './merit-badge-card'
 import { LeadershipTimeline } from './leadership-timeline'
 import { ActivityStats } from './activity-stats'
+import { RankTrailVisualization } from './rank-trail-visualization'
+import { WhatsNextCard } from './whats-next-card'
 import { isFeatureEnabled, FeatureFlag } from '@/lib/feature-flags'
 import {
   Award,
-  Star,
-  Clock,
+  Medal,
+  Users,
+  Activity,
   TentTree,
   Footprints,
   Heart,
   TreePine,
+  Plus,
 } from 'lucide-react'
+import type { RankProgress as RankProgressType, MeritBadgeProgress as MeritBadgeProgressType } from '@/types/advancement'
 
 interface RankProgress {
   id: string
@@ -33,11 +37,14 @@ interface RankProgress {
     code: string
     name: string
     display_order: number
+    image_url?: string | null
   }
   scout_rank_requirement_progress: Array<{
     id: string
     status: string
     completed_at: string | null
+    completed_by: string | null
+    notes: string | null
     approval_status: string | null
     bsa_rank_requirements: {
       id: string
@@ -133,223 +140,263 @@ export function ScoutAdvancementSection({
   }
 
   // Calculate progress statistics
-  const inProgressRanks = rankProgress.filter(
-    (r) => r.status === 'in_progress' || r.status === 'completed'
-  )
-  const currentRankProgress = inProgressRanks[0]
-  const completedRequirements = currentRankProgress?.scout_rank_requirement_progress.filter(
-    (r) => r.status === 'completed' || r.status === 'approved' || r.status === 'awarded'
-  ).length ?? 0
-  const totalRequirements = currentRankProgress?.scout_rank_requirement_progress.length ?? 0
-  const progressPercent = totalRequirements > 0 ? Math.round((completedRequirements / totalRequirements) * 100) : 0
-
   const inProgressBadges = meritBadgeProgress.filter((b) => b.status === 'in_progress')
   const earnedBadges = meritBadgeProgress.filter((b) => b.status === 'awarded')
   const eagleRequiredEarned = earnedBadges.filter((b) => b.bsa_merit_badges.is_eagle_required === true)
-
   const currentLeadership = leadershipHistory.filter((l) => !l.end_date)
 
+  // Type cast for the new components
+  const typedRankProgress = rankProgress as unknown as RankProgressType[]
+
+  const handleViewRank = (rankId: string) => {
+    setActiveTab('rank')
+    // Could scroll to specific rank card in the future
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-forest-600" />
-              Advancement
-            </CardTitle>
-            <CardDescription>Track rank progress, merit badges, and activities</CardDescription>
-          </div>
-          {currentRank && (
-            <Badge variant="secondary" className="text-sm">
-              Current Rank: {currentRank}
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Summary Stats */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-4">
-          <div className="rounded-lg border bg-stone-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-stone-600">
-              <Star className="h-4 w-4" />
-              Next Rank
+    <div className="space-y-6">
+      {/* Rank Trail Visualization - Full Width */}
+      <RankTrailVisualization
+        rankProgress={typedRankProgress}
+        currentRank={currentRank}
+      />
+
+      {/* What's Next Card */}
+      <WhatsNextCard
+        rankProgress={typedRankProgress}
+        scoutId={scoutId}
+        unitId={unitId}
+        canEdit={canEdit}
+        onViewRank={handleViewRank}
+      />
+
+      {/* Main Advancement Card with Tabs */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-forest-600" />
+                Advancement Details
+              </CardTitle>
+              <CardDescription>
+                Detailed progress for ranks, merit badges, and activities
+              </CardDescription>
             </div>
-            {currentRankProgress ? (
-              <div className="mt-2">
-                <p className="text-lg font-semibold">
-                  {currentRankProgress.bsa_ranks.name}
-                </p>
-                <Progress value={progressPercent} className="mt-2 h-2" />
-                <p className="mt-1 text-xs text-stone-500">
-                  {completedRequirements}/{totalRequirements} requirements ({progressPercent}%)
-                </p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Quick Stats Row */}
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-amber-50 to-orange-50 p-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                <Medal className="h-5 w-5 text-amber-600" />
               </div>
-            ) : (
-              <p className="mt-2 text-sm text-stone-500">No rank in progress</p>
-            )}
+              <div>
+                <p className="text-xl font-bold text-amber-900">{earnedBadges.length}</p>
+                <p className="text-xs text-amber-700">Merit Badges</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <Award className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-blue-900">{eagleRequiredEarned.length}/14</p>
+                <p className="text-xs text-blue-700">Eagle Required</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-emerald-50 to-green-50 p-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+                <Users className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-emerald-900">
+                  {currentLeadership.length > 0 ? currentLeadership[0].bsa_leadership_positions.name.split(' ')[0] : '—'}
+                </p>
+                <p className="text-xs text-emerald-700">Leadership</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-purple-50 to-violet-50 p-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+                <Activity className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="flex gap-2 text-xs">
+                <span className="flex items-center gap-0.5 text-purple-800">
+                  <TentTree className="h-3 w-3" />
+                  {activityTotals.camping}
+                </span>
+                <span className="flex items-center gap-0.5 text-purple-800">
+                  <Footprints className="h-3 w-3" />
+                  {activityTotals.hiking.toFixed(0)}
+                </span>
+                <span className="flex items-center gap-0.5 text-purple-800">
+                  <Heart className="h-3 w-3" />
+                  {activityTotals.service.toFixed(0)}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-lg border bg-stone-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-stone-600">
-              <Award className="h-4 w-4" />
-              Merit Badges
-            </div>
-            <div className="mt-2">
-              <p className="text-lg font-semibold">{earnedBadges.length} Earned</p>
-              <p className="text-xs text-stone-500">
-                {inProgressBadges.length} in progress
-              </p>
-              <p className="text-xs text-forest-600">
-                {eagleRequiredEarned.length}/14 Eagle required
-              </p>
-            </div>
-          </div>
+          {/* Tabbed Content */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="rank" className="gap-1.5">
+                <Award className="h-4 w-4 hidden sm:inline" />
+                Ranks
+              </TabsTrigger>
+              <TabsTrigger value="badges" className="gap-1.5">
+                <Medal className="h-4 w-4 hidden sm:inline" />
+                Badges
+              </TabsTrigger>
+              <TabsTrigger value="leadership" className="gap-1.5">
+                <Users className="h-4 w-4 hidden sm:inline" />
+                Leadership
+              </TabsTrigger>
+              <TabsTrigger value="activities" className="gap-1.5">
+                <Activity className="h-4 w-4 hidden sm:inline" />
+                Activities
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="rounded-lg border bg-stone-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-stone-600">
-              <Clock className="h-4 w-4" />
-              Leadership
-            </div>
-            <div className="mt-2">
-              {currentLeadership.length > 0 ? (
-                <>
-                  <p className="text-lg font-semibold">
-                    {currentLeadership[0].bsa_leadership_positions.name}
-                  </p>
-                  <p className="text-xs text-stone-500">
-                    Since {new Date(currentLeadership[0].start_date).toLocaleDateString()}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-stone-500">No current position</p>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-stone-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-stone-600">
-              <TentTree className="h-4 w-4" />
-              Activity Totals
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-1 text-xs">
-              <span className="flex items-center gap-1">
-                <TentTree className="h-3 w-3" /> {activityTotals.camping} nights
-              </span>
-              <span className="flex items-center gap-1">
-                <Footprints className="h-3 w-3" /> {activityTotals.hiking.toFixed(1)} mi
-              </span>
-              <span className="flex items-center gap-1">
-                <Heart className="h-3 w-3" /> {activityTotals.service.toFixed(1)} hrs
-              </span>
-              <span className="flex items-center gap-1">
-                <TreePine className="h-3 w-3" /> {activityTotals.conservation.toFixed(1)} hrs
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabbed Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="rank">Rank Progress</TabsTrigger>
-            <TabsTrigger value="badges">Merit Badges</TabsTrigger>
-            <TabsTrigger value="leadership">Leadership</TabsTrigger>
-            <TabsTrigger value="activities">Activities</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="rank" className="mt-4">
-            <div className="space-y-4">
-              {rankProgress.length > 0 ? (
-                rankProgress.map((rank) => (
-                  <RankProgressCard
-                    key={rank.id}
-                    rank={rank}
-                    scoutId={scoutId}
-                    unitId={unitId}
-                    canEdit={canEdit}
-                  />
-                ))
-              ) : (
-                <div className="rounded-lg border border-dashed p-8 text-center">
-                  <p className="text-stone-500">No rank progress yet</p>
-                  {canEdit && (
-                    <Button variant="outline" className="mt-4" size="sm">
-                      Start First Rank
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="badges" className="mt-4">
-            <div className="space-y-4">
-              {inProgressBadges.length > 0 && (
-                <div>
-                  <h4 className="mb-3 font-medium text-stone-900">In Progress</h4>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {inProgressBadges.map((badge) => (
-                      <MeritBadgeCard
-                        key={badge.id}
-                        badge={badge}
-                        scoutId={scoutId}
-                        unitId={unitId}
-                        canEdit={canEdit}
-                      />
-                    ))}
+            <TabsContent value="rank" className="mt-4">
+              <div className="space-y-4">
+                {rankProgress.length > 0 ? (
+                  rankProgress.map((rank) => (
+                    <RankProgressCard
+                      key={rank.id}
+                      rank={rank}
+                      scoutId={scoutId}
+                      unitId={unitId}
+                      canEdit={canEdit}
+                    />
+                  ))
+                ) : (
+                  <div className="rounded-lg border border-dashed p-8 text-center">
+                    <p className="text-stone-500">No rank progress yet</p>
+                    {canEdit && (
+                      <Button variant="outline" className="mt-4" size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Start First Rank
+                      </Button>
+                    )}
                   </div>
-                </div>
-              )}
-              {earnedBadges.length > 0 && (
-                <div>
-                  <h4 className="mb-3 font-medium text-stone-900">Earned ({earnedBadges.length})</h4>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {earnedBadges.map((badge) => (
-                      <MeritBadgeCard
-                        key={badge.id}
-                        badge={badge}
-                        scoutId={scoutId}
-                        unitId={unitId}
-                        canEdit={false}
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="badges" className="mt-4">
+              <div className="space-y-6">
+                {/* Eagle Required Progress */}
+                {eagleRequiredEarned.length > 0 || inProgressBadges.some(b => b.bsa_merit_badges.is_eagle_required) ? (
+                  <div className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h4 className="flex items-center gap-2 font-semibold text-amber-900">
+                        <Award className="h-4 w-4" />
+                        Eagle Required Progress
+                      </h4>
+                      <Badge className="bg-amber-100 text-amber-800">
+                        {eagleRequiredEarned.length}/14
+                      </Badge>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-amber-200">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-500"
+                        style={{ width: `${(eagleRequiredEarned.length / 14) * 100}%` }}
                       />
-                    ))}
+                    </div>
+                    <p className="mt-2 text-xs text-amber-700">
+                      {14 - eagleRequiredEarned.length} Eagle-required badges remaining
+                    </p>
                   </div>
-                </div>
-              )}
-              {meritBadgeProgress.length === 0 && (
-                <div className="rounded-lg border border-dashed p-8 text-center">
-                  <p className="text-stone-500">No merit badges tracked yet</p>
-                  {canEdit && (
-                    <Button variant="outline" className="mt-4" size="sm">
-                      Start Merit Badge
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          </TabsContent>
+                ) : null}
 
-          <TabsContent value="leadership" className="mt-4">
-            <LeadershipTimeline
-              history={leadershipHistory}
-              scoutId={scoutId}
-              unitId={unitId}
-              canEdit={canEdit}
-            />
-          </TabsContent>
+                {/* In Progress Badges */}
+                {inProgressBadges.length > 0 && (
+                  <div>
+                    <div className="mb-3 flex items-center justify-between">
+                      <h4 className="font-medium text-stone-900">In Progress ({inProgressBadges.length})</h4>
+                      {canEdit && (
+                        <Button variant="outline" size="sm">
+                          <Plus className="mr-1 h-4 w-4" />
+                          Start Badge
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {inProgressBadges.map((badge) => (
+                        <MeritBadgeCard
+                          key={badge.id}
+                          badge={badge}
+                          scoutId={scoutId}
+                          unitId={unitId}
+                          canEdit={canEdit}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-          <TabsContent value="activities" className="mt-4">
-            <ActivityStats
-              entries={activityEntries}
-              totals={activityTotals}
-              scoutId={scoutId}
-              unitId={unitId}
-              canEdit={canEdit}
-            />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+                {/* Earned Badges */}
+                {earnedBadges.length > 0 && (
+                  <div>
+                    <h4 className="mb-3 font-medium text-stone-900">
+                      Earned ({earnedBadges.length})
+                    </h4>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {earnedBadges.map((badge) => (
+                        <MeritBadgeCard
+                          key={badge.id}
+                          badge={badge}
+                          scoutId={scoutId}
+                          unitId={unitId}
+                          canEdit={false}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {meritBadgeProgress.length === 0 && (
+                  <div className="rounded-lg border border-dashed p-8 text-center">
+                    <Medal className="mx-auto h-12 w-12 text-stone-300" />
+                    <p className="mt-2 text-stone-500">No merit badges tracked yet</p>
+                    {canEdit && (
+                      <Button variant="outline" className="mt-4" size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Start Merit Badge
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="leadership" className="mt-4">
+              <LeadershipTimeline
+                history={leadershipHistory}
+                scoutId={scoutId}
+                unitId={unitId}
+                canEdit={canEdit}
+              />
+            </TabsContent>
+
+            <TabsContent value="activities" className="mt-4">
+              <ActivityStats
+                entries={activityEntries}
+                totals={activityTotals}
+                scoutId={scoutId}
+                unitId={unitId}
+                canEdit={canEdit}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
