@@ -1,26 +1,34 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { RankIcon } from './rank-icon'
-import { Check, MapPin, Flag } from 'lucide-react'
-import type { RankProgress, AdvancementStatus, BsaRank } from '@/types/advancement'
+import { Check, MapPin, Compass, ChevronRight, Sparkles } from 'lucide-react'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
+import type { RankProgress } from '@/types/advancement'
 
 interface RankTrailVisualizationProps {
   rankProgress: RankProgress[]
   currentRank: string | null
   className?: string
+  onRankClick?: (rankCode: string) => void
+  selectedRank?: string | null
+  compact?: boolean
 }
 
 // All BSA ranks in order for the trail with image URLs
-const ALL_RANKS: Array<{ code: string; name: string; display_order: number; image_url: string }> = [
-  { code: 'scout', name: 'Scout', display_order: 1, image_url: '/images/ranks/scout100.png' },
-  { code: 'tenderfoot', name: 'Tenderfoot', display_order: 2, image_url: '/images/ranks/tenderfoot100.png' },
-  { code: 'second_class', name: 'Second Class', display_order: 3, image_url: '/images/ranks/secondclass100.png' },
-  { code: 'first_class', name: 'First Class', display_order: 4, image_url: '/images/ranks/firstclass100.png' },
-  { code: 'star', name: 'Star', display_order: 5, image_url: '/images/ranks/star100.png' },
-  { code: 'life', name: 'Life', display_order: 6, image_url: '/images/ranks/life100.png' },
-  { code: 'eagle', name: 'Eagle', display_order: 7, image_url: '/images/ranks/eagle.png' },
+const ALL_RANKS: Array<{ code: string; name: string; shortName: string; display_order: number; image_url: string }> = [
+  { code: 'scout', name: 'Scout', shortName: 'Scout', display_order: 1, image_url: '/images/ranks/scout100.png' },
+  { code: 'tenderfoot', name: 'Tenderfoot', shortName: 'Tenderfoot', display_order: 2, image_url: '/images/ranks/tenderfoot100.png' },
+  { code: 'second_class', name: 'Second Class', shortName: '2nd Class', display_order: 3, image_url: '/images/ranks/secondclass100.png' },
+  { code: 'first_class', name: 'First Class', shortName: '1st Class', display_order: 4, image_url: '/images/ranks/firstclass100.png' },
+  { code: 'star', name: 'Star', shortName: 'Star', display_order: 5, image_url: '/images/ranks/star100.png' },
+  { code: 'life', name: 'Life', shortName: 'Life', display_order: 6, image_url: '/images/ranks/life100.png' },
+  { code: 'eagle', name: 'Eagle', shortName: 'Eagle', display_order: 7, image_url: '/images/ranks/eagle.png' },
 ]
 
 type RankState = 'awarded' | 'in_progress' | 'future'
@@ -72,80 +80,271 @@ function calculateProgress(progress?: RankProgress): number {
   return Math.round((completed / total) * 100)
 }
 
+// Generate contextual suggestions based on current progress
+function getGuideSuggestions(
+  ranksWithState: Array<{ code: string; name: string; state: RankState; progressPercent: number; progress?: RankProgress }>
+): Array<{ type: 'focus' | 'tip' | 'milestone'; text: string; detail?: string }> {
+  const suggestions: Array<{ type: 'focus' | 'tip' | 'milestone'; text: string; detail?: string }> = []
+
+  const inProgress = ranksWithState.find(r => r.state === 'in_progress')
+  const awarded = ranksWithState.filter(r => r.state === 'awarded')
+  const nextFuture = ranksWithState.find(r => r.state === 'future')
+
+  if (inProgress) {
+    const remaining = 100 - inProgress.progressPercent
+    suggestions.push({
+      type: 'focus',
+      text: `Continue working on ${inProgress.name}`,
+      detail: `${inProgress.progressPercent}% complete — ${remaining}% to go!`
+    })
+
+    if (inProgress.progressPercent >= 75) {
+      suggestions.push({
+        type: 'milestone',
+        text: `Almost there!`,
+        detail: `You're close to completing ${inProgress.name}. Keep up the great work!`
+      })
+    }
+  } else if (nextFuture) {
+    suggestions.push({
+      type: 'focus',
+      text: `Start working on ${nextFuture.name}`,
+      detail: `Click to view requirements and begin your journey.`
+    })
+  }
+
+  if (awarded.length > 0 && awarded.length < 7) {
+    const lastAwarded = awarded[awarded.length - 1]
+    suggestions.push({
+      type: 'tip',
+      text: `Great progress!`,
+      detail: `You've earned ${awarded.length} rank${awarded.length !== 1 ? 's' : ''}, most recently ${lastAwarded.name}.`
+    })
+  }
+
+  if (awarded.length === 0) {
+    suggestions.push({
+      type: 'tip',
+      text: `Begin your Scouting journey`,
+      detail: `Start by completing the Scout rank requirements.`
+    })
+  }
+
+  return suggestions
+}
+
 export function RankTrailVisualization({
   rankProgress,
   currentRank,
   className,
+  onRankClick,
+  selectedRank,
+  compact = false,
 }: RankTrailVisualizationProps) {
+  const [guideOpen, setGuideOpen] = useState(false)
+
   const ranksWithState = useMemo(() => {
-    return ALL_RANKS.map(rank => ({
-      ...rank,
-      ...getRankState(rank.code, rankProgress, currentRank),
-    }))
+    return ALL_RANKS.map(rank => {
+      const stateInfo = getRankState(rank.code, rankProgress, currentRank)
+      const progressPercent = calculateProgress(stateInfo.progress)
+      return {
+        ...rank,
+        ...stateInfo,
+        progressPercent,
+      }
+    })
   }, [rankProgress, currentRank])
 
   const currentInProgressRank = ranksWithState.find(r => r.state === 'in_progress')
-  const progressPercent = currentInProgressRank ? calculateProgress(currentInProgressRank.progress) : 0
+  const progressPercent = currentInProgressRank?.progressPercent || 0
+
+  const suggestions = useMemo(() => getGuideSuggestions(ranksWithState), [ranksWithState])
 
   return (
     <div className={cn('relative', className)}>
-      {/* Topographic background pattern */}
-      <div className="absolute inset-0 overflow-hidden rounded-xl opacity-[0.03]">
-        <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="topo" patternUnits="userSpaceOnUse" width="100" height="100">
-              <path
-                d="M0 50 Q25 30 50 50 T100 50"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-              />
-              <path
-                d="M0 70 Q30 50 60 70 T120 70"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="0.5"
-              />
-              <path
-                d="M0 30 Q20 10 40 30 T80 30"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="0.5"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#topo)" />
-        </svg>
-      </div>
+      {/* Main container */}
+      <div className={cn(
+        'relative overflow-hidden rounded-xl border border-stone-200 bg-gradient-to-b from-stone-50 to-stone-100',
+        compact ? 'p-3 sm:p-4' : 'p-4 sm:p-6'
+      )}>
+        {/* Trail background imagery - full width, positioned at bottom */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-full overflow-hidden opacity-[0.04]">
+          {/* Pine tree silhouettes - uses percentage-based positioning for full width coverage */}
+          <svg
+            className="absolute bottom-0 left-0 right-0 h-full w-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            {/* Trees drawn with percentage-based x coordinates for full width coverage */}
+            <g fill="currentColor" className="text-forest-900">
+              {/* Tree 1 - 3% */}
+              <path d="M3 100 L3.8 82 L3.4 82 L4.2 65 L3.6 65 L4.5 45 L5.4 65 L4.8 65 L5.6 82 L5.2 82 L6 100Z" />
+              {/* Tree 2 - 8% */}
+              <path d="M8 100 L8.6 85 L8.3 85 L9 70 L8.5 70 L9.3 52 L10.1 70 L9.6 70 L10.3 85 L10 85 L10.6 100Z" />
+              {/* Tree 3 - 15% */}
+              <path d="M15 100 L15.8 80 L15.4 80 L16.2 62 L15.6 62 L16.5 40 L17.4 62 L16.8 62 L17.6 80 L17.2 80 L18 100Z" />
+              {/* Tree 4 - 22% */}
+              <path d="M22 100 L22.6 87 L22.3 87 L23 73 L22.5 73 L23.3 55 L24.1 73 L23.6 73 L24.3 87 L24 87 L24.6 100Z" />
+              {/* Tree 5 - 30% */}
+              <path d="M30 100 L30.8 82 L30.4 82 L31.2 65 L30.6 65 L31.5 45 L32.4 65 L31.8 65 L32.6 82 L32.2 82 L33 100Z" />
+              {/* Tree 6 - 38% */}
+              <path d="M38 100 L38.5 88 L38.2 88 L38.8 75 L38.4 75 L39.2 58 L40 75 L39.5 75 L40.2 88 L39.8 88 L40.5 100Z" />
+              {/* Tree 7 - 47% */}
+              <path d="M47 100 L47.8 80 L47.4 80 L48.2 62 L47.6 62 L48.5 40 L49.4 62 L48.8 62 L49.6 80 L49.2 80 L50 100Z" />
+              {/* Tree 8 - 55% */}
+              <path d="M55 100 L55.6 85 L55.3 85 L56 70 L55.5 70 L56.3 52 L57.1 70 L56.6 70 L57.3 85 L57 85 L57.6 100Z" />
+              {/* Tree 9 - 63% */}
+              <path d="M63 100 L63.8 82 L63.4 82 L64.2 65 L63.6 65 L64.5 45 L65.4 65 L64.8 65 L65.6 82 L65.2 82 L66 100Z" />
+              {/* Tree 10 - 72% */}
+              <path d="M72 100 L72.5 88 L72.2 88 L72.8 75 L72.4 75 L73.2 58 L74 75 L73.5 75 L74.2 88 L73.8 88 L74.5 100Z" />
+              {/* Tree 11 - 80% */}
+              <path d="M80 100 L80.8 80 L80.4 80 L81.2 62 L80.6 62 L81.5 40 L82.4 62 L81.8 62 L82.6 80 L82.2 80 L83 100Z" />
+              {/* Tree 12 - 88% */}
+              <path d="M88 100 L88.6 85 L88.3 85 L89 70 L88.5 70 L89.3 52 L90.1 70 L89.6 70 L90.3 85 L90 85 L90.6 100Z" />
+              {/* Tree 13 - 95% */}
+              <path d="M95 100 L95.6 87 L95.3 87 L96 73 L95.5 73 L96.3 55 L97.1 73 L96.6 73 L97.3 87 L97 87 L97.6 100Z" />
+            </g>
+          </svg>
+          {/* Mountain range silhouette - full width */}
+          <svg
+            className="absolute bottom-0 left-0 right-0 h-1/3 w-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0 100 L5 70 L12 85 L22 50 L30 75 L40 55 L50 35 L60 60 L70 45 L80 70 L88 50 L95 75 L100 60 L100 100Z"
+              fill="currentColor"
+              className="text-forest-900"
+            />
+          </svg>
+        </div>
 
-      {/* Main container with trail */}
-      <div className="relative rounded-xl border border-stone-200/80 bg-gradient-to-b from-stone-50 via-white to-amber-50/30 p-4 shadow-sm sm:p-6">
         {/* Header */}
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-100">
-            <MapPin className="h-4 w-4 text-forest-600" />
+        <div className={cn('relative flex items-center justify-between gap-3', compact ? 'mb-3' : 'mb-4')}>
+          {/* Title with trail branding */}
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              'flex items-center justify-center rounded-lg bg-gradient-to-br from-forest-500 to-forest-600 shadow-sm',
+              compact ? 'h-7 w-7' : 'h-8 w-8'
+            )}>
+              <MapPin className={cn(compact ? 'h-4 w-4' : 'h-4.5 w-4.5', 'text-white')} />
+            </div>
+            <div>
+              <h3 className={cn(
+                'font-bold tracking-tight text-forest-800',
+                compact ? 'text-sm' : 'text-base'
+              )}>
+                Trail to Eagle
+              </h3>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-forest-600/70">
+                Rank Advancement
+              </p>
+            </div>
           </div>
-          <h3 className="font-semibold tracking-tight text-stone-800">
-            Trail to Eagle
-          </h3>
-          {currentInProgressRank && (
-            <span className="ml-auto rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-              {progressPercent}% to {currentInProgressRank.name}
-            </span>
-          )}
+
+          {/* Guide Compass Button - more prominent */}
+          <Popover open={guideOpen} onOpenChange={setGuideOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'group flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all',
+                  'border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50',
+                  'hover:border-amber-300 hover:from-amber-100 hover:to-orange-100 hover:shadow-sm',
+                  guideOpen && 'border-amber-300 from-amber-100 to-orange-100 shadow-sm'
+                )}
+              >
+                <div className={cn(
+                  'flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm transition-transform',
+                  'group-hover:scale-110'
+                )}>
+                  <Compass className="h-3.5 w-3.5 text-white" />
+                </div>
+                <span className="text-xs font-semibold text-amber-800">Guide</span>
+                <ChevronRight className={cn(
+                  'h-3.5 w-3.5 text-amber-500 transition-transform',
+                  guideOpen && 'rotate-90'
+                )} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="border-b bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm">
+                    <Compass className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-amber-900">Trail Guide</h4>
+                    <p className="text-[10px] text-amber-700">What to work on next</p>
+                  </div>
+                </div>
+              </div>
+              <div className="divide-y">
+                {suggestions.map((suggestion, index) => {
+                  const isFocus = suggestion.type === 'focus'
+                  return (
+                    <div
+                      key={index}
+                      className={cn(
+                        'px-4 py-3',
+                        isFocus && onRankClick && 'cursor-pointer hover:bg-stone-50'
+                      )}
+                      onClick={() => {
+                        if (isFocus && onRankClick) {
+                          // Navigate to the next rank
+                          const nextRank = currentInProgressRank || ranksWithState.find(r => r.state === 'future')
+                          if (nextRank) {
+                            onRankClick(nextRank.code)
+                            setGuideOpen(false)
+                          }
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={cn(
+                          'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
+                          suggestion.type === 'focus' && 'bg-forest-100 text-forest-600',
+                          suggestion.type === 'tip' && 'bg-blue-100 text-blue-600',
+                          suggestion.type === 'milestone' && 'bg-amber-100 text-amber-600'
+                        )}>
+                          {suggestion.type === 'focus' && <ChevronRight className="h-3.5 w-3.5" />}
+                          {suggestion.type === 'tip' && <Sparkles className="h-3.5 w-3.5" />}
+                          {suggestion.type === 'milestone' && <Check className="h-3.5 w-3.5" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-stone-800">{suggestion.text}</p>
+                          {suggestion.detail && (
+                            <p className="mt-0.5 text-xs text-stone-500">{suggestion.detail}</p>
+                          )}
+                          {isFocus && onRankClick && (
+                            <p className="mt-1.5 text-xs font-medium text-forest-600">
+                              Click to view requirements →
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Trail visualization */}
         <div className="relative">
           {/* Scrollable container for mobile */}
-          <div className="scrollbar-hide -mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
-            <div className="relative flex min-w-[640px] items-center justify-between py-6 sm:min-w-0">
-              {/* Trail path background */}
-              <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2">
-                {/* Future trail (dashed) */}
-                <div className="absolute inset-0 rounded-full bg-stone-200" />
+          <div className="scrollbar-hide -mx-3 overflow-x-auto px-3 sm:-mx-4 sm:px-4 md:mx-0 md:overflow-visible md:px-0">
+            <div className={cn(
+              'relative flex items-end justify-between',
+              compact ? 'min-w-[500px] pb-2 pt-4 md:min-w-0' : 'min-w-[580px] pb-2 pt-8 md:min-w-0'
+            )}>
+              {/* Trail path background - styled like a dirt path */}
+              <div className="absolute inset-x-0 bottom-[46px] h-2 sm:bottom-[50px] md:bottom-[54px]">
+                {/* Path base */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-b from-stone-300 to-stone-400 shadow-inner" />
 
-                {/* Completed trail (solid) */}
+                {/* Completed trail */}
                 {(() => {
                   const lastAwarded = ranksWithState.filter(r => r.state === 'awarded').length
                   const inProgressIndex = ranksWithState.findIndex(r => r.state === 'in_progress')
@@ -155,7 +354,7 @@ export function RankTrailVisualization({
 
                   return (
                     <div
-                      className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-forest-500 via-forest-400 to-amber-400 transition-all duration-700"
+                      className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-b from-forest-500 to-forest-600 shadow-sm transition-all duration-700"
                       style={{ width: `${Math.min(progressWidth, 100)}%` }}
                     />
                   )
@@ -163,115 +362,79 @@ export function RankTrailVisualization({
               </div>
 
               {/* Trail markers */}
-              {ranksWithState.map((rank, index) => {
-                const isFirst = index === 0
-                const isLast = index === ALL_RANKS.length - 1
+              {ranksWithState.map((rank) => {
+                const isClickable = !!onRankClick
+                const isSelected = selectedRank === rank.code
 
                 return (
                   <div
                     key={rank.code}
-                    className={cn(
-                      'relative z-10 flex flex-col items-center',
-                      rank.state === 'in_progress' && 'scale-110 sm:scale-100'
-                    )}
+                    className="relative z-10 flex flex-col items-center"
                   >
-                    {/* Milestone marker */}
-                    <div
+                    {/* Clickable badge area */}
+                    <button
+                      type="button"
+                      onClick={() => onRankClick?.(rank.code)}
+                      disabled={!isClickable}
                       className={cn(
-                        'relative flex flex-col items-center transition-all duration-300',
-                        rank.state === 'future' && 'opacity-40 grayscale'
+                        'relative flex flex-col items-center transition-all duration-200',
+                        isClickable && 'cursor-pointer focus:outline-none',
+                        !isClickable && 'cursor-default'
                       )}
                     >
-                      {/* Glow effect for current rank */}
-                      {rank.state === 'in_progress' && (
-                        <>
-                          <div className="absolute -inset-2 animate-pulse rounded-full bg-blue-400/20 blur-md" />
-                          <div className="absolute -inset-1 rounded-full bg-blue-500/10" />
-                        </>
-                      )}
-
-                      {/* Achievement glow for awarded */}
-                      {rank.state === 'awarded' && (
-                        <div className="absolute -inset-1 rounded-full bg-amber-400/20" />
-                      )}
-
-                      {/* Badge container */}
+                      {/* Badge image container */}
                       <div
                         className={cn(
-                          'relative rounded-full p-1 transition-all',
-                          rank.state === 'awarded' && 'bg-gradient-to-br from-amber-100 to-amber-200/80 shadow-lg shadow-amber-200/50',
-                          rank.state === 'in_progress' && 'bg-gradient-to-br from-blue-100 to-blue-200/80 shadow-lg shadow-blue-200/50 ring-2 ring-blue-400/50',
-                          rank.state === 'future' && 'bg-stone-100'
+                          'relative transition-transform duration-200',
+                          isSelected && 'scale-150',
+                          isClickable && !isSelected && 'hover:scale-110'
                         )}
                       >
-                        <RankIcon
-                          rank={{
-                            code: rank.code,
-                            name: rank.name,
-                            image_url: rank.image_url,
-                          }}
-                          size={rank.state === 'in_progress' ? 'lg' : 'md'}
+                        {/* Badge image - responsive sizing */}
+                        <img
+                          src={rank.image_url}
+                          alt={rank.name}
+                          className={cn(
+                            'object-contain drop-shadow-md',
+                            'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12'
+                          )}
                         />
+                      </div>
 
-                        {/* Checkmark for awarded ranks */}
-                        {rank.state === 'awarded' && (
-                          <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm">
+                      {/* Status indicator - positioned below the badge */}
+                      <div className={cn(
+                        'mt-1.5 flex h-5 items-center justify-center transition-all duration-200',
+                        isSelected && 'mt-3'
+                      )}>
+                        {rank.state === 'awarded' ? (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
                             <Check className="h-3 w-3 text-white" strokeWidth={3} />
                           </div>
-                        )}
-
-                        {/* "You are here" marker for in-progress */}
-                        {rank.state === 'in_progress' && (
-                          <div className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full">
-                            <div className="relative">
-                              <div className="absolute inset-0 animate-ping rounded-full bg-blue-400 opacity-75" />
-                              <div className="relative rounded-full bg-blue-500 p-1">
-                                <MapPin className="h-3 w-3 text-white" />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Eagle flag for final rank */}
-                        {isLast && rank.state === 'awarded' && (
-                          <div className="absolute -top-1 right-0 translate-x-1/2">
-                            <Flag className="h-4 w-4 text-amber-600" fill="currentColor" />
-                          </div>
+                        ) : (
+                          <span className={cn(
+                            'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                            rank.state === 'in_progress'
+                              ? 'bg-forest-500 text-white'
+                              : 'bg-stone-300 text-stone-600'
+                          )}>
+                            {rank.progressPercent}%
+                          </span>
                         )}
                       </div>
 
-                      {/* Rank name */}
+                      {/* Rank name - using shortName for consistent width */}
                       <span
                         className={cn(
-                          'mt-2 text-center text-xs font-medium transition-colors',
-                          rank.state === 'awarded' && 'text-amber-800',
-                          rank.state === 'in_progress' && 'text-blue-700',
-                          rank.state === 'future' && 'text-stone-400'
+                          'mt-1 whitespace-nowrap text-center text-[10px] font-medium sm:text-xs',
+                          rank.state === 'awarded' && 'text-stone-700',
+                          rank.state === 'in_progress' && 'text-forest-700',
+                          rank.state === 'future' && 'text-stone-500',
+                          isSelected && 'font-semibold text-forest-700'
                         )}
                       >
-                        {rank.name}
+                        {rank.shortName}
                       </span>
-
-                      {/* Progress bar for in-progress rank */}
-                      {rank.state === 'in_progress' && progressPercent > 0 && (
-                        <div className="mt-1.5 h-1 w-12 overflow-hidden rounded-full bg-blue-200">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                      )}
-
-                      {/* Award date for completed ranks */}
-                      {rank.state === 'awarded' && rank.progress?.awarded_at && (
-                        <span className="mt-0.5 text-[10px] text-amber-600/80">
-                          {new Date(rank.progress.awarded_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            year: '2-digit',
-                          })}
-                        </span>
-                      )}
-                    </div>
+                    </button>
                   </div>
                 )
               })}
@@ -279,26 +442,28 @@ export function RankTrailVisualization({
           </div>
 
           {/* Scroll hint for mobile */}
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white to-transparent sm:hidden" />
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-stone-100 to-transparent md:hidden" />
         </div>
 
-        {/* Journey stats */}
-        <div className="mt-4 flex items-center justify-center gap-4 border-t border-stone-100 pt-4 text-xs text-stone-500">
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600" />
-            <span>{ranksWithState.filter(r => r.state === 'awarded').length} Earned</span>
-          </div>
-          {currentInProgressRank && (
+        {/* Journey stats - hidden in compact mode */}
+        {!compact && (
+          <div className="relative mt-4 flex items-center justify-center gap-4 border-t border-stone-200/60 pt-4 text-xs text-stone-500">
             <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-              <span>Working on {currentInProgressRank.name}</span>
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span>{ranksWithState.filter(r => r.state === 'awarded').length} Earned</span>
             </div>
-          )}
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-stone-300" />
-            <span>{ranksWithState.filter(r => r.state === 'future').length} Ahead</span>
+            {currentInProgressRank && (
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-forest-500" />
+                <span>Working on {currentInProgressRank.name}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-stone-300" />
+              <span>{ranksWithState.filter(r => r.state === 'future').length} Ahead</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
