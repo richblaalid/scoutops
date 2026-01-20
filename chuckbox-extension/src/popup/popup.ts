@@ -105,7 +105,7 @@ function setNotConnected(status: string) {
   tokenInput.value = ''
   tokenInput.disabled = false
   clearTokenBtn.classList.add('hidden')
-  tokenInfoText.innerHTML = 'Get a token from <a href="https://chuckbox.app/settings/integrations" target="_blank" class="link">Chuckbox Settings</a>'
+  tokenInfoText.innerHTML = 'Get a token from <a href="https://chuckbox.app/settings/integrations" target="_blank" class="link">ChuckBox Settings</a>'
 }
 
 async function checkCurrentPage() {
@@ -134,7 +134,7 @@ async function checkCurrentPage() {
       pageDot.className = 'status-dot green'
       pageStatus.textContent = 'Ready'
       isOnRosterPage = true // Enable sync button
-      infoText.textContent = 'Click "Sync Roster" to import your roster to Chuckbox.'
+      infoText.textContent = 'Click "Sync Roster" to import your roster to ChuckBox.'
     } else {
       setPageNotReady('Unable to connect')
     }
@@ -228,7 +228,7 @@ async function handleTokenInput() {
     } else {
       // Token is invalid
       setNotConnected('Token invalid or expired')
-      showError('Token is invalid or expired. Generate a new one in Chuckbox Settings.')
+      showError('Token is invalid or expired. Generate a new one in ChuckBox Settings.')
       // Clear the invalid token
       await chrome.runtime.sendMessage({ action: 'setToken', token: '' })
     }
@@ -339,7 +339,7 @@ async function handleSync() {
       showSuccess(
         `<strong>Sync complete!</strong><br>` +
           `${parts.join(', ')}<br><br>` +
-          `<a href="${baseUrlForLinks}/settings/integrations" target="_blank" class="link" style="font-weight: 500;">Review changes in Chuckbox →</a>`
+          `<a href="${baseUrlForLinks}/settings/integrations" target="_blank" class="link" style="font-weight: 500;">Review changes in ChuckBox →</a>`
       )
     }
 
@@ -355,7 +355,7 @@ async function handleSync() {
     if (message.includes('Rate limit')) {
       showError('Too many syncs. Please wait an hour before syncing again.')
     } else if (message.includes('Invalid') || message.includes('expired')) {
-      showError('Token is invalid or expired. Generate a new one in Chuckbox Settings.')
+      showError('Token is invalid or expired. Generate a new one in ChuckBox Settings.')
     } else if (message.includes('roster')) {
       showError('Navigate to your Scoutbook roster page, then click Sync.')
     } else {

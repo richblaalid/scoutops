@@ -33,7 +33,7 @@
 3. **Success State**
    - After successful sync
    - Show summary: "X new scouts, Y updates"
-   - Show "Review changes in Chuckbox" link
+   - Show "Review changes in ChuckBox" link
 
 4. **Token Entry** (optional)
    - Show the not-connected state with token input
@@ -83,11 +83,11 @@
 - [ ] Monitor email for approval or feedback
 - [ ] If rejected, address feedback and resubmit
 - [ ] Once approved, test installation from Web Store
-- [ ] Update Chuckbox settings page with Web Store link
+- [ ] Update ChuckBox settings page with Web Store link
 
 ## Post-Launch
 
-- [ ] Add Web Store link to Chuckbox settings/integrations page
+- [ ] Add Web Store link to ChuckBox settings/integrations page
 - [ ] Add installation instructions to help docs
 - [ ] Monitor reviews and respond to feedback
 

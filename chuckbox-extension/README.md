@@ -1,6 +1,6 @@
-# Chuckbox Sync Extension
+# ChuckBox Sync Extension
 
-Chrome browser extension for syncing Scoutbook rosters to Chuckbox.
+Chrome browser extension for syncing Scoutbook rosters to ChuckBox.
 
 ## Development
 
@@ -35,20 +35,20 @@ npm run dev
 ## Usage
 
 1. **Get an Extension Token**
-   - Log into Chuckbox
+   - Log into ChuckBox
    - Go to Settings > Scoutbook Sync
    - Click "Generate Extension Token"
    - Copy the token
 
 2. **Configure the Extension**
-   - Click the Chuckbox extension icon
+   - Click the ChuckBox extension icon
    - Paste your token in the Settings section
 
 3. **Sync Your Roster**
    - Navigate to your Scoutbook roster page at `advancements.scouting.org`
    - Click the extension icon
    - Click "Sync Roster"
-   - Review the changes in Chuckbox
+   - Review the changes in ChuckBox
 
 ## Project Structure
 
@@ -64,7 +64,7 @@ chuckbox-extension/
 │   ├── background/
 │   │   └── service-worker.ts   # Background API communication
 │   └── lib/
-│       ├── api.ts              # Chuckbox API client
+│       ├── api.ts              # ChuckBox API client
 │       └── extractor.ts        # DOM extraction utilities
 ├── public/
 │   └── icons/                  # Extension icons
@@ -85,5 +85,5 @@ Place PNG icons in `public/icons/`:
 
 - Extension tokens are hashed before storage in the database
 - Tokens expire after 60 days
-- Users can revoke tokens at any time from Chuckbox settings
+- Users can revoke tokens at any time from ChuckBox settings
 - The extension never stores or transmits Scoutbook credentials
