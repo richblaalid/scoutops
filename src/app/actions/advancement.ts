@@ -610,7 +610,8 @@ export async function denyRequirementSubmission(
  */
 export async function approveRank(
   rankProgressId: string,
-  unitId: string
+  unitId: string,
+  approvedAt?: string
 ): Promise<ActionResult> {
   const featureCheck = checkFeatureEnabled<void>()
   if (featureCheck) return featureCheck
@@ -624,7 +625,7 @@ export async function approveRank(
     .from('scout_rank_progress')
     .update({
       status: 'approved',
-      approved_at: new Date().toISOString(),
+      approved_at: approvedAt || new Date().toISOString(),
       approved_by: auth.profileId,
       updated_at: new Date().toISOString(),
     })
@@ -645,7 +646,8 @@ export async function approveRank(
 export async function awardRank(
   rankProgressId: string,
   scoutId: string,
-  unitId: string
+  unitId: string,
+  awardedAt?: string
 ): Promise<ActionResult> {
   const featureCheck = checkFeatureEnabled<void>()
   if (featureCheck) return featureCheck
@@ -666,12 +668,14 @@ export async function awardRank(
     return { success: false, error: 'Rank progress not found' }
   }
 
+  const timestamp = awardedAt || new Date().toISOString()
+
   // Update rank progress
   const { error: progressError } = await adminSupabase
     .from('scout_rank_progress')
     .update({
       status: 'awarded',
-      awarded_at: new Date().toISOString(),
+      awarded_at: timestamp,
       awarded_by: auth.profileId,
       updated_at: new Date().toISOString(),
     })
@@ -1892,6 +1896,107 @@ export async function markRequirementCompleteWithInit(params: {
   revalidatePath(`/scouts/${params.scoutId}`)
   revalidatePath('/advancement')
   return { success: true, data: { requirementProgressId: reqProgress.id } }
+}
+
+/**
+ * Bulk approve requirements with auto-initialization for unstarted ranks
+ * This handles the case where a scout hasn't started a rank yet
+ */
+export async function bulkApproveRequirementsWithInit(params: {
+  scoutId: string
+  rankId: string
+  requirementIds: string[]
+  unitId: string
+  versionId: string
+  completedAt?: string
+  notes?: string
+}): Promise<ActionResult<{ successCount: number; failedCount: number; rankProgressId?: string }>> {
+  const featureCheck = checkFeatureEnabled<{ successCount: number; failedCount: number; rankProgressId?: string }>()
+  if (featureCheck) return featureCheck
+
+  if (params.requirementIds.length === 0) {
+    return { success: true, data: { successCount: 0, failedCount: 0 } }
+  }
+
+  const auth = await verifyLeaderRole(params.unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+  const timestamp = params.completedAt || new Date().toISOString()
+
+  // Check if scout has rank progress for this rank
+  let { data: rankProgress } = await adminSupabase
+    .from('scout_rank_progress')
+    .select('id')
+    .eq('scout_id', params.scoutId)
+    .eq('rank_id', params.rankId)
+    .maybeSingle()
+
+  // Create rank progress if it doesn't exist
+  if (!rankProgress) {
+    const { data: newProgress, error: progressError } = await adminSupabase
+      .from('scout_rank_progress')
+      .insert({
+        scout_id: params.scoutId,
+        rank_id: params.rankId,
+        version_id: params.versionId,
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single()
+
+    if (progressError) {
+      console.error('Error creating rank progress:', progressError)
+      return { success: false, error: 'Failed to create rank progress' }
+    }
+
+    rankProgress = newProgress
+
+    // Create all requirement progress records for this rank
+    const { data: requirements } = await adminSupabase
+      .from('bsa_rank_requirements')
+      .select('id')
+      .eq('version_id', params.versionId)
+      .eq('rank_id', params.rankId)
+
+    if (requirements && requirements.length > 0) {
+      const reqProgressRecords = requirements.map((req) => ({
+        scout_rank_progress_id: rankProgress!.id,
+        requirement_id: req.id,
+        status: 'not_started' as const,
+      }))
+
+      await adminSupabase.from('scout_rank_requirement_progress').insert(reqProgressRecords)
+    }
+  }
+
+  // Now bulk update the selected requirements
+  const { data, error } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .update({
+      status: 'completed',
+      completed_at: timestamp,
+      completed_by: auth.profileId,
+      notes: params.notes || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('scout_rank_progress_id', rankProgress.id)
+    .in('requirement_id', params.requirementIds)
+    .not('status', 'in', '("approved","awarded")')
+    .select('id')
+
+  if (error) {
+    console.error('Error bulk approving requirements:', error)
+    return { success: false, error: 'Failed to approve requirements' }
+  }
+
+  const successCount = data?.length || 0
+  const failedCount = params.requirementIds.length - successCount
+
+  revalidatePath(`/scouts/${params.scoutId}`)
+  revalidatePath('/advancement')
+  return { success: true, data: { successCount, failedCount, rankProgressId: rankProgress.id } }
 }
 
 /**

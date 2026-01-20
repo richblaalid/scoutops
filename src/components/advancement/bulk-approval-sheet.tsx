@@ -2,21 +2,21 @@
 
 import { useState, useMemo } from 'react'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import {
   CheckSquare,
@@ -25,13 +25,15 @@ import {
   Loader2,
   AlertCircle,
   Sparkles,
+  ListChecks,
+  ChevronRight,
 } from 'lucide-react'
-import { bulkApproveRequirements } from '@/app/actions/advancement'
+import { bulkApproveRequirements, bulkApproveRequirementsWithInit } from '@/app/actions/advancement'
 import type { AdvancementStatus } from '@/types/advancement'
 
 interface Requirement {
   id: string
-  requirementProgressId: string
+  requirementProgressId: string | null
   requirementNumber: string
   description: string
   status: AdvancementStatus
@@ -44,6 +46,10 @@ interface BulkApprovalSheetProps {
   scoutId: string
   trigger?: React.ReactNode
   onComplete?: () => void
+  initData?: {
+    rankId: string
+    versionId: string
+  }
 }
 
 export function BulkApprovalSheet({
@@ -53,6 +59,7 @@ export function BulkApprovalSheet({
   scoutId,
   trigger,
   onComplete,
+  initData,
 }: BulkApprovalSheetProps) {
   const [open, setOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -62,21 +69,36 @@ export function BulkApprovalSheet({
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ success: number; failed: number } | null>(null)
 
+  // Sort all requirements by number
+  const sortedRequirements = useMemo(() => {
+    return [...requirements].sort((a, b) => {
+      const numA = parseFloat(a.requirementNumber || '0')
+      const numB = parseFloat(b.requirementNumber || '0')
+      return numA - numB
+    })
+  }, [requirements])
+
   // Filter to incomplete requirements only
   const incompleteRequirements = useMemo(() => {
-    return requirements.filter(
+    return sortedRequirements.filter(
       req => !['completed', 'approved', 'awarded'].includes(req.status)
     )
-  }, [requirements])
+  }, [sortedRequirements])
+
+  const completedCount = sortedRequirements.length - incompleteRequirements.length
+  const progressPercent = sortedRequirements.length > 0
+    ? Math.round((completedCount / sortedRequirements.length) * 100)
+    : 0
 
   const allSelected = selectedIds.size === incompleteRequirements.length && incompleteRequirements.length > 0
   const someSelected = selectedIds.size > 0
+  const needsInit = initData && incompleteRequirements.some(r => r.requirementProgressId === null)
 
   const handleSelectAll = () => {
     if (allSelected) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(incompleteRequirements.map(r => r.requirementProgressId)))
+      setSelectedIds(new Set(incompleteRequirements.map(r => r.id)))
     }
   }
 
@@ -98,12 +120,30 @@ export function BulkApprovalSheet({
     setResult(null)
 
     try {
-      const response = await bulkApproveRequirements(
-        Array.from(selectedIds),
-        unitId,
-        `${completedDate}T12:00:00.000Z`,
-        notes || undefined
-      )
+      let response
+
+      if (needsInit && initData) {
+        response = await bulkApproveRequirementsWithInit({
+          scoutId,
+          rankId: initData.rankId,
+          requirementIds: Array.from(selectedIds),
+          unitId,
+          versionId: initData.versionId,
+          completedAt: `${completedDate}T12:00:00.000Z`,
+          notes: notes || undefined,
+        })
+      } else {
+        const progressIds = incompleteRequirements
+          .filter(r => selectedIds.has(r.id) && r.requirementProgressId)
+          .map(r => r.requirementProgressId!)
+
+        response = await bulkApproveRequirements(
+          progressIds,
+          unitId,
+          `${completedDate}T12:00:00.000Z`,
+          notes || undefined
+        )
+      }
 
       if (response.success && response.data) {
         setResult({
@@ -112,11 +152,9 @@ export function BulkApprovalSheet({
         })
 
         if (response.data.failedCount === 0) {
-          // All succeeded - close after brief delay
           setTimeout(() => {
             setOpen(false)
             onComplete?.()
-            // Reset state
             setSelectedIds(new Set())
             setNotes('')
             setResult(null)
@@ -136,7 +174,6 @@ export function BulkApprovalSheet({
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen)
     if (!isOpen) {
-      // Reset state when closing
       setSelectedIds(new Set())
       setNotes('')
       setError(null)
@@ -145,177 +182,298 @@ export function BulkApprovalSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetTrigger asChild>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="gap-2">
             <CheckSquare className="h-4 w-4" />
             Bulk Approve
           </Button>
         )}
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <CheckSquare className="h-5 w-5 text-forest-600" />
-            Bulk Approve Requirements
-          </SheetTitle>
-          <SheetDescription>
-            Select requirements to approve for {rankName}
-          </SheetDescription>
-        </SheetHeader>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-b from-forest-50/50 to-transparent">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-forest-100 text-forest-700">
+              <ListChecks className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-xl font-semibold text-stone-900">
+                Bulk Approve Requirements
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-stone-600">
+                Select and approve multiple requirements at once for{' '}
+                <span className="font-medium text-forest-700">{rankName}</span>
+              </DialogDescription>
+            </div>
+          </div>
 
-        <div className="mt-6 space-y-6">
-          {/* Success Message */}
-          {result && result.failed === 0 && (
-            <div className="flex items-center gap-3 rounded-lg bg-emerald-50 p-4 text-emerald-700">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                <Sparkles className="h-5 w-5" />
+          {/* Progress Overview */}
+          <div className="mt-4 rounded-lg border border-stone-200 bg-white p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-stone-700">Overall Progress</span>
+              <span className="text-sm font-semibold text-forest-700">
+                {completedCount} / {sortedRequirements.length} complete
+              </span>
+            </div>
+            <Progress value={progressPercent} className="h-2" />
+            <p className="mt-2 text-xs text-stone-500">
+              {incompleteRequirements.length} requirement{incompleteRequirements.length !== 1 ? 's' : ''} remaining
+            </p>
+          </div>
+        </DialogHeader>
+
+        {/* Success State */}
+        {result && result.failed === 0 && (
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-forest-100 to-emerald-100 ring-4 ring-forest-50">
+                <Sparkles className="h-8 w-8 text-forest-600" />
               </div>
-              <div>
-                <p className="font-medium">Success!</p>
-                <p className="text-sm">Approved {result.success} requirement{result.success !== 1 ? 's' : ''}</p>
+              <h3 className="mt-4 text-xl font-semibold text-stone-900">
+                Requirements Approved!
+              </h3>
+              <p className="mt-2 text-stone-600">
+                Successfully approved {result.success} requirement{result.success !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="mx-6 mt-4 flex items-center gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+            <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Main Content */}
+        {!result && (
+          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+            {/* Date & Notes Section */}
+            <div className="px-6 py-4 border-b bg-stone-50/50">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="completion-date" className="flex items-center gap-2 text-sm font-medium text-stone-700">
+                    <Calendar className="h-4 w-4 text-stone-500" />
+                    Completion Date
+                  </Label>
+                  <Input
+                    id="completion-date"
+                    type="date"
+                    value={completedDate}
+                    onChange={(e) => setCompletedDate(e.target.value)}
+                    className="bg-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="text-sm font-medium text-stone-700">
+                    Notes <span className="font-normal text-stone-400">(optional)</span>
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Add notes for these requirements..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={1}
+                    className="resize-none bg-white min-h-[38px]"
+                  />
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-700">
-              <AlertCircle className="h-5 w-5" />
-              <p className="text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Date & Notes */}
-          {!result && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="completion-date" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-stone-500" />
-                  Completion Date
-                </Label>
-                <Input
-                  id="completion-date"
-                  type="date"
-                  value={completedDate}
-                  onChange={(e) => setCompletedDate(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes (optional)</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Add notes for these requirements..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={2}
-                  className="resize-none"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Requirements List */}
-          {!result && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Requirements</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSelectAll}
-                  className="h-8 text-xs"
-                >
-                  {allSelected ? 'Deselect All' : 'Select All'}
-                </Button>
+            {/* Requirements List */}
+            <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-6 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-stone-700">
+                  Requirements
+                </span>
+                {incompleteRequirements.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="h-8 text-xs text-forest-700 hover:text-forest-800 hover:bg-forest-50"
+                  >
+                    {allSelected ? 'Deselect All' : 'Select All Incomplete'}
+                  </Button>
+                )}
               </div>
 
               {incompleteRequirements.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-6 text-center">
-                  <Check className="mx-auto h-8 w-8 text-emerald-500" />
-                  <p className="mt-2 text-sm text-stone-500">
-                    All requirements are already complete!
-                  </p>
+                <div className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50">
+                  <div className="text-center py-8">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                      <Check className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <p className="mt-3 text-sm font-medium text-stone-700">
+                      All requirements complete!
+                    </p>
+                    <p className="mt-1 text-xs text-stone-500">
+                      Nothing left to approve
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <ScrollArea className="h-[280px] rounded-lg border">
-                  <div className="divide-y">
-                    {incompleteRequirements.map((req) => (
-                      <label
-                        key={req.requirementProgressId}
-                        className={cn(
-                          'flex cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-stone-50',
-                          selectedIds.has(req.requirementProgressId) && 'bg-blue-50'
-                        )}
-                      >
-                        <Checkbox
-                          checked={selectedIds.has(req.requirementProgressId)}
-                          onCheckedChange={() => handleSelectOne(req.requirementProgressId)}
-                          className="mt-0.5"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm">
-                            <span className="mr-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-stone-100 px-1 text-xs font-bold text-stone-600">
-                              {req.requirementNumber}
-                            </span>
-                            {req.description.length > 100
-                              ? `${req.description.slice(0, 100)}...`
-                              : req.description}
-                          </p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </ScrollArea>
-              )}
+                <div className="flex-1 overflow-y-auto min-h-0 rounded-xl border border-stone-200 bg-white">
+                  <div className="divide-y divide-stone-100">
+                    {sortedRequirements.map((req) => {
+                      const isComplete = ['completed', 'approved', 'awarded'].includes(req.status)
+                      const isSelected = selectedIds.has(req.id)
 
-              {/* Selection Summary */}
-              {someSelected && (
-                <div className="flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2">
-                  <span className="text-sm text-blue-700">
-                    {selectedIds.size} requirement{selectedIds.size !== 1 ? 's' : ''} selected
-                  </span>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                    Ready to approve
-                  </Badge>
+                      return (
+                        <div
+                          key={req.id}
+                          className={cn(
+                            'group flex items-start gap-4 p-4 transition-all duration-150',
+                            isComplete
+                              ? 'bg-stone-50/80'
+                              : isSelected
+                                ? 'bg-forest-50/70 hover:bg-forest-50'
+                                : 'hover:bg-stone-50 cursor-pointer'
+                          )}
+                          onClick={() => !isComplete && handleSelectOne(req.id)}
+                          role={isComplete ? undefined : "button"}
+                          tabIndex={isComplete ? undefined : 0}
+                          onKeyDown={(e) => {
+                            if (!isComplete && (e.key === 'Enter' || e.key === ' ')) {
+                              e.preventDefault()
+                              handleSelectOne(req.id)
+                            }
+                          }}
+                        >
+                          {/* Checkbox / Check indicator */}
+                          <div className="pt-0.5">
+                            {isComplete ? (
+                              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-100 border border-emerald-200">
+                                <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
+                              </div>
+                            ) : (
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => handleSelectOne(req.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                className={cn(
+                                  'h-5 w-5 rounded-md border-2 transition-colors',
+                                  isSelected
+                                    ? 'border-forest-600 bg-forest-600 text-white'
+                                    : 'border-stone-300 group-hover:border-stone-400'
+                                )}
+                              />
+                            )}
+                          </div>
+
+                          {/* Requirement number badge */}
+                          <div className={cn(
+                            'shrink-0 flex h-7 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold tabular-nums transition-colors',
+                            isComplete
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : isSelected
+                                ? 'bg-forest-200 text-forest-800'
+                                : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'
+                          )}>
+                            {req.requirementNumber}
+                          </div>
+
+                          {/* Description */}
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              'text-sm leading-relaxed',
+                              isComplete ? 'text-stone-500' : 'text-stone-700'
+                            )}>
+                              {req.description}
+                            </p>
+                          </div>
+
+                          {/* Status badge */}
+                          {isComplete && (
+                            <Badge
+                              variant="secondary"
+                              className="shrink-0 bg-emerald-100 text-emerald-700 border-0 text-xs font-medium"
+                            >
+                              Complete
+                            </Badge>
+                          )}
+
+                          {/* Selection indicator for incomplete */}
+                          {!isComplete && isSelected && (
+                            <div className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-forest-600 text-white">
+                              <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <SheetFooter className="mt-6">
+        {/* Footer */}
+        <DialogFooter className="px-6 py-4 border-t bg-stone-50/80">
           {!result ? (
-            <>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={selectedIds.size === 0 || isSubmitting}
-                className="gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Approving...
-                  </>
+            <div className="flex w-full items-center justify-between gap-4">
+              {/* Selection summary */}
+              <div className="flex items-center gap-2">
+                {someSelected ? (
+                  <Badge
+                    variant="secondary"
+                    className="bg-forest-100 text-forest-700 border-0 text-sm font-medium px-3 py-1"
+                  >
+                    {selectedIds.size} selected
+                  </Badge>
                 ) : (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Approve {selectedIds.size > 0 ? selectedIds.size : ''} Requirement{selectedIds.size !== 1 ? 's' : ''}
-                  </>
+                  <span className="text-sm text-stone-500">
+                    Select requirements to approve
+                  </span>
                 )}
-              </Button>
-            </>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  className="border-stone-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={selectedIds.size === 0 || isSubmitting}
+                  className={cn(
+                    'gap-2 min-w-[140px]',
+                    selectedIds.size > 0
+                      ? 'bg-forest-700 hover:bg-forest-800 text-white'
+                      : ''
+                  )}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Approving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Approve{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           ) : result.failed > 0 ? (
-            <Button onClick={() => setOpen(false)}>Close</Button>
+            <Button onClick={() => setOpen(false)} className="ml-auto">
+              Close
+            </Button>
           ) : null}
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

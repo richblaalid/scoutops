@@ -407,7 +407,7 @@ export function RankTrailVisualization({
                         isSelected && 'mt-3'
                       )}>
                         {rank.state === 'awarded' ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 shadow-sm">
                             <Check className="h-3 w-3 text-white" strokeWidth={3} />
                           </div>
                         ) : (
@@ -449,7 +449,7 @@ export function RankTrailVisualization({
         {!compact && (
           <div className="relative mt-4 flex items-center justify-center gap-4 border-t border-stone-200/60 pt-4 text-xs text-stone-500">
             <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <div className="h-2 w-2 rounded-full bg-amber-500" />
               <span>{ranksWithState.filter(r => r.state === 'awarded').length} Earned</span>
             </div>
             {currentInProgressRank && (
