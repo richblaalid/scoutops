@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { RequirementAssignDialog } from './requirement-assign-dialog'
 import { UserPlus } from 'lucide-react'
@@ -58,6 +58,89 @@ interface RankRequirementsListProps {
   canEdit: boolean
 }
 
+// Section names for each rank's requirement groups
+const rankSectionNames: Record<string, Record<string, string>> = {
+  scout: {
+    '1': 'Scout Oath, Law & Spirit',
+    '2': 'Troop Meetings',
+    '3': 'Patrol Method',
+    '4': 'Knots & Ropework',
+    '5': 'Knife Safety',
+    '6': 'Youth Protection',
+    '7': 'Scoutmaster Conference',
+  },
+  tenderfoot: {
+    '1': 'Camping & Outdoor Ethics',
+    '2': 'Cooking',
+    '3': 'Tools',
+    '4': 'First Aid & Nature',
+    '5': 'Hiking',
+    '6': 'Fitness',
+    '7': 'Citizenship',
+    '8': 'Leadership',
+    '9': 'Scout Spirit',
+    '10': 'Scoutmaster Conference',
+    '11': 'Board of Review',
+  },
+  second_class: {
+    '1': 'Camping & Outdoor Ethics',
+    '2': 'Cooking & Tools',
+    '3': 'Navigation',
+    '4': 'Nature',
+    '5': 'Aquatics',
+    '6': 'First Aid',
+    '7': 'Fitness',
+    '8': 'Citizenship',
+    '9': 'Leadership',
+    '10': 'Scout Spirit',
+    '11': 'Scoutmaster Conference',
+    '12': 'Board of Review',
+  },
+  first_class: {
+    '1': 'Camping & Outdoor Ethics',
+    '2': 'Cooking',
+    '3': 'Tools',
+    '4': 'Navigation',
+    '5': 'Nature',
+    '6': 'Aquatics',
+    '7': 'First Aid & Emergency',
+    '8': 'Fitness',
+    '9': 'Citizenship',
+    '10': 'Leadership',
+    '11': 'Scout Spirit',
+    '12': 'Scoutmaster Conference',
+    '13': 'Board of Review',
+  },
+  star: {
+    '1': 'Active Participation',
+    '2': 'Scout Spirit',
+    '3': 'Merit Badges',
+    '4': 'Leadership',
+    '5': 'Service Project',
+    '6': 'Scoutmaster Conference',
+    '7': 'Board of Review',
+  },
+  life: {
+    '1': 'Active Participation',
+    '2': 'Scout Spirit',
+    '3': 'Merit Badges',
+    '4': 'Leadership',
+    '5': 'Service Project',
+    '6': 'Scoutmaster Conference',
+    '7': 'Board of Review',
+  },
+  eagle: {
+    '1': 'Active Participation',
+    '2': 'Scout Spirit',
+    '3': 'Merit Badges',
+    '4': 'Leadership',
+    '5': 'Service Hours',
+    '6': 'Eagle Project',
+    '7': 'Scoutmaster Conference',
+    '8': 'Board of Review',
+  },
+}
+
 export function RankRequirementsList({
   rank,
   requirements,
@@ -69,16 +152,22 @@ export function RankRequirementsList({
   const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  // Get top-level requirements (no parent)
-  const topLevelRequirements = requirements
-    .filter((req) => !req.parent_requirement_id)
-    .sort((a, b) => a.display_order - b.display_order)
+  // Group requirements by their main number
+  const groupedRequirements = useMemo(() => {
+    const groups = new Map<string, Requirement[]>()
 
-  // Get sub-requirements for a parent
-  const getSubRequirements = (parentId: string) =>
-    requirements
-      .filter((req) => req.parent_requirement_id === parentId)
-      .sort((a, b) => a.display_order - b.display_order)
+    const sortedReqs = [...requirements].sort((a, b) => a.display_order - b.display_order)
+
+    for (const req of sortedReqs) {
+      const mainNumber = req.requirement_number
+      if (!groups.has(mainNumber)) {
+        groups.set(mainNumber, [])
+      }
+      groups.get(mainNumber)!.push(req)
+    }
+
+    return groups
+  }, [requirements])
 
   const handleAssignClick = (requirement: Requirement) => {
     setSelectedRequirement(requirement)
@@ -106,45 +195,62 @@ export function RankRequirementsList({
     return { completed, inProgress }
   }
 
+  // Get section name for a requirement number
+  const getSectionName = (reqNumber: string) => {
+    return rankSectionNames[rank.code]?.[reqNumber] || `Section ${reqNumber}`
+  }
+
+  // Get the full display number for a requirement
+  const getFullNumber = (req: Requirement) => {
+    return `${req.requirement_number}${req.sub_requirement_letter || ''}`
+  }
+
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b bg-stone-50 text-left text-sm font-medium text-stone-600">
-              <th className="w-16 px-4 py-3">#</th>
-              <th className="px-4 py-3">Requirement</th>
-              <th className="w-32 px-4 py-3 text-center">Progress</th>
-              {canEdit && <th className="w-28 px-4 py-3 text-right">Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {topLevelRequirements.map((req) => {
-              const subReqs = getSubRequirements(req.id)
-              const stats = getCompletionStats(req.id)
-              const hasSubReqs = subReqs.length > 0
+      <div className="space-y-6">
+        {Array.from(groupedRequirements.entries()).map(([sectionNum, reqs]) => (
+          <div key={sectionNum} className="overflow-hidden rounded-lg border border-stone-200">
+            {/* Section Header */}
+            <div className="border-b border-stone-200 bg-forest-50 px-4 py-3">
+              <h3 className="flex items-center gap-3 font-semibold text-forest-800">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-600 text-sm text-white">
+                  {sectionNum}
+                </span>
+                {getSectionName(sectionNum)}
+              </h3>
+            </div>
 
-              return (
-                <>
-                  <tr key={req.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 align-top font-mono text-sm font-medium text-stone-900">
-                      {req.requirement_number}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <p className="text-sm text-stone-900">{req.description}</p>
-                    </td>
-                    <td className="px-4 py-3 text-center align-top">
-                      {stats.inProgress > 0 ? (
-                        <span className="text-xs text-stone-500">
-                          {stats.completed}/{stats.inProgress}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-stone-400">-</span>
-                      )}
-                    </td>
-                    {canEdit && (
-                      <td className="px-4 py-3 text-right align-top">
-                        {!hasSubReqs && (
+            {/* Requirements Table */}
+            <table className="w-full">
+              <tbody>
+                {reqs.map((req, idx) => {
+                  const stats = getCompletionStats(req.id)
+                  const isLast = idx === reqs.length - 1
+
+                  return (
+                    <tr
+                      key={req.id}
+                      className={`${!isLast ? 'border-b border-stone-100' : ''} ${
+                        idx % 2 === 1 ? 'bg-stone-50/50' : 'bg-white'
+                      }`}
+                    >
+                      <td className="w-16 px-4 py-3 align-top font-mono text-sm font-medium text-stone-700">
+                        {getFullNumber(req)}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <p className="text-sm text-stone-700">{req.description}</p>
+                      </td>
+                      <td className="w-24 px-4 py-3 text-center align-top">
+                        {stats.inProgress > 0 ? (
+                          <span className="text-xs text-stone-500">
+                            {stats.completed}/{stats.inProgress}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-stone-400">-</span>
+                        )}
+                      </td>
+                      {canEdit && (
+                        <td className="w-28 px-4 py-3 text-right align-top">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -154,51 +260,15 @@ export function RankRequirementsList({
                             <UserPlus className="mr-1 h-3 w-3" />
                             Assign
                           </Button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                  {subReqs.map((subReq) => {
-                    const subStats = getCompletionStats(subReq.id)
-                    return (
-                      <tr key={subReq.id} className="border-b bg-stone-50/50 last:border-0">
-                        <td className="px-4 py-2 pl-8 align-top font-mono text-sm text-stone-600">
-                          {subReq.requirement_number}
-                          {subReq.sub_requirement_letter}
                         </td>
-                        <td className="px-4 py-2 align-top">
-                          <p className="text-sm text-stone-700">{subReq.description}</p>
-                        </td>
-                        <td className="px-4 py-2 text-center align-top">
-                          {subStats.inProgress > 0 ? (
-                            <span className="text-xs text-stone-500">
-                              {subStats.completed}/{subStats.inProgress}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-stone-400">-</span>
-                          )}
-                        </td>
-                        {canEdit && (
-                          <td className="px-4 py-2 text-right align-top">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleAssignClick(subReq)}
-                              className="h-7 text-xs"
-                            >
-                              <UserPlus className="mr-1 h-3 w-3" />
-                              Assign
-                            </Button>
-                          </td>
-                        )}
-                      </tr>
-                    )
-                  })}
-                </>
-              )
-            })}
-          </tbody>
-        </table>
+                      )}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
 
       {selectedRequirement && (

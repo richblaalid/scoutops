@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { ChevronDown, ChevronRight, Check, Clock, AlertCircle } from 'lucide-react'
 import { markRequirementComplete } from '@/app/actions/advancement'
 import { cn } from '@/lib/utils'
+import { RankIcon } from './rank-icon'
 
 interface RankProgressCardProps {
   rank: {
@@ -103,6 +104,7 @@ export function RankProgressCard({ rank, scoutId, unitId, canEdit }: RankProgres
             ) : (
               <ChevronRight className="h-5 w-5 text-stone-400" />
             )}
+            <RankIcon rank={rank.bsa_ranks} size="md" />
             <div>
               <h3 className="text-lg font-semibold text-stone-900">{rank.bsa_ranks.name}</h3>
               {rank.status !== 'not_started' && rank.status !== 'awarded' && (

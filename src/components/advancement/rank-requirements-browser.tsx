@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { RankRequirementsList } from './rank-requirements-list'
-import { Star } from 'lucide-react'
+import { RankIcon } from './rank-icon'
+import { Award } from 'lucide-react'
 
 interface Rank {
   id: string
@@ -89,8 +90,8 @@ export function RankRequirementsBrowser({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-amber-500" />
-              BSA Rank Requirements
+              <Award className="h-5 w-5 text-forest-600" />
+              Scouts BSA Rank Requirements
             </CardTitle>
             <CardDescription>
               Select a rank to view requirements and assign completions
@@ -110,9 +111,10 @@ export function RankRequirementsBrowser({
               <TabsTrigger
                 key={rank.code}
                 value={rank.code}
-                className="text-xs sm:text-sm"
+                className="flex items-center gap-1.5 text-xs sm:text-sm"
               >
-                {rank.name}
+                <RankIcon rank={rank} size="sm" />
+                <span className="hidden sm:inline">{rank.name}</span>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -123,14 +125,17 @@ export function RankRequirementsBrowser({
 
             return (
               <TabsContent key={rank.code} value={rank.code} className="mt-0">
-                <div className="mb-4 rounded-lg bg-stone-50 p-4">
-                  <h3 className="text-lg font-semibold text-stone-900">{rank.name} Rank</h3>
-                  {rank.description && (
-                    <p className="mt-1 text-sm text-stone-600">{rank.description}</p>
-                  )}
-                  <p className="mt-2 text-sm text-stone-500">
-                    {topLevel.length} requirement{topLevel.length !== 1 ? 's' : ''}
-                  </p>
+                <div className="mb-4 flex items-start gap-4 rounded-lg bg-stone-50 p-4">
+                  <RankIcon rank={rank} size="lg" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-stone-900">{rank.name} Rank</h3>
+                    {rank.description && (
+                      <p className="mt-1 text-sm text-stone-600">{rank.description}</p>
+                    )}
+                    <p className="mt-2 text-sm text-stone-500">
+                      {topLevel.length} requirement{topLevel.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
 
                 <RankRequirementsList
