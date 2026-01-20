@@ -106,6 +106,14 @@ const sizeClasses = {
   xl: 'h-28 w-28',
 }
 
+// Map size to pixels for the sizes prop
+const sizePixels = {
+  sm: '40px',
+  md: '56px',
+  lg: '80px',
+  xl: '112px',
+}
+
 export function MeritBadgeIcon({
   badge,
   size = 'md',
@@ -145,6 +153,7 @@ export function MeritBadgeIcon({
         src={badge.image_url}
         alt={badge.name}
         fill
+        sizes={sizePixels[size]}
         className="object-cover"
       />
     </div>

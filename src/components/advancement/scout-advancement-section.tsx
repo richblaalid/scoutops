@@ -3,13 +3,12 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { MeritBadgeCard } from './merit-badge-card'
 import { LeadershipTimeline } from './leadership-timeline'
 import { ActivityStats } from './activity-stats'
 import { RankTrailVisualization } from './rank-trail-visualization'
 import { SingleRankRequirements } from './single-rank-requirements'
+import { MeritBadgeSashView } from './merit-badge-sash-view'
+import { SingleMeritBadgeRequirements } from './single-merit-badge-requirements'
 import { getRankRequirements, getCurrentUserInfo } from '@/app/actions/advancement'
 import {
   Award,
@@ -19,7 +18,6 @@ import {
   TentTree,
   Footprints,
   Heart,
-  Plus,
 } from 'lucide-react'
 import type { RankProgress as RankProgressType } from '@/types/advancement'
 
@@ -58,6 +56,7 @@ interface RankProgress {
 interface MeritBadgeProgress {
   id: string
   status: string
+  version_id?: string
   started_at: string | null
   completed_at: string | null
   awarded_at: string | null
@@ -68,11 +67,21 @@ interface MeritBadgeProgress {
     name: string
     is_eagle_required: boolean | null
     category: string | null
+    image_url?: string | null
   }
   scout_merit_badge_requirement_progress: Array<{
     id: string
     status: string
     completed_at: string | null
+    completed_by?: string | null
+    notes?: string | null
+    requirement_id?: string
+    bsa_merit_badge_requirements?: {
+      id: string
+      requirement_number: string
+      description: string
+      parent_requirement_id?: string | null
+    }
   }>
 }
 
@@ -175,6 +184,9 @@ export function ScoutAdvancementSection({
 }: ScoutAdvancementSectionProps) {
   const [activeTab, setActiveTab] = useState('rank')
 
+  // State for selected merit badge (for detail view)
+  const [selectedBadge, setSelectedBadge] = useState<MeritBadgeProgress | null>(null)
+
   // Compute default selected rank
   const defaultSelectedRank = useMemo(() => {
     return computeNextRank(currentRank, rankProgress)
@@ -201,7 +213,6 @@ export function ScoutAdvancementSection({
   }, [unitId, canEdit])
 
   // Calculate progress statistics
-  const inProgressBadges = meritBadgeProgress.filter((b) => b.status === 'in_progress')
   const earnedBadges = meritBadgeProgress.filter((b) => b.status === 'awarded')
   const eagleRequiredEarned = earnedBadges.filter((b) => b.bsa_merit_badges.is_eagle_required === true)
   const currentLeadership = leadershipHistory.filter((l) => !l.end_date)
@@ -237,7 +248,7 @@ export function ScoutAdvancementSection({
 
   return (
     <div className="space-y-4">
-      {/* Quick Stats Row - Moved up */}
+      {/* Quick Stats Row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-amber-50 to-orange-50 p-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
@@ -353,91 +364,27 @@ export function ScoutAdvancementSection({
             </TabsContent>
 
             <TabsContent value="badges" className="mt-4">
-              <div className="space-y-6">
-                {/* Eagle Required Progress */}
-                {eagleRequiredEarned.length > 0 || inProgressBadges.some(b => b.bsa_merit_badges.is_eagle_required) ? (
-                  <div className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <h4 className="flex items-center gap-2 font-semibold text-amber-900">
-                        <Award className="h-4 w-4" />
-                        Eagle Required Progress
-                      </h4>
-                      <Badge className="bg-amber-100 text-amber-800">
-                        {eagleRequiredEarned.length}/14
-                      </Badge>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-amber-200">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-500"
-                        style={{ width: `${(eagleRequiredEarned.length / 14) * 100}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-amber-700">
-                      {14 - eagleRequiredEarned.length} Eagle-required badges remaining
-                    </p>
-                  </div>
-                ) : null}
-
-                {/* In Progress Badges */}
-                {inProgressBadges.length > 0 && (
-                  <div>
-                    <div className="mb-3 flex items-center justify-between">
-                      <h4 className="font-medium text-stone-900">In Progress ({inProgressBadges.length})</h4>
-                      {canEdit && (
-                        <Button variant="outline" size="sm">
-                          <Plus className="mr-1 h-4 w-4" />
-                          Start Badge
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {inProgressBadges.map((badge) => (
-                        <MeritBadgeCard
-                          key={badge.id}
-                          badge={badge}
-                          scoutId={scoutId}
-                          unitId={unitId}
-                          canEdit={canEdit}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Earned Badges */}
-                {earnedBadges.length > 0 && (
-                  <div>
-                    <h4 className="mb-3 font-medium text-stone-900">
-                      Earned ({earnedBadges.length})
-                    </h4>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {earnedBadges.map((badge) => (
-                        <MeritBadgeCard
-                          key={badge.id}
-                          badge={badge}
-                          scoutId={scoutId}
-                          unitId={unitId}
-                          canEdit={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Empty State */}
-                {meritBadgeProgress.length === 0 && (
-                  <div className="rounded-lg border border-dashed p-8 text-center">
-                    <Medal className="mx-auto h-12 w-12 text-stone-300" />
-                    <p className="mt-2 text-stone-500">No merit badges tracked yet</p>
-                    {canEdit && (
-                      <Button variant="outline" className="mt-4" size="sm">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Start Merit Badge
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
+              {selectedBadge ? (
+                // Detail view for selected badge
+                <SingleMeritBadgeRequirements
+                  badge={selectedBadge}
+                  scoutId={scoutId}
+                  unitId={unitId}
+                  versionId={selectedBadge.version_id || ''}
+                  canEdit={canEdit}
+                  onBack={() => setSelectedBadge(null)}
+                  currentUserName={currentUserName}
+                />
+              ) : (
+                // Grid view with sash layout
+                <MeritBadgeSashView
+                    meritBadgeProgress={meritBadgeProgress}
+                    onBadgeClick={setSelectedBadge}
+                    scoutId={scoutId}
+                    unitId={unitId}
+                    canEdit={canEdit}
+                  />
+              )}
             </TabsContent>
 
             <TabsContent value="leadership" className="mt-4">

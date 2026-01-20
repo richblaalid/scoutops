@@ -1775,10 +1775,28 @@ async function processMeritBadgeRequirementEntry(
 export async function getMeritBadgeRequirements(meritBadgeId: string, versionId: string) {
   const supabase = await createClient()
 
+  // If versionId is empty, fetch the active version
+  let actualVersionId = versionId
+  if (!actualVersionId) {
+    const { data: version } = await supabase
+      .from('bsa_requirement_versions')
+      .select('id')
+      .eq('is_active', true)
+      .order('effective_date', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (!version) {
+      console.error('No active requirement version found')
+      return []
+    }
+    actualVersionId = version.id
+  }
+
   const { data, error } = await supabase
     .from('bsa_merit_badge_requirements')
     .select('*')
-    .eq('version_id', versionId)
+    .eq('version_id', actualVersionId)
     .eq('merit_badge_id', meritBadgeId)
     .order('display_order')
 
