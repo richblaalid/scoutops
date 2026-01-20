@@ -129,6 +129,58 @@ supabase db push                                   # Push to PROD
 - Feature components in `src/components/{feature}/`
 - Use `cn()` from `src/lib/utils.ts` for class merging
 
+## Development Workflow
+
+### Spec-Driven Development
+
+**For new features**, use `/plan [feature description]`:
+1. Gather requirements by asking clarifying questions
+2. Explore codebase for existing patterns
+3. Create plan document in `/plans/`
+4. Get user approval before implementing
+5. Implement with TodoWrite tracking
+
+**For bug fixes**, use `/bugfix [bug description]`:
+1. Understand and reproduce the bug
+2. Investigate root cause (not just symptoms)
+3. Document in `/plans/bugfix-[name].md`
+4. Confirm approach before implementing
+5. Write test, fix, verify
+
+### Quality Gates
+
+Before implementing any feature:
+- [ ] Requirements gathered via questions (use AskUserQuestion)
+- [ ] Codebase explored for patterns (use Task with Explore agent)
+- [ ] Plan document created and approved
+
+During implementation:
+- [ ] Use TodoWrite to track progress
+- [ ] Use `frontend-design` skill for all UI work
+- [ ] Use `context7` MCP for library documentation
+- [ ] Run `npm run build` after significant changes
+- [ ] Run `npm test` for affected areas
+
+### Plan Documents
+
+Plans live in `/plans/` directory:
+- `PLAN-TEMPLATE.md` - Template for new features
+- `BUG-TEMPLATE.md` - Template for bug fixes
+- Feature plans follow the template structure
+
+### When to Use Plan Mode
+
+Use Claude's built-in Plan Mode (`EnterPlanMode`) for:
+- Multi-file changes
+- Architectural decisions
+- Features with multiple valid approaches
+- Any change you're uncertain about
+
+Skip planning for:
+- Single-line fixes
+- Obvious bugs with clear solutions
+- Tasks with explicit, detailed instructions
+
 ### Important Notes
 - Supabase queries return single objects (not arrays) for one-to-one relations like `scout_accounts`
 - Protected routes check `unit_memberships` for role-based access (admin, treasurer, leader, parent, scout)
@@ -138,3 +190,122 @@ supabase db push                                   # Push to PROD
   - `funds_balance`: Scout savings from fundraising/overpayments (always >= 0)
 - Avoid reading localStorage in initial state - defer to useEffect to prevent hydration mismatches
 - Nested interactive elements (button inside button) cause React hydration issues - use `<div role="button">` with keyboard handlers instead
+
+---
+
+## Session Protocol
+
+### Starting a Session
+
+1. Read this file (CLAUDE.md)
+2. Read the relevant plan file in `/plans/` to find the next task
+3. State which task you'll work on (use task number if available)
+4. State your implementation approach briefly
+5. Wait for approval before writing code
+
+### During Implementation
+
+1. Work on **ONE task at a time**
+2. Use Context7 for library documentation before implementing
+3. Run `npm run build` and `npm test` after changes
+4. If tests fail, **STOP** and fix before continuing
+5. Mark task complete **immediately** after finishing
+6. Update Task Log with date and commit hash
+
+### Completing a Task
+
+1. Ensure all tests pass: `npm test`
+2. Ensure build passes: `npm run build`
+3. Mark task complete in plan/tasks file
+4. Update Task Log with date and commit
+5. Commit with descriptive message
+6. Report what you completed
+
+### Between Sessions
+
+If continuing work from a previous session:
+1. Read the plan file to see progress
+2. Check the Task Log for what was last completed
+3. Identify the next pending task
+4. Resume from step 3 of "Starting a Session"
+
+---
+
+## Do NOT
+
+**These rules are critical. Violating them wastes time and creates bugs.**
+
+- ❌ Modify multiple tasks without approval
+- ❌ Skip tests or type checking
+- ❌ Proceed after test/build failures without fixing
+- ❌ Make architectural changes without discussion
+- ❌ Install new dependencies without discussing first
+- ❌ Use `any` types in TypeScript
+- ❌ Write code that doesn't match existing patterns
+- ❌ Create new files when editing existing ones would work
+- ❌ Add features beyond what was requested
+- ❌ Push to production database without explicit approval
+- ❌ Commit code that doesn't build or pass tests
+
+---
+
+## Custom Commands
+
+### `/plan [feature description]`
+
+Start spec-driven development for a new feature.
+
+```
+/plan Add CSV export for scout data
+/plan refresh                        # Re-read and update existing plan
+```
+
+**Workflow:**
+1. Ask clarifying questions (AskUserQuestion)
+2. Research library docs (Context7)
+3. Explore codebase (Explore agent)
+4. Create plan in `/plans/[feature-name].md`
+5. Get approval before implementing
+
+### `/bugfix [bug description]`
+
+Investigate and fix a bug systematically.
+
+```
+/bugfix Login redirect fails after session timeout
+/bugfix Payment amounts showing negative
+```
+
+**Workflow:**
+1. Ask clarifying questions
+2. Investigate root cause (not symptoms)
+3. Document in `/plans/bugfix-[name].md`
+4. Confirm approach before implementing
+5. Write test, fix, verify
+
+### `/execute [mode]`
+
+Execute tasks from an approved plan with safeguards.
+
+```
+/execute           # Execute next single pending task
+/execute phase     # Execute all tasks in current phase (max 5)
+/execute to 1.2.3  # Execute up to and including task 1.2.3
+/execute 1.2.3     # Execute only task 1.2.3
+```
+
+**Safeguards:**
+- Stops immediately on test/build failures
+- Maximum 5 tasks per `/execute phase`
+- Requires approval at phase checkpoints
+- Auto-commits after each successful task
+
+### Task Numbering
+
+Tasks use format: `{Phase}.{Section}.{Task}`
+
+- **Phase 0**: Foundation (migrations, types, setup)
+- **Phase 1+**: Feature phases
+- Example: `1.2.3` = Phase 1, Section 2, Task 3
+
+See `plans/PLAN-TEMPLATE.md` and `plans/TASKS-TEMPLATE.md` for formats
