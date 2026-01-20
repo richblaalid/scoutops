@@ -1,16 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { RankProgressCard } from './rank-progress-card'
 import { MeritBadgeCard } from './merit-badge-card'
 import { LeadershipTimeline } from './leadership-timeline'
 import { ActivityStats } from './activity-stats'
 import { RankTrailVisualization } from './rank-trail-visualization'
-import { WhatsNextCard } from './whats-next-card'
+import { SingleRankRequirements } from './single-rank-requirements'
+import { getRankRequirements, getCurrentUserInfo } from '@/app/actions/advancement'
 import {
   Award,
   Medal,
@@ -19,10 +19,12 @@ import {
   TentTree,
   Footprints,
   Heart,
-  TreePine,
   Plus,
 } from 'lucide-react'
-import type { RankProgress as RankProgressType, MeritBadgeProgress as MeritBadgeProgressType } from '@/types/advancement'
+import type { RankProgress as RankProgressType } from '@/types/advancement'
+
+// All BSA rank codes in order
+const RANK_ORDER = ['scout', 'tenderfoot', 'second_class', 'first_class', 'star', 'life', 'eagle']
 
 interface RankProgress {
   id: string
@@ -119,6 +121,46 @@ interface ScoutAdvancementSectionProps {
   canEdit: boolean
 }
 
+// Compute the "next" rank based on current rank or progress
+function computeNextRank(currentRank: string | null, rankProgress: RankProgress[]): string {
+  // Find the highest awarded rank from progress
+  const awardedRanks = rankProgress
+    .filter(rp => rp.status === 'awarded')
+    .map(rp => rp.bsa_ranks.code)
+
+  // Find any in-progress rank
+  const inProgressRank = rankProgress.find(rp => rp.status === 'in_progress')
+  if (inProgressRank) {
+    return inProgressRank.bsa_ranks.code
+  }
+
+  // If we have awarded ranks, find the next one after the highest
+  if (awardedRanks.length > 0) {
+    const highestIndex = Math.max(...awardedRanks.map(code => RANK_ORDER.indexOf(code)))
+    const nextIndex = highestIndex + 1
+    if (nextIndex < RANK_ORDER.length) {
+      return RANK_ORDER[nextIndex]
+    }
+    // If they have Eagle, show Eagle
+    return 'eagle'
+  }
+
+  // Check currentRank from scout record as fallback
+  if (currentRank) {
+    const normalized = currentRank.toLowerCase().replace(/\s+/g, '_')
+    const currentIndex = RANK_ORDER.indexOf(normalized)
+    if (currentIndex >= 0 && currentIndex < RANK_ORDER.length - 1) {
+      return RANK_ORDER[currentIndex + 1]
+    }
+    if (currentIndex === RANK_ORDER.length - 1) {
+      return 'eagle' // Already at Eagle
+    }
+  }
+
+  // Default to Scout rank
+  return 'scout'
+}
+
 export function ScoutAdvancementSection({
   scoutId,
   unitId,
@@ -133,6 +175,31 @@ export function ScoutAdvancementSection({
 }: ScoutAdvancementSectionProps) {
   const [activeTab, setActiveTab] = useState('rank')
 
+  // Compute default selected rank
+  const defaultSelectedRank = useMemo(() => {
+    return computeNextRank(currentRank, rankProgress)
+  }, [currentRank, rankProgress])
+
+  const [selectedRank, setSelectedRank] = useState<string>(defaultSelectedRank)
+
+  // State for fetched requirements when rank has no progress
+  type RankRequirementsData = Awaited<ReturnType<typeof getRankRequirements>>
+  const [fetchedRequirements, setFetchedRequirements] = useState<RankRequirementsData>(null)
+
+  // State for current user info (for completion dialogs)
+  const [currentUserName, setCurrentUserName] = useState<string>('Leader')
+
+  // Fetch current user info on mount
+  useEffect(() => {
+    if (canEdit) {
+      getCurrentUserInfo(unitId).then(result => {
+        if (result.success && result.data) {
+          setCurrentUserName(result.data.fullName)
+        }
+      })
+    }
+  }, [unitId, canEdit])
+
   // Calculate progress statistics
   const inProgressBadges = meritBadgeProgress.filter((b) => b.status === 'in_progress')
   const earnedBadges = meritBadgeProgress.filter((b) => b.status === 'awarded')
@@ -142,27 +209,88 @@ export function ScoutAdvancementSection({
   // Type cast for the new components
   const typedRankProgress = rankProgress as unknown as RankProgressType[]
 
-  const handleViewRank = (rankId: string) => {
-    setActiveTab('rank')
-    // Could scroll to specific rank card in the future
+  // Find the selected rank's progress data
+  const selectedRankProgress = useMemo(() => {
+    return rankProgress.find(
+      rp => rp.bsa_ranks.code === selectedRank ||
+            rp.bsa_ranks.name.toLowerCase().replace(/\s+/g, '_') === selectedRank
+    ) || null
+  }, [rankProgress, selectedRank])
+
+  // Fetch requirements when selected rank has no progress
+  useEffect(() => {
+    if (!selectedRankProgress && selectedRank) {
+      // No progress for this rank - fetch the raw requirements
+      getRankRequirements(selectedRank).then(data => {
+        setFetchedRequirements(data)
+      })
+    } else {
+      // Clear fetched requirements when we have progress data
+      setFetchedRequirements(null)
+    }
+  }, [selectedRank, selectedRankProgress])
+
+  // Handle clicking a rank in the trail
+  const handleRankClick = (rankCode: string) => {
+    setSelectedRank(rankCode)
   }
 
   return (
-    <div className="space-y-6">
-      {/* Rank Trail Visualization - Full Width */}
-      <RankTrailVisualization
-        rankProgress={typedRankProgress}
-        currentRank={currentRank}
-      />
+    <div className="space-y-4">
+      {/* Quick Stats Row - Moved up */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-amber-50 to-orange-50 p-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+            <Medal className="h-5 w-5 text-amber-600" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-amber-900">{earnedBadges.length}</p>
+            <p className="text-xs text-amber-700">Merit Badges</p>
+          </div>
+        </div>
 
-      {/* What's Next Card */}
-      <WhatsNextCard
-        rankProgress={typedRankProgress}
-        scoutId={scoutId}
-        unitId={unitId}
-        canEdit={canEdit}
-        onViewRank={handleViewRank}
-      />
+        <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+            <Award className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-blue-900">{eagleRequiredEarned.length}/14</p>
+            <p className="text-xs text-blue-700">Eagle Required</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-emerald-50 to-green-50 p-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+            <Users className="h-5 w-5 text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-emerald-900">
+              {currentLeadership.length > 0 ? currentLeadership[0].bsa_leadership_positions.name.split(' ')[0] : '—'}
+            </p>
+            <p className="text-xs text-emerald-700">Leadership</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-purple-50 to-violet-50 p-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+            <Activity className="h-5 w-5 text-purple-600" />
+          </div>
+          <div className="flex gap-2 text-xs">
+            <span className="flex items-center gap-0.5 text-purple-800">
+              <TentTree className="h-3 w-3" />
+              {activityTotals.camping}
+            </span>
+            <span className="flex items-center gap-0.5 text-purple-800">
+              <Footprints className="h-3 w-3" />
+              {activityTotals.hiking.toFixed(0)}
+            </span>
+            <span className="flex items-center gap-0.5 text-purple-800">
+              <Heart className="h-3 w-3" />
+              {activityTotals.service.toFixed(0)}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Main Advancement Card with Tabs */}
       <Card>
@@ -174,67 +302,12 @@ export function ScoutAdvancementSection({
                 Advancement Details
               </CardTitle>
               <CardDescription>
-                Detailed progress for ranks, merit badges, and activities
+                Track progress for ranks, merit badges, and activities
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {/* Quick Stats Row */}
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-amber-50 to-orange-50 p-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-                <Medal className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-amber-900">{earnedBadges.length}</p>
-                <p className="text-xs text-amber-700">Merit Badges</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                <Award className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-blue-900">{eagleRequiredEarned.length}/14</p>
-                <p className="text-xs text-blue-700">Eagle Required</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-emerald-50 to-green-50 p-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                <Users className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-emerald-900">
-                  {currentLeadership.length > 0 ? currentLeadership[0].bsa_leadership_positions.name.split(' ')[0] : '—'}
-                </p>
-                <p className="text-xs text-emerald-700">Leadership</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-lg border bg-gradient-to-br from-purple-50 to-violet-50 p-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                <Activity className="h-5 w-5 text-purple-600" />
-              </div>
-              <div className="flex gap-2 text-xs">
-                <span className="flex items-center gap-0.5 text-purple-800">
-                  <TentTree className="h-3 w-3" />
-                  {activityTotals.camping}
-                </span>
-                <span className="flex items-center gap-0.5 text-purple-800">
-                  <Footprints className="h-3 w-3" />
-                  {activityTotals.hiking.toFixed(0)}
-                </span>
-                <span className="flex items-center gap-0.5 text-purple-800">
-                  <Heart className="h-3 w-3" />
-                  {activityTotals.service.toFixed(0)}
-                </span>
-              </div>
-            </div>
-          </div>
-
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4">
@@ -256,30 +329,27 @@ export function ScoutAdvancementSection({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="rank" className="mt-4">
-              <div className="space-y-4">
-                {rankProgress.length > 0 ? (
-                  rankProgress.map((rank) => (
-                    <RankProgressCard
-                      key={rank.id}
-                      rank={rank}
-                      scoutId={scoutId}
-                      unitId={unitId}
-                      canEdit={canEdit}
-                    />
-                  ))
-                ) : (
-                  <div className="rounded-lg border border-dashed p-8 text-center">
-                    <p className="text-stone-500">No rank progress yet</p>
-                    {canEdit && (
-                      <Button variant="outline" className="mt-4" size="sm">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Start First Rank
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
+            {/* Ranks Tab - includes trail visualization */}
+            <TabsContent value="rank" className="mt-4 space-y-4">
+              {/* Trail to Eagle - only visible in Ranks tab */}
+              <RankTrailVisualization
+                rankProgress={typedRankProgress}
+                currentRank={currentRank}
+                onRankClick={handleRankClick}
+                selectedRank={selectedRank}
+                compact
+              />
+
+              {/* Single Rank Requirements */}
+              <SingleRankRequirements
+                rank={selectedRankProgress}
+                scoutId={scoutId}
+                unitId={unitId}
+                canEdit={canEdit}
+                rankName={selectedRank.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                currentUserName={currentUserName}
+                rankRequirementsData={fetchedRequirements}
+              />
             </TabsContent>
 
             <TabsContent value="badges" className="mt-4">

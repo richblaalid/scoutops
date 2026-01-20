@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { isFeatureEnabled, FeatureFlag } from '@/lib/feature-flags'
+import { appendNote, serializeNotes, createCompletionNote, createUndoNote } from '@/lib/notes-utils'
 
 interface ActionResult<T = void> {
   success: boolean
@@ -30,7 +31,7 @@ async function verifyLeaderRole(unitId: string) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, first_name, last_name')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -50,7 +51,8 @@ async function verifyLeaderRole(unitId: string) {
     return { error: 'Only leaders can modify advancement records' }
   }
 
-  return { profileId: profile.id, role: membership.role }
+  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown'
+  return { profileId: profile.id, role: membership.role, fullName }
 }
 
 // Helper to verify parent access to a scout
@@ -163,12 +165,13 @@ export async function initializeRankProgress(
 
 /**
  * Mark a single requirement as complete
+ * @param noteText - Optional note text to add to the structured notes array
  */
 export async function markRequirementComplete(
   requirementProgressId: string,
   unitId: string,
   completedAt?: string,
-  notes?: string
+  noteText?: string
 ): Promise<ActionResult> {
   const featureCheck = checkFeatureEnabled<void>()
   if (featureCheck) return featureCheck
@@ -178,13 +181,39 @@ export async function markRequirementComplete(
 
   const adminSupabase = createAdminClient()
 
+  // Fetch existing notes to append to
+  const { data: existing } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .select('notes')
+    .eq('id', requirementProgressId)
+    .single()
+
+  // Build the new notes value
+  let newNotes: string | null = existing?.notes || null
+  if (noteText) {
+    newNotes = appendNote(existing?.notes || null, {
+      text: noteText,
+      author: auth.fullName,
+      authorId: auth.profileId,
+      type: 'completion',
+    })
+  } else {
+    // Even without explicit note text, record who completed it
+    newNotes = appendNote(existing?.notes || null, {
+      text: 'Requirement completed',
+      author: auth.fullName,
+      authorId: auth.profileId,
+      type: 'completion',
+    })
+  }
+
   const { error } = await adminSupabase
     .from('scout_rank_requirement_progress')
     .update({
       status: 'completed',
       completed_at: completedAt || new Date().toISOString(),
       completed_by: auth.profileId,
-      notes,
+      notes: newNotes,
       updated_at: new Date().toISOString(),
     })
     .eq('id', requirementProgressId)
@@ -192,6 +221,71 @@ export async function markRequirementComplete(
   if (error) {
     console.error('Error marking requirement complete:', error)
     return { success: false, error: 'Failed to mark requirement complete' }
+  }
+
+  revalidatePath('/advancement')
+  return { success: true }
+}
+
+/**
+ * Undo a completed requirement - resets status and adds undo note
+ * @param undoReason - Required reason for undoing the completion (for audit trail)
+ */
+export async function undoRequirementCompletion(
+  requirementProgressId: string,
+  unitId: string,
+  undoReason: string
+): Promise<ActionResult> {
+  const featureCheck = checkFeatureEnabled<void>()
+  if (featureCheck) return featureCheck
+
+  if (!undoReason || undoReason.trim().length === 0) {
+    return { success: false, error: 'A reason is required to undo a completed requirement' }
+  }
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+
+  // Fetch existing requirement progress
+  const { data: existing } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .select('notes, status')
+    .eq('id', requirementProgressId)
+    .single()
+
+  if (!existing) {
+    return { success: false, error: 'Requirement progress not found' }
+  }
+
+  // Only allow undo on completed requirements (not approved or awarded)
+  if (!['completed'].includes(existing.status)) {
+    return { success: false, error: 'Only completed requirements can be undone' }
+  }
+
+  // Append the undo note with reason
+  const newNotes = appendNote(existing.notes || null, {
+    text: `Undo: ${undoReason.trim()}`,
+    author: auth.fullName,
+    authorId: auth.profileId,
+    type: 'undo',
+  })
+
+  const { error } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .update({
+      status: 'not_started',
+      completed_at: null,
+      completed_by: null,
+      notes: newNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', requirementProgressId)
+
+  if (error) {
+    console.error('Error undoing requirement completion:', error)
+    return { success: false, error: 'Failed to undo requirement completion' }
   }
 
   revalidatePath('/advancement')
@@ -293,25 +387,45 @@ export async function bulkApproveRequirements(
 }
 
 /**
- * Add or update notes on a requirement without changing its status
+ * Add a note to a requirement without changing its status
+ * Appends to the structured notes array
  */
 export async function updateRequirementNotes(
   requirementProgressId: string,
   unitId: string,
-  notes: string
+  noteText: string
 ): Promise<ActionResult> {
   const featureCheck = checkFeatureEnabled<void>()
   if (featureCheck) return featureCheck
+
+  if (!noteText || noteText.trim().length === 0) {
+    return { success: false, error: 'Note text is required' }
+  }
 
   const auth = await verifyLeaderRole(unitId)
   if ('error' in auth) return { success: false, error: auth.error }
 
   const adminSupabase = createAdminClient()
 
+  // Fetch existing notes to append to
+  const { data: existing } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .select('notes')
+    .eq('id', requirementProgressId)
+    .single()
+
+  // Append the new note
+  const newNotes = appendNote(existing?.notes || null, {
+    text: noteText.trim(),
+    author: auth.fullName,
+    authorId: auth.profileId,
+    type: 'general',
+  })
+
   const { error } = await adminSupabase
     .from('scout_rank_requirement_progress')
     .update({
-      notes,
+      notes: newNotes,
       updated_at: new Date().toISOString(),
     })
     .eq('id', requirementProgressId)
@@ -1177,6 +1291,31 @@ export async function assignMeritBadgeRequirementToScouts(params: {
 }
 
 // ==========================================
+// USER INFO
+// ==========================================
+
+/**
+ * Get the current user's profile info for display in UI
+ */
+export async function getCurrentUserInfo(unitId: string): Promise<ActionResult<{
+  profileId: string
+  fullName: string
+  role: string
+}>> {
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  return {
+    success: true,
+    data: {
+      profileId: auth.profileId,
+      fullName: auth.fullName,
+      role: auth.role,
+    },
+  }
+}
+
+// ==========================================
 // READ-ONLY DATA FETCHING
 // ==========================================
 
@@ -1645,6 +1784,173 @@ export async function getMeritBadgeRequirements(meritBadgeId: string, versionId:
   }
 
   return data
+}
+
+/**
+ * Mark a requirement complete, auto-initializing progress records if needed
+ * This is used when a scout hasn't started a rank yet but we want to mark a requirement
+ */
+export async function markRequirementCompleteWithInit(params: {
+  scoutId: string
+  rankId: string
+  requirementId: string
+  unitId: string
+  versionId: string
+  completedAt?: string
+  notes?: string
+}): Promise<ActionResult<{ requirementProgressId: string }>> {
+  const featureCheck = checkFeatureEnabled<{ requirementProgressId: string }>()
+  if (featureCheck) return featureCheck
+
+  const auth = await verifyLeaderRole(params.unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+
+  // Check if scout has rank progress for this rank
+  let { data: rankProgress } = await adminSupabase
+    .from('scout_rank_progress')
+    .select('id')
+    .eq('scout_id', params.scoutId)
+    .eq('rank_id', params.rankId)
+    .maybeSingle()
+
+  // Create rank progress if it doesn't exist
+  if (!rankProgress) {
+    const { data: newProgress, error: progressError } = await adminSupabase
+      .from('scout_rank_progress')
+      .insert({
+        scout_id: params.scoutId,
+        rank_id: params.rankId,
+        version_id: params.versionId,
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single()
+
+    if (progressError) {
+      console.error('Error creating rank progress:', progressError)
+      return { success: false, error: 'Failed to create rank progress' }
+    }
+
+    rankProgress = newProgress
+
+    // Create all requirement progress records for this rank
+    const { data: requirements } = await adminSupabase
+      .from('bsa_rank_requirements')
+      .select('id')
+      .eq('version_id', params.versionId)
+      .eq('rank_id', params.rankId)
+
+    if (requirements && requirements.length > 0) {
+      const reqProgressRecords = requirements.map((req) => ({
+        scout_rank_progress_id: rankProgress!.id,
+        requirement_id: req.id,
+        status: 'not_started' as const,
+      }))
+
+      await adminSupabase.from('scout_rank_requirement_progress').insert(reqProgressRecords)
+    }
+  }
+
+  // Get the requirement progress record
+  const { data: reqProgress, error: reqFetchError } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .select('id, status')
+    .eq('scout_rank_progress_id', rankProgress.id)
+    .eq('requirement_id', params.requirementId)
+    .maybeSingle()
+
+  if (reqFetchError || !reqProgress) {
+    console.error('Error fetching requirement progress:', reqFetchError)
+    return { success: false, error: 'Failed to find requirement progress' }
+  }
+
+  // Skip if already completed
+  if (['completed', 'approved', 'awarded'].includes(reqProgress.status)) {
+    return { success: true, data: { requirementProgressId: reqProgress.id } }
+  }
+
+  // Mark requirement as complete
+  const { error: updateError } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .update({
+      status: 'completed',
+      completed_at: params.completedAt || new Date().toISOString(),
+      completed_by: auth.profileId,
+      notes: params.notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', reqProgress.id)
+
+  if (updateError) {
+    console.error('Error marking requirement complete:', updateError)
+    return { success: false, error: 'Failed to mark requirement complete' }
+  }
+
+  revalidatePath(`/scouts/${params.scoutId}`)
+  revalidatePath('/advancement')
+  return { success: true, data: { requirementProgressId: reqProgress.id } }
+}
+
+/**
+ * Get rank requirements by rank code
+ * Returns requirements for display even when scout has no progress record
+ */
+export async function getRankRequirements(rankCode: string) {
+  const supabase = await createClient()
+
+  // Get the rank
+  const { data: rankData, error: rankError } = await supabase
+    .from('bsa_ranks')
+    .select('id, code, name, display_order')
+    .eq('code', rankCode)
+    .single()
+
+  if (rankError || !rankData) {
+    console.error('Error fetching rank:', rankError)
+    return null
+  }
+
+  // Add image_url (images are stored in filesystem, not database)
+  const rank = {
+    ...rankData,
+    image_url: null as string | null,
+  }
+
+  // Get the active requirement version
+  const { data: version } = await supabase
+    .from('bsa_requirement_versions')
+    .select('id')
+    .eq('is_active', true)
+    .order('effective_date', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (!version) {
+    console.error('No active requirement version found')
+    return null
+  }
+
+  // Get all requirements for this rank (including sub-requirements)
+  const { data: requirements, error: reqError } = await supabase
+    .from('bsa_rank_requirements')
+    .select('id, requirement_number, description, parent_requirement_id')
+    .eq('version_id', version.id)
+    .eq('rank_id', rank.id)
+    .order('display_order')
+
+  if (reqError) {
+    console.error('Error fetching requirements:', reqError)
+    return null
+  }
+
+  return {
+    rank,
+    versionId: version.id,
+    requirements: requirements || [],
+  }
 }
 
 /**

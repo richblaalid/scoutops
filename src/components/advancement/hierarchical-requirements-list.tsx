@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { RequirementApprovalRow } from './requirement-approval-row'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
@@ -8,7 +8,7 @@ import type { AdvancementStatus } from '@/types/advancement'
 
 interface Requirement {
   id: string
-  requirementProgressId: string
+  requirementProgressId: string | null // Can be null for unstarted ranks
   requirementNumber: string
   description: string
   status: AdvancementStatus
@@ -23,6 +23,15 @@ interface HierarchicalRequirementsListProps {
   unitId: string
   canEdit: boolean
   showSectionHeaders?: boolean
+  defaultCollapseCompleted?: boolean
+  // Current user name for completion dialogs
+  currentUserName?: string
+  // Optional data for initializing progress when marking complete on unstarted ranks
+  initData?: {
+    scoutId: string
+    rankId: string
+    versionId: string
+  }
 }
 
 // Parse requirement number to extract group number and sub-letter
@@ -98,12 +107,32 @@ export function HierarchicalRequirementsList({
   requirements,
   unitId,
   canEdit,
+  defaultCollapseCompleted = false,
+  currentUserName,
+  initData,
 }: HierarchicalRequirementsListProps) {
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set())
-
   const groupedRequirements = useMemo(() => {
     return groupRequirements(requirements)
   }, [requirements])
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set())
+
+  // Reset collapsed state when requirements change - collapse completed groups by default
+  useEffect(() => {
+    if (!defaultCollapseCompleted) {
+      setCollapsedGroups(new Set())
+      return
+    }
+
+    const collapsed = new Set<number>()
+    groupedRequirements.forEach((group, groupNum) => {
+      const stats = getGroupStats(group.parent, group.children)
+      if (stats.completed === stats.total) {
+        collapsed.add(groupNum)
+      }
+    })
+    setCollapsedGroups(collapsed)
+  }, [groupedRequirements, defaultCollapseCompleted])
 
   const toggleGroup = (group: number) => {
     setCollapsedGroups(prev => {
@@ -213,6 +242,8 @@ export function HierarchicalRequirementsList({
                     approvalStatus={parent.approvalStatus}
                     unitId={unitId}
                     canEdit={canEdit}
+                    currentUserName={currentUserName}
+                    initData={initData}
                   />
                 )}
 
@@ -221,7 +252,7 @@ export function HierarchicalRequirementsList({
                   <div className="space-y-0.5">
                     {children.map((child) => (
                       <div
-                        key={child.requirementProgressId}
+                        key={child.id}
                         className="ml-2 border-l-2 border-stone-200 pl-2"
                       >
                         <RequirementApprovalRow
@@ -236,6 +267,8 @@ export function HierarchicalRequirementsList({
                           approvalStatus={child.approvalStatus}
                           unitId={unitId}
                           canEdit={canEdit}
+                          currentUserName={currentUserName}
+                          initData={initData}
                         />
                       </div>
                     ))}
