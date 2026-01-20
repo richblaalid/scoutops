@@ -172,7 +172,7 @@ export function RequirementApprovalRow({
     <>
       <div
         className={cn(
-          'group relative flex items-start gap-3 rounded-lg p-3 transition-all',
+          'group relative flex items-start gap-2 rounded-lg p-2 transition-all sm:gap-3 sm:p-3',
           showSuccess && 'bg-emerald-50 ring-1 ring-emerald-200',
           isComplete && !showSuccess && 'bg-emerald-50/50',
           isPending && 'bg-amber-50',
@@ -228,7 +228,7 @@ export function RequirementApprovalRow({
               </p>
 
               {/* Metadata Row */}
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs sm:mt-2 sm:gap-2">
                 {/* Completion Info */}
                 {completedAt && (
                   <span className="flex items-center gap-1 text-emerald-600">
@@ -281,8 +281,8 @@ export function RequirementApprovalRow({
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex shrink-0 items-center gap-1">
+            {/* Actions - always visible on mobile, hover on desktop */}
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
               {/* Add Notes Button */}
               {canAddNotes && (
                 <Popover open={notesOpen} onOpenChange={setNotesOpen}>
@@ -291,11 +291,12 @@ export function RequirementApprovalRow({
                       variant="ghost"
                       size="sm"
                       className={cn(
-                        'h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100',
-                        hasNotes && 'opacity-100'
+                        'h-7 w-7 p-0 sm:h-8 sm:w-8',
+                        'sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100',
+                        hasNotes && 'sm:opacity-100'
                       )}
                     >
-                      <MessageSquare className="h-4 w-4" />
+                      <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72" align="end">
@@ -341,34 +342,36 @@ export function RequirementApprovalRow({
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    'h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100',
+                    'h-7 w-7 p-0 sm:h-8 sm:w-8',
+                    'sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100',
                     'text-amber-600 hover:bg-amber-50 hover:text-amber-700'
                   )}
                   onClick={() => setUndoDialogOpen(true)}
                   disabled={isLoading}
                 >
-                  <Undo2 className="h-4 w-4" />
+                  <Undo2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               )}
 
-              {/* Complete Button */}
+              {/* Complete Button - icon only on mobile */}
               {canApprove && (
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    'h-8 px-2 opacity-0 transition-all group-hover:opacity-100',
+                    'h-7 w-7 p-0 sm:h-8 sm:w-auto sm:px-2',
+                    'sm:opacity-0 sm:transition-all sm:group-hover:opacity-100',
                     'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
                   )}
                   onClick={() => setCompletionDialogOpen(true)}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   ) : (
                     <>
-                      <Check className="mr-1 h-4 w-4" />
-                      Complete
+                      <Check className="h-3.5 w-3.5 sm:mr-1 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Complete</span>
                     </>
                   )}
                 </Button>
