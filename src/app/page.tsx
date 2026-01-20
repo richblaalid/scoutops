@@ -16,8 +16,8 @@ function Logo({
   variant?: 'default' | 'amber'
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }) {
-  const sizes = { sm: 32, md: 40, lg: 48, xl: 64 }
-  const textSizes = { sm: 'text-2xl', md: 'text-3xl', lg: 'text-4xl', xl: 'text-5xl' }
+  const sizes = { sm: 28, md: 32, lg: 40, xl: 48 }
+  const textSizes = { sm: 'text-xl', md: 'text-2xl', lg: 'text-3xl', xl: 'text-4xl' }
   const iconSize = sizes[size]
 
   const boxBody = '#14532d'  // Deep pine
@@ -70,11 +70,11 @@ export default async function Home({ searchParams }: HomeProps) {
     <main className="min-h-screen bg-[#FEFCF8]">
       {/* Navigation - Clean, minimal */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
-        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <Logo variant="amber" size="lg" />
           <Link
             href="/login"
-            className="text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="text-base font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
             Sign in
           </Link>
@@ -82,9 +82,9 @@ export default async function Home({ searchParams }: HomeProps) {
       </nav>
 
       {/* Hero - Light, editorial, asymmetric */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="pt-24 pb-16 px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
             {/* Left: Content */}
             <div>
               {/* Eyebrow */}
@@ -127,23 +127,23 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
 
             {/* Right: Visual element - Real screenshot */}
-            <div className="relative">
+            <div className="relative max-w-md lg:max-w-lg lg:pt-12">
               {/* Main screenshot - Full dashboard view */}
-              <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-xl shadow-stone-900/10">
+              <div className="bg-white rounded-lg p-2 border border-stone-200 shadow-lg shadow-stone-900/10">
                 <Image
                   src="/marketing_assets/screenshots/dashboard.png"
                   alt="ChuckBox dashboard with quick actions, transactions, and scout account summary"
                   width={1280}
                   height={720}
-                  className="rounded-lg"
+                  className="rounded"
                   priority
                 />
               </div>
 
               {/* Floating accent card */}
-              <div className="absolute -bottom-6 -left-6 bg-amber-700 text-white p-4 rounded-xl shadow-xl shadow-amber-800/30">
-                <div className="text-2xl font-bold">Zero</div>
-                <div className="text-white text-sm">spreadsheets</div>
+              <div className="absolute -bottom-4 -left-4 bg-amber-700 text-white p-2.5 rounded-md shadow-lg shadow-amber-800/30">
+                <div className="text-lg font-bold">Zero</div>
+                <div className="text-white text-[10px]">spreadsheets</div>
               </div>
             </div>
           </div>
@@ -151,9 +151,9 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       {/* Quote banner - Subtle, warm */}
-      <section className="py-12 px-6 bg-stone-100/50 border-y border-stone-200/60">
+      <section className="py-10 px-6 bg-stone-100/50 border-y border-stone-200/60">
         <div className="mx-auto max-w-4xl text-center">
-          <blockquote className="text-xl sm:text-2xl font-medium text-stone-700 italic">
+          <blockquote className="text-lg sm:text-xl font-medium text-stone-700 italic">
             &ldquo;Scoutbook is for the Council.
             <span className="text-amber-700"> ChuckBox is for the Unit.</span>&rdquo;
           </blockquote>
@@ -161,34 +161,34 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       {/* Features - Bento grid */}
-      <section id="features" className="py-24 px-6 bg-[#FEFCF8]">
+      <section id="features" className="py-20 px-6 bg-[#FEFCF8]">
         <div className="mx-auto max-w-6xl">
           {/* Section header */}
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-stone-800">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">
               Everything a treasurer needs
             </h2>
-            <p className="mt-4 text-lg text-stone-600 max-w-2xl mx-auto">
+            <p className="mt-3 text-base text-stone-600 max-w-2xl mx-auto">
               Purpose-built for Scout unit finances. Not a general-purpose tool trying to do everything.
             </p>
           </div>
 
           {/* Bento grid - 2 large cards on top, 2 smaller below */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-4">
             {/* Scout Ledgers - Card with screenshot */}
-            <div className="group p-6 rounded-2xl bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-white" />
+            <div className="group p-4 rounded-lg bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
+                  <Wallet className="w-3.5 h-3.5 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-stone-800">Scout Ledgers</h3>
+                <h3 className="text-base font-semibold text-stone-800">Scout Ledgers</h3>
               </div>
-              <p className="text-amber-700 font-medium mb-2">&ldquo;Where did that $47.50 go?&rdquo;</p>
-              <p className="text-stone-600 text-sm leading-relaxed mb-4">
+              <p className="text-amber-700 font-medium text-xs mb-1">&ldquo;Where did that $47.50 go?&rdquo;</p>
+              <p className="text-stone-600 text-xs leading-relaxed mb-2.5">
                 Real double-entry accounting means every dollar has a paper trail.
                 Billing balances, scout funds, payments—all tracked automatically.
               </p>
-              <div className="rounded-lg overflow-hidden border border-stone-100 max-h-80 overflow-y-hidden">
+              <div className="rounded overflow-hidden border border-stone-100 max-h-56 overflow-y-hidden">
                 <Image
                   src="/marketing_assets/screenshots/accounting_screenshot.png"
                   alt="Scout account ledgers showing billing and funds balances"
@@ -200,18 +200,18 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
 
             {/* Fair Share Billing - Large card with screenshot */}
-            <div className="group p-6 rounded-2xl bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
-                  <Receipt className="w-5 h-5 text-white" />
+            <div className="group p-4 rounded-lg bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
+                  <Receipt className="w-3.5 h-3.5 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-stone-800">Fair Share Billing</h3>
+                <h3 className="text-base font-semibold text-stone-800">Fair Share Billing</h3>
               </div>
-              <p className="text-amber-700 font-medium mb-2">&ldquo;Summer camp is $1,247.50 for 23 scouts...&rdquo;</p>
-              <p className="text-stone-600 text-sm leading-relaxed mb-4">
+              <p className="text-amber-700 font-medium text-xs mb-1">&ldquo;Summer camp is $1,247.50 for 23 scouts...&rdquo;</p>
+              <p className="text-stone-600 text-xs leading-relaxed mb-2.5">
                 Enter the total, select the scouts, done. ChuckBox handles the math—$54.24 each, calculated instantly.
               </p>
-              <div className="rounded-lg overflow-hidden border border-stone-100 max-h-80 overflow-y-hidden">
+              <div className="rounded overflow-hidden border border-stone-100 max-h-56 overflow-y-hidden">
                 <Image
                   src="/marketing_assets/screenshots/billing_screenshot.png"
                   alt="Fair share billing splitting costs among scouts"
@@ -223,19 +223,19 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
 
             {/* Payment Portal - Card with Square screenshot */}
-            <div className="group p-6 rounded-2xl bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-white" />
+            <div className="group p-4 rounded-lg bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
+                  <CreditCard className="w-3.5 h-3.5 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-stone-800">Payment Portal</h3>
+                <h3 className="text-base font-semibold text-stone-800">Payment Portal</h3>
               </div>
-              <p className="text-amber-700 font-medium mb-2">&ldquo;Stop chasing checks&rdquo;</p>
-              <p className="text-stone-600 text-sm leading-relaxed mb-4">
+              <p className="text-amber-700 font-medium text-xs mb-1">&ldquo;Stop chasing checks&rdquo;</p>
+              <p className="text-stone-600 text-xs leading-relaxed mb-2.5">
                 Parents pay online via Square. Money comes in, scout accounts update automatically.
                 No more tracking down cash or waiting for checks to clear.
               </p>
-              <div className="rounded-lg overflow-hidden border border-stone-100 max-h-80 overflow-y-hidden">
+              <div className="rounded overflow-hidden border border-stone-100 max-h-56 overflow-y-hidden">
                 <Image
                   src="/marketing_assets/screenshots/square_transactions.png"
                   alt="Square Transaction History showing payments received"
@@ -247,19 +247,19 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
 
             {/* Audit-Ready Reports - Card with aging report screenshot */}
-            <div className="group p-6 rounded-2xl bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-white" />
+            <div className="group p-4 rounded-lg bg-white border border-stone-200 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-800/5 transition-all duration-300">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-green-700 to-green-800 flex items-center justify-center">
+                  <BarChart3 className="w-3.5 h-3.5 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-stone-800">Audit-Ready Reports</h3>
+                <h3 className="text-base font-semibold text-stone-800">Audit-Ready Reports</h3>
               </div>
-              <p className="text-amber-700 font-medium mb-2">&ldquo;Committee meeting in 10 minutes?&rdquo;</p>
-              <p className="text-stone-600 text-sm leading-relaxed mb-4">
+              <p className="text-amber-700 font-medium text-xs mb-1">&ldquo;Committee meeting in 10 minutes?&rdquo;</p>
+              <p className="text-stone-600 text-xs leading-relaxed mb-2.5">
                 One click generates a complete financial report. Balance summaries, aging buckets,
                 outstanding charges—everything the committee needs to see.
               </p>
-              <div className="rounded-lg overflow-hidden border border-stone-100 max-h-80 overflow-y-hidden">
+              <div className="rounded overflow-hidden border border-stone-100 max-h-56 overflow-y-hidden">
                 <Image
                   src="/marketing_assets/screenshots/aging_report.png"
                   alt="Aging report showing overdue balances by time bucket"
@@ -274,20 +274,20 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       {/* Value statements */}
-      <section className="py-16 px-6 bg-green-800">
+      <section className="py-12 px-6 bg-green-800">
         <div className="mx-auto max-w-4xl">
-          <div className="grid grid-cols-3 gap-8 text-center">
+          <div className="grid grid-cols-3 gap-6 text-center">
             {[
               { word: 'formulas', label: 'Calculations done for you' },
               { word: 'manual entry', label: 'Sync from Scoutbook' },
               { word: 'guesswork', label: 'Every dollar tracked' },
             ].map((stat) => (
               <div key={stat.word}>
-                <div className="text-4xl sm:text-5xl font-bold text-white">0</div>
-                <div className="text-lg sm:text-xl font-semibold text-white mt-1">
+                <div className="text-3xl sm:text-4xl font-bold text-white">0</div>
+                <div className="text-base sm:text-lg font-semibold text-white mt-1">
                   {stat.word}
                 </div>
-                <div className="text-green-200 text-sm mt-2">
+                <div className="text-green-200 text-xs mt-1.5">
                   {stat.label}
                 </div>
               </div>
@@ -297,22 +297,22 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       {/* Benefits list */}
-      <section className="py-24 px-6 bg-[#FEFDFB]">
+      <section className="py-20 px-6 bg-[#FEFDFB]">
         <div className="mx-auto max-w-6xl">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-stone-800">
+              <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">
                 Built by a treasurer
                 <br />
                 <span className="text-amber-700">who hated spreadsheets</span>
               </h2>
-              <p className="mt-6 text-lg text-stone-600 leading-relaxed">
+              <p className="mt-5 text-base text-stone-600 leading-relaxed">
                 After years of wrestling with Excel, Google Sheets, and paper ledgers,
                 we built the tool we wished existed. ChuckBox handles the complexity
                 so you can focus on what matters.
               </p>
 
-              <ul className="mt-8 space-y-4">
+              <ul className="mt-6 space-y-3">
                 {[
                   'Double-entry accounting keeps books balanced',
                   'Fair share billing calculated automatically',
@@ -320,27 +320,27 @@ export default async function Home({ searchParams }: HomeProps) {
                   'Square integration for online payments',
                   'One-click reports for committee meetings',
                 ].map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Check className="w-3 h-3 text-green-600" />
+                  <li key={benefit} className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check className="w-2.5 h-2.5 text-green-600" />
                     </div>
-                    <span className="text-stone-700">{benefit}</span>
+                    <span className="text-stone-700 text-sm">{benefit}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Visual collage - Reports, billing records, roster */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {/* Reports - full width */}
-              <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-md col-span-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded bg-green-700 flex items-center justify-center">
-                    <BarChart3 className="w-3.5 h-3.5 text-white" />
+              <div className="bg-white rounded-lg p-3 border border-stone-200 shadow-md col-span-2">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <div className="w-5 h-5 rounded bg-green-700 flex items-center justify-center">
+                    <BarChart3 className="w-3 h-3 text-white" />
                   </div>
-                  <span className="text-sm font-semibold text-stone-700">One-Click Reports</span>
+                  <span className="text-xs font-semibold text-stone-700">One-Click Reports</span>
                 </div>
-                <div className="rounded-lg overflow-hidden border border-stone-100 max-h-32 overflow-hidden">
+                <div className="rounded overflow-hidden border border-stone-100 max-h-28 overflow-hidden">
                   <Image
                     src="/marketing_assets/screenshots/reports_screenshot.png"
                     alt="Financial reports showing balance summaries"
@@ -352,14 +352,14 @@ export default async function Home({ searchParams }: HomeProps) {
               </div>
 
               {/* Billing records */}
-              <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-md">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded bg-green-700 flex items-center justify-center">
-                    <Receipt className="w-3.5 h-3.5 text-white" />
+              <div className="bg-white rounded-lg p-3 border border-stone-200 shadow-md">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <div className="w-5 h-5 rounded bg-green-700 flex items-center justify-center">
+                    <Receipt className="w-3 h-3 text-white" />
                   </div>
-                  <span className="text-sm font-semibold text-stone-700">Billing Records</span>
+                  <span className="text-xs font-semibold text-stone-700">Billing Records</span>
                 </div>
-                <div className="rounded-lg overflow-hidden border border-stone-100 max-h-36 overflow-hidden">
+                <div className="rounded overflow-hidden border border-stone-100 max-h-32 overflow-hidden">
                   <Image
                     src="/marketing_assets/screenshots/billing_detailed.png"
                     alt="Recent billing records with payment status"
@@ -371,16 +371,16 @@ export default async function Home({ searchParams }: HomeProps) {
               </div>
 
               {/* Roster management */}
-              <div className="bg-white rounded-xl p-4 border border-stone-200 shadow-md">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded bg-green-700 flex items-center justify-center">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="bg-white rounded-lg p-3 border border-stone-200 shadow-md">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <div className="w-5 h-5 rounded bg-green-700 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <span className="text-sm font-semibold text-stone-700">Roster Sync</span>
+                  <span className="text-xs font-semibold text-stone-700">Roster Sync</span>
                 </div>
-                <div className="rounded-lg overflow-hidden border border-stone-100 max-h-36 overflow-hidden">
+                <div className="rounded overflow-hidden border border-stone-100 max-h-32 overflow-hidden">
                   <Image
                     src="/marketing_assets/screenshots/roster_screenshot.png"
                     alt="Scout roster with patrol, rank, and position"
@@ -396,45 +396,45 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-6 bg-stone-50">
+      <section className="py-20 px-6 bg-stone-50">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-stone-800">
+          <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">
             Ready to ditch the spreadsheet?
           </h2>
-          <p className="mt-4 text-lg text-stone-600">
+          <p className="mt-3 text-base text-stone-600">
             Join the beta and see how ChuckBox can simplify your unit&apos;s finances.
           </p>
-          <div className="mt-8">
+          <div className="mt-6">
             <Link
               href="/early-access"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-800 text-white text-lg font-semibold rounded-lg hover:bg-green-900 transition-all hover:shadow-lg hover:shadow-green-900/25 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-green-800 text-white font-semibold rounded-lg hover:bg-green-900 transition-all hover:shadow-lg hover:shadow-green-900/25 hover:-translate-y-0.5"
             >
               Request Early Access
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-stone-200 bg-[#FEFDFB]">
+      <footer className="py-10 px-6 border-t border-stone-200 bg-[#FEFDFB]">
         <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
             <Logo variant="amber" size="sm" />
 
-            <div className="flex items-center gap-6">
-              <Link href="/privacy" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+            <div className="flex items-center gap-5">
+              <Link href="/privacy" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
                 Privacy
               </Link>
-              <Link href="/terms" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+              <Link href="/terms" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
                 Terms
               </Link>
-              <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+              <Link href="/contact" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
                 Contact
               </Link>
             </div>
 
-            <p className="text-sm text-stone-500">
+            <p className="text-xs text-stone-500">
               &copy; {new Date().getFullYear()} ChuckBox
             </p>
           </div>

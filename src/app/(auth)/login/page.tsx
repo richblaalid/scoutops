@@ -159,32 +159,32 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#FEFCF8] dark:bg-stone-900">
       {/* Top nav bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 dark:bg-stone-900/80 backdrop-blur-md border-b border-stone-200/60 dark:border-stone-700/60">
-        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <Logo variant="full" size="lg" />
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-200 transition-colors"
+            className="inline-flex items-center gap-2 text-base font-medium text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-200 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to home
           </Link>
         </div>
       </nav>
 
       {/* Main content - centered */}
-      <main className="flex min-h-screen flex-col items-center justify-center px-4 py-12 pt-28">
+      <main className="flex min-h-screen flex-col items-center justify-center px-4 py-10 pt-24">
         {/* Hero branding section */}
-        <div className="mb-10 flex flex-col items-center text-center">
+        <div className="mb-8 flex flex-col items-center text-center">
           {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium mb-6">
-            <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
             Private Beta
           </div>
 
-          <h1 className="text-3xl font-semibold tracking-tight text-stone-800 dark:text-stone-200">
+          <h1 className="text-2xl font-semibold tracking-tight text-stone-800 dark:text-stone-200">
             <span className="text-green-800 dark:text-green-500">Your unit,</span> <span className="text-amber-700 dark:text-amber-500">organized.</span>
           </h1>
-          <p className="mt-4 max-w-lg text-xl text-slate-600 dark:text-stone-400">
+          <p className="mt-3 max-w-lg text-lg text-slate-600 dark:text-stone-400">
             The all-in-one platform for Scout unit finances, billing, and operations.
           </p>
         </div>
@@ -203,8 +203,8 @@ export default function LoginPage() {
 
         {/* Create unit link - only show if self-signup is enabled */}
         {process.env.NEXT_PUBLIC_ENABLE_SELF_SIGNUP === 'true' ? (
-          <div className="mt-8 text-center">
-            <p className="text-lg text-slate-600 dark:text-stone-400">
+          <div className="mt-6 text-center">
+            <p className="text-base text-slate-600 dark:text-stone-400">
               Setting up a new unit?{' '}
               <Link href="/signup" className="font-semibold text-green-800 hover:text-green-900 dark:text-green-500 dark:hover:text-green-400 transition-colors">
                 Create your unit
@@ -212,8 +212,8 @@ export default function LoginPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-8 text-center">
-            <p className="text-lg text-slate-600 dark:text-stone-400">
+          <div className="mt-6 text-center">
+            <p className="text-base text-slate-600 dark:text-stone-400">
               Interested in ChuckBox for your unit?{' '}
               <Link href="/early-access" className="font-semibold text-green-800 hover:text-green-900 dark:text-green-500 dark:hover:text-green-400 transition-colors">
                 Join the waitlist
@@ -223,17 +223,17 @@ export default function LoginPage() {
         )}
 
         {/* Footer */}
-        <footer className="mt-12 flex items-center justify-center gap-6">
-          <Link href="/privacy" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
+        <footer className="mt-10 flex items-center justify-center gap-5">
+          <Link href="/privacy" className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Privacy
           </Link>
-          <Link href="/terms" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
+          <Link href="/terms" className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Terms
           </Link>
-          <Link href="/contact" className="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
+          <Link href="/contact" className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors">
             Contact
           </Link>
-          <span className="text-sm text-stone-500 dark:text-stone-400">
+          <span className="text-xs text-stone-500 dark:text-stone-400">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
         </footer>

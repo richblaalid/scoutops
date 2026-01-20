@@ -57,23 +57,23 @@ export default function ContactPage() {
       <main className="min-h-screen bg-[#FEFCF8]">
         {/* Top nav bar */}
         <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
-          <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+          <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
             <Logo variant="full" size="lg" />
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              className="inline-flex items-center gap-2 text-base font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
               Back to home
             </Link>
           </div>
         </nav>
 
-        <div className="flex min-h-screen flex-col items-center justify-center px-4 pt-20">
+        <div className="flex min-h-screen flex-col items-center justify-center px-4 pt-16">
           <div className="max-w-md w-full text-center">
-            <div className="bg-white rounded-xl border border-stone-200 p-8 shadow-lg">
-              <div className="text-5xl mb-4">✉️</div>
-              <h1 className="text-2xl font-bold text-green-800 mb-2">Message Sent!</h1>
+            <div className="bg-white rounded-xl border border-stone-200 p-6 shadow-lg">
+              <div className="text-4xl mb-3">✉️</div>
+              <h1 className="text-xl font-bold text-green-800 mb-2">Message Sent!</h1>
               <p className="text-stone-600 mb-6">
                 Thanks for reaching out. We&apos;ll get back to you as soon as possible.
               </p>
@@ -95,22 +95,22 @@ export default function ContactPage() {
     <main className="min-h-screen bg-[#FEFCF8]">
       {/* Top nav bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
-        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <Logo variant="full" size="lg" />
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-2 text-base font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to home
           </Link>
         </div>
       </nav>
 
-      <div className="max-w-xl mx-auto px-4 pt-32 pb-12">
+      <div className="max-w-xl mx-auto px-4 pt-24 pb-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">Contact Us</h1>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-green-800 mb-2">Contact Us</h1>
           <p className="text-stone-600">
             Have a question or feedback? We&apos;d love to hear from you.
           </p>
@@ -209,17 +209,17 @@ export default function ContactPage() {
         </form>
 
         {/* Footer */}
-        <div className="mt-12 flex items-center justify-center gap-6">
-          <Link href="/privacy" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+        <div className="mt-10 flex items-center justify-center gap-5">
+          <Link href="/privacy" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
             Privacy
           </Link>
-          <Link href="/terms" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+          <Link href="/terms" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
             Terms
           </Link>
-          <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors font-medium">
+          <Link href="/contact" className="text-xs text-stone-500 hover:text-stone-700 transition-colors font-medium">
             Contact
           </Link>
-          <span className="text-sm text-stone-500">
+          <span className="text-xs text-stone-500">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
         </div>

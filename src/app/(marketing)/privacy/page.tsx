@@ -12,22 +12,22 @@ export default function PrivacyPolicyPage() {
     <main className="min-h-screen bg-[#FEFCF8]">
       {/* Top nav bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FEFCF8]/80 backdrop-blur-md border-b border-stone-200/60">
-        <div className="mx-auto max-w-6xl px-6 h-20 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <Logo variant="full" size="lg" />
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-lg font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-2 text-base font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to home
           </Link>
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-4 pt-32 pb-12">
+      <div className="max-w-3xl mx-auto px-4 pt-24 pb-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">Privacy Policy</h1>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-green-800 mb-2">Privacy Policy</h1>
           <p className="text-stone-500 text-sm">Last updated: January 18, 2025</p>
         </div>
 
@@ -151,17 +151,17 @@ export default function PrivacyPolicyPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 flex items-center justify-center gap-6">
-          <Link href="/privacy" className="text-sm text-stone-500 hover:text-stone-700 transition-colors font-medium">
+        <div className="mt-10 flex items-center justify-center gap-5">
+          <Link href="/privacy" className="text-xs text-stone-500 hover:text-stone-700 transition-colors font-medium">
             Privacy
           </Link>
-          <Link href="/terms" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+          <Link href="/terms" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
             Terms
           </Link>
-          <Link href="/contact" className="text-sm text-stone-500 hover:text-stone-700 transition-colors">
+          <Link href="/contact" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
             Contact
           </Link>
-          <span className="text-sm text-stone-500">
+          <span className="text-xs text-stone-500">
             &copy; {new Date().getFullYear()} ChuckBox
           </span>
         </div>
