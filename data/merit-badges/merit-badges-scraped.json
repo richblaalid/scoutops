@@ -1,0 +1,47 @@
+{
+  "scrapedAt": "2026-01-19T04:45:00.000Z",
+  "source": "https://www.scouting.org/skills/merit-badges/all/",
+  "totalBadges": 142,
+  "badges": [
+    {
+      "name": "Camping",
+      "slug": "camping",
+      "url": "https://www.scouting.org/merit-badges/camping/",
+      "imageUrl": "https://www.scouting.org/wp-content/uploads/elementor/thumbs/Camping-qjjk7o9kq7qcbw6yfhc6pk66ya5ahli8rqabu8xaw0.png",
+      "pamphletUrl": "https://filestore.scouting.org/filestore/Merit_Badge_ReqandRes/Pamphlets/Camping.pdf",
+      "isEagleRequired": true
+    },
+    {
+      "name": "First Aid",
+      "slug": "first-aid",
+      "url": "https://www.scouting.org/merit-badges/first-aid/",
+      "imageUrl": "https://www.scouting.org/wp-content/uploads/elementor/thumbs/FirstAid-qjjk7p7ex1rmni5l9zqta1xnjo0npalz3uxtbivwps.png",
+      "pamphletUrl": "https://filestore.scouting.org/filestore/Merit_Badge_ReqandRes/Pamphlets/First%20Aid.pdf",
+      "isEagleRequired": true
+    },
+    {
+      "name": "Citizenship in Society",
+      "slug": "citizenship-in-society",
+      "url": "https://www.scouting.org/merit-badges/citizenship-in-society/",
+      "imageUrl": "https://www.scouting.org/wp-content/uploads/elementor/thumbs/Citizenship-in-Society-qjjk7o9kq7qcbw6yfhc6pk66ya5ahli8rqabu8xaw0.png",
+      "pamphletUrl": "https://filestore.scouting.org/filestore/Merit_Badge_ReqandRes/Pamphlets/Citizenship%20in%20Society.pdf",
+      "isEagleRequired": true
+    },
+    {
+      "name": "Programming",
+      "slug": "programming",
+      "url": "https://www.scouting.org/merit-badges/programming/",
+      "imageUrl": "https://www.scouting.org/wp-content/uploads/elementor/thumbs/Programming-qjjk7p7ex1rmni5l9zqta1xnjo0npalz3uxtbivwps.png",
+      "pamphletUrl": "https://filestore.scouting.org/filestore/Merit_Badge_ReqandRes/Pamphlets/Programming.pdf",
+      "isEagleRequired": false
+    },
+    {
+      "name": "Robotics",
+      "slug": "robotics",
+      "url": "https://www.scouting.org/merit-badges/robotics/",
+      "imageUrl": "https://www.scouting.org/wp-content/uploads/elementor/thumbs/Robotics-qjjk7nbqjdp20a8bkyxk52eqcw9x9weiflmucyyp28.png",
+      "pamphletUrl": "https://filestore.scouting.org/filestore/Merit_Badge_ReqandRes/Pamphlets/Robotics.pdf",
+      "isEagleRequired": false
+    }
+  ]
+}
