@@ -23,7 +23,7 @@ import {
   User,
   History,
 } from 'lucide-react'
-import { markRequirementComplete, updateRequirementNotes, markRequirementCompleteWithInit, undoRequirementCompletion } from '@/app/actions/advancement'
+import { markRequirementComplete, updateRequirementNotes, markRequirementCompleteWithInit, undoRequirementCompletion, markMeritBadgeRequirement } from '@/app/actions/advancement'
 import { RequirementCompletionDialog } from './requirement-completion-dialog'
 import { RequirementUndoDialog } from './requirement-undo-dialog'
 import { parseNotes, formatNoteTimestamp, getNoteTypeLabel, type RequirementNote } from '@/lib/notes-utils'
@@ -51,6 +51,14 @@ interface RequirementApprovalRowProps {
     rankId: string
     versionId: string
   }
+  // Merit badge support
+  isMeritBadge?: boolean
+  meritBadgeInitData?: {
+    scoutId: string
+    meritBadgeId: string
+    meritBadgeProgressId: string
+    versionId: string
+  }
 }
 
 export function RequirementApprovalRow({
@@ -69,6 +77,8 @@ export function RequirementApprovalRow({
   onSelectionChange,
   currentUserName = 'Leader',
   initData,
+  isMeritBadge = false,
+  meritBadgeInitData,
 }: RequirementApprovalRowProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -84,9 +94,9 @@ export function RequirementApprovalRow({
   const isPending = approvalStatus === 'pending_approval'
   const isDenied = approvalStatus === 'denied'
   // Can approve if we have either a progress ID or init data to create one
-  const canApprove = canEdit && !isComplete && !isPending && (requirementProgressId || initData)
-  // Can undo only completed (not approved/awarded) requirements
-  const canUndo = canEdit && status === 'completed' && requirementProgressId
+  const canApprove = canEdit && !isComplete && !isPending && (requirementProgressId || initData || meritBadgeInitData)
+  // Can undo only completed (not approved/awarded) requirements - ranks only for now
+  const canUndo = canEdit && status === 'completed' && requirementProgressId && !isMeritBadge
 
   // Parse notes from JSON or legacy format
   const parsedNotes = useMemo(() => parseNotes(notes), [notes])
@@ -96,20 +106,29 @@ export function RequirementApprovalRow({
     setIsLoading(true)
     try {
       let result
-      if (requirementProgressId) {
-        // Normal case: progress record exists
-        result = await markRequirementComplete(requirementProgressId, unitId, completedAt, noteText || undefined)
-      } else if (initData) {
-        // No progress record yet: initialize and mark complete
-        result = await markRequirementCompleteWithInit({
-          scoutId: initData.scoutId,
-          rankId: initData.rankId,
-          requirementId: id,
-          unitId,
-          versionId: initData.versionId,
-          completedAt,
-          notes: noteText || undefined,
-        })
+      if (isMeritBadge) {
+        // Merit badge requirement
+        if (requirementProgressId) {
+          result = await markMeritBadgeRequirement(requirementProgressId, unitId, completedAt, noteText || undefined)
+        }
+        // TODO: Add init support for merit badge requirements if needed
+      } else {
+        // Rank requirement
+        if (requirementProgressId) {
+          // Normal case: progress record exists
+          result = await markRequirementComplete(requirementProgressId, unitId, completedAt, noteText || undefined)
+        } else if (initData) {
+          // No progress record yet: initialize and mark complete
+          result = await markRequirementCompleteWithInit({
+            scoutId: initData.scoutId,
+            rankId: initData.rankId,
+            requirementId: id,
+            unitId,
+            versionId: initData.versionId,
+            completedAt,
+            notes: noteText || undefined,
+          })
+        }
       }
       if (result?.success) {
         setShowSuccess(true)

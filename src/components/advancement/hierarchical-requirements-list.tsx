@@ -32,6 +32,14 @@ interface HierarchicalRequirementsListProps {
     rankId: string
     versionId: string
   }
+  // Merit badge support
+  isMeritBadge?: boolean
+  meritBadgeInitData?: {
+    scoutId: string
+    meritBadgeId: string
+    meritBadgeProgressId: string
+    versionId: string
+  }
 }
 
 // Parse requirement number to extract group number and sub-letter
@@ -110,6 +118,8 @@ export function HierarchicalRequirementsList({
   defaultCollapseCompleted = false,
   currentUserName,
   initData,
+  isMeritBadge = false,
+  meritBadgeInitData,
 }: HierarchicalRequirementsListProps) {
   const groupedRequirements = useMemo(() => {
     return groupRequirements(requirements)
@@ -244,6 +254,8 @@ export function HierarchicalRequirementsList({
                     canEdit={canEdit}
                     currentUserName={currentUserName}
                     initData={initData}
+                    isMeritBadge={isMeritBadge}
+                    meritBadgeInitData={meritBadgeInitData}
                   />
                 )}
 
@@ -269,6 +281,8 @@ export function HierarchicalRequirementsList({
                           canEdit={canEdit}
                           currentUserName={currentUserName}
                           initData={initData}
+                          isMeritBadge={isMeritBadge}
+                          meritBadgeInitData={meritBadgeInitData}
                         />
                       </div>
                     ))}
