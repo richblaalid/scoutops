@@ -344,8 +344,9 @@ export function SingleRankRequirements({
               {incompleteCount} requirement{incompleteCount !== 1 ? 's' : ''} remaining
             </span>
             <BulkApprovalSheet
+              type="rank"
               requirements={formattedRequirements}
-              rankName={rankData.name}
+              itemName={rankData.name}
               unitId={unitId}
               scoutId={scoutId}
               initData={hasRawRequirements && rankRequirementsData ? {

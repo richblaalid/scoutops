@@ -188,8 +188,9 @@ export function RankProgressCard({ rank, scoutId, unitId, canEdit }: RankProgres
                   {incompleteCount} requirement{incompleteCount !== 1 ? 's' : ''} remaining
                 </span>
                 <BulkApprovalSheet
+                  type="rank"
                   requirements={bulkRequirements}
-                  rankName={rank.bsa_ranks.name}
+                  itemName={rank.bsa_ranks.name}
                   unitId={unitId}
                   scoutId={scoutId}
                   trigger={

@@ -28,7 +28,11 @@ import {
   ListChecks,
   ChevronRight,
 } from 'lucide-react'
-import { bulkApproveRequirements, bulkApproveRequirementsWithInit } from '@/app/actions/advancement'
+import {
+  bulkApproveRequirements,
+  bulkApproveRequirementsWithInit,
+  bulkApproveMeritBadgeRequirements,
+} from '@/app/actions/advancement'
 import type { AdvancementStatus } from '@/types/advancement'
 
 interface Requirement {
@@ -39,22 +43,34 @@ interface Requirement {
   status: AdvancementStatus
 }
 
+interface RankInitData {
+  rankId: string
+  versionId: string
+}
+
 interface BulkApprovalSheetProps {
+  /** Type of requirements being approved */
+  type: 'rank' | 'merit-badge'
+  /** Requirements to display and select from */
   requirements: Requirement[]
-  rankName: string
+  /** Display name (rank name or badge name) */
+  itemName: string
+  /** Unit ID for authorization */
   unitId: string
+  /** Scout ID */
   scoutId: string
+  /** Optional custom trigger element */
   trigger?: React.ReactNode
+  /** Callback when approval completes successfully */
   onComplete?: () => void
-  initData?: {
-    rankId: string
-    versionId: string
-  }
+  /** Init data for ranks without progress records (rank type only) */
+  initData?: RankInitData
 }
 
 export function BulkApprovalSheet({
+  type,
   requirements,
-  rankName,
+  itemName,
   unitId,
   scoutId,
   trigger,
@@ -92,7 +108,8 @@ export function BulkApprovalSheet({
 
   const allSelected = selectedIds.size === incompleteRequirements.length && incompleteRequirements.length > 0
   const someSelected = selectedIds.size > 0
-  const needsInit = initData && incompleteRequirements.some(r => r.requirementProgressId === null)
+  // Only ranks can have uninitialized progress records; merit badges always have them
+  const needsInit = type === 'rank' && initData && incompleteRequirements.some(r => r.requirementProgressId === null)
 
   const handleSelectAll = () => {
     if (allSelected) {
@@ -122,22 +139,37 @@ export function BulkApprovalSheet({
     try {
       let response
 
-      if (needsInit && initData) {
-        response = await bulkApproveRequirementsWithInit({
-          scoutId,
-          rankId: initData.rankId,
-          requirementIds: Array.from(selectedIds),
-          unitId,
-          versionId: initData.versionId,
-          completedAt: `${completedDate}T12:00:00.000Z`,
-          notes: notes || undefined,
-        })
+      if (type === 'rank') {
+        // Rank requirements
+        if (needsInit && initData) {
+          response = await bulkApproveRequirementsWithInit({
+            scoutId,
+            rankId: initData.rankId,
+            requirementIds: Array.from(selectedIds),
+            unitId,
+            versionId: initData.versionId,
+            completedAt: `${completedDate}T12:00:00.000Z`,
+            notes: notes || undefined,
+          })
+        } else {
+          const progressIds = incompleteRequirements
+            .filter(r => selectedIds.has(r.id) && r.requirementProgressId)
+            .map(r => r.requirementProgressId!)
+
+          response = await bulkApproveRequirements(
+            progressIds,
+            unitId,
+            `${completedDate}T12:00:00.000Z`,
+            notes || undefined
+          )
+        }
       } else {
+        // Merit badge requirements - always have progress records
         const progressIds = incompleteRequirements
           .filter(r => selectedIds.has(r.id) && r.requirementProgressId)
           .map(r => r.requirementProgressId!)
 
-        response = await bulkApproveRequirements(
+        response = await bulkApproveMeritBadgeRequirements(
           progressIds,
           unitId,
           `${completedDate}T12:00:00.000Z`,
@@ -204,7 +236,7 @@ export function BulkApprovalSheet({
               </DialogTitle>
               <DialogDescription className="mt-1 text-stone-600">
                 Select and approve multiple requirements at once for{' '}
-                <span className="font-medium text-forest-700">{rankName}</span>
+                <span className="font-medium text-forest-700">{itemName}</span>
               </DialogDescription>
             </div>
           </div>
