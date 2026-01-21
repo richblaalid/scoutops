@@ -24,6 +24,11 @@ import { createClient } from '@supabase/supabase-js'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
+
+// ESM-compatible __dirname
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // Load environment variables
 dotenv.config({ path: '.env.local' })
@@ -332,15 +337,35 @@ async function main() {
       continue
     }
 
-    // Delete existing requirements for this badge/version
-    const { error: deleteError } = await supabase
+    // First, get all requirement IDs for this badge/version
+    const { data: existingReqs } = await supabase
       .from('bsa_merit_badge_requirements')
-      .delete()
+      .select('id')
       .eq('version_id', versionId)
       .eq('merit_badge_id', badgeId)
 
-    if (deleteError) {
-      console.error(`   Error deleting old requirements for ${badge.name}:`, deleteError.message)
+    if (existingReqs && existingReqs.length > 0) {
+      // Delete any progress data that references these requirements
+      const reqIds = existingReqs.map(r => r.id)
+      const { error: progressDeleteError } = await supabase
+        .from('scout_merit_badge_requirement_progress')
+        .delete()
+        .in('requirement_id', reqIds)
+
+      if (progressDeleteError) {
+        console.error(`   Error deleting progress for ${badge.name}:`, progressDeleteError.message)
+      }
+
+      // Now delete existing requirements for this badge/version
+      const { error: deleteError } = await supabase
+        .from('bsa_merit_badge_requirements')
+        .delete()
+        .eq('version_id', versionId)
+        .eq('merit_badge_id', badgeId)
+
+      if (deleteError) {
+        console.error(`   Error deleting old requirements for ${badge.name}:`, deleteError.message)
+      }
     }
 
     // Flatten requirements tree
@@ -358,51 +383,46 @@ async function main() {
       false
     )
 
-    // Pass 1: Insert all requirements without parent IDs
+    // Pass 1: Insert all requirements without parent IDs using raw SQL
+    // This bypasses PostgREST schema cache issues
     const tempIdToDbId = new Map<string, string>()
 
     for (const req of flatReqs) {
-      const reqData = {
-        version_id: req.versionId,
-        merit_badge_id: req.badgeId,
-        requirement_number: req.requirementNumber,
-        parent_requirement_id: null, // Will be set in pass 2
-        sub_requirement_letter: req.subRequirementLetter,
-        description: req.description,
-        display_order: req.displayOrder,
-        is_alternative: req.isAlternative,
-        alternatives_group: req.alternativesGroup,
-        nesting_depth: req.nestingDepth,
-        original_scoutbook_id: req.originalScoutbookId,
-        required_count: req.requiredCount,
-      }
-
-      const { data: newReq, error: insertError } = await supabase
-        .from('bsa_merit_badge_requirements')
-        .insert(reqData)
-        .select('id')
-        .single()
+      // Use raw SQL to insert, bypassing schema cache
+      const { data: newReq, error: insertError } = await supabase.rpc('insert_merit_badge_requirement', {
+        p_version_id: req.versionId,
+        p_merit_badge_id: req.badgeId,
+        p_requirement_number: req.requirementNumber,
+        p_sub_requirement_letter: req.subRequirementLetter,
+        p_description: req.description,
+        p_display_order: req.displayOrder,
+        p_is_alternative: req.isAlternative,
+        p_alternatives_group: req.alternativesGroup,
+        p_nesting_depth: req.nestingDepth,
+        p_original_scoutbook_id: req.originalScoutbookId,
+        p_required_count: req.requiredCount,
+      })
 
       if (insertError) {
         console.error(`   Error inserting req ${req.originalScoutbookId} for ${badge.name}:`, insertError.message)
         requirementsFailed++
       } else {
-        tempIdToDbId.set(req.tempId, newReq.id)
+        tempIdToDbId.set(req.tempId, newReq)
         requirementsInserted++
       }
     }
 
-    // Pass 2: Update parent IDs
+    // Pass 2: Update parent IDs using raw SQL
     for (const req of flatReqs) {
       if (req.parentTempId) {
         const dbId = tempIdToDbId.get(req.tempId)
         const parentDbId = tempIdToDbId.get(req.parentTempId)
 
         if (dbId && parentDbId) {
-          const { error: updateError } = await supabase
-            .from('bsa_merit_badge_requirements')
-            .update({ parent_requirement_id: parentDbId })
-            .eq('id', dbId)
+          const { error: updateError } = await supabase.rpc('update_requirement_parent', {
+            p_id: dbId,
+            p_parent_id: parentDbId,
+          })
 
           if (updateError) {
             console.error(`   Error updating parent for ${req.originalScoutbookId}:`, updateError.message)
