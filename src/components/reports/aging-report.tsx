@@ -182,7 +182,7 @@ export function AgingReport({ charges }: AgingReportProps) {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <Link
-                        href={`/accounts/${scout.scout_account_id}`}
+                        href={`/finances/accounts/${scout.scout_account_id}`}
                         className="font-medium text-forest-600 hover:text-forest-800"
                       >
                         {scout.scout_name}

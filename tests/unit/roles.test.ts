@@ -178,35 +178,35 @@ describe('roles', () => {
     it('should return all nav items for admin', () => {
       const items = getVisibleNavItems('admin')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts', 'billing', 'payments', 'advancement', 'reports', 'members'
+        'dashboard', 'scouts', 'finances', 'advancement', 'members'
       ])
     })
 
     it('should return correct items for treasurer', () => {
       const items = getVisibleNavItems('treasurer')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts', 'billing', 'payments', 'advancement', 'reports'
+        'dashboard', 'scouts', 'finances', 'advancement'
       ])
     })
 
     it('should return correct items for leader', () => {
       const items = getVisibleNavItems('leader')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts', 'advancement', 'reports'
+        'dashboard', 'scouts', 'finances', 'advancement'
       ])
     })
 
     it('should return correct items for parent', () => {
       const items = getVisibleNavItems('parent')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'scouts', 'accounts'
+        'dashboard', 'scouts', 'finances'
       ])
     })
 
     it('should return correct items for scout', () => {
       const items = getVisibleNavItems('scout')
       expect(items.map(i => i.page)).toEqual([
-        'dashboard', 'accounts'
+        'dashboard', 'finances'
       ])
     })
   })

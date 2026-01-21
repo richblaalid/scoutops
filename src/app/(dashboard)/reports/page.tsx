@@ -401,7 +401,7 @@ export default async function ReportsPage() {
                       <tr key={account.id} className="border-b last:border-0">
                         <td className="py-3 pr-4">
                           <Link
-                            href={`/accounts/${account.id}`}
+                            href={`/finances/accounts/${account.id}`}
                             className="font-medium text-forest-600 hover:text-forest-800"
                           >
                             {account.scouts?.first_name} {account.scouts?.last_name}

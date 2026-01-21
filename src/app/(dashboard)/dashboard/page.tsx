@@ -278,7 +278,7 @@ export default async function DashboardPage() {
                   {scoutAccounts.map((account) => (
                     <Link
                       key={account.id}
-                      href={`/accounts/${account.id}`}
+                      href={`/finances/accounts/${account.id}`}
                       className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-amber-50/50 hover:border-amber-200 dark:hover:bg-amber-900/10 dark:hover:border-amber-700/30"
                     >
                       <div>

@@ -184,26 +184,26 @@ Largely unchanged, but:
 - [x] 1.1.5 Add quick action buttons
 
 ### Phase 2: Migrate Existing Pages
-- 2.1.1 Move Accounts to /finances/accounts
-- 2.1.2 Move Account Detail to /finances/accounts/[id]
-- 2.1.3 Move Billing to /finances/billing
-- 2.1.4 Move Payments to /finances/payments
-- 2.2.1 Add FinanceSubnav to all pages
-- 2.2.2 Update internal links to new URLs
+- [x] 2.1.1 Move Accounts to /finances/accounts
+- [x] 2.1.2 Move Account Detail to /finances/accounts/[id]
+- [x] 2.1.3 Move Billing to /finances/billing
+- [x] 2.1.4 Move Payments to /finances/payments
+- [x] 2.2.1 Add FinanceSubnav to all pages
+- [x] 2.2.2 Update internal links to new URLs
 
 ### Phase 3: Integration & Links
-- 3.1.1 Update Roster balance column to link to account detail
-- 3.1.2 Add Financial Summary card to Scout Profile
-- 3.1.3 Make all scout names in finance pages link to account detail
+- [x] 3.1.1 Update Roster balance column to link to account detail (links already updated)
+- [x] 3.1.2 Add Financial Summary card to Scout Profile (already exists - scout-profile-tabs.tsx)
+- [x] 3.1.3 Make all scout names in finance pages link to account detail (done in Phase 2)
 - 3.1.4 Add "View Scout Profile" to Account Detail page
 
 ### Phase 4: Navigation & Cleanup
-- 4.1.1 Update sidebar: Remove Accounts, Billing, Payments, Reports
-- 4.1.2 Add single "Finances" nav item
-- 4.1.3 Update role definitions in roles.ts
+- [x] 4.1.1 Update sidebar: Remove Accounts, Billing, Payments, Reports
+- [x] 4.1.2 Add single "Finances" nav item
+- [x] 4.1.3 Update role definitions in roles.ts
 - 4.2.1 Delete old Reports page (content now in Overview)
-- 4.2.2 Test all redirects
-- 4.2.3 Update any remaining hardcoded links
+- [x] 4.2.2 Test all redirects (configured in next.config.mjs)
+- [x] 4.2.3 Update any remaining hardcoded links
 
 ## Files to Create
 

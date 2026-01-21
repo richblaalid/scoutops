@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, Settings, LogOut, Plug } from 'lucide-react'
+import { Menu, Settings, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getVisibleNavItems, isAdmin, isFinancialRole } from '@/lib/roles'
+import { getVisibleNavItems, isFinancialRole } from '@/lib/roles'
 import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import {
@@ -55,8 +55,7 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
   const initials = getInitials(user.email || '', userName)
   const userRole = currentRole || 'parent'
 
-  const showUnitSettings = isAdmin(userRole)
-  const showIntegrations = isFinancialRole(userRole)
+  const showSettings = isFinancialRole(userRole)
 
   const closeMenu = () => setIsOpen(false)
 
@@ -121,51 +120,32 @@ export function MobileNav({ user, userName, className }: MobileNavProps) {
             </nav>
 
             {/* Admin/Treasurer Settings Section */}
-            {(showUnitSettings || showIntegrations) && (
+            {showSettings && (
               <div className="border-t border-sidebar-border px-3 py-3">
                 <ul className="space-y-1">
-                  {showUnitSettings && (
-                    <li>
-                      <Link
-                        href="/settings/unit"
-                        onClick={closeMenu}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                          pathname === '/settings/unit'
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Settings className="h-4 w-4" />
-                        Unit Settings
-                      </Link>
-                    </li>
-                  )}
-                  {showIntegrations && (
-                    <li>
-                      <Link
-                        href="/settings/integrations"
-                        onClick={closeMenu}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                          pathname === '/settings/integrations'
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Plug className="h-4 w-4" />
-                        Integrations
-                      </Link>
-                    </li>
-                  )}
+                  <li>
+                    <Link
+                      href="/settings"
+                      onClick={closeMenu}
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        pathname === '/settings' || pathname.startsWith('/settings/')
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                      )}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
+                  </li>
                 </ul>
               </div>
             )}
 
-            {/* User Section - avatar links to profile settings */}
+            {/* User Section - avatar links to profile */}
             <div className="border-t border-sidebar-border px-3 py-3">
               <Link
-                href="/settings"
+                href="/profile"
                 onClick={closeMenu}
                 className="flex items-center gap-3 rounded-md px-3 py-2 transition-colors hover:bg-sidebar-accent/50"
               >

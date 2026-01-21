@@ -361,7 +361,7 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                       </button>
                       {accountId && (
                         <Link
-                          href={`/accounts/${accountId}`}
+                          href={`/finances/accounts/${accountId}`}
                           className="text-sm text-forest-600 hover:text-forest-800 hidden sm:inline"
                         >
                           Account

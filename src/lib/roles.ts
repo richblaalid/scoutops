@@ -4,10 +4,8 @@ import {
   LayoutDashboard,
   Users,
   Wallet,
-  Receipt,
-  CreditCard,
-  BarChart3,
   UserCog,
+  Award,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -21,7 +19,9 @@ export type AppPage =
   | 'billing'
   | 'payments'
   | 'reports'
+  | 'finances'
   | 'members'
+  | 'advancement'
 
 // Actions that can be performed
 export type AppAction =
@@ -46,7 +46,9 @@ const PAGE_ACCESS: Record<AppPage, MemberRole[]> = {
   billing: ['admin', 'treasurer'],
   payments: ['admin', 'treasurer'],
   reports: ['admin', 'treasurer', 'leader'],
+  finances: ['admin', 'treasurer', 'leader', 'parent', 'scout'], // Single nav entry for all financial pages
   members: ['admin'],
+  advancement: ['admin', 'treasurer', 'leader'], // Feature flag controlled
 }
 
 // Action permissions by role
@@ -77,10 +79,8 @@ export interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', page: 'dashboard', icon: LayoutDashboard },
   { href: '/roster', label: 'Roster', page: 'scouts', icon: Users },
-  { href: '/accounts', label: 'Accounts', page: 'accounts', icon: Wallet },
-  { href: '/billing', label: 'Billing', page: 'billing', icon: Receipt },
-  { href: '/payments', label: 'Payments', page: 'payments', icon: CreditCard },
-  { href: '/reports', label: 'Reports', page: 'reports', icon: BarChart3 },
+  { href: '/finances', label: 'Finances', page: 'finances', icon: Wallet },
+  { href: '/advancement', label: 'Advancement', page: 'advancement', icon: Award },
   { href: '/members', label: 'Members', page: 'members', icon: UserCog },
 ]
 

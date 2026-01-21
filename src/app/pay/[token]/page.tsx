@@ -610,7 +610,7 @@ export default function PaymentCheckoutPage() {
               )}
               <div className="pt-2 border-t border-stone-100">
                 <a
-                  href={`/login?redirect=/accounts/${linkData.scoutAccountId}`}
+                  href={`/login?redirect=/finances/accounts/${linkData.scoutAccountId}`}
                   className="text-sm text-forest-600 hover:text-forest-700 flex items-center justify-center gap-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
