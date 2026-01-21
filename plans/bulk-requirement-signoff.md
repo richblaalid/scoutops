@@ -224,9 +224,9 @@ User clicks "Sign Off Selected"
 - [x] **2.1.5** Wire up selection → approval flow
 
 ### Phase 3: Rank Multi-Select Alignment
-- [ ] **3.1.1** Verify `single-rank-requirements.tsx` has same toggle pattern
-- [ ] **3.1.2** Align UI if any inconsistencies found
-- [ ] **3.1.3** Update to use refactored `BulkApprovalSheet` with `type="rank"`
+- [x] **3.1.1** Verify `single-rank-requirements.tsx` has same toggle pattern
+- [x] **3.1.2** Align UI if any inconsistencies found
+- [x] **3.1.3** Update to use refactored `BulkApprovalSheet` with `type="rank"`
 
 ### Phase 4: /advancement Browser Views
 - [ ] **4.1.1** Add multi-select to merit badge browser view
@@ -271,4 +271,5 @@ User clicks "Sign Off Selected"
 |------|------|--------|
 | 2026-01-21 | Phase 0: Refactored BulkApprovalSheet for unified rank/badge use | f50ea62 |
 | 2026-01-21 | Phase 1: Added multi-select infrastructure | 170e51a |
-| 2026-01-21 | Phase 2: Merit badge multi-select in scout profile | pending |
+| 2026-01-21 | Phase 2: Merit badge multi-select in scout profile | 029f41d |
+| 2026-01-21 | Phase 3: Rank multi-select alignment | pending |

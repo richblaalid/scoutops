@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,8 +9,8 @@ import { RankIcon } from './rank-icon'
 import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
 import { BulkApprovalSheet } from './bulk-approval-sheet'
 import { RankActionDialog } from './rank-action-dialog'
-import { Award, Calendar, Check, CheckSquare, PartyPopper, ShieldCheck } from 'lucide-react'
-import { useState } from 'react'
+import { MultiSelectActionBar } from './multi-select-action-bar'
+import { Award, Calendar, Check, CheckSquare, PartyPopper, ShieldCheck, ListChecks } from 'lucide-react'
 import { approveRank, awardRank } from '@/app/actions/advancement'
 import { cn } from '@/lib/utils'
 import type { AdvancementStatus } from '@/types/advancement'
@@ -86,6 +86,11 @@ export function SingleRankRequirements({
   const [approveDialogOpen, setApproveDialogOpen] = useState(false)
   const [awardDialogOpen, setAwardDialogOpen] = useState(false)
 
+  // Multi-select mode state
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkApprovalOpen, setBulkApprovalOpen] = useState(false)
+
   // Sort requirements by number - handle both progress data and raw requirements
   const sortedRequirements = useMemo(() => {
     if (rank) {
@@ -142,6 +147,55 @@ export function SingleRankRequirements({
     description: req.bsa_rank_requirements.description,
     status: req.status as AdvancementStatus,
   }))
+
+  // Multi-select helpers - compute from source data (not formattedRequirements which is defined later)
+  const incompleteRequirementIds = useMemo(() => {
+    if (hasProgressData) {
+      return new Set(
+        sortedRequirements
+          .filter(r => !['completed', 'approved', 'awarded'].includes(r.status))
+          .map(r => r.bsa_rank_requirements.id)
+      )
+    } else {
+      // All raw requirements are not started (incomplete)
+      return new Set(sortedRawRequirements.map(r => r.id))
+    }
+  }, [sortedRequirements, sortedRawRequirements, hasProgressData])
+
+  const handleSelectionChange = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const handleSelectAll = () => {
+    setSelectedIds(new Set(incompleteRequirementIds))
+  }
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set())
+  }
+
+  const handleCancelMultiSelect = () => {
+    setIsMultiSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const handleSignOff = () => {
+    setBulkApprovalOpen(true)
+  }
+
+  const handleBulkApprovalComplete = () => {
+    setBulkApprovalOpen(false)
+    setIsMultiSelectMode(false)
+    setSelectedIds(new Set())
+  }
 
   // Init data for creating progress when marking requirements complete on unstarted ranks
   const initData = hasRawRequirements && rankRequirementsData ? {
@@ -236,12 +290,36 @@ export function SingleRankRequirements({
 
           {/* Rank Info */}
           <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-stone-900">{rankData.name}</h2>
-              <Badge className={cn(config.bg, config.text, 'border-0')}>
-                {config.icon && <Award className="mr-1 h-3 w-3" />}
-                {config.label}
-              </Badge>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-stone-900">{rankData.name}</h2>
+                <Badge className={cn(config.bg, config.text, 'border-0')}>
+                  {config.icon && <Award className="mr-1 h-3 w-3" />}
+                  {config.label}
+                </Badge>
+              </div>
+
+              {/* Multi-select toggle */}
+              {canEdit && !isAwarded && incompleteCount > 0 && (
+                <Button
+                  variant={isMultiSelectMode ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    if (isMultiSelectMode) {
+                      handleCancelMultiSelect()
+                    } else {
+                      setIsMultiSelectMode(true)
+                    }
+                  }}
+                  className={cn(
+                    'h-8 gap-1.5 text-xs',
+                    isMultiSelectMode && 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  )}
+                >
+                  <ListChecks className="h-3.5 w-3.5" />
+                  {isMultiSelectMode ? 'Cancel Selection' : 'Select Multiple'}
+                </Button>
+              )}
             </div>
 
             {/* Progress Bar */}
@@ -337,32 +415,6 @@ export function SingleRankRequirements({
           </div>
         )}
 
-        {/* Bulk Actions Toolbar - show for both started and unstarted ranks */}
-        {canEdit && incompleteCount > 0 && (
-          <div className="mb-4 flex items-center justify-between rounded-lg border bg-stone-50/50 px-3 py-2">
-            <span className="text-sm text-stone-600">
-              {incompleteCount} requirement{incompleteCount !== 1 ? 's' : ''} remaining
-            </span>
-            <BulkApprovalSheet
-              type="rank"
-              requirements={formattedRequirements}
-              itemName={rankData.name}
-              unitId={unitId}
-              scoutId={scoutId}
-              initData={hasRawRequirements && rankRequirementsData ? {
-                rankId: rankRequirementsData.rank.id,
-                versionId: rankRequirementsData.versionId,
-              } : undefined}
-              trigger={
-                <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                  <CheckSquare className="h-4 w-4" />
-                  Bulk Approve
-                </Button>
-              }
-            />
-          </div>
-        )}
-
         {/* Requirements List */}
         <HierarchicalRequirementsList
           requirements={formattedRequirements}
@@ -371,6 +423,9 @@ export function SingleRankRequirements({
           defaultCollapseCompleted={hasProgressData}
           currentUserName={currentUserName}
           initData={initData}
+          isMultiSelectMode={isMultiSelectMode}
+          selectedIds={selectedIds}
+          onSelectionChange={handleSelectionChange}
         />
 
       </CardContent>
@@ -402,6 +457,34 @@ export function SingleRankRequirements({
           }}
         />
       )}
+
+      {/* Multi-select action bar */}
+      <MultiSelectActionBar
+        selectedCount={selectedIds.size}
+        totalSelectableCount={incompleteRequirementIds.size}
+        onSelectAll={handleSelectAll}
+        onClear={handleClearSelection}
+        onSignOff={handleSignOff}
+        onCancel={handleCancelMultiSelect}
+        visible={isMultiSelectMode}
+      />
+
+      {/* Bulk Approval Sheet - controlled mode for multi-select */}
+      <BulkApprovalSheet
+        type="rank"
+        requirements={formattedRequirements}
+        itemName={rankData.name}
+        unitId={unitId}
+        scoutId={scoutId}
+        open={bulkApprovalOpen}
+        onOpenChange={setBulkApprovalOpen}
+        preSelectedIds={selectedIds}
+        onComplete={handleBulkApprovalComplete}
+        initData={hasRawRequirements && rankRequirementsData ? {
+          rankId: rankRequirementsData.rank.id,
+          versionId: rankRequirementsData.versionId,
+        } : undefined}
+      />
     </Card>
   )
 }
