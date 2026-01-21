@@ -195,7 +195,7 @@ Largely unchanged, but:
 - [x] 3.1.1 Update Roster balance column to link to account detail (links already updated)
 - [x] 3.1.2 Add Financial Summary card to Scout Profile (already exists - scout-profile-tabs.tsx)
 - [x] 3.1.3 Make all scout names in finance pages link to account detail (done in Phase 2)
-- 3.1.4 Add "View Scout Profile" to Account Detail page
+- [x] 3.1.4 Add "View Scout Profile" to Account Detail page
 
 ### Phase 4: Navigation & Cleanup
 - [x] 4.1.1 Update sidebar: Remove Accounts, Billing, Payments, Reports
@@ -262,8 +262,9 @@ Largely unchanged, but:
 
 | Task | Date | Commit |
 |------|------|--------|
-| 0.1.1 | 2026-01-20 | e9af5f0 |
-| 0.1.2 | 2026-01-20 | e9af5f0 |
-| 0.1.3 | 2026-01-20 | e9af5f0 |
-| 1.1.1-5 | 2026-01-20 | (pending) |
+| 0.1.1-3 | 2026-01-20 | e9af5f0 |
+| 1.1.1-5 | 2026-01-20 | 4a84487 |
+| 2.1.1-2.2.2 | 2026-01-20 | fd7c9eb |
+| 4.2.1 | 2026-01-20 | 0694d0b |
+| 3.1.4 | 2026-01-20 | (pending) |
 

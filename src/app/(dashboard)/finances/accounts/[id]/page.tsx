@@ -195,6 +195,14 @@ export default async function AccountDetailPage({ params }: AccountPageProps) {
             {account.scouts?.patrols?.name && account.scouts?.rank && ' • '}
             {account.scouts?.rank}
           </p>
+          {account.scouts && (
+            <Link
+              href={`/scouts/${account.scouts.id}`}
+              className="mt-2 inline-block text-sm text-forest-600 hover:text-forest-800 hover:underline"
+            >
+              View Scout Profile →
+            </Link>
+          )}
         </div>
         <div className="flex flex-col items-start gap-3 sm:items-end">
           {/* Billing Balance */}
