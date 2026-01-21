@@ -46,6 +46,10 @@ interface HierarchicalRequirementsListProps {
     meritBadgeProgressId: string
     versionId: string
   }
+  // Multi-select support for bulk operations
+  isMultiSelectMode?: boolean
+  selectedIds?: Set<string>
+  onSelectionChange?: (id: string) => void
 }
 
 // Parse requirement number to extract group number, sub-letters, and depth
@@ -277,6 +281,9 @@ function RequirementNodeView({
   meritBadgeInitData,
   collapsedNodes,
   toggleNode,
+  isMultiSelectMode,
+  selectedIds,
+  onSelectionChange,
 }: {
   node: RequirementNode
   unitId: string
@@ -292,6 +299,9 @@ function RequirementNodeView({
   }
   collapsedNodes: Set<string>
   toggleNode: (id: string) => void
+  isMultiSelectMode?: boolean
+  selectedIds?: Set<string>
+  onSelectionChange?: (id: string) => void
 }) {
   const hasChildren = node.children.length > 0
   const isCollapsed = collapsedNodes.has(node.requirement.id)
@@ -322,6 +332,9 @@ function RequirementNodeView({
         initData={initData}
         isMeritBadge={isMeritBadge}
         meritBadgeInitData={meritBadgeInitData}
+        isMultiSelectMode={isMultiSelectMode}
+        isSelected={selectedIds?.has(req.id) ?? false}
+        onSelectionChange={onSelectionChange ? () => onSelectionChange(req.id) : undefined}
       />
     )
   }
@@ -417,6 +430,9 @@ function RequirementNodeView({
                   meritBadgeInitData={meritBadgeInitData}
                   collapsedNodes={collapsedNodes}
                   toggleNode={toggleNode}
+                  isMultiSelectMode={isMultiSelectMode}
+                  selectedIds={selectedIds}
+                  onSelectionChange={onSelectionChange}
                 />
               </div>
             ))}
@@ -436,6 +452,9 @@ export function HierarchicalRequirementsList({
   initData,
   isMeritBadge = false,
   meritBadgeInitData,
+  isMultiSelectMode = false,
+  selectedIds,
+  onSelectionChange,
 }: HierarchicalRequirementsListProps) {
   const requirementTree = useMemo(() => {
     return buildRequirementTree(requirements)
@@ -496,6 +515,9 @@ export function HierarchicalRequirementsList({
           meritBadgeInitData={meritBadgeInitData}
           collapsedNodes={collapsedNodes}
           toggleNode={toggleNode}
+          isMultiSelectMode={isMultiSelectMode}
+          selectedIds={selectedIds}
+          onSelectionChange={onSelectionChange}
         />
       ))}
     </div>

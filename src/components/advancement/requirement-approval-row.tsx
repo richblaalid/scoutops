@@ -41,8 +41,10 @@ interface RequirementApprovalRowProps {
   approvalStatus: string | null
   unitId: string
   canEdit: boolean
+  // Multi-select mode props
+  isMultiSelectMode?: boolean
   isSelected?: boolean
-  onSelectionChange?: (id: string, selected: boolean) => void
+  onSelectionChange?: () => void
   // Current user info for dialogs
   currentUserName?: string
   // Optional props for initializing progress when marking complete on unstarted ranks
@@ -73,6 +75,7 @@ export function RequirementApprovalRow({
   approvalStatus,
   unitId,
   canEdit,
+  isMultiSelectMode = false,
   isSelected = false,
   onSelectionChange,
   currentUserName = 'Leader',
@@ -176,10 +179,11 @@ export function RequirementApprovalRow({
   const handleCheckboxChange = (checked: boolean) => {
     if (!canEdit || isComplete) return
 
-    if (onSelectionChange && requirementProgressId) {
-      onSelectionChange(requirementProgressId, checked)
+    if (isMultiSelectMode && onSelectionChange) {
+      // In multi-select mode, toggle selection
+      onSelectionChange()
     } else if (checked) {
-      // If no selection handler or no progress ID, open completion dialog
+      // Normal mode: open completion dialog
       setCompletionDialogOpen(true)
     }
   }
@@ -204,12 +208,15 @@ export function RequirementApprovalRow({
         <div className="flex h-6 items-center">
           {canEdit ? (
             <Checkbox
-              checked={isSelected || isComplete || showSuccess}
+              checked={isMultiSelectMode ? isSelected : (isComplete || showSuccess)}
               disabled={isLoading || status === 'approved' || status === 'awarded'}
               onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
               className={cn(
                 'transition-all',
-                (isComplete || showSuccess) && 'border-emerald-500 bg-emerald-500 text-white data-[state=checked]:bg-emerald-500'
+                // Multi-select mode: blue selection styling
+                isMultiSelectMode && isSelected && 'border-blue-500 bg-blue-500 text-white data-[state=checked]:bg-blue-500',
+                // Normal mode: green completion styling
+                !isMultiSelectMode && (isComplete || showSuccess) && 'border-emerald-500 bg-emerald-500 text-white data-[state=checked]:bg-emerald-500'
               )}
             />
           ) : (

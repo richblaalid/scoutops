@@ -212,9 +212,9 @@ User clicks "Sign Off Selected"
 - [x] **0.2.4** Update existing rank usages to pass `type="rank"`
 
 ### Phase 1: Unified Multi-Select Infrastructure
-- [ ] **1.1.1** Update `hierarchical-requirements-list.tsx` with selection props
-- [ ] **1.1.2** Update `requirement-approval-row.tsx` for conditional checkbox display
-- [ ] **1.1.3** Create shared `MultiSelectActionBar` component (or inline pattern)
+- [x] **1.1.1** Update `hierarchical-requirements-list.tsx` with selection props
+- [x] **1.1.2** Update `requirement-approval-row.tsx` for conditional checkbox display
+- [x] **1.1.3** Create shared `MultiSelectActionBar` component
 
 ### Phase 2: Merit Badge Multi-Select (Scout Profile)
 - [ ] **2.1.1** Add multi-select state to `single-merit-badge-requirements.tsx`
