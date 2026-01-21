@@ -694,14 +694,23 @@ function parsePartialBadgeLine(line: string, current: ParsedMeritBadge | null): 
   if (lower.includes('completed requirements:')) {
     const match = line.match(/Completed Requirements:\s*(.+)$/i)
     if (match) {
-      const reqsText = match[1]
+      // Remove trailing quotes that may come from CSV formatting
+      const reqsText = match[1].replace(/["']+$/, '')
       // Extract version if present: "9b(2)(2024 Version)"
       const versionMatch = reqsText.match(/\((\d{4})\s+Version\)/i)
       const version = versionMatch ? versionMatch[1] : null
 
       // Remove version info and parse requirements
       const cleanedReqs = reqsText.replace(/\(\d{4}\s+Version\)/gi, '')
-      const requirements = cleanedReqs.split(/[,\s]+/).filter((r) => r && r !== '(' && r !== ')')
+
+      // Parse requirements preserving parenthetical notation like "6A(a)(1)"
+      // This regex matches: alphanumeric base + any number of parenthetical groups
+      // Examples: "1a", "6A(a)(1)", "9b(2)", "5a1"
+      const reqPattern = /[a-zA-Z0-9]+(?:\([^)]+\))*/g
+      const matches = cleanedReqs.match(reqPattern) || []
+      const requirements = matches
+        .map((r) => r.replace(/["']/g, '').trim()) // Remove any remaining quotes
+        .filter((r) => r && r.length > 0)
 
       return {
         isNewBadge: false,

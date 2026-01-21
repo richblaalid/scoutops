@@ -1,15 +1,22 @@
 /**
- * Seed Merit Badges Database
+ * Seed Merit Badges Database (v2 - Complex Requirements Support)
  *
  * Populates the database with merit badge data from the source file:
  * - bsa_requirement_versions (2026 version)
  * - bsa_merit_badges (141 badges)
- * - bsa_merit_badge_requirements (all requirements)
+ * - bsa_merit_badge_requirements (all requirements with alternatives support)
  *
  * Run with: npx tsx scripts/seed-merit-badges.ts
  *
+ * Features:
+ * - Two-pass insertion for proper parent-child relationships
+ * - Detects OR/alternative requirements from text
+ * - Handles duplicate IDs by creating unique alternatives_group
+ * - Calculates nesting depth
+ * - Preserves original Scoutbook IDs for import matching
+ *
  * Prerequisites:
- * - Supabase migrations must be applied (including pamphlet_url column)
+ * - Supabase migrations must be applied (including alternatives columns)
  * - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local
  */
 
@@ -64,6 +71,158 @@ interface SourceData {
   eagle_required_count: number
   categories: string[]
   merit_badges: MeritBadge[]
+}
+
+// Intermediate structure for two-pass insertion
+interface FlatRequirement {
+  tempId: string // Temporary unique ID for linking
+  parentTempId: string | null
+  badgeId: string
+  versionId: string
+  requirementNumber: string
+  subRequirementLetter: string | null
+  description: string
+  displayOrder: number
+  isAlternative: boolean
+  alternativesGroup: string | null
+  nestingDepth: number
+  originalScoutbookId: string
+  requiredCount: number | null
+}
+
+/**
+ * Detect if a requirement text indicates children are alternatives (OR options)
+ */
+function detectAlternatives(text: string): { isAlternativeParent: boolean; requiredCount: number | null } {
+  const lowerText = text.toLowerCase()
+
+  // "Do ONE of the following"
+  if (/do\s+one\s+of\s+the\s+following/i.test(text)) {
+    return { isAlternativeParent: true, requiredCount: 1 }
+  }
+
+  // "Do TWO of the following"
+  if (/do\s+two\s+of\s+the\s+following/i.test(text)) {
+    return { isAlternativeParent: true, requiredCount: 2 }
+  }
+
+  // "Do THREE of the following"
+  if (/do\s+three\s+of\s+the\s+following/i.test(text)) {
+    return { isAlternativeParent: true, requiredCount: 3 }
+  }
+
+  // "Choose ONE" or "complete ONE"
+  if (/choose\s+one/i.test(text) || /complete\s+one\s+of/i.test(text)) {
+    return { isAlternativeParent: true, requiredCount: 1 }
+  }
+
+  // "Choose TWO" or "complete TWO"
+  if (/choose\s+two/i.test(text) || /complete\s+two\s+of/i.test(text)) {
+    return { isAlternativeParent: true, requiredCount: 2 }
+  }
+
+  // Check for explicit options like "Option A" or "Option B" in text
+  if (/option\s+[a-z]/i.test(text) && lowerText.includes(' or ')) {
+    return { isAlternativeParent: true, requiredCount: 1 }
+  }
+
+  return { isAlternativeParent: false, requiredCount: null }
+}
+
+/**
+ * Flatten the requirement tree into a list with parent references
+ */
+function flattenRequirements(
+  requirements: Requirement[],
+  badgeId: string,
+  versionId: string,
+  parentTempId: string | null,
+  depth: number,
+  idCounter: { value: number },
+  seenIds: Map<string, number>, // Track occurrences of each ID
+  parentAlternativesGroup: string | null,
+  isChildOfAlternativeParent: boolean
+): FlatRequirement[] {
+  const result: FlatRequirement[] = []
+
+  for (const req of requirements) {
+    // Parse requirement ID (e.g., "1", "1a", "1a1", "7b8")
+    const match = req.id.match(/^(\d+)([a-z])?(\d+)?$/i)
+
+    let reqNumber: string
+    let subLetter: string | null = null
+
+    if (match) {
+      reqNumber = match[1]
+      if (match[2]) {
+        subLetter = match[2].toLowerCase()
+        if (match[3]) {
+          // Deep sub-requirement like 7b8 - combine letter and number
+          subLetter = match[2].toLowerCase() + match[3]
+        }
+      }
+    } else {
+      // Fallback: use the whole ID as requirement number
+      reqNumber = req.id
+    }
+
+    // Track duplicate IDs
+    const baseId = subLetter ? `${reqNumber}${subLetter}` : reqNumber
+    const occurrenceCount = (seenIds.get(baseId) || 0) + 1
+    seenIds.set(baseId, occurrenceCount)
+
+    // Generate unique tempId
+    const tempId = `${badgeId}_${baseId}_${occurrenceCount}`
+
+    // Determine alternatives_group for duplicates
+    let alternativesGroup: string | null = parentAlternativesGroup
+    if (occurrenceCount > 1 || isChildOfAlternativeParent) {
+      // This is a duplicate ID or child of alternative parent
+      // Create a group name based on the parent and option letter
+      alternativesGroup = parentAlternativesGroup || `${reqNumber}_opt${String.fromCharCode(64 + occurrenceCount)}`
+    }
+
+    // Detect if this requirement's children are alternatives
+    const { isAlternativeParent, requiredCount } = detectAlternatives(req.text)
+
+    // Create flat requirement
+    const flatReq: FlatRequirement = {
+      tempId,
+      parentTempId,
+      badgeId,
+      versionId,
+      requirementNumber: reqNumber,
+      subRequirementLetter: subLetter,
+      description: req.text,
+      displayOrder: ++idCounter.value,
+      isAlternative: isChildOfAlternativeParent,
+      alternativesGroup,
+      nestingDepth: depth,
+      originalScoutbookId: req.id,
+      requiredCount,
+    }
+
+    result.push(flatReq)
+
+    // Process children recursively
+    if (req.subrequirements && req.subrequirements.length > 0) {
+      const childrenGroup = isAlternativeParent ? `${reqNumber}_alternatives` : alternativesGroup
+      const children = flattenRequirements(
+        req.subrequirements,
+        badgeId,
+        versionId,
+        tempId,
+        depth + 1,
+        idCounter,
+        seenIds,
+        childrenGroup,
+        isAlternativeParent
+      )
+      result.push(...children)
+    }
+  }
+
+  return result
 }
 
 async function main() {
@@ -160,10 +319,11 @@ async function main() {
 
   console.log(`   Inserted: ${badgesInserted}, Updated: ${badgesUpdated}`)
 
-  // Step 3: Insert requirements
-  console.log('\n3. Inserting requirements...')
+  // Step 3: Insert requirements (two-pass approach)
+  console.log('\n3. Inserting requirements (two-pass approach)...')
   let requirementsInserted = 0
-  let requirementsSkipped = 0
+  let requirementsFailed = 0
+  let parentLinksUpdated = 0
 
   for (const badge of sourceData.merit_badges) {
     const badgeId = badgeIdMap.get(badge.code)
@@ -173,122 +333,96 @@ async function main() {
     }
 
     // Delete existing requirements for this badge/version
-    await supabase
+    const { error: deleteError } = await supabase
       .from('bsa_merit_badge_requirements')
       .delete()
       .eq('version_id', versionId)
       .eq('merit_badge_id', badgeId)
 
-    let displayOrder = 0
+    if (deleteError) {
+      console.error(`   Error deleting old requirements for ${badge.name}:`, deleteError.message)
+    }
 
-    // Track inserted requirements to skip duplicates
-    // Key: "reqNumber|subLetter" (subLetter can be null)
-    const insertedReqs = new Set<string>()
+    // Flatten requirements tree
+    const idCounter = { value: 0 }
+    const seenIds = new Map<string, number>()
+    const flatReqs = flattenRequirements(
+      badge.requirements,
+      badgeId,
+      versionId,
+      null,
+      1,
+      idCounter,
+      seenIds,
+      null,
+      false
+    )
 
-    // Map to track parent requirement IDs by requirement number
-    const parentIdByReqNumber = new Map<string, string>()
+    // Pass 1: Insert all requirements without parent IDs
+    const tempIdToDbId = new Map<string, string>()
 
-    async function insertRequirements(
-      requirements: Requirement[],
-      parentId: string | null = null
-    ) {
-      for (const req of requirements) {
-        // Parse requirement ID (e.g., "1", "1a", "1a1", "7b8")
-        // Main requirements: just a number (1, 2, 3...)
-        // Sub-requirements: number + letter (1a, 1b...)
-        // Deep sub-requirements: number + letter + number (1a1, 7b8...)
-        const match = req.id.match(/^(\d+)([a-z])?(\d+)?$/)
+    for (const req of flatReqs) {
+      const reqData = {
+        version_id: req.versionId,
+        merit_badge_id: req.badgeId,
+        requirement_number: req.requirementNumber,
+        parent_requirement_id: null, // Will be set in pass 2
+        sub_requirement_letter: req.subRequirementLetter,
+        description: req.description,
+        display_order: req.displayOrder,
+        is_alternative: req.isAlternative,
+        alternatives_group: req.alternativesGroup,
+        nesting_depth: req.nestingDepth,
+        original_scoutbook_id: req.originalScoutbookId,
+        required_count: req.requiredCount,
+      }
 
-        let reqNumber: string
-        let subLetter: string | null = null
+      const { data: newReq, error: insertError } = await supabase
+        .from('bsa_merit_badge_requirements')
+        .insert(reqData)
+        .select('id')
+        .single()
 
-        if (match) {
-          reqNumber = match[1]
-          if (match[2]) {
-            subLetter = match[2]
-            if (match[3]) {
-              // Deep sub-requirement like 7b8 - combine letter and number
-              subLetter = match[2] + match[3]
-            }
-          }
-        } else {
-          // Fallback: use the whole ID as requirement number
-          reqNumber = req.id
-        }
+      if (insertError) {
+        console.error(`   Error inserting req ${req.originalScoutbookId} for ${badge.name}:`, insertError.message)
+        requirementsFailed++
+      } else {
+        tempIdToDbId.set(req.tempId, newReq.id)
+        requirementsInserted++
+      }
+    }
 
-        // Check for duplicates using the unique constraint key
-        const uniqueKey = `${reqNumber}|${subLetter || ''}`
-        if (insertedReqs.has(uniqueKey)) {
-          requirementsSkipped++
+    // Pass 2: Update parent IDs
+    for (const req of flatReqs) {
+      if (req.parentTempId) {
+        const dbId = tempIdToDbId.get(req.tempId)
+        const parentDbId = tempIdToDbId.get(req.parentTempId)
 
-          // Still process sub-requirements with existing parent
-          if (req.subrequirements && req.subrequirements.length > 0) {
-            const existingParentId = subLetter
-              ? parentIdByReqNumber.get(reqNumber)
-              : parentIdByReqNumber.get(reqNumber)
-            if (existingParentId) {
-              await insertRequirements(req.subrequirements, existingParentId)
-            }
-          }
-          continue
-        }
+        if (dbId && parentDbId) {
+          const { error: updateError } = await supabase
+            .from('bsa_merit_badge_requirements')
+            .update({ parent_requirement_id: parentDbId })
+            .eq('id', dbId)
 
-        insertedReqs.add(uniqueKey)
-        displayOrder++
-
-        // For sub-requirements, find the parent by requirement number
-        let actualParentId = parentId
-        if (subLetter && !parentId) {
-          // This is a sub-requirement, look up the parent by requirement number
-          actualParentId = parentIdByReqNumber.get(reqNumber) || null
-        }
-
-        const reqData = {
-          version_id: versionId,
-          merit_badge_id: badgeId,
-          requirement_number: reqNumber,
-          parent_requirement_id: actualParentId,
-          sub_requirement_letter: subLetter,
-          description: req.text,
-          display_order: displayOrder,
-        }
-
-        const { data: newReq, error: reqError } = await supabase
-          .from('bsa_merit_badge_requirements')
-          .insert(reqData)
-          .select('id')
-          .single()
-
-        if (reqError) {
-          console.error(`   Error inserting req ${req.id} for ${badge.name}:`, reqError.message)
-          requirementsSkipped++
-        } else {
-          requirementsInserted++
-
-          // Store the ID for this requirement number (for sub-requirements to find their parent)
-          if (!subLetter) {
-            // This is a main requirement (no sub-letter)
-            parentIdByReqNumber.set(reqNumber, newReq.id)
-          }
-
-          // Insert sub-requirements with this as their parent
-          if (req.subrequirements && req.subrequirements.length > 0) {
-            await insertRequirements(req.subrequirements, newReq.id)
+          if (updateError) {
+            console.error(`   Error updating parent for ${req.originalScoutbookId}:`, updateError.message)
+          } else {
+            parentLinksUpdated++
           }
         }
       }
     }
-
-    await insertRequirements(badge.requirements)
   }
 
-  console.log(`   Inserted: ${requirementsInserted}, Skipped: ${requirementsSkipped}`)
+  console.log(`   Inserted: ${requirementsInserted}, Failed: ${requirementsFailed}`)
+  console.log(`   Parent links updated: ${parentLinksUpdated}`)
 
   // Summary
   console.log('\n=== Seeding Complete ===')
   console.log(`Version: 2026 (${versionId})`)
   console.log(`Badges: ${badgesInserted} inserted, ${badgesUpdated} updated`)
-  console.log(`Requirements: ${requirementsInserted} inserted`)
+  console.log(`Requirements: ${requirementsInserted} inserted (${requirementsFailed} failed)`)
+  console.log(`Parent links: ${parentLinksUpdated} updated`)
 }
 
 main().catch(console.error)

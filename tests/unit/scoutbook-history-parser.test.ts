@@ -206,6 +206,78 @@ describe('ScoutBook History Parser', () => {
       expect(cycling?.completedRequirements.length).toBeGreaterThan(0)
       expect(cycling?.completedRequirements).toContain('1a')
       expect(cycling?.completedRequirements).toContain('1b')
+      // Verify the last requirement before version is captured (3 from "3(2025 Version)")
+      expect(cycling?.completedRequirements).toContain('3')
+    })
+
+    it('should parse requirement followed directly by version year', () => {
+      const result = parseScoutbookHistory(SAMPLE_CSV)
+
+      // Geocaching has "7, 9(2019 Version)" - verify 9 is captured
+      const geocaching = result.partialMeritBadges.find((b) => b.normalizedName === 'geocaching')
+      expect(geocaching).toBeDefined()
+      expect(geocaching?.completedRequirements).toContain('7')
+      expect(geocaching?.completedRequirements).toContain('9')
+      expect(geocaching?.version).toBe('2019')
+    })
+
+    it('should parse complex parenthetical requirements like 6A(a)(1)', () => {
+      // Create CSV with complex parenthetical requirements (Scoutbook format)
+      const complexCsv = `Generated: 01/21/2026 10:00:00
+Scouts BSA History Report
+"Test Scout Troop 1234 BOYS"
+"Birthdate:","01/01/2010","Date Joined Scouts BSA:","01/01/2024","Rank:","Scout(01/15/2024)",
+"BSA ID:","123456789","Position:","",
+
+"Partial Merit Badges","Start Date"
+"Cooking","01/15/2026"
+"Completed Requirements: 1a, 1b, 6A(a)(1), 6A(a)(2), 6A(a)(3), 6A(a)(4), 6A(a)(5)(2025 Version)"
+
+"Swimming","02/01/2026"
+"Completed Requirements: 1, 2a, 2b(1), 2b(2), 3(2025 Version)"
+`
+      const result = parseScoutbookHistory(complexCsv)
+
+      const cooking = result.partialMeritBadges.find((b) => b.normalizedName === 'cooking')
+      expect(cooking).toBeDefined()
+      // Verify simple requirements
+      expect(cooking?.completedRequirements).toContain('1a')
+      expect(cooking?.completedRequirements).toContain('1b')
+      // Verify complex parenthetical requirements are preserved intact
+      expect(cooking?.completedRequirements).toContain('6A(a)(1)')
+      expect(cooking?.completedRequirements).toContain('6A(a)(2)')
+      expect(cooking?.completedRequirements).toContain('6A(a)(3)')
+      expect(cooking?.completedRequirements).toContain('6A(a)(4)')
+      expect(cooking?.completedRequirements).toContain('6A(a)(5)')
+      expect(cooking?.version).toBe('2025')
+
+      const swimming = result.partialMeritBadges.find((b) => b.normalizedName === 'swimming')
+      expect(swimming).toBeDefined()
+      // Verify mixed format requirements
+      expect(swimming?.completedRequirements).toContain('1')
+      expect(swimming?.completedRequirements).toContain('2a')
+      expect(swimming?.completedRequirements).toContain('2b(1)')
+      expect(swimming?.completedRequirements).toContain('2b(2)')
+      expect(swimming?.completedRequirements).toContain('3')
+    })
+
+    it('should not break simple requirements when parsing complex ones', () => {
+      // Ensure the new regex doesn't break simple requirement parsing
+      const simpleCsv = `Generated: 01/21/2026 10:00:00
+Scouts BSA History Report
+"Test Scout Troop 1234 BOYS"
+"Birthdate:","01/01/2010","Date Joined Scouts BSA:","01/01/2024","Rank:","Scout(01/15/2024)",
+"BSA ID:","123456789","Position:","",
+
+"Partial Merit Badges","Start Date"
+"First Aid","01/15/2026"
+"Completed Requirements: 1, 2a, 2b, 2c, 3, 4a, 4b, 5(2025 Version)"
+`
+      const result = parseScoutbookHistory(simpleCsv)
+
+      const firstAid = result.partialMeritBadges.find((b) => b.normalizedName === 'first_aid')
+      expect(firstAid).toBeDefined()
+      expect(firstAid?.completedRequirements).toEqual(['1', '2a', '2b', '2c', '3', '4a', '4b', '5'])
     })
 
     it('should parse leadership history', () => {
