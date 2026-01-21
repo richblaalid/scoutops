@@ -217,11 +217,11 @@ User clicks "Sign Off Selected"
 - [x] **1.1.3** Create shared `MultiSelectActionBar` component
 
 ### Phase 2: Merit Badge Multi-Select (Scout Profile)
-- [ ] **2.1.1** Add multi-select state to `single-merit-badge-requirements.tsx`
-- [ ] **2.1.2** Add "Select Multiple" toggle button matching rank view
-- [ ] **2.1.3** Integrate `BulkApprovalSheet` with `type="merit-badge"`
-- [ ] **2.1.4** Add floating action bar when selections exist
-- [ ] **2.1.5** Wire up selection → approval flow
+- [x] **2.1.1** Add multi-select state to `single-merit-badge-requirements.tsx`
+- [x] **2.1.2** Add "Select Multiple" toggle button matching rank view
+- [x] **2.1.3** Integrate `BulkApprovalSheet` with `type="merit-badge"`
+- [x] **2.1.4** Add floating action bar when selections exist
+- [x] **2.1.5** Wire up selection → approval flow
 
 ### Phase 3: Rank Multi-Select Alignment
 - [ ] **3.1.1** Verify `single-rank-requirements.tsx` has same toggle pattern
@@ -269,4 +269,6 @@ User clicks "Sign Off Selected"
 
 | Date | Task | Commit |
 |------|------|--------|
-| 2026-01-21 | Phase 0: Refactored BulkApprovalSheet for unified rank/badge use | pending |
+| 2026-01-21 | Phase 0: Refactored BulkApprovalSheet for unified rank/badge use | f50ea62 |
+| 2026-01-21 | Phase 1: Added multi-select infrastructure | 170e51a |
+| 2026-01-21 | Phase 2: Merit badge multi-select in scout profile | pending |

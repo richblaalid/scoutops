@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MeritBadgeIcon } from './merit-badge-icon'
 import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
+import { MultiSelectActionBar } from './multi-select-action-bar'
+import { BulkApprovalSheet } from './bulk-approval-sheet'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, Award, Calendar, Check, Star, User, Loader2 } from 'lucide-react'
+import { ArrowLeft, Award, Calendar, Check, Star, User, Loader2, ListChecks } from 'lucide-react'
 import { getMeritBadgeRequirements, markMeritBadgeRequirement } from '@/app/actions/advancement'
 import type { AdvancementStatus } from '@/types/advancement'
 
@@ -70,6 +72,11 @@ export function SingleMeritBadgeRequirements({
   }>>([])
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(true)
   const [isPending, startTransition] = useTransition()
+
+  // Multi-select mode state
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkApprovalOpen, setBulkApprovalOpen] = useState(false)
 
   // Fetch requirements on mount
   useEffect(() => {
@@ -149,6 +156,52 @@ export function SingleMeritBadgeRequirements({
   const totalCount = formattedRequirements.length
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
+  // Multi-select helpers
+  const incompleteRequirements = useMemo(() => {
+    return formattedRequirements.filter(
+      r => !['completed', 'approved', 'awarded'].includes(r.status)
+    )
+  }, [formattedRequirements])
+
+  const incompleteIds = useMemo(() => {
+    return new Set(incompleteRequirements.map(r => r.id))
+  }, [incompleteRequirements])
+
+  const handleSelectionChange = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const handleSelectAll = () => {
+    setSelectedIds(new Set(incompleteIds))
+  }
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set())
+  }
+
+  const handleCancelMultiSelect = () => {
+    setIsMultiSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const handleSignOff = () => {
+    setBulkApprovalOpen(true)
+  }
+
+  const handleBulkApprovalComplete = () => {
+    setBulkApprovalOpen(false)
+    setIsMultiSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
   const isAwarded = badge.status === 'awarded' || badge.status === 'approved'
   const isInProgress = badge.status === 'in_progress' || badge.status === 'completed'
 
@@ -227,25 +280,49 @@ export function SingleMeritBadgeRequirements({
             </div>
 
             {/* Badge metadata */}
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-stone-500">
-              {badge.bsa_merit_badges.is_eagle_required && (
-                <span className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-3 w-3 fill-amber-500" />
-                  Eagle Required
-                </span>
-              )}
-              {badge.bsa_merit_badges.category && (
-                <span className="flex items-center gap-1">
-                  <span className="text-stone-300">|</span>
-                  {badge.bsa_merit_badges.category}
-                </span>
-              )}
-              {badge.counselor_name && (
-                <span className="flex items-center gap-1">
-                  <span className="text-stone-300">|</span>
-                  <User className="h-3 w-3" />
-                  {badge.counselor_name}
-                </span>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
+                {badge.bsa_merit_badges.is_eagle_required && (
+                  <span className="flex items-center gap-1 text-amber-600">
+                    <Star className="h-3 w-3 fill-amber-500" />
+                    Eagle Required
+                  </span>
+                )}
+                {badge.bsa_merit_badges.category && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-stone-300">|</span>
+                    {badge.bsa_merit_badges.category}
+                  </span>
+                )}
+                {badge.counselor_name && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-stone-300">|</span>
+                    <User className="h-3 w-3" />
+                    {badge.counselor_name}
+                  </span>
+                )}
+              </div>
+
+              {/* Multi-select toggle */}
+              {canEdit && !isAwarded && incompleteRequirements.length > 0 && (
+                <Button
+                  variant={isMultiSelectMode ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    if (isMultiSelectMode) {
+                      handleCancelMultiSelect()
+                    } else {
+                      setIsMultiSelectMode(true)
+                    }
+                  }}
+                  className={cn(
+                    'h-8 gap-1.5 text-xs',
+                    isMultiSelectMode && 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  )}
+                >
+                  <ListChecks className="h-3.5 w-3.5" />
+                  {isMultiSelectMode ? 'Cancel Selection' : 'Select Multiple'}
+                </Button>
               )}
             </div>
 
@@ -308,6 +385,9 @@ export function SingleMeritBadgeRequirements({
             currentUserName={currentUserName}
             isMeritBadge={true}
             meritBadgeInitData={initData}
+            isMultiSelectMode={isMultiSelectMode}
+            selectedIds={selectedIds}
+            onSelectionChange={handleSelectionChange}
           />
         ) : (
           <div className="py-12 text-center">
@@ -316,6 +396,30 @@ export function SingleMeritBadgeRequirements({
           </div>
         )}
       </CardContent>
+
+      {/* Multi-select action bar */}
+      <MultiSelectActionBar
+        selectedCount={selectedIds.size}
+        totalSelectableCount={incompleteRequirements.length}
+        onSelectAll={handleSelectAll}
+        onClear={handleClearSelection}
+        onSignOff={handleSignOff}
+        onCancel={handleCancelMultiSelect}
+        visible={isMultiSelectMode}
+      />
+
+      {/* Bulk Approval Sheet */}
+      <BulkApprovalSheet
+        type="merit-badge"
+        requirements={formattedRequirements}
+        itemName={badge.bsa_merit_badges.name}
+        unitId={unitId}
+        scoutId={scoutId}
+        open={bulkApprovalOpen}
+        onOpenChange={setBulkApprovalOpen}
+        preSelectedIds={selectedIds}
+        onComplete={handleBulkApprovalComplete}
+      />
     </Card>
   )
 }

@@ -65,6 +65,12 @@ interface BulkApprovalSheetProps {
   onComplete?: () => void
   /** Init data for ranks without progress records (rank type only) */
   initData?: RankInitData
+  /** Optional controlled open state */
+  open?: boolean
+  /** Optional callback for controlled open state */
+  onOpenChange?: (open: boolean) => void
+  /** Optional pre-selected requirement IDs */
+  preSelectedIds?: Set<string>
 }
 
 export function BulkApprovalSheet({
@@ -76,9 +82,19 @@ export function BulkApprovalSheet({
   trigger,
   onComplete,
   initData,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  preSelectedIds,
 }: BulkApprovalSheetProps) {
-  const [open, setOpen] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = isControlled ? (value: boolean) => controlledOnOpenChange?.(value) : setInternalOpen
+
+  // Initialize with pre-selected IDs if provided
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() =>
+    preSelectedIds ? new Set(preSelectedIds) : new Set()
+  )
   const [completedDate, setCompletedDate] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -205,7 +221,10 @@ export function BulkApprovalSheet({
 
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen)
-    if (!isOpen) {
+    if (isOpen && preSelectedIds) {
+      // Re-apply pre-selected IDs when opening
+      setSelectedIds(new Set(preSelectedIds))
+    } else if (!isOpen) {
       setSelectedIds(new Set())
       setNotes('')
       setError(null)
@@ -215,14 +234,17 @@ export function BulkApprovalSheet({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm" className="gap-2">
-            <CheckSquare className="h-4 w-4" />
-            Bulk Approve
-          </Button>
-        )}
-      </DialogTrigger>
+      {/* Only render trigger when not in controlled mode or when trigger is explicitly provided */}
+      {(!isControlled || trigger) && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="outline" size="sm" className="gap-2">
+              <CheckSquare className="h-4 w-4" />
+              Bulk Approve
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
         {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-b from-forest-50/50 to-transparent">
