@@ -1,5 +1,35 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      // Financial IA consolidation - redirect old routes to new /finances structure
+      {
+        source: '/accounts',
+        destination: '/finances/accounts',
+        permanent: true,
+      },
+      {
+        source: '/accounts/:id',
+        destination: '/finances/accounts/:id',
+        permanent: true,
+      },
+      {
+        source: '/billing',
+        destination: '/finances/billing',
+        permanent: true,
+      },
+      {
+        source: '/payments',
+        destination: '/finances/payments',
+        permanent: true,
+      },
+      {
+        source: '/reports',
+        destination: '/finances',
+        permanent: true,
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       {
