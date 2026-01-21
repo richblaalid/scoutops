@@ -177,11 +177,11 @@ Largely unchanged, but:
 - [x] 0.1.3 Set up URL redirects from old routes
 
 ### Phase 1: Overview Page
-- 1.1.1 Create Finances Overview page layout
-- 1.1.2 Add summary stats cards (from Reports)
-- 1.1.3 Add "Who Owes Money" section
-- 1.1.4 Add "Recent Activity" section
-- 1.1.5 Add quick action buttons
+- [x] 1.1.1 Create Finances Overview page layout
+- [x] 1.1.2 Add summary stats cards (from Reports)
+- [x] 1.1.3 Add "Who Owes Money" section
+- [x] 1.1.4 Add "Recent Activity" section
+- [x] 1.1.5 Add quick action buttons
 
 ### Phase 2: Migrate Existing Pages
 - 2.1.1 Move Accounts to /finances/accounts
@@ -262,7 +262,8 @@ Largely unchanged, but:
 
 | Task | Date | Commit |
 |------|------|--------|
-| 0.1.1 | 2026-01-20 | (pending) |
-| 0.1.2 | 2026-01-20 | (pending) |
-| 0.1.3 | 2026-01-20 | (pending) |
+| 0.1.1 | 2026-01-20 | e9af5f0 |
+| 0.1.2 | 2026-01-20 | e9af5f0 |
+| 0.1.3 | 2026-01-20 | e9af5f0 |
+| 1.1.1-5 | 2026-01-20 | (pending) |
 
