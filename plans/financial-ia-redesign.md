@@ -201,7 +201,7 @@ Largely unchanged, but:
 - [x] 4.1.1 Update sidebar: Remove Accounts, Billing, Payments, Reports
 - [x] 4.1.2 Add single "Finances" nav item
 - [x] 4.1.3 Update role definitions in roles.ts
-- 4.2.1 Delete old Reports page (content now in Overview)
+- [x] 4.2.1 Move Reports to /finances/reports (keeping aging report & detailed breakdowns)
 - [x] 4.2.2 Test all redirects (configured in next.config.mjs)
 - [x] 4.2.3 Update any remaining hardcoded links
 

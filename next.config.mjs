@@ -25,7 +25,7 @@ const nextConfig = {
       },
       {
         source: '/reports',
-        destination: '/finances',
+        destination: '/finances/reports',
         permanent: true,
       },
     ]
