@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useMemo, useEffect, useTransition } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MeritBadgeGridCard } from './merit-badge-grid-card'
-import { MeritBadgeDetailSheet } from './merit-badge-detail-sheet'
+import { MeritBadgeDetailView } from './merit-badge-detail-view'
 import { Search, Award, Star, Users, Filter } from 'lucide-react'
-import Link from 'next/link'
 import { getMeritBadgeRequirements } from '@/app/actions/advancement'
 
 interface MeritBadge {
@@ -37,6 +36,9 @@ interface RequirementProgress {
   id: string
   requirement_id: string
   status: string
+  completed_at?: string | null
+  completed_by?: string | null
+  notes?: string | null
 }
 
 interface BadgeProgress {
@@ -66,6 +68,7 @@ interface MeritBadgeBrowserProps {
   unitId: string
   versionId: string
   canEdit: boolean
+  currentUserName?: string
 }
 
 type FilterType = 'all' | 'eagle' | 'in_progress' | 'category'
@@ -78,12 +81,12 @@ export function MeritBadgeBrowser({
   unitId,
   versionId,
   canEdit,
+  currentUserName = 'Leader',
 }: MeritBadgeBrowserProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedBadge, setSelectedBadge] = useState<MeritBadge | null>(null)
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [badgeRequirements, setBadgeRequirements] = useState<Requirement[]>([])
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -157,7 +160,6 @@ export function MeritBadgeBrowser({
 
   const handleBadgeClick = async (badge: MeritBadge) => {
     setSelectedBadge(badge)
-    setIsDetailOpen(true)
     setIsLoadingRequirements(true)
 
     // Fetch requirements on-demand for this specific badge
@@ -174,36 +176,31 @@ export function MeritBadgeBrowser({
     })
   }
 
-  // Clear requirements when detail sheet closes
-  const handleDetailClose = (open: boolean) => {
-    setIsDetailOpen(open)
-    if (!open) {
-      setBadgeRequirements([])
-    }
+  const handleBack = () => {
+    setSelectedBadge(null)
+    setBadgeRequirements([])
   }
 
+  // Show detail view if a badge is selected
+  if (selectedBadge) {
+    return (
+      <MeritBadgeDetailView
+        badge={selectedBadge}
+        requirements={badgeRequirements}
+        scouts={scouts}
+        unitId={unitId}
+        versionId={versionId}
+        canEdit={canEdit}
+        isLoading={isLoadingRequirements}
+        onBack={handleBack}
+        currentUserName={currentUserName}
+      />
+    )
+  }
+
+  // Show grid view
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/advancement"
-              className="text-sm text-stone-500 hover:text-stone-700"
-            >
-              Advancement
-            </Link>
-            <span className="text-stone-400">/</span>
-            <span className="text-sm text-stone-900">Merit Badges</span>
-          </div>
-          <h1 className="mt-2 text-3xl font-bold text-stone-900">Merit Badges</h1>
-          <p className="text-stone-500">
-            Browse {badges.length} BSA merit badges and track scout progress
-          </p>
-        </div>
-      </div>
-
       {/* Stats Bar */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <button
@@ -365,21 +362,6 @@ export function MeritBadgeBrowser({
             Clear filters
           </Button>
         </div>
-      )}
-
-      {/* Badge Detail Sheet */}
-      {selectedBadge && (
-        <MeritBadgeDetailSheet
-          open={isDetailOpen}
-          onOpenChange={handleDetailClose}
-          badge={selectedBadge}
-          requirements={badgeRequirements}
-          scouts={scouts}
-          unitId={unitId}
-          versionId={versionId}
-          canEdit={canEdit}
-          isLoading={isLoadingRequirements}
-        />
       )}
     </div>
   )

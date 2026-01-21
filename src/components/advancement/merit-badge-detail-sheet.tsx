@@ -23,6 +23,7 @@ import {
   Clock,
   FileText,
   ExternalLink,
+  Check,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -340,8 +341,8 @@ export function MeritBadgeDetailSheet({
                             onClick={() => handleAssignClick(mainReq)}
                             className="shrink-0 text-xs"
                           >
-                            <UserPlus className="mr-1 h-3 w-3" />
-                            Assign
+                            <Check className="mr-1 h-3 w-3" />
+                            Sign Off
                           </Button>
                         )}
                       </div>
@@ -379,7 +380,7 @@ export function MeritBadgeDetailSheet({
                                       onClick={() => handleAssignClick(subReq)}
                                       className="h-6 shrink-0 px-2 text-xs"
                                     >
-                                      <UserPlus className="h-3 w-3" />
+                                      <Check className="h-3 w-3" />
                                     </Button>
                                   )}
                                 </div>
@@ -418,7 +419,7 @@ export function MeritBadgeDetailSheet({
           onOpenChange={setIsAssignDialogOpen}
           requirement={selectedRequirement}
           badge={badge}
-          scoutsTracking={scoutsTracking}
+          allScouts={scouts}
           unitId={unitId}
           versionId={versionId}
         />

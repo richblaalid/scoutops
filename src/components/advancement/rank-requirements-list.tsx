@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { RequirementAssignDialog } from './requirement-assign-dialog'
-import { UserPlus } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 interface Rank {
   id: string
@@ -174,27 +174,6 @@ export function RankRequirementsList({
     setIsDialogOpen(true)
   }
 
-  // Get completion stats for a requirement
-  const getCompletionStats = (requirementId: string) => {
-    let completed = 0
-    let inProgress = 0
-
-    scouts.forEach((scout) => {
-      const rankProgress = scout.scout_rank_progress.find((rp) => rp.rank_id === rank.id)
-      if (rankProgress) {
-        inProgress++
-        const reqProgress = rankProgress.scout_rank_requirement_progress.find(
-          (rp) => rp.requirement_id === requirementId
-        )
-        if (reqProgress && ['completed', 'approved', 'awarded'].includes(reqProgress.status)) {
-          completed++
-        }
-      }
-    })
-
-    return { completed, inProgress }
-  }
-
   // Get section name for a requirement number
   const getSectionName = (reqNumber: string) => {
     return rankSectionNames[rank.code]?.[reqNumber] || `Section ${reqNumber}`
@@ -224,7 +203,6 @@ export function RankRequirementsList({
             <table className="w-full">
               <tbody>
                 {reqs.map((req, idx) => {
-                  const stats = getCompletionStats(req.id)
                   const isLast = idx === reqs.length - 1
 
                   return (
@@ -240,15 +218,6 @@ export function RankRequirementsList({
                       <td className="px-4 py-3 align-top">
                         <p className="text-sm text-stone-700">{req.description}</p>
                       </td>
-                      <td className="w-24 px-4 py-3 text-center align-top">
-                        {stats.inProgress > 0 ? (
-                          <span className="text-xs text-stone-500">
-                            {stats.completed}/{stats.inProgress}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-stone-400">-</span>
-                        )}
-                      </td>
                       {canEdit && (
                         <td className="w-28 px-4 py-3 text-right align-top">
                           <Button
@@ -257,8 +226,8 @@ export function RankRequirementsList({
                             onClick={() => handleAssignClick(req)}
                             className="h-8 text-xs"
                           >
-                            <UserPlus className="mr-1 h-3 w-3" />
-                            Assign
+                            <Check className="mr-1 h-3 w-3" />
+                            Sign Off
                           </Button>
                         </td>
                       )}

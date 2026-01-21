@@ -70,17 +70,17 @@ interface BadgeRequirementAssignDialogProps {
   onOpenChange: (open: boolean) => void
   requirement: Requirement
   badge: MeritBadge
-  scoutsTracking: Scout[]
+  allScouts: Scout[] // All scouts in the unit (not just those tracking)
   unitId: string
   versionId: string
 }
 
-type ScoutStatus = 'completed' | 'in_progress'
+type ScoutStatus = 'completed' | 'tracking' | 'not_tracking'
 
 interface ScoutWithStatus {
   scout: Scout
   status: ScoutStatus
-  badgeProgressId: string
+  badgeProgressId: string | null // null if not tracking
   requirementProgressId: string | null
 }
 
@@ -89,7 +89,7 @@ export function BadgeRequirementAssignDialog({
   onOpenChange,
   requirement,
   badge,
-  scoutsTracking,
+  allScouts,
   unitId,
   versionId,
 }: BadgeRequirementAssignDialogProps) {
@@ -100,16 +100,27 @@ export function BadgeRequirementAssignDialog({
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // Categorize scouts by their status for this requirement
-  const scoutsWithStatus: ScoutWithStatus[] = scoutsTracking.map((scout) => {
+  // Categorize all scouts by their status for this requirement
+  const scoutsWithStatus: ScoutWithStatus[] = allScouts.map((scout) => {
     const badgeProgress = scout.scout_merit_badge_progress.find(
       (p) => p.merit_badge_id === badge.id
-    )!
+    )
+
+    // Scout is not tracking this badge at all
+    if (!badgeProgress) {
+      return {
+        scout,
+        status: 'not_tracking' as ScoutStatus,
+        badgeProgressId: null,
+        requirementProgressId: null,
+      }
+    }
 
     const reqProgress = badgeProgress.scout_merit_badge_requirement_progress.find(
       (rp) => rp.requirement_id === requirement.id
     )
 
+    // Scout has already completed this requirement
     if (reqProgress && ['completed', 'approved'].includes(reqProgress.status)) {
       return {
         scout,
@@ -119,16 +130,17 @@ export function BadgeRequirementAssignDialog({
       }
     }
 
+    // Scout is tracking but hasn't completed this requirement
     return {
       scout,
-      status: 'in_progress' as ScoutStatus,
+      status: 'tracking' as ScoutStatus,
       badgeProgressId: badgeProgress.id,
       requirementProgressId: reqProgress?.id || null,
     }
   })
 
-  const inProgressScouts = scoutsWithStatus.filter((s) => s.status === 'in_progress')
-  const completedScouts = scoutsWithStatus.filter((s) => s.status === 'completed')
+  // Scouts who can be selected (anyone who hasn't completed this requirement)
+  const selectableScouts = scoutsWithStatus.filter((s) => s.status !== 'completed')
 
   const toggleScout = (scoutId: string) => {
     const newSelected = new Set(selectedScoutIds)
@@ -142,7 +154,7 @@ export function BadgeRequirementAssignDialog({
 
   const selectAll = () => {
     const newSelected = new Set(selectedScoutIds)
-    inProgressScouts.forEach((s) => newSelected.add(s.scout.id))
+    selectableScouts.forEach((s) => newSelected.add(s.scout.id))
     setSelectedScoutIds(newSelected)
   }
 
@@ -154,12 +166,12 @@ export function BadgeRequirementAssignDialog({
 
     setError(null)
 
-    // Get the badge progress IDs for selected scouts
-    const assignments = inProgressScouts
+    // Get assignments for selected scouts (includes those not yet tracking)
+    const assignments = selectableScouts
       .filter((s) => selectedScoutIds.has(s.scout.id))
       .map((s) => ({
         scoutId: s.scout.id,
-        badgeProgressId: s.badgeProgressId,
+        badgeProgressId: s.badgeProgressId, // null if not tracking yet
         requirementProgressId: s.requirementProgressId,
       }))
 
@@ -193,9 +205,9 @@ export function BadgeRequirementAssignDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Assign Requirement Completion</DialogTitle>
+          <DialogTitle>Sign Off Requirement</DialogTitle>
           <DialogDescription>
-            Mark this requirement as complete for scouts tracking {badge.name}
+            Mark this requirement as complete for selected scouts
           </DialogDescription>
         </DialogHeader>
 
@@ -226,65 +238,38 @@ export function BadgeRequirementAssignDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Select Scouts</Label>
-              {inProgressScouts.length > 1 && (
+              {selectableScouts.length > 1 && (
                 <Button variant="ghost" size="sm" onClick={selectAll} className="h-7 text-xs">
-                  Select all ({inProgressScouts.length})
+                  Select all ({selectableScouts.length})
                 </Button>
               )}
             </div>
 
-            <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border p-2">
-              {inProgressScouts.length > 0 && (
-                <div className="mb-2">
-                  <p className="mb-1 text-xs font-medium text-stone-500">
-                    Tracking ({inProgressScouts.length})
-                  </p>
-                  {inProgressScouts.map(({ scout }) => (
-                    <label
-                      key={scout.id}
-                      className={`flex cursor-pointer items-center gap-2 rounded p-2 transition-colors ${
-                        selectedScoutIds.has(scout.id)
-                          ? 'bg-forest-50'
-                          : 'hover:bg-stone-50'
-                      }`}
-                    >
-                      <Checkbox
-                        checked={selectedScoutIds.has(scout.id)}
-                        onCheckedChange={() => toggleScout(scout.id)}
-                      />
-                      <span className="flex-1 text-sm">
-                        {scout.first_name} {scout.last_name}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              {completedScouts.length > 0 && (
-                <div>
-                  <p className="mb-1 text-xs font-medium text-stone-500">
-                    Already completed ({completedScouts.length})
-                  </p>
-                  {completedScouts.map(({ scout }) => (
-                    <div
-                      key={scout.id}
-                      className="flex cursor-not-allowed items-center gap-2 rounded p-2 opacity-50"
-                    >
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="flex-1 text-sm">
-                        {scout.first_name} {scout.last_name}
-                      </span>
-                      <Badge variant="secondary" className="text-xs">
-                        Done
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {scoutsTracking.length === 0 && (
+            <div className="max-h-64 space-y-1 overflow-y-auto rounded-lg border p-2">
+              {selectableScouts.length > 0 ? (
+                selectableScouts.map(({ scout }) => (
+                  <label
+                    key={scout.id}
+                    className={`flex cursor-pointer items-center gap-2 rounded p-2 transition-colors ${
+                      selectedScoutIds.has(scout.id)
+                        ? 'bg-forest-50'
+                        : 'hover:bg-stone-50'
+                    }`}
+                  >
+                    <Checkbox
+                      checked={selectedScoutIds.has(scout.id)}
+                      onCheckedChange={() => toggleScout(scout.id)}
+                    />
+                    <span className="flex-1 text-sm">
+                      {scout.first_name} {scout.last_name}
+                    </span>
+                  </label>
+                ))
+              ) : (
                 <p className="py-4 text-center text-sm text-stone-500">
-                  No scouts are tracking this badge yet
+                  {allScouts.length === 0
+                    ? 'No scouts in this unit'
+                    : 'All scouts have already completed this requirement'}
                 </p>
               )}
             </div>
@@ -316,10 +301,10 @@ export function BadgeRequirementAssignDialog({
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Assigning...
+                Signing off...
               </>
             ) : (
-              `Assign to ${selectedScoutIds.size} Scout${selectedScoutIds.size !== 1 ? 's' : ''}`
+              `Sign Off for ${selectedScoutIds.size} Scout${selectedScoutIds.size !== 1 ? 's' : ''}`
             )}
           </Button>
         </DialogFooter>

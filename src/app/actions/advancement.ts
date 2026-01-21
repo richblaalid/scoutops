@@ -1200,7 +1200,7 @@ export async function assignMeritBadgeRequirementToScouts(params: {
   unitId: string
   assignments: Array<{
     scoutId: string
-    badgeProgressId: string
+    badgeProgressId: string | null // null if scout is not yet tracking this badge
     requirementProgressId: string | null
   }>
   completedAt: string
@@ -1220,14 +1220,40 @@ export async function assignMeritBadgeRequirementToScouts(params: {
 
   for (const assignment of params.assignments) {
     try {
+      let badgeProgressId = assignment.badgeProgressId
       let requirementProgressId = assignment.requirementProgressId
+
+      // If scout is not tracking this badge yet, create badge progress first
+      if (!badgeProgressId) {
+        // Create merit badge progress record
+        const { data: newBadgeProgress, error: badgeError } = await adminSupabase
+          .from('scout_merit_badge_progress')
+          .insert({
+            scout_id: assignment.scoutId,
+            merit_badge_id: params.meritBadgeId,
+            version_id: params.versionId,
+            status: 'in_progress',
+            started_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single()
+
+        if (badgeError) {
+          console.error('Error creating badge progress:', badgeError)
+          errors.push(`Failed to start badge tracking for scout ${assignment.scoutId}`)
+          failedCount++
+          continue
+        }
+
+        badgeProgressId = newBadgeProgress.id
+      }
 
       // Create requirement progress if it doesn't exist
       if (!requirementProgressId) {
         const { data: newReqProgress, error: createError } = await adminSupabase
           .from('scout_merit_badge_requirement_progress')
           .insert({
-            scout_merit_badge_progress_id: assignment.badgeProgressId,
+            scout_merit_badge_progress_id: badgeProgressId,
             requirement_id: params.requirementId,
             status: 'not_started',
           })
@@ -2074,6 +2100,55 @@ export async function getRankRequirements(rankCode: string) {
     versionId: version.id,
     requirements: requirements || [],
   }
+}
+
+/**
+ * Bulk approve parent submissions (pending_approval items) across multiple scouts
+ * Used by the unit-level Pending Approvals modal
+ */
+export async function bulkApproveParentSubmissions(
+  requirementProgressIds: string[],
+  unitId: string
+): Promise<ActionResult<{ successCount: number; failedCount: number }>> {
+  const featureCheck = checkFeatureEnabled<{ successCount: number; failedCount: number }>()
+  if (featureCheck) return featureCheck
+
+  if (requirementProgressIds.length === 0) {
+    return { success: true, data: { successCount: 0, failedCount: 0 } }
+  }
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+  const timestamp = new Date().toISOString()
+
+  // Update all selected pending submissions
+  const { data, error } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .update({
+      status: 'completed',
+      completed_at: timestamp,
+      completed_by: auth.profileId,
+      approval_status: 'approved',
+      reviewed_by: auth.profileId,
+      reviewed_at: timestamp,
+      updated_at: timestamp,
+    })
+    .in('id', requirementProgressIds)
+    .eq('approval_status', 'pending_approval')
+    .select('id')
+
+  if (error) {
+    console.error('Error bulk approving parent submissions:', error)
+    return { success: false, error: 'Failed to approve submissions' }
+  }
+
+  const successCount = data?.length || 0
+  const failedCount = requirementProgressIds.length - successCount
+
+  revalidatePath('/advancement')
+  return { success: true, data: { successCount, failedCount } }
 }
 
 /**

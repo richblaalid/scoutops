@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { assignRequirementToScouts } from '@/app/actions/advancement'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, Circle, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 interface Rank {
   id: string
@@ -132,15 +132,8 @@ export function RequirementAssignDialog({
     }
   })
 
-  // Sort: in_progress first, then not_started, then completed
-  const sortedScouts = [...scoutsWithStatus].sort((a, b) => {
-    const order = { in_progress: 0, not_started: 1, completed: 2 }
-    return order[a.status] - order[b.status]
-  })
-
-  const inProgressScouts = sortedScouts.filter((s) => s.status === 'in_progress')
-  const notStartedScouts = sortedScouts.filter((s) => s.status === 'not_started')
-  const completedScouts = sortedScouts.filter((s) => s.status === 'completed')
+  // Scouts who can be selected (anyone who hasn't completed this requirement)
+  const selectableScouts = scoutsWithStatus.filter((s) => s.status !== 'completed')
 
   const toggleScout = (scoutId: string) => {
     const newSelected = new Set(selectedScoutIds)
@@ -152,9 +145,9 @@ export function RequirementAssignDialog({
     setSelectedScoutIds(newSelected)
   }
 
-  const selectAllInProgress = () => {
+  const selectAll = () => {
     const newSelected = new Set(selectedScoutIds)
-    inProgressScouts.forEach((s) => newSelected.add(s.scout.id))
+    selectableScouts.forEach((s) => newSelected.add(s.scout.id))
     setSelectedScoutIds(newSelected)
   }
 
@@ -196,7 +189,7 @@ export function RequirementAssignDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Assign Requirement Completion</DialogTitle>
+          <DialogTitle>Sign Off Requirement</DialogTitle>
           <DialogDescription>
             Mark this requirement as complete for selected scouts
           </DialogDescription>
@@ -227,76 +220,44 @@ export function RequirementAssignDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Select Scouts</Label>
-              {inProgressScouts.length > 0 && (
+              {selectableScouts.length > 1 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={selectAllInProgress}
+                  onClick={selectAll}
                   className="h-7 text-xs"
                 >
-                  Select all in progress ({inProgressScouts.length})
+                  Select all ({selectableScouts.length})
                 </Button>
               )}
             </div>
 
             <div className="max-h-64 space-y-1 overflow-y-auto rounded-lg border p-2">
-              {/* In Progress */}
-              {inProgressScouts.length > 0 && (
-                <div className="mb-2">
-                  <p className="mb-1 text-xs font-medium text-stone-500">
-                    Working on {rank.name} ({inProgressScouts.length})
-                  </p>
-                  {inProgressScouts.map(({ scout }) => (
-                    <ScoutCheckboxRow
-                      key={scout.id}
-                      scout={scout}
-                      status="in_progress"
+              {selectableScouts.length > 0 ? (
+                selectableScouts.map(({ scout }) => (
+                  <label
+                    key={scout.id}
+                    className={`flex cursor-pointer items-center gap-2 rounded p-2 transition-colors ${
+                      selectedScoutIds.has(scout.id)
+                        ? 'bg-forest-50'
+                        : 'hover:bg-stone-50'
+                    }`}
+                  >
+                    <Checkbox
                       checked={selectedScoutIds.has(scout.id)}
-                      onToggle={() => toggleScout(scout.id)}
+                      onCheckedChange={() => toggleScout(scout.id)}
                     />
-                  ))}
-                </div>
-              )}
-
-              {/* Not Started */}
-              {notStartedScouts.length > 0 && (
-                <div className="mb-2">
-                  <p className="mb-1 text-xs font-medium text-stone-500">
-                    Not started ({notStartedScouts.length})
-                  </p>
-                  {notStartedScouts.map(({ scout }) => (
-                    <ScoutCheckboxRow
-                      key={scout.id}
-                      scout={scout}
-                      status="not_started"
-                      checked={selectedScoutIds.has(scout.id)}
-                      onToggle={() => toggleScout(scout.id)}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Completed */}
-              {completedScouts.length > 0 && (
-                <div>
-                  <p className="mb-1 text-xs font-medium text-stone-500">
-                    Already completed ({completedScouts.length})
-                  </p>
-                  {completedScouts.map(({ scout }) => (
-                    <ScoutCheckboxRow
-                      key={scout.id}
-                      scout={scout}
-                      status="completed"
-                      checked={false}
-                      onToggle={() => {}}
-                      disabled
-                    />
-                  ))}
-                </div>
-              )}
-
-              {sortedScouts.length === 0 && (
-                <p className="py-4 text-center text-sm text-stone-500">No scouts found</p>
+                    <span className="flex-1 text-sm">
+                      {scout.first_name} {scout.last_name}
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <p className="py-4 text-center text-sm text-stone-500">
+                  {scouts.length === 0
+                    ? 'No scouts found'
+                    : 'All scouts have already completed this requirement'}
+                </p>
               )}
             </div>
           </div>
@@ -329,64 +290,14 @@ export function RequirementAssignDialog({
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Assigning...
+                Signing off...
               </>
             ) : (
-              `Assign to ${selectedScoutIds.size} Scout${selectedScoutIds.size !== 1 ? 's' : ''}`
+              `Sign Off for ${selectedScoutIds.size} Scout${selectedScoutIds.size !== 1 ? 's' : ''}`
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
-
-interface ScoutCheckboxRowProps {
-  scout: Scout
-  status: ScoutStatus
-  checked: boolean
-  onToggle: () => void
-  disabled?: boolean
-}
-
-function ScoutCheckboxRow({ scout, status, checked, onToggle, disabled }: ScoutCheckboxRowProps) {
-  return (
-    <label
-      className={`flex cursor-pointer items-center gap-2 rounded p-2 transition-colors ${
-        disabled
-          ? 'cursor-not-allowed opacity-50'
-          : checked
-          ? 'bg-forest-50'
-          : 'hover:bg-stone-50'
-      }`}
-    >
-      {status === 'completed' ? (
-        <CheckCircle className="h-4 w-4 text-green-500" />
-      ) : (
-        <Checkbox
-          checked={checked}
-          onCheckedChange={onToggle}
-          disabled={disabled}
-        />
-      )}
-      <span className="flex-1 text-sm">
-        {scout.first_name} {scout.last_name}
-      </span>
-      {status === 'in_progress' && (
-        <Badge variant="outline" className="text-xs">
-          In Progress
-        </Badge>
-      )}
-      {status === 'not_started' && (
-        <span className="text-xs text-stone-400">
-          {scout.rank || 'No rank'}
-        </span>
-      )}
-      {status === 'completed' && (
-        <Badge variant="secondary" className="text-xs">
-          Done
-        </Badge>
-      )}
-    </label>
   )
 }
