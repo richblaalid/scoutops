@@ -69,6 +69,12 @@ export interface BsaMeritBadgeRequirement {
   sub_requirement_letter: string | null
   description: string
   display_order: number
+  // Alternative/OR options support
+  is_alternative: boolean | null
+  alternatives_group: string | null
+  nesting_depth: number | null
+  original_scoutbook_id: string | null
+  required_count: number | null
 }
 
 export interface BsaLeadershipPosition {

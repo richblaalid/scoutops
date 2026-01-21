@@ -433,6 +433,7 @@ export type Database = {
           is_active: boolean | null
           is_eagle_required: boolean | null
           name: string
+          pamphlet_url: string | null
           updated_at: string | null
         }
         Insert: {
@@ -445,6 +446,7 @@ export type Database = {
           is_active?: boolean | null
           is_eagle_required?: boolean | null
           name: string
+          pamphlet_url?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -457,6 +459,7 @@ export type Database = {
           is_active?: boolean | null
           is_eagle_required?: boolean | null
           name?: string
+          pamphlet_url?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -532,6 +535,7 @@ export type Database = {
           description: string | null
           display_order: number
           id: string
+          image_url: string | null
           is_eagle_required: boolean | null
           name: string
         }
@@ -541,6 +545,7 @@ export type Database = {
           description?: string | null
           display_order: number
           id?: string
+          image_url?: string | null
           is_eagle_required?: boolean | null
           name: string
         }
@@ -550,6 +555,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           id?: string
+          image_url?: string | null
           is_eagle_required?: boolean | null
           name?: string
         }
