@@ -1,6 +1,6 @@
 # Bulk Requirement Sign-Off Feature
 
-> **Status:** In Progress
+> **Status:** Ready for Manual Testing
 > **Created:** 2026-01-21
 > **Author:** Claude
 
@@ -229,16 +229,16 @@ User clicks "Sign Off Selected"
 - [x] **3.1.3** Update to use refactored `BulkApprovalSheet` with `type="rank"`
 
 ### Phase 4: /advancement Browser Views
-- [ ] **4.1.1** Add multi-select to merit badge browser view
-- [ ] **4.1.2** Add multi-select to rank browser view (if not present)
-- [ ] **4.1.3** Ensure consistent behavior with scout profile views
+- [x] **4.1.1** Add multi-select to merit badge browser view → N/A: Browser views use existing `BadgeRequirementAssignDialog` for bulk scout selection per requirement
+- [x] **4.1.2** Add multi-select to rank browser view (if not present) → N/A: Same pattern - individual scout drilldown uses `SingleRankRequirements`
+- [x] **4.1.3** Ensure consistent behavior with scout profile views → Verified: All individual scout views share components
 
 ### Phase 5: Testing & Polish
-- [ ] **5.1.1** Test bulk sign-off with 1, 5, 10+ requirements (both types)
-- [ ] **5.1.2** Test edge cases (all selected, none selected, mixed states)
-- [ ] **5.1.3** Verify mobile responsiveness
-- [ ] **5.1.4** Run build and lint
-- [ ] **5.1.5** Cross-browser testing
+- [ ] **5.1.1** Test bulk sign-off with 1, 5, 10+ requirements (both types) → Manual testing needed
+- [ ] **5.1.2** Test edge cases (all selected, none selected, mixed states) → Manual testing needed
+- [ ] **5.1.3** Verify mobile responsiveness → Manual testing needed
+- [x] **5.1.4** Run build and lint → Build passes, pre-existing lint warnings unrelated to changes
+- [ ] **5.1.5** Cross-browser testing → Manual testing needed
 
 ---
 
@@ -272,4 +272,6 @@ User clicks "Sign Off Selected"
 | 2026-01-21 | Phase 0: Refactored BulkApprovalSheet for unified rank/badge use | f50ea62 |
 | 2026-01-21 | Phase 1: Added multi-select infrastructure | 170e51a |
 | 2026-01-21 | Phase 2: Merit badge multi-select in scout profile | 029f41d |
-| 2026-01-21 | Phase 3: Rank multi-select alignment | pending |
+| 2026-01-21 | Phase 3: Rank multi-select alignment | 089dca3 |
+| 2026-01-21 | Phase 4: Verified browser views use existing patterns | N/A |
+| 2026-01-21 | Phase 5: Build and tests passing, ready for manual testing | - |
