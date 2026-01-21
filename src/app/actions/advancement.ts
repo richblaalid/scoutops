@@ -853,6 +853,51 @@ export async function completeMeritBadge(
   return { success: true }
 }
 
+/**
+ * Bulk award merit badges (mark as awarded by scoutmaster)
+ * Used when badges are "completed" (all requirements done) and need final approval
+ */
+export async function bulkAwardMeritBadges(
+  meritBadgeProgressIds: string[],
+  unitId: string
+): Promise<ActionResult<{ successCount: number; failedCount: number }>> {
+  const featureCheck = checkFeatureEnabled<{ successCount: number; failedCount: number }>()
+  if (featureCheck) return featureCheck
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+  const now = new Date().toISOString()
+
+  let successCount = 0
+  let failedCount = 0
+
+  // Process each badge
+  for (const progressId of meritBadgeProgressIds) {
+    const { error } = await adminSupabase
+      .from('scout_merit_badge_progress')
+      .update({
+        status: 'awarded',
+        awarded_at: now,
+        approved_by: auth.profileId,
+        updated_at: now,
+      })
+      .eq('id', progressId)
+      .eq('status', 'completed') // Only update badges that are in 'completed' status
+
+    if (error) {
+      console.error('Error awarding merit badge:', error)
+      failedCount++
+    } else {
+      successCount++
+    }
+  }
+
+  revalidatePath('/advancement')
+  return { success: true, data: { successCount, failedCount } }
+}
+
 // ==========================================
 // LEADERSHIP ACTIONS
 // ==========================================
