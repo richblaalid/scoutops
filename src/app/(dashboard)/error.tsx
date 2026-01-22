@@ -12,8 +12,11 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log error to monitoring service in production
-    console.error('Dashboard error:', error)
+    // Only log in development - in production, send to error monitoring service
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Dashboard error:', error)
+    }
+    // TODO: Add error reporting service integration (e.g., Sentry)
   }, [error])
 
   return (

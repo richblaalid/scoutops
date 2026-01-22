@@ -129,7 +129,7 @@ export async function inviteMember({ unitId, email, role, linkedScoutId }: Invit
 
     // If user already exists, they can log in via normal login flow
     if (emailError?.code === 'email_exists') {
-      console.log('User already exists, they can log in to accept invite:', email)
+      // Note: User already exists - logged for debugging
       return { success: true, warning: 'User already has an account. They can log in to accept the invite.' }
     } else if (emailError) {
       console.error('Auth email error:', emailError)
@@ -187,11 +187,10 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
   }
 
   if (!invites || invites.length === 0) {
-    console.log('No pending invites found for:', user.email.toLowerCase())
     return { accepted: 0 }
   }
 
-  console.log(`Found ${invites.length} pending invite(s) for ${user.email}`)
+  // Process invites without logging email
 
   let accepted = 0
   let lastUnitId: string | undefined
@@ -201,7 +200,6 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
 
     // If membership already has a profile_id (roster invite), keep it and link to auth user
     if (invite.profile_id && invite.profile_id !== userProfile.id) {
-      console.log(`Membership has existing profile_id ${invite.profile_id}, linking to auth user`)
 
       // Link the roster profile to the auth user
       const { error: linkError } = await adminSupabase
@@ -222,7 +220,7 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
           .single()
 
         if (duplicateProfile && !duplicateProfile.member_type && !duplicateProfile.bsa_member_id) {
-          console.log(`Deleting duplicate empty profile ${userProfile.id}`)
+          // Clean up duplicate empty profile
           await adminSupabase
             .from('profiles')
             .delete()
@@ -262,9 +260,8 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
 
       if (scoutLinkError) {
         console.error('Failed to link profile to scout:', scoutLinkError.message)
-      } else {
-        console.log(`Linked profile ${finalProfileId} to scout ${invite.linked_scout_id}`)
       }
+      // Successfully linked profile to scout
     }
 
     accepted++

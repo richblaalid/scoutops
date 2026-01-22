@@ -4,9 +4,35 @@ import { updateSession } from '@/lib/supabase/middleware'
 // Pages that support section filtering
 const SECTION_FILTER_PATHS = ['/dashboard', '/scouts', '/billing', '/reports', '/payments', '/accounts']
 
+// Add security headers to response
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  // Prevent clickjacking attacks
+  response.headers.set('X-Frame-Options', 'DENY')
+
+  // Prevent MIME type sniffing
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+
+  // Control referrer information
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+  // Enable XSS protection (legacy, but still useful for older browsers)
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+
+  // Permissions Policy - restrict powerful features
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+  )
+
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   // First, handle Supabase session
-  const response = await updateSession(request)
+  let response = await updateSession(request)
+
+  // Add security headers to all responses
+  response = addSecurityHeaders(response)
 
   // Check if this is a page that supports section filtering
   const pathname = request.nextUrl.pathname

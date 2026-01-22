@@ -324,8 +324,6 @@ export async function provisionUnit(input: ProvisionUnitInput, ipAddress: string
 
     // 6. Send magic link email with provision_token param
     const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/confirm?provision_token=${token}&next=/setup`
-    console.log('Sending invite email with redirectTo:', redirectUrl)
-    console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)
 
     const { error: authError } = await adminSupabase.auth.admin.inviteUserByEmail(admin.email.toLowerCase(), {
       redirectTo: redirectUrl,
