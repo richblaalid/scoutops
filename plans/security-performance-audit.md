@@ -739,15 +739,15 @@ export async function initializeRankProgress(...)
 | 3.4 | Parallel await in billing page | `billing/page.tsx` | ✅ Done |
 | 3.5 | Parallel await in advancement.ts | `actions/advancement.ts` | ✅ Done
 
-**Priority B: Bundle Optimization (High Impact)**
+**Priority B: Bundle Optimization (High Impact) ✅ COMPLETE**
 
-| # | Task | File(s) | Impact |
+| # | Task | File(s) | Status |
 |---|------|---------|--------|
-| 3.6 | Remove advancement barrel, use direct imports | `components/advancement/index.ts` | Critical |
-| 3.7 | Remove scoutbook barrel, use direct imports | `components/scoutbook-sync/index.ts` | High |
-| 3.8 | Dynamic import PaymentEntry (Square SDK) | `payment-entry.tsx` | High |
-| 3.9 | Dynamic import BulkEntryInterface | `bulk-entry-interface.tsx` | Medium |
-| 3.10 | Dynamic import ScoutbookSyncCard | `scoutbook-sync-card.tsx` | Medium |
+| 3.6 | Remove advancement barrel | `components/advancement/index.ts` | ✅ Deleted |
+| 3.7 | Scoutbook barrel | `lib/sync/scoutbook/index.ts` | ✅ N/A (library API) |
+| 3.8 | Dynamic import PaymentEntry | `payment-entry-lazy.tsx` | ✅ Done |
+| 3.9 | Dynamic import BulkEntryInterface | `bulk-entry-interface-lazy.tsx` | ✅ Done |
+| 3.10 | Dynamic import ScoutbookSyncCard | `scoutbook-sync-card-lazy.tsx` | ✅ Done |
 
 **Priority C: Re-render Optimization (Medium Impact)**
 
@@ -823,7 +823,8 @@ export async function initializeRankProgress(...)
 | 2026-01-21 | Phase 1 complete (security fixes) | Multiple commits |
 | 2026-01-22 | Phase 2 complete (N+1, O(n²) fixes) | 787676d |
 | 2026-01-22 | Vercel best practices audit added | (plan update) |
-| 2026-01-22 | Phase 3A complete (parallel awaits) | Pending |
+| 2026-01-22 | Phase 3A complete (parallel awaits) | 2e083ed |
+| 2026-01-22 | Phase 3B complete (bundle optimization) | Pending |
 
 ---
 

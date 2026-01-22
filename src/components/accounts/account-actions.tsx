@@ -1,15 +1,29 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { PaymentModal } from './payment-modal'
 import { SendPaymentRequestModal } from './send-payment-request-modal'
 import { UseFundsModal } from './use-funds-modal'
 import { AddFundsModal } from './add-funds-modal'
-import { PaymentEntry } from '@/components/payments/payment-entry'
 import { Card, CardContent } from '@/components/ui/card'
-import { ChevronDown, ChevronUp, CreditCard, Wallet } from 'lucide-react'
+import { ChevronDown, ChevronUp, CreditCard, Wallet, Loader2 } from 'lucide-react'
+
+// Dynamic import of PaymentEntry - defers Square SDK loading
+const PaymentEntry = dynamic(
+  () => import('@/components/payments/payment-entry').then(mod => ({ default: mod.PaymentEntry })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="h-5 w-5 animate-spin text-stone-400" />
+        <span className="ml-2 text-sm text-stone-500">Loading...</span>
+      </div>
+    ),
+    ssr: false,
+  }
+)
 
 interface AccountActionsProps {
   scoutId: string

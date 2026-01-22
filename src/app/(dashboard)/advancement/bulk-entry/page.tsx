@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isFeatureEnabled, FeatureFlag } from '@/lib/feature-flags'
-import { BulkEntryInterface } from '@/components/advancement/bulk-entry-interface'
+import { BulkEntryInterfaceLazy } from '@/components/advancement/bulk-entry-interface-lazy'
 
 export default async function BulkEntryPage() {
   // Check feature flag
@@ -187,7 +187,7 @@ export default async function BulkEntryPage() {
   const scouts = (scoutsData || []) as Scout[]
 
   return (
-    <BulkEntryInterface
+    <BulkEntryInterfaceLazy
       ranks={ranks}
       rankRequirements={rankRequirements}
       badges={badges}

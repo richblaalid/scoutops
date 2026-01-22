@@ -5,7 +5,7 @@ import { UnitInfoForm } from '@/components/settings/unit-info-form'
 import { PatrolList } from '@/components/settings/patrol-list'
 import { LogoUpload } from '@/components/settings/logo-upload'
 import { PaymentProcessingCard } from '@/components/settings/payment-processing-card'
-import { ScoutbookSyncCard } from '@/components/settings/scoutbook-sync-card'
+import { ScoutbookSyncCardLazy } from '@/components/settings/scoutbook-sync-card-lazy'
 import { isFinancialRole, isAdmin as checkIsAdmin } from '@/lib/roles'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -171,7 +171,7 @@ export default async function SettingsPage({
   // Data Tab Content
   const dataTabContent = (
     <div className="grid gap-6">
-      <ScoutbookSyncCard
+      <ScoutbookSyncCardLazy
         lastSyncAt={lastSyncSession?.completed_at}
         lastSyncMemberCount={lastSyncSession?.records_extracted}
         isAdmin={isAdmin}

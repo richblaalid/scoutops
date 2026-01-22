@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { ScoutGuardianAssociations } from './scout-guardian-associations'
-import { ScoutAdvancementSection } from '@/components/advancement'
+import { ScoutAdvancementSection } from '@/components/advancement/scout-advancement-section'
 import {
   Award,
   User,

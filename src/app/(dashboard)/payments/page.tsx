@@ -4,7 +4,7 @@ import { CollapsibleCard } from '@/components/ui/collapsible-card'
 import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
 import { canAccessPage, canPerformAction, isAdmin } from '@/lib/roles'
-import { PaymentEntry } from '@/components/payments/payment-entry'
+import { PaymentEntryLazy } from '@/components/payments/payment-entry-lazy'
 import { AddFundsForm } from '@/components/payments/add-funds-form'
 import { PaymentsList } from '@/components/payments/payments-list'
 import { PaymentsTabs } from '@/components/payments/payments-tabs'
@@ -248,7 +248,7 @@ export default async function PaymentsPage() {
             ? 'Accept card payments or record cash/check payments'
             : 'Record cash, check, or other payments'}
         >
-          <PaymentEntry
+          <PaymentEntryLazy
             unitId={membership.unit_id}
             applicationId={squareApplicationId}
             locationId={squareCredentials?.location_id || null}
