@@ -110,6 +110,9 @@ interface AdvancementData {
         id: string
         requirement_number: string
         description: string
+        parent_requirement_id: string | null
+        is_alternative: boolean | null
+        alternatives_group: string | null
       }
     }>
   }>

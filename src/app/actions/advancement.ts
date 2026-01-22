@@ -2164,7 +2164,7 @@ export async function getRankRequirements(rankCode: string) {
   // Get all requirements for this rank (including sub-requirements)
   const { data: requirements, error: reqError } = await supabase
     .from('bsa_rank_requirements')
-    .select('id, requirement_number, description, parent_requirement_id')
+    .select('id, requirement_number, description, parent_requirement_id, is_alternative, alternatives_group')
     .eq('version_id', version.id)
     .eq('rank_id', rank.id)
     .order('display_order')
