@@ -6,9 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LeadershipTimeline } from './leadership-timeline'
 import { ActivityStats } from './activity-stats'
 import { RankTrailVisualization } from './rank-trail-visualization'
-import { SingleRankRequirements } from './single-rank-requirements'
+import { ScoutRankPanel } from './scout-rank-panel'
 import { MeritBadgeSashView } from './merit-badge-sash-view'
-import { SingleMeritBadgeRequirements } from './single-merit-badge-requirements'
+import { ScoutMeritBadgePanel } from './scout-merit-badge-panel'
 import { getRankRequirements, getCurrentUserInfo } from '@/app/actions/advancement'
 import {
   Award,
@@ -128,6 +128,8 @@ interface ScoutAdvancementSectionProps {
   activityEntries: ActivityEntry[]
   activityTotals: ActivityTotals
   canEdit: boolean
+  /** Active BSA requirement version ID - used as fallback when progress records don't have version_id */
+  versionId: string
 }
 
 // Compute the "next" rank based on current rank or progress
@@ -181,6 +183,7 @@ export function ScoutAdvancementSection({
   activityEntries,
   activityTotals,
   canEdit,
+  versionId,
 }: ScoutAdvancementSectionProps) {
   const [activeTab, setActiveTab] = useState('rank')
 
@@ -197,6 +200,7 @@ export function ScoutAdvancementSection({
   // State for fetched requirements when rank has no progress
   type RankRequirementsData = Awaited<ReturnType<typeof getRankRequirements>>
   const [fetchedRequirements, setFetchedRequirements] = useState<RankRequirementsData>(null)
+  const [isLoadingRequirements, setIsLoadingRequirements] = useState(false)
 
   // State for current user info (for completion dialogs)
   const [currentUserName, setCurrentUserName] = useState<string>('Leader')
@@ -232,12 +236,19 @@ export function ScoutAdvancementSection({
   useEffect(() => {
     if (!selectedRankProgress && selectedRank) {
       // No progress for this rank - fetch the raw requirements
+      setIsLoadingRequirements(true)
+      setFetchedRequirements(null)
       getRankRequirements(selectedRank).then(data => {
         setFetchedRequirements(data)
+        setIsLoadingRequirements(false)
+      }).catch(err => {
+        console.error('Error fetching rank requirements:', err)
+        setIsLoadingRequirements(false)
       })
     } else {
       // Clear fetched requirements when we have progress data
       setFetchedRequirements(null)
+      setIsLoadingRequirements(false)
     }
   }, [selectedRank, selectedRankProgress])
 
@@ -351,8 +362,8 @@ export function ScoutAdvancementSection({
                 compact
               />
 
-              {/* Single Rank Requirements */}
-              <SingleRankRequirements
+              {/* Scout Rank Panel */}
+              <ScoutRankPanel
                 rank={selectedRankProgress}
                 scoutId={scoutId}
                 unitId={unitId}
@@ -360,17 +371,20 @@ export function ScoutAdvancementSection({
                 rankName={selectedRank.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                 currentUserName={currentUserName}
                 rankRequirementsData={fetchedRequirements}
+                isLoading={isLoadingRequirements}
               />
             </TabsContent>
 
             <TabsContent value="badges" className="mt-4">
               {selectedBadge ? (
                 // Detail view for selected badge
-                <SingleMeritBadgeRequirements
+                // Always use active versionId for fetching requirements (not badge's version_id)
+                // Progress matching still works via requirement_id links
+                <ScoutMeritBadgePanel
                   badge={selectedBadge}
                   scoutId={scoutId}
                   unitId={unitId}
-                  versionId={selectedBadge.version_id || ''}
+                  versionId={versionId}
                   canEdit={canEdit}
                   onBack={() => setSelectedBadge(null)}
                   currentUserName={currentUserName}

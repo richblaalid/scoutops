@@ -10,7 +10,7 @@ import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
 import { BulkApprovalSheet } from './bulk-approval-sheet'
 import { RankActionDialog } from './rank-action-dialog'
 import { MultiSelectActionBar } from './multi-select-action-bar'
-import { Award, Calendar, Check, CheckSquare, PartyPopper, ShieldCheck, ListChecks } from 'lucide-react'
+import { Award, Calendar, Check, CheckSquare, PartyPopper, ShieldCheck, ListChecks, Loader2, AlertCircle } from 'lucide-react'
 import { approveRank, awardRank } from '@/app/actions/advancement'
 import { cn } from '@/lib/utils'
 import type { AdvancementStatus } from '@/types/advancement'
@@ -62,7 +62,7 @@ interface RankRequirementsData {
   }>
 }
 
-interface SingleRankRequirementsProps {
+interface ScoutRankPanelProps {
   rank: RankProgress | null
   scoutId: string
   unitId: string
@@ -72,9 +72,16 @@ interface SingleRankRequirementsProps {
   currentUserName?: string
   // Optional: requirements data for ranks with no progress
   rankRequirementsData?: RankRequirementsData | null
+  // Loading state when fetching requirements
+  isLoading?: boolean
 }
 
-export function SingleRankRequirements({
+/**
+ * ScoutRankPanel - Individual scout's rank progress view.
+ * Shows requirements with completion status for a single scout.
+ * Used in the /scout profile page to track individual progress.
+ */
+export function ScoutRankPanel({
   rank,
   scoutId,
   unitId,
@@ -82,7 +89,8 @@ export function SingleRankRequirements({
   rankName,
   currentUserName,
   rankRequirementsData,
-}: SingleRankRequirementsProps) {
+  isLoading = false,
+}: ScoutRankPanelProps) {
   const [approveDialogOpen, setApproveDialogOpen] = useState(false)
   const [awardDialogOpen, setAwardDialogOpen] = useState(false)
 
@@ -204,16 +212,33 @@ export function SingleRankRequirements({
     versionId: rankRequirementsData.versionId,
   } : undefined
 
-  // If no data at all, show empty state
+  // Show loading state while fetching requirements
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-forest-500" />
+          <p className="mt-4 text-stone-500">
+            Loading requirements for {rankName || 'rank'}...
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // If no data at all (fetch failed or no rank selected), show appropriate state
   if (!hasProgressData && !hasRawRequirements) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
-            <Award className="h-8 w-8 text-stone-400" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+            <AlertCircle className="h-8 w-8 text-amber-500" />
           </div>
-          <p className="text-stone-500">
-            {rankName ? `Loading requirements for ${rankName}...` : 'Select a rank to view requirements'}
+          <p className="font-medium text-stone-700">
+            {rankName ? `Unable to load requirements for ${rankName}` : 'Select a rank to view requirements'}
+          </p>
+          <p className="mt-1 text-sm text-stone-500">
+            {rankName ? 'Please try refreshing the page or contact support if the issue persists.' : ''}
           </p>
         </CardContent>
       </Card>

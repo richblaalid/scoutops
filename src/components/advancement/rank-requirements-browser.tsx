@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { RankRequirementsList } from './rank-requirements-list'
+import { UnitRankPanel } from './unit-rank-panel'
 import { RankIcon } from './rank-icon'
 import { Award } from 'lucide-react'
 
@@ -15,6 +15,7 @@ interface Rank {
   display_order: number
   is_eagle_required: boolean | null
   description: string | null
+  image_url?: string | null
 }
 
 interface Requirement {
@@ -59,6 +60,7 @@ interface RankRequirementsBrowserProps {
   unitId: string
   versionId: string
   canEdit: boolean
+  currentUserName?: string
 }
 
 export function RankRequirementsBrowser({
@@ -68,14 +70,11 @@ export function RankRequirementsBrowser({
   unitId,
   versionId,
   canEdit,
+  currentUserName = 'Leader',
 }: RankRequirementsBrowserProps) {
   const [selectedRank, setSelectedRank] = useState(ranks[0]?.code || 'scout')
 
   const currentRank = ranks.find((r) => r.code === selectedRank)
-  const rankRequirements = requirements.filter((req) => req.rank_id === currentRank?.id)
-
-  // Count top-level requirements (no parent)
-  const topLevelRequirements = rankRequirements.filter((req) => !req.parent_requirement_id)
 
   // Get scouts working on this rank
   const scoutsWorkingOnRank = scouts.filter((scout) =>
@@ -94,7 +93,7 @@ export function RankRequirementsBrowser({
               Scouts BSA Rank Requirements
             </CardTitle>
             <CardDescription>
-              Select a rank to view requirements and assign completions
+              Select requirements and sign off for multiple scouts
             </CardDescription>
           </div>
           {scoutsWorkingOnRank.length > 0 && (
@@ -121,30 +120,17 @@ export function RankRequirementsBrowser({
 
           {ranks.map((rank) => {
             const reqs = requirements.filter((req) => req.rank_id === rank.id)
-            const topLevel = reqs.filter((req) => !req.parent_requirement_id)
 
             return (
               <TabsContent key={rank.code} value={rank.code} className="mt-0">
-                <div className="mb-4 flex items-start gap-4 rounded-lg bg-stone-50 p-4">
-                  <RankIcon rank={rank} size="lg" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-stone-900">{rank.name} Rank</h3>
-                    {rank.description && (
-                      <p className="mt-1 text-sm text-stone-600">{rank.description}</p>
-                    )}
-                    <p className="mt-2 text-sm text-stone-500">
-                      {topLevel.length} requirement{topLevel.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                </div>
-
-                <RankRequirementsList
+                <UnitRankPanel
                   rank={rank}
                   requirements={reqs}
                   scouts={scouts}
                   unitId={unitId}
                   versionId={versionId}
                   canEdit={canEdit}
+                  currentUserName={currentUserName}
                 />
               </TabsContent>
             )

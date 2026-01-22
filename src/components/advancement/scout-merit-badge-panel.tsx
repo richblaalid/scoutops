@@ -10,7 +10,7 @@ import { MultiSelectActionBar } from './multi-select-action-bar'
 import { BulkApprovalSheet } from './bulk-approval-sheet'
 import { cn } from '@/lib/utils'
 import { ArrowLeft, Award, Calendar, Check, Star, User, Loader2, ListChecks } from 'lucide-react'
-import { getMeritBadgeRequirements, markMeritBadgeRequirement } from '@/app/actions/advancement'
+import { getMeritBadgeRequirements } from '@/app/actions/advancement'
 import type { AdvancementStatus } from '@/types/advancement'
 
 interface MeritBadgeProgress {
@@ -45,7 +45,7 @@ interface MeritBadgeProgress {
   }>
 }
 
-interface SingleMeritBadgeRequirementsProps {
+interface ScoutMeritBadgePanelProps {
   badge: MeritBadgeProgress
   scoutId: string
   unitId: string
@@ -55,7 +55,12 @@ interface SingleMeritBadgeRequirementsProps {
   currentUserName?: string
 }
 
-export function SingleMeritBadgeRequirements({
+/**
+ * ScoutMeritBadgePanel - Individual scout's merit badge progress view.
+ * Shows requirements with completion status for a single scout.
+ * Used in the /scout profile page to track individual progress.
+ */
+export function ScoutMeritBadgePanel({
   badge,
   scoutId,
   unitId,
@@ -63,7 +68,7 @@ export function SingleMeritBadgeRequirements({
   canEdit,
   onBack,
   currentUserName = 'Leader',
-}: SingleMeritBadgeRequirementsProps) {
+}: ScoutMeritBadgePanelProps) {
   const [requirements, setRequirements] = useState<Array<{
     id: string
     requirement_number: string
@@ -98,7 +103,7 @@ export function SingleMeritBadgeRequirements({
     })
   }, [badge.bsa_merit_badges.id, versionId])
 
-  // Build progress map for quick lookup
+  // Build progress map for quick lookup - keyed by requirement_number for cross-version matching
   const progressMap = useMemo(() => {
     const map = new Map<string, {
       id: string
@@ -109,10 +114,10 @@ export function SingleMeritBadgeRequirements({
     }>()
 
     badge.scout_merit_badge_requirement_progress.forEach(p => {
-      // Use either the direct requirement_id or nested bsa_merit_badge_requirements.id
-      const reqId = p.requirement_id || p.bsa_merit_badge_requirements?.id
-      if (reqId) {
-        map.set(reqId, {
+      // Key by requirement_number (stable across versions) rather than requirement_id (version-specific UUIDs)
+      const reqNumber = p.bsa_merit_badge_requirements?.requirement_number
+      if (reqNumber) {
+        map.set(reqNumber, {
           id: p.id,
           status: p.status,
           completed_at: p.completed_at,
@@ -125,16 +130,17 @@ export function SingleMeritBadgeRequirements({
   }, [badge.scout_merit_badge_requirement_progress])
 
   // Format requirements for HierarchicalRequirementsList
+  // Pass ALL requirements (including sub-requirements) - the component handles hierarchy via requirement number parsing
   const formattedRequirements = useMemo(() => {
     return requirements
-      .filter(req => !req.parent_requirement_id) // Only top-level requirements
       .sort((a, b) => {
         const numA = parseFloat(a.requirement_number || '0')
         const numB = parseFloat(b.requirement_number || '0')
         return numA - numB
       })
       .map(req => {
-        const progress = progressMap.get(req.id)
+        // Look up progress by requirement_number (stable across versions)
+        const progress = progressMap.get(req.requirement_number)
         return {
           id: req.id,
           requirementProgressId: progress?.id || null,
@@ -145,6 +151,7 @@ export function SingleMeritBadgeRequirements({
           completedBy: progress?.completed_by || null,
           notes: progress?.notes || null,
           approvalStatus: null,
+          parentRequirementId: req.parent_requirement_id,
         }
       })
   }, [requirements, progressMap])

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MeritBadgeGridCard } from './merit-badge-grid-card'
-import { MeritBadgeDetailView } from './merit-badge-detail-view'
+import { UnitMeritBadgePanel } from './unit-merit-badge-panel'
 import { Search, Award, Star, Users, Filter } from 'lucide-react'
 import { getMeritBadgeRequirements } from '@/app/actions/advancement'
 
@@ -181,10 +181,10 @@ export function MeritBadgeBrowser({
     setBadgeRequirements([])
   }
 
-  // Show detail view if a badge is selected
+  // Show unit-mode requirements view if a badge is selected
   if (selectedBadge) {
     return (
-      <MeritBadgeDetailView
+      <UnitMeritBadgePanel
         badge={selectedBadge}
         requirements={badgeRequirements}
         scouts={scouts}
