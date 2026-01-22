@@ -55,49 +55,48 @@ export function SendChargeNotificationDialog({
   // Fetch guardians when dialog opens
   useEffect(() => {
     if (open && scoutId) {
+      const fetchGuardians = async () => {
+        setIsFetchingGuardians(true)
+        setError(null)
+
+        const supabase = createClient()
+
+        const { data, error: fetchError } = await supabase
+          .from('scout_guardians')
+          .select(`
+            profile_id,
+            is_primary,
+            profiles (
+              id,
+              email,
+              full_name,
+              first_name
+            )
+          `)
+          .eq('scout_id', scoutId)
+          .order('is_primary', { ascending: false })
+
+        setIsFetchingGuardians(false)
+
+        if (fetchError) {
+          setError('Failed to load guardians')
+          return
+        }
+
+        const validGuardians = (data || []).filter(
+          (g) => g.profiles?.email
+        ) as Guardian[]
+
+        setGuardians(validGuardians)
+
+        // Auto-select primary guardian or first with email
+        if (validGuardians.length > 0) {
+          setSelectedGuardian(validGuardians[0].profile_id)
+        }
+      }
       fetchGuardians()
     }
   }, [open, scoutId])
-
-  const fetchGuardians = async () => {
-    setIsFetchingGuardians(true)
-    setError(null)
-
-    const supabase = createClient()
-
-    const { data, error: fetchError } = await supabase
-      .from('scout_guardians')
-      .select(`
-        profile_id,
-        is_primary,
-        profiles (
-          id,
-          email,
-          full_name,
-          first_name
-        )
-      `)
-      .eq('scout_id', scoutId)
-      .order('is_primary', { ascending: false })
-
-    setIsFetchingGuardians(false)
-
-    if (fetchError) {
-      setError('Failed to load guardians')
-      return
-    }
-
-    const validGuardians = (data || []).filter(
-      (g) => g.profiles?.email
-    ) as Guardian[]
-
-    setGuardians(validGuardians)
-
-    // Auto-select primary guardian or first with email
-    if (validGuardians.length > 0) {
-      setSelectedGuardian(validGuardians[0].profile_id)
-    }
-  }
 
   const handleSend = async () => {
     if (!selectedGuardian) {

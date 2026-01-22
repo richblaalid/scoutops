@@ -226,7 +226,8 @@ export function BulkEntryInterface({
   // By Requirement mode state
   const [selectedRankId, setSelectedRankId] = useState<string>(ranks[0]?.id || '')
   const [selectedBadgeId, setSelectedBadgeId] = useState<string>('')
-  const [selectedRequirementId, setSelectedRequirementId] = useState<string>('')
+  // Track user's explicit selection; null means "use first available"
+  const [selectedRequirementIdState, setSelectedRequirementId] = useState<string | null>(null)
   const [selectedScoutIds, setSelectedScoutIds] = useState<Set<string>>(new Set())
 
   // Matrix mode state
@@ -255,14 +256,18 @@ export function BulkEntryInterface({
   // Get selected rank or badge
   const selectedRank = ranks.find(r => r.id === selectedRankId)
   const selectedBadge = badges.find(b => b.id === selectedBadgeId)
-  const selectedRequirement = filteredRequirements.find(r => r.id === selectedRequirementId)
 
-  // Auto-select first requirement when rank/badge changes
-  useEffect(() => {
-    if (filteredRequirements.length > 0 && !selectedRequirementId) {
-      setSelectedRequirementId(filteredRequirements[0].id)
+  // Derive selectedRequirementId: use explicit selection if valid, otherwise default to first
+  const selectedRequirementId = useMemo(() => {
+    // If user has an explicit selection that exists in current filtered list, use it
+    if (selectedRequirementIdState && filteredRequirements.some(r => r.id === selectedRequirementIdState)) {
+      return selectedRequirementIdState
     }
-  }, [filteredRequirements, selectedRequirementId])
+    // Otherwise default to first requirement
+    return filteredRequirements[0]?.id || ''
+  }, [selectedRequirementIdState, filteredRequirements])
+
+  const selectedRequirement = filteredRequirements.find(r => r.id === selectedRequirementId)
 
   // Filter scouts by search
   const filteredScouts = scouts.filter(s => {
@@ -476,7 +481,7 @@ export function BulkEntryInterface({
               <button
                 onClick={() => {
                   setRequirementType('rank')
-                  setSelectedRequirementId('')
+                  setSelectedRequirementId(null)
                   resetSelections()
                 }}
                 className={cn(
@@ -492,7 +497,7 @@ export function BulkEntryInterface({
               <button
                 onClick={() => {
                   setRequirementType('merit-badge')
-                  setSelectedRequirementId('')
+                  setSelectedRequirementId(null)
                   resetSelections()
                 }}
                 className={cn(
@@ -518,7 +523,7 @@ export function BulkEntryInterface({
                 value={selectedRankId}
                 onValueChange={(val) => {
                   setSelectedRankId(val)
-                  setSelectedRequirementId('')
+                  setSelectedRequirementId(null)
                   resetSelections()
                 }}
               >
@@ -538,7 +543,7 @@ export function BulkEntryInterface({
                 value={selectedBadgeId}
                 onValueChange={(val) => {
                   setSelectedBadgeId(val)
-                  setSelectedRequirementId('')
+                  setSelectedRequirementId(null)
                   resetSelections()
                 }}
               >

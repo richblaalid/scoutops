@@ -108,7 +108,7 @@ export function BillingForm({ unitId, scouts }: BillingFormProps) {
 
       // Call the atomic billing function - all operations happen in a single transaction
       // TODO: create_billing_with_journal function needs to be added to the schema
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data, error: rpcError } = await (supabase.rpc as any)('create_billing_with_journal', {
         p_unit_id: unitId,
         p_description: description,

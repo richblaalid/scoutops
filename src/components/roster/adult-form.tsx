@@ -1,12 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useSyncExternalStore, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateRosterAdult } from '@/app/actions/roster'
+
+// Hook to detect client-side mount without triggering cascading renders
+function useIsMounted() {
+  const subscribe = useCallback(() => () => {}, [])
+  const getSnapshot = useCallback(() => true, [])
+  const getServerSnapshot = useCallback(() => false, [])
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+}
 
 const MEMBER_TYPES = [
   { value: 'LEADER', label: 'Leader' },
@@ -42,13 +50,9 @@ export function AdultForm({ unitId, adult, onClose, onSuccess }: AdultFormProps)
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
 
-  // Track mount state for portal (SSR compatibility)
-  useEffect(() => {
-    setMounted(true)
-    return () => setMounted(false)
-  }, [])
+  // Use useSyncExternalStore for SSR-safe mount detection (avoids cascading renders)
+  const mounted = useIsMounted()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

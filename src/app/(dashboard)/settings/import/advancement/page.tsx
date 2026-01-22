@@ -65,38 +65,36 @@ export default function AdvancementImportPage() {
   // Load scouts when entering select-scout step
   useEffect(() => {
     if (step === 'select-scout' && currentUnit?.id) {
+      const loadScouts = async () => {
+        setIsLoadingScouts(true)
+        try {
+          const result = await getUnitScoutsForImport(currentUnit.id)
+          if (result.success && result.data) {
+            setScouts(result.data)
+
+            // Try to auto-match the scout
+            if (parsedData) {
+              const matchResult = await findScoutByBsaIdOrName(
+                currentUnit.id,
+                parsedData.scout.bsaId,
+                parsedData.scout.firstName,
+                parsedData.scout.lastName
+              )
+              if (matchResult.success && matchResult.data) {
+                setMatchedScout(matchResult.data)
+                setSelectedScoutId(matchResult.data.id)
+              }
+            }
+          } else if (!result.success) {
+            setError(result.error || 'Failed to load scouts')
+          }
+        } finally {
+          setIsLoadingScouts(false)
+        }
+      }
       loadScouts()
     }
-  }, [step, currentUnit?.id])
-
-  const loadScouts = async () => {
-    if (!currentUnit?.id) return
-    setIsLoadingScouts(true)
-    try {
-      const result = await getUnitScoutsForImport(currentUnit.id)
-      if (result.success && result.data) {
-        setScouts(result.data)
-
-        // Try to auto-match the scout
-        if (parsedData) {
-          const matchResult = await findScoutByBsaIdOrName(
-            currentUnit.id,
-            parsedData.scout.bsaId,
-            parsedData.scout.firstName,
-            parsedData.scout.lastName
-          )
-          if (matchResult.success && matchResult.data) {
-            setMatchedScout(matchResult.data)
-            setSelectedScoutId(matchResult.data.id)
-          }
-        }
-      } else if (!result.success) {
-        setError(result.error || 'Failed to load scouts')
-      }
-    } finally {
-      setIsLoadingScouts(false)
-    }
-  }
+  }, [step, currentUnit?.id, parsedData])
 
   const handleParsed = (data: ParsedScoutbookHistory) => {
     setParsedData(data)

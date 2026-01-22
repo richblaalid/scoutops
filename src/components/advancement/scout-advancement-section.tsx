@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LeadershipTimeline } from './leadership-timeline'
@@ -200,7 +200,12 @@ export function ScoutAdvancementSection({
   // State for fetched requirements when rank has no progress
   type RankRequirementsData = Awaited<ReturnType<typeof getRankRequirements>>
   const [fetchedRequirements, setFetchedRequirements] = useState<RankRequirementsData>(null)
-  const [isLoadingRequirements, setIsLoadingRequirements] = useState(false)
+
+  // Use transition for non-blocking data fetches
+  const [isPendingRequirements, startRequirementsTransition] = useTransition()
+
+  // Track fetch request to handle race conditions
+  const fetchRequestRef = useRef<string | null>(null)
 
   // State for current user info (for completion dialogs)
   const [currentUserName, setCurrentUserName] = useState<string>('Leader')
@@ -233,24 +238,46 @@ export function ScoutAdvancementSection({
   }, [rankProgress, selectedRank])
 
   // Fetch requirements when selected rank has no progress
+  // Use startTransition to avoid synchronous setState warning
   useEffect(() => {
     if (!selectedRankProgress && selectedRank) {
       // No progress for this rank - fetch the raw requirements
-      setIsLoadingRequirements(true)
-      setFetchedRequirements(null)
+      const requestId = selectedRank
+      fetchRequestRef.current = requestId
+
+      startRequirementsTransition(() => {
+        // Clear previous requirements inside transition
+        setFetchedRequirements(null)
+      })
+
       getRankRequirements(selectedRank).then(data => {
-        setFetchedRequirements(data)
-        setIsLoadingRequirements(false)
+        // Only update if this is still the current request
+        if (fetchRequestRef.current === requestId) {
+          startRequirementsTransition(() => {
+            setFetchedRequirements(data)
+          })
+        }
       }).catch(err => {
         console.error('Error fetching rank requirements:', err)
-        setIsLoadingRequirements(false)
+        if (fetchRequestRef.current === requestId) {
+          startRequirementsTransition(() => {
+            setFetchedRequirements(null)
+          })
+        }
       })
     } else {
       // Clear fetched requirements when we have progress data
-      setFetchedRequirements(null)
-      setIsLoadingRequirements(false)
+      fetchRequestRef.current = null
+      startRequirementsTransition(() => {
+        setFetchedRequirements(null)
+      })
     }
   }, [selectedRank, selectedRankProgress])
+
+  // Derive loading state from pending transition
+  const isLoadingRequirements = isPendingRequirements || Boolean(
+    !selectedRankProgress && selectedRank && !fetchedRequirements
+  )
 
   // Handle clicking a rank in the trail
   const handleRankClick = (rankCode: string) => {

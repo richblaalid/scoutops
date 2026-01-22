@@ -54,7 +54,7 @@ export function VoidBillingDialog({
     const supabase = createClient()
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error: rpcError } = await (supabase.rpc as any)(
         type === 'record' ? 'void_billing_record' : 'void_billing_charge',
         type === 'record'

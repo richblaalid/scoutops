@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 interface RankIconProps {
@@ -28,18 +29,22 @@ const sizeConfig = {
   sm: {
     container: 'h-8 w-8',
     image: 'h-6 w-6',
+    pixels: 24,
   },
   md: {
     container: 'h-12 w-12',
     image: 'h-10 w-10',
+    pixels: 40,
   },
   lg: {
     container: 'h-16 w-16',
     image: 'h-14 w-14',
+    pixels: 56,
   },
   xl: {
     container: 'h-24 w-24',
     image: 'h-20 w-20',
+    pixels: 80,
   },
 }
 
@@ -70,10 +75,12 @@ export function RankIcon({ rank, size = 'md', showName = false, className }: Ran
 
   return (
     <div className={cn('flex flex-col items-center gap-1', className)}>
-      <img
+      <Image
         src={imageUrl}
         alt={rank.name}
-        className={cn(sizeClasses.image, 'object-contain')}
+        width={sizeClasses.pixels}
+        height={sizeClasses.pixels}
+        className="object-contain"
       />
       {showName && (
         <span className="text-xs font-medium text-stone-700">{rank.name}</span>

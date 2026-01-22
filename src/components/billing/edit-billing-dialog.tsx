@@ -50,7 +50,7 @@ export function EditBillingDialog({
     const supabase = createClient()
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error: rpcError } = await (supabase.rpc as any)('update_billing_description', {
         p_billing_record_id: billingRecordId,
         p_new_description: description.trim(),

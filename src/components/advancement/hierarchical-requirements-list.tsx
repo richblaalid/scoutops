@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { RequirementApprovalRow } from './requirement-approval-row'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
@@ -443,6 +443,29 @@ function RequirementNodeView({
   )
 }
 
+// Helper to compute default collapsed nodes based on completed requirements
+function computeDefaultCollapsedNodes(tree: RequirementNode[], collapseCompleted: boolean): Set<string> {
+  if (!collapseCompleted) {
+    return new Set()
+  }
+
+  const collapsed = new Set<string>()
+  function checkNode(node: RequirementNode) {
+    const stats = getNodeStats(node)
+    if (stats.completed === stats.total && node.children.length > 0) {
+      collapsed.add(node.requirement.id)
+    }
+    node.children.forEach(checkNode)
+  }
+  tree.forEach(checkNode)
+  return collapsed
+}
+
+// Generate a stable key for requirements to detect meaningful changes
+function getRequirementsKey(requirements: Requirement[]): string {
+  return requirements.map(r => r.id).join(',')
+}
+
 export function HierarchicalRequirementsList({
   requirements,
   unitId,
@@ -460,36 +483,50 @@ export function HierarchicalRequirementsList({
     return buildRequirementTree(requirements)
   }, [requirements])
 
-  const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set())
+  // Create a stable key from requirements - used to reset state when requirements change
+  const requirementsKey = useMemo(() => getRequirementsKey(requirements), [requirements])
 
-  // Reset collapsed state when requirements change
-  useEffect(() => {
-    if (!defaultCollapseCompleted) {
-      setCollapsedNodes(new Set())
-      return
-    }
+  // Compute default collapsed state from tree structure
+  const defaultCollapsed = useMemo(() =>
+    computeDefaultCollapsedNodes(requirementTree, defaultCollapseCompleted),
+    [requirementTree, defaultCollapseCompleted]
+  )
 
-    const collapsed = new Set<string>()
-    function checkNode(node: RequirementNode) {
-      const stats = getNodeStats(node)
-      if (stats.completed === stats.total && node.children.length > 0) {
-        collapsed.add(node.requirement.id)
+  // Track user's manual toggles, keyed by requirements
+  // The key pattern ensures toggles reset when requirements change
+  const [toggleState, setToggleState] = useState<{ key: string; toggles: Set<string> }>({
+    key: requirementsKey,
+    toggles: new Set()
+  })
+
+  // Derive effective collapsed state: default XOR user toggles
+  // Compute userToggles inside useMemo to avoid dependency issues
+  const collapsedNodes = useMemo(() => {
+    // Get current user toggles (resets if requirements changed)
+    const userToggles = toggleState.key === requirementsKey ? toggleState.toggles : new Set<string>()
+
+    const effective = new Set(defaultCollapsed)
+    userToggles.forEach(id => {
+      if (effective.has(id)) {
+        effective.delete(id)
+      } else {
+        effective.add(id)
       }
-      node.children.forEach(checkNode)
-    }
-    requirementTree.forEach(checkNode)
-    setCollapsedNodes(collapsed)
-  }, [requirementTree, defaultCollapseCompleted])
+    })
+    return effective
+  }, [defaultCollapsed, toggleState, requirementsKey])
 
   const toggleNode = (id: string) => {
-    setCollapsedNodes(prev => {
-      const next = new Set(prev)
+    setToggleState(prev => {
+      // Ensure we're working with current requirements key
+      const currentToggles = prev.key === requirementsKey ? prev.toggles : new Set<string>()
+      const next = new Set(currentToggles)
       if (next.has(id)) {
         next.delete(id)
       } else {
         next.add(id)
       }
-      return next
+      return { key: requirementsKey, toggles: next }
     })
   }
 

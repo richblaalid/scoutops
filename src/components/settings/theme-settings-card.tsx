@@ -1,11 +1,19 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore, useCallback } from 'react'
 import { Sun, Moon, Monitor } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+
+// Hook to detect client-side mount without triggering cascading renders
+function useIsMounted() {
+  const subscribe = useCallback(() => () => {}, [])
+  const getSnapshot = useCallback(() => true, [])
+  const getServerSnapshot = useCallback(() => false, [])
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+}
 
 type ThemeOption = 'light' | 'dark' | 'system'
 
@@ -32,12 +40,9 @@ const themeOptions: { value: ThemeOption; label: string; description: string; ic
 
 export function ThemeSettingsCard() {
   const { theme, setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
 
-  // Avoid hydration mismatch by only rendering after mount
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // Use useSyncExternalStore for SSR-safe mount detection (avoids cascading renders)
+  const mounted = useIsMounted()
 
   if (!mounted) {
     return (

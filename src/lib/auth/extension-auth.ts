@@ -39,7 +39,7 @@ function hashToken(token: string): string {
 }
 
 // Helper to get typed table access (table not in generated types yet)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function getTokensTable(supabase: SupabaseClient<Database>) {
   return (supabase as any).from('extension_auth_tokens')
 }

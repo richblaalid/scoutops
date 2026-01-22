@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Check, MapPin, Compass, ChevronRight, Sparkles } from 'lucide-react'
 import {
@@ -386,18 +387,18 @@ export function RankTrailVisualization({
                       <div
                         className={cn(
                           'relative transition-transform duration-200',
+                          'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12',
                           isSelected && 'scale-150',
                           isClickable && !isSelected && 'hover:scale-110'
                         )}
                       >
                         {/* Badge image - responsive sizing */}
-                        <img
+                        <Image
                           src={rank.image_url}
                           alt={rank.name}
-                          className={cn(
-                            'object-contain drop-shadow-md',
-                            'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12'
-                          )}
+                          fill
+                          sizes="(max-width: 640px) 40px, (max-width: 768px) 44px, 48px"
+                          className="object-contain drop-shadow-md"
                         />
                       </div>
 
