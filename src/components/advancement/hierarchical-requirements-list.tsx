@@ -18,9 +18,9 @@ interface Requirement {
   approvalStatus: string | null
   // New fields for alternatives support
   parentRequirementId?: string | null
-  isAlternative?: boolean
+  isAlternative?: boolean | null
   alternativesGroup?: string | null
-  nestingDepth?: number
+  nestingDepth?: number | null
   requiredCount?: number | null
 }
 

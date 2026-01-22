@@ -8,29 +8,10 @@ import { MeritBadgeGridCard } from './merit-badge-grid-card'
 import { UnitMeritBadgePanel } from './unit-merit-badge-panel'
 import { Search, Award, Star, Users, Filter } from 'lucide-react'
 import { getMeritBadgeRequirements } from '@/app/actions/advancement'
+import type { BsaMeritBadge, BsaMeritBadgeRequirement } from '@/types/advancement'
 
-interface MeritBadge {
-  id: string
-  code: string
-  name: string
-  category: string | null
-  description: string | null
-  is_eagle_required: boolean | null
-  is_active: boolean | null
-  image_url: string | null
-  pamphlet_url: string | null
-}
-
-interface Requirement {
-  id: string
-  version_id: string
-  merit_badge_id: string
-  requirement_number: string
-  parent_requirement_id: string | null
-  sub_requirement_letter: string | null
-  description: string
-  display_order: number
-}
+// Local alias for the merit badge type used in this component
+type MeritBadge = BsaMeritBadge
 
 interface RequirementProgress {
   id: string
@@ -62,7 +43,7 @@ interface Scout {
 
 interface MeritBadgeBrowserProps {
   badges: MeritBadge[]
-  requirements: Requirement[] // May be truncated due to Supabase 1000 row limit
+  requirements: BsaMeritBadgeRequirement[] // May be truncated due to Supabase 1000 row limit
   scouts: Scout[]
   categories: string[]
   unitId: string
@@ -87,7 +68,7 @@ export function MeritBadgeBrowser({
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedBadge, setSelectedBadge] = useState<MeritBadge | null>(null)
-  const [badgeRequirements, setBadgeRequirements] = useState<Requirement[]>([])
+  const [badgeRequirements, setBadgeRequirements] = useState<BsaMeritBadgeRequirement[]>([])
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -166,7 +147,7 @@ export function MeritBadgeBrowser({
     startTransition(async () => {
       try {
         const reqs = await getMeritBadgeRequirements(badge.id, versionId)
-        setBadgeRequirements(reqs as Requirement[])
+        setBadgeRequirements(reqs as BsaMeritBadgeRequirement[])
       } catch (error) {
         console.error('Error fetching requirements:', error)
         setBadgeRequirements([])

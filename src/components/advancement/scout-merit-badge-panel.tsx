@@ -11,7 +11,7 @@ import { BulkApprovalSheet } from './bulk-approval-sheet'
 import { cn } from '@/lib/utils'
 import { ArrowLeft, Award, Calendar, Check, Star, User, Loader2, ListChecks } from 'lucide-react'
 import { getMeritBadgeRequirements } from '@/app/actions/advancement'
-import type { AdvancementStatus } from '@/types/advancement'
+import type { AdvancementStatus, BsaMeritBadgeRequirement } from '@/types/advancement'
 
 interface MeritBadgeProgress {
   id: string
@@ -69,12 +69,7 @@ export function ScoutMeritBadgePanel({
   onBack,
   currentUserName = 'Leader',
 }: ScoutMeritBadgePanelProps) {
-  const [requirements, setRequirements] = useState<Array<{
-    id: string
-    requirement_number: string
-    description: string
-    parent_requirement_id: string | null
-  }>>([])
+  const [requirements, setRequirements] = useState<BsaMeritBadgeRequirement[]>([])
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(true)
   const [isPending, startTransition] = useTransition()
 
@@ -89,12 +84,7 @@ export function ScoutMeritBadgePanel({
     startTransition(async () => {
       try {
         const reqs = await getMeritBadgeRequirements(badge.bsa_merit_badges.id, versionId)
-        setRequirements(reqs as Array<{
-          id: string
-          requirement_number: string
-          description: string
-          parent_requirement_id: string | null
-        }>)
+        setRequirements(reqs as BsaMeritBadgeRequirement[])
       } catch (error) {
         console.error('Error fetching requirements:', error)
       } finally {
@@ -152,6 +142,10 @@ export function ScoutMeritBadgePanel({
           notes: progress?.notes || null,
           approvalStatus: null,
           parentRequirementId: req.parent_requirement_id,
+          isAlternative: req.is_alternative,
+          alternativesGroup: req.alternatives_group,
+          nestingDepth: req.nesting_depth,
+          requiredCount: req.required_count,
         }
       })
   }, [requirements, progressMap])
@@ -259,13 +253,14 @@ export function ScoutMeritBadgePanel({
             <MeritBadgeIcon
               badge={{
                 id: badge.bsa_merit_badges.id,
-                code: badge.bsa_merit_badges.code || '',
+                code: badge.bsa_merit_badges.code,
                 name: badge.bsa_merit_badges.name,
                 category: badge.bsa_merit_badges.category,
                 description: null,
                 is_eagle_required: badge.bsa_merit_badges.is_eagle_required,
                 is_active: true,
                 image_url: badge.bsa_merit_badges.image_url ?? null,
+                pamphlet_url: null,
               }}
               size="xl"
             />

@@ -62,13 +62,14 @@ export function SashBadgeSlot({ badge, onClick, className }: SashBadgeSlotProps)
         <MeritBadgeIcon
           badge={{
             id: badge.bsa_merit_badges.id,
-            code: badge.bsa_merit_badges.code || '',
+            code: badge.bsa_merit_badges.code,
             name: badge.bsa_merit_badges.name,
             category: badge.bsa_merit_badges.category,
             description: null,
             is_eagle_required: badge.bsa_merit_badges.is_eagle_required,
             is_active: true,
             image_url: badge.bsa_merit_badges.image_url ?? null,
+            pamphlet_url: null,
           }}
           size="md"
           className={cn(

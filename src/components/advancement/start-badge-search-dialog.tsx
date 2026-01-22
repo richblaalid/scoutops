@@ -21,17 +21,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import type { BsaMeritBadge } from '@/types/advancement'
 
-interface MeritBadge {
-  id: string
-  code: string
-  name: string
-  category: string | null
-  description: string | null
-  is_eagle_required: boolean | null
-  is_active: boolean | null
-  image_url: string | null
-}
+type MeritBadge = BsaMeritBadge
 
 interface StartBadgeSearchDialogProps {
   open: boolean

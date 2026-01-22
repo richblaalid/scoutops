@@ -18,17 +18,9 @@ import { MeritBadgeIcon } from './merit-badge-icon'
 import { startMeritBadge } from '@/app/actions/advancement'
 import { useRouter } from 'next/navigation'
 import { Loader2, Star } from 'lucide-react'
+import type { BsaMeritBadge } from '@/types/advancement'
 
-interface MeritBadge {
-  id: string
-  code: string
-  name: string
-  category: string | null
-  description: string | null
-  is_eagle_required: boolean | null
-  is_active: boolean | null
-  image_url: string | null
-}
+type MeritBadge = BsaMeritBadge
 
 interface Scout {
   id: string

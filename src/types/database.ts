@@ -375,6 +375,11 @@ export type Database = {
           requirement_number: string
           sub_requirement_letter: string | null
           version_id: string
+          is_alternative: boolean | null
+          alternatives_group: string | null
+          nesting_depth: number | null
+          original_scoutbook_id: string | null
+          required_count: number | null
         }
         Insert: {
           created_at?: string | null
@@ -386,6 +391,11 @@ export type Database = {
           requirement_number: string
           sub_requirement_letter?: string | null
           version_id: string
+          is_alternative?: boolean | null
+          alternatives_group?: string | null
+          nesting_depth?: number | null
+          original_scoutbook_id?: string | null
+          required_count?: number | null
         }
         Update: {
           created_at?: string | null
@@ -397,6 +407,11 @@ export type Database = {
           requirement_number?: string
           sub_requirement_letter?: string | null
           version_id?: string
+          is_alternative?: boolean | null
+          alternatives_group?: string | null
+          nesting_depth?: number | null
+          original_scoutbook_id?: string | null
+          required_count?: number | null
         }
         Relationships: [
           {

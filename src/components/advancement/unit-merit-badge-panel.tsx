@@ -4,32 +4,16 @@ import { useState, useMemo, useTransition } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { MeritBadgeIcon } from './merit-badge-icon'
+import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
 import { ScoutSelectionDialog } from './scout-selection-dialog'
 import { MultiSelectActionBar } from './multi-select-action-bar'
 import { cn } from '@/lib/utils'
 import { ArrowLeft, Award, Star, ListChecks, Loader2 } from 'lucide-react'
 import { bulkSignOffForScouts } from '@/app/actions/advancement'
 import { useRouter } from 'next/navigation'
+import type { BsaMeritBadge, BsaMeritBadgeRequirement } from '@/types/advancement'
 
-interface MeritBadge {
-  id: string
-  code: string
-  name: string
-  category: string | null
-  description: string | null
-  is_eagle_required: boolean | null
-  is_active: boolean | null
-  image_url: string | null
-}
-
-interface Requirement {
-  id: string
-  requirement_number: string
-  description: string
-  parent_requirement_id: string | null
-}
 
 interface RequirementProgress {
   id: string
@@ -53,8 +37,8 @@ interface Scout {
 }
 
 interface UnitMeritBadgePanelProps {
-  badge: MeritBadge
-  requirements: Requirement[]
+  badge: BsaMeritBadge
+  requirements: BsaMeritBadgeRequirement[]
   scouts: Scout[]
   unitId: string
   versionId: string
@@ -87,27 +71,28 @@ export function UnitMeritBadgePanel({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [scoutSelectionOpen, setScoutSelectionOpen] = useState(false)
 
-  // Sort requirements by number, filter to top-level only
-  const sortedRequirements = useMemo(() => {
+  // Transform requirements to the format expected by HierarchicalRequirementsList
+  // For unit-wide view, there's no scout-specific progress, so all start as 'not_started'
+  const formattedRequirements = useMemo(() => {
     return requirements
-      .filter(r => !r.parent_requirement_id)
-      .sort((a, b) => {
-        const numA = parseFloat(a.requirement_number || '0')
-        const numB = parseFloat(b.requirement_number || '0')
-        return numA - numB
-      })
+      .sort((a, b) => a.display_order - b.display_order)
+      .map(req => ({
+        id: req.id,
+        requirementProgressId: null, // No scout-specific progress in unit view
+        requirementNumber: req.requirement_number,
+        description: req.description,
+        status: 'not_started' as const,
+        completedAt: null,
+        completedBy: null,
+        notes: null,
+        approvalStatus: null,
+        parentRequirementId: req.parent_requirement_id,
+        isAlternative: req.is_alternative,
+        alternativesGroup: req.alternatives_group,
+        nestingDepth: req.nesting_depth,
+        requiredCount: req.required_count,
+      }))
   }, [requirements])
-
-  // Get sub-requirements for each parent
-  const getSubRequirements = (parentId: string) => {
-    return requirements
-      .filter(r => r.parent_requirement_id === parentId)
-      .sort((a, b) => {
-        const numA = parseFloat(a.requirement_number || '0')
-        const numB = parseFloat(b.requirement_number || '0')
-        return numA - numB
-      })
-  }
 
   // Build maps for scout completion status
   const { scoutsWithAllComplete, scoutCompletedRequirements } = useMemo(() => {
@@ -160,13 +145,8 @@ export function UnitMeritBadgePanel({
   }
 
   const handleSelectAll = () => {
-    // Select all requirements (including sub-requirements)
-    const allIds = new Set<string>()
-    sortedRequirements.forEach(req => {
-      allIds.add(req.id)
-      getSubRequirements(req.id).forEach(sub => allIds.add(sub.id))
-    })
-    setSelectedIds(allIds)
+    // Select all requirements
+    setSelectedIds(new Set(requirements.map(r => r.id)))
   }
 
   const handleClearSelection = () => {
@@ -241,16 +221,7 @@ export function UnitMeritBadgePanel({
         )}>
           <div className="flex items-start gap-4">
             <MeritBadgeIcon
-              badge={{
-                id: badge.id,
-                code: badge.code,
-                name: badge.name,
-                category: badge.category,
-                description: badge.description,
-                is_eagle_required: badge.is_eagle_required,
-                is_active: badge.is_active ?? true,
-                image_url: badge.image_url,
-              }}
+              badge={badge}
               size="xl"
             />
             <div className="flex-1">
@@ -303,83 +274,17 @@ export function UnitMeritBadgePanel({
               <Loader2 className="h-6 w-6 animate-spin text-stone-400" />
               <span className="ml-2 text-stone-500">Loading requirements...</span>
             </div>
-          ) : sortedRequirements.length > 0 ? (
-            <div className="space-y-2">
-              {sortedRequirements.map(req => {
-                const subReqs = getSubRequirements(req.id)
-                const isSelected = selectedIds.has(req.id)
-
-                return (
-                  <div key={req.id}>
-                    {/* Parent requirement */}
-                    <div
-                      className={cn(
-                        'flex items-start gap-3 rounded-lg border p-3 transition-colors',
-                        isMultiSelectMode && 'cursor-pointer',
-                        isSelected
-                          ? 'border-blue-200 bg-blue-50'
-                          : 'border-stone-200 bg-white hover:bg-stone-50'
-                      )}
-                      onClick={() => isMultiSelectMode && handleSelectionChange(req.id)}
-                    >
-                      {isMultiSelectMode && (
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => handleSelectionChange(req.id)}
-                          className="mt-0.5"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-start gap-2">
-                          <span className="font-mono text-sm font-semibold text-stone-500">
-                            {req.requirement_number}.
-                          </span>
-                          <p className="text-sm text-stone-700">{req.description}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sub-requirements */}
-                    {subReqs.length > 0 && (
-                      <div className="ml-6 mt-1 space-y-1">
-                        {subReqs.map(sub => {
-                          const isSubSelected = selectedIds.has(sub.id)
-                          return (
-                            <div
-                              key={sub.id}
-                              className={cn(
-                                'flex items-start gap-3 rounded-lg border p-2.5 transition-colors',
-                                isMultiSelectMode && 'cursor-pointer',
-                                isSubSelected
-                                  ? 'border-blue-200 bg-blue-50'
-                                  : 'border-stone-100 bg-stone-50 hover:bg-stone-100'
-                              )}
-                              onClick={() => isMultiSelectMode && handleSelectionChange(sub.id)}
-                            >
-                              {isMultiSelectMode && (
-                                <Checkbox
-                                  checked={isSubSelected}
-                                  onCheckedChange={() => handleSelectionChange(sub.id)}
-                                  className="mt-0.5"
-                                />
-                              )}
-                              <div className="flex-1">
-                                <div className="flex items-start gap-2">
-                                  <span className="font-mono text-xs font-semibold text-stone-400">
-                                    {sub.requirement_number}.
-                                  </span>
-                                  <p className="text-xs text-stone-600">{sub.description}</p>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+          ) : formattedRequirements.length > 0 ? (
+            <HierarchicalRequirementsList
+              requirements={formattedRequirements}
+              unitId={unitId}
+              canEdit={false} // Unit view doesn't edit individual requirements
+              defaultCollapseCompleted={false}
+              isMeritBadge={true}
+              isMultiSelectMode={isMultiSelectMode}
+              selectedIds={selectedIds}
+              onSelectionChange={handleSelectionChange}
+            />
           ) : (
             <div className="py-12 text-center">
               <Award className="mx-auto h-12 w-12 text-stone-300" />

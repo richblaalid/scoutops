@@ -214,10 +214,10 @@ export function EagleProgressCard({
                     <MeritBadgeIcon
                       badge={{
                         ...badge.bsa_merit_badges,
-                        code: badge.bsa_merit_badges.code || '',
                         description: null,
                         is_active: true,
                         image_url: badge.bsa_merit_badges.image_url ?? null,
+                        pamphlet_url: null,
                       }}
                       size="sm"
                       className={cn(

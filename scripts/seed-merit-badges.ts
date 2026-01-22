@@ -52,6 +52,10 @@ interface Requirement {
   id: string
   text: string
   subrequirements?: Requirement[]
+  // Pre-set alternative fields from v2 JSON
+  isAlternative?: boolean
+  alternativesGroup?: string
+  requiredCount?: number
 }
 
 interface MeritBadge {
@@ -151,25 +155,10 @@ function flattenRequirements(
   const result: FlatRequirement[] = []
 
   for (const req of requirements) {
-    // Parse requirement ID (e.g., "1", "1a", "1a1", "7b8")
-    const match = req.id.match(/^(\d+)([a-z])?(\d+)?$/i)
-
-    let reqNumber: string
-    let subLetter: string | null = null
-
-    if (match) {
-      reqNumber = match[1]
-      if (match[2]) {
-        subLetter = match[2].toLowerCase()
-        if (match[3]) {
-          // Deep sub-requirement like 7b8 - combine letter and number
-          subLetter = match[2].toLowerCase() + match[3]
-        }
-      }
-    } else {
-      // Fallback: use the whole ID as requirement number
-      reqNumber = req.id
-    }
+    // Use the full ID as the requirement number (e.g., "5A", "5A1", "5B6a")
+    // This preserves the complete hierarchical identifier
+    const reqNumber = req.id
+    const subLetter: string | null = null
 
     // Track duplicate IDs
     const baseId = subLetter ? `${reqNumber}${subLetter}` : reqNumber
@@ -187,8 +176,23 @@ function flattenRequirements(
       alternativesGroup = parentAlternativesGroup || `${reqNumber}_opt${String.fromCharCode(64 + occurrenceCount)}`
     }
 
-    // Detect if this requirement's children are alternatives
-    const { isAlternativeParent, requiredCount } = detectAlternatives(req.text)
+    // Use pre-set fields from v2 JSON if available, otherwise auto-detect
+    const hasPresetAlternatives = req.isAlternative !== undefined || req.requiredCount !== undefined
+
+    let isAlternative = isChildOfAlternativeParent
+    let finalAlternativesGroup = alternativesGroup
+    let requiredCount: number | null = null
+
+    if (hasPresetAlternatives) {
+      // Use pre-set values from v2 JSON
+      isAlternative = req.isAlternative ?? isChildOfAlternativeParent
+      finalAlternativesGroup = req.alternativesGroup ?? alternativesGroup
+      requiredCount = req.requiredCount ?? null
+    } else {
+      // Fallback: auto-detect from text
+      const detected = detectAlternatives(req.text)
+      requiredCount = detected.requiredCount
+    }
 
     // Create flat requirement
     const flatReq: FlatRequirement = {
@@ -200,8 +204,8 @@ function flattenRequirements(
       subRequirementLetter: subLetter,
       description: req.text,
       displayOrder: ++idCounter.value,
-      isAlternative: isChildOfAlternativeParent,
-      alternativesGroup,
+      isAlternative,
+      alternativesGroup: finalAlternativesGroup,
       nestingDepth: depth,
       originalScoutbookId: req.id,
       requiredCount,
@@ -211,7 +215,12 @@ function flattenRequirements(
 
     // Process children recursively
     if (req.subrequirements && req.subrequirements.length > 0) {
-      const childrenGroup = isAlternativeParent ? `${reqNumber}_alternatives` : alternativesGroup
+      // Determine if children should be marked as alternatives
+      const hasAlternativeChildren = req.requiredCount !== undefined && req.requiredCount > 0
+      const childrenGroup = hasAlternativeChildren
+        ? (req.alternativesGroup || `${reqNumber}_alternatives`)
+        : finalAlternativesGroup
+
       const children = flattenRequirements(
         req.subrequirements,
         badgeId,
@@ -221,7 +230,7 @@ function flattenRequirements(
         idCounter,
         seenIds,
         childrenGroup,
-        isAlternativeParent
+        hasAlternativeChildren || isChildOfAlternativeParent
       )
       result.push(...children)
     }
@@ -232,9 +241,10 @@ function flattenRequirements(
 
 async function main() {
   console.log('Loading merit badge source data...')
-  const sourcePath = path.join(__dirname, '../data/merit-badges-source.json')
+  // Use v2 file with properly structured Options (isAlternative, alternativesGroup, requiredCount)
+  const sourcePath = path.join(__dirname, '../data/merit-badges-source-v2.json')
   const sourceData: SourceData = JSON.parse(fs.readFileSync(sourcePath, 'utf-8'))
-  console.log(`Loaded ${sourceData.total_badges} badges`)
+  console.log(`Loaded ${sourceData.total_badges} badges (using v2 with Options structure)`)
 
   // Step 1: Create or get 2026 requirement version
   console.log('\n1. Creating 2026 requirement version...')
@@ -248,6 +258,11 @@ async function main() {
   if (existingVersion) {
     versionId = existingVersion.id
     console.log('   Using existing 2026 version:', versionId)
+    // Ensure it's marked as active
+    await supabase
+      .from('bsa_requirement_versions')
+      .update({ is_active: true })
+      .eq('id', versionId)
   } else {
     const { data: newVersion, error: versionError } = await supabase
       .from('bsa_requirement_versions')

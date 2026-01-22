@@ -714,6 +714,7 @@ function ByRequirementView({
                 description: null,
                 is_active: true,
                 image_url: null,
+                pamphlet_url: null,
               }}
               size="md"
             />
@@ -986,6 +987,7 @@ function MatrixView({
                 description: null,
                 is_active: true,
                 image_url: null,
+                pamphlet_url: null,
               }}
               size="md"
             />

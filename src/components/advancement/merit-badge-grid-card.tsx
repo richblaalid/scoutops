@@ -2,20 +2,10 @@
 
 import { Star, Users } from 'lucide-react'
 import { MeritBadgeIcon } from './merit-badge-icon'
-
-interface MeritBadge {
-  id: string
-  code: string
-  name: string
-  category: string | null
-  description: string | null
-  is_eagle_required: boolean | null
-  is_active: boolean | null
-  image_url: string | null
-}
+import type { BsaMeritBadge } from '@/types/advancement'
 
 interface MeritBadgeGridCardProps {
-  badge: MeritBadge
+  badge: BsaMeritBadge
   inProgressCount: number
   completedCount: number
   onClick: () => void
