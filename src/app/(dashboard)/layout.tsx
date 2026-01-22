@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
+import { unstable_noStore as noStore } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-
-// Force dynamic rendering - disable caching for this layout
-export const dynamic = 'force-dynamic'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { MobileNav } from '@/components/dashboard/mobile-nav'
 import { MainContent } from '@/components/dashboard/main-content'
@@ -13,6 +11,9 @@ import { SidebarProvider } from '@/components/providers/sidebar-context'
 import { ToastProvider } from '@/components/ui/toast'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Opt out of caching for auth checks - must be fresh for security
+  noStore()
+
   const supabase = await createClient()
 
   // Use getUser() to validate the session with Supabase servers

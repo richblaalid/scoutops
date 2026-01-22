@@ -1469,45 +1469,50 @@ export async function getScoutAdvancementProgress(scoutId: string) {
   // Authorization is handled by the calling page which checks user role
   const supabase = createAdminClient()
 
-  const { data: rankProgress, error: rankError } = await supabase
-    .from('scout_rank_progress')
-    .select(`
-      *,
-      bsa_ranks(*),
-      scout_rank_requirement_progress(
+  // Run all 4 queries in parallel - they are completely independent
+  const [rankResult, mbResult, leadResult, actResult] = await Promise.all([
+    supabase
+      .from('scout_rank_progress')
+      .select(`
         *,
-        bsa_rank_requirements(*)
-      )
-    `)
-    .eq('scout_id', scoutId)
-    .order('bsa_ranks(display_order)')
-
-  const { data: meritBadgeProgress, error: mbError } = await supabase
-    .from('scout_merit_badge_progress')
-    .select(`
-      *,
-      bsa_merit_badges(*),
-      scout_merit_badge_requirement_progress(
+        bsa_ranks(*),
+        scout_rank_requirement_progress(
+          *,
+          bsa_rank_requirements(*)
+        )
+      `)
+      .eq('scout_id', scoutId)
+      .order('bsa_ranks(display_order)'),
+    supabase
+      .from('scout_merit_badge_progress')
+      .select(`
         *,
-        bsa_merit_badge_requirements(*)
-      )
-    `)
-    .eq('scout_id', scoutId)
+        bsa_merit_badges(*),
+        scout_merit_badge_requirement_progress(
+          *,
+          bsa_merit_badge_requirements(*)
+        )
+      `)
+      .eq('scout_id', scoutId),
+    supabase
+      .from('scout_leadership_history')
+      .select(`
+        *,
+        bsa_leadership_positions(*)
+      `)
+      .eq('scout_id', scoutId)
+      .order('start_date', { ascending: false }),
+    supabase
+      .from('scout_activity_entries')
+      .select('*')
+      .eq('scout_id', scoutId)
+      .order('activity_date', { ascending: false }),
+  ])
 
-  const { data: leadershipHistory, error: leadError } = await supabase
-    .from('scout_leadership_history')
-    .select(`
-      *,
-      bsa_leadership_positions(*)
-    `)
-    .eq('scout_id', scoutId)
-    .order('start_date', { ascending: false })
-
-  const { data: activityEntries, error: actError } = await supabase
-    .from('scout_activity_entries')
-    .select('*')
-    .eq('scout_id', scoutId)
-    .order('activity_date', { ascending: false })
+  const { data: rankProgress, error: rankError } = rankResult
+  const { data: meritBadgeProgress, error: mbError } = mbResult
+  const { data: leadershipHistory, error: leadError } = leadResult
+  const { data: activityEntries, error: actError } = actResult
 
   if (rankError || mbError || leadError || actError) {
     console.error('Error fetching advancement progress')

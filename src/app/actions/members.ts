@@ -61,39 +61,40 @@ export async function inviteMember({ unitId, email, role, linkedScoutId }: Invit
     return { success: false, error: 'Only admins can invite members' }
   }
 
-  // Check if email already has an active membership
-  const { data: existingActive, error: activeError } = await supabase
-    .from('unit_memberships')
-    .select('id')
-    .eq('unit_id', unitId)
-    .eq('email', email.toLowerCase())
-    .eq('status', 'active')
-    .maybeSingle()
+  // Check for existing active membership and pending invite in parallel
+  const normalizedEmail = email.toLowerCase()
+  const [activeResult, inviteResult] = await Promise.all([
+    supabase
+      .from('unit_memberships')
+      .select('id')
+      .eq('unit_id', unitId)
+      .eq('email', normalizedEmail)
+      .eq('status', 'active')
+      .maybeSingle(),
+    supabase
+      .from('unit_memberships')
+      .select('id')
+      .eq('unit_id', unitId)
+      .eq('email', normalizedEmail)
+      .eq('status', 'invited')
+      .maybeSingle(),
+  ])
 
-  if (activeError) {
-    console.error('Active check error:', activeError)
+  if (activeResult.error) {
+    console.error('Active check error:', activeResult.error)
     return { success: false, error: 'Failed to check existing members' }
   }
 
-  if (existingActive) {
+  if (activeResult.data) {
     return { success: false, error: 'This email is already a member of this unit' }
   }
 
-  // Check if there's already a pending invite
-  const { data: existingInvite, error: inviteError } = await supabase
-    .from('unit_memberships')
-    .select('id')
-    .eq('unit_id', unitId)
-    .eq('email', email.toLowerCase())
-    .eq('status', 'invited')
-    .maybeSingle()
-
-  if (inviteError) {
-    console.error('Invite check error:', inviteError)
+  if (inviteResult.error) {
+    console.error('Invite check error:', inviteResult.error)
     return { success: false, error: 'Failed to check existing invites' }
   }
 
-  if (existingInvite) {
+  if (inviteResult.data) {
     return { success: false, error: 'A pending invite already exists for this email' }
   }
 
@@ -296,35 +297,37 @@ export async function updateMemberRole(
     return { success: false, error: 'Profile not found' }
   }
 
-  // Check if user is admin
-  const { data: adminCheck, error: adminError } = await supabase
-    .from('unit_memberships')
-    .select('role')
-    .eq('unit_id', unitId)
-    .eq('profile_id', profile.id)
-    .eq('status', 'active')
-    .maybeSingle()
+  // Check admin permissions and get target member in parallel
+  const [adminResult, targetResult] = await Promise.all([
+    supabase
+      .from('unit_memberships')
+      .select('role')
+      .eq('unit_id', unitId)
+      .eq('profile_id', profile.id)
+      .eq('status', 'active')
+      .maybeSingle(),
+    supabase
+      .from('unit_memberships')
+      .select('profile_id, role')
+      .eq('id', memberId)
+      .maybeSingle(),
+  ])
 
-  if (adminError) {
-    console.error('Admin check error:', adminError)
+  if (adminResult.error) {
+    console.error('Admin check error:', adminResult.error)
     return { success: false, error: 'Failed to verify permissions' }
   }
 
-  if (!adminCheck || adminCheck.role !== 'admin') {
+  if (!adminResult.data || adminResult.data.role !== 'admin') {
     return { success: false, error: 'Only admins can change roles' }
   }
 
-  // Prevent admin from demoting themselves if they're the only admin
-  const { data: targetMember, error: targetError } = await supabase
-    .from('unit_memberships')
-    .select('profile_id, role')
-    .eq('id', memberId)
-    .maybeSingle()
-
-  if (targetError) {
-    console.error('Target member error:', targetError)
+  if (targetResult.error) {
+    console.error('Target member error:', targetResult.error)
     return { success: false, error: 'Failed to find member' }
   }
+
+  const targetMember = targetResult.data
 
   if (targetMember?.profile_id === user.id && targetMember?.role === 'admin' && newRole !== 'admin') {
     const { data: otherAdmins } = await supabase
@@ -376,35 +379,37 @@ export async function removeMember(unitId: string, memberId: string): Promise<Ac
     return { success: false, error: 'Profile not found' }
   }
 
-  // Check if user is admin
-  const { data: adminCheck, error: adminError } = await supabase
-    .from('unit_memberships')
-    .select('role')
-    .eq('unit_id', unitId)
-    .eq('profile_id', profile.id)
-    .eq('status', 'active')
-    .maybeSingle()
+  // Check admin permissions and get target member info in parallel
+  const [adminResult, targetResult] = await Promise.all([
+    supabase
+      .from('unit_memberships')
+      .select('role')
+      .eq('unit_id', unitId)
+      .eq('profile_id', profile.id)
+      .eq('status', 'active')
+      .maybeSingle(),
+    supabase
+      .from('unit_memberships')
+      .select('profile_id, role, status')
+      .eq('id', memberId)
+      .maybeSingle(),
+  ])
 
-  if (adminError) {
-    console.error('Admin check error:', adminError)
+  if (adminResult.error) {
+    console.error('Admin check error:', adminResult.error)
     return { success: false, error: 'Failed to verify permissions' }
   }
 
-  if (!adminCheck || adminCheck.role !== 'admin') {
+  if (!adminResult.data || adminResult.data.role !== 'admin') {
     return { success: false, error: 'Only admins can remove members' }
   }
 
-  // Get target member info
-  const { data: targetMember, error: targetError } = await supabase
-    .from('unit_memberships')
-    .select('profile_id, role, status')
-    .eq('id', memberId)
-    .maybeSingle()
-
-  if (targetError) {
-    console.error('Target member error:', targetError)
+  if (targetResult.error) {
+    console.error('Target member error:', targetResult.error)
     return { success: false, error: 'Failed to find member' }
   }
+
+  const targetMember = targetResult.data
 
   // Prevent removing yourself if you're the only admin
   if (targetMember?.profile_id === user.id && targetMember?.role === 'admin') {

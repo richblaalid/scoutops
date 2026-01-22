@@ -92,58 +92,59 @@ export default async function BillingPage() {
   const canEditBilling = canPerformAction(membership.role, 'edit_billing')
   const canVoidBilling = canPerformAction(membership.role, 'void_billing')
 
-  // Get active scouts for billing form
-  const { data: scoutsData } = await supabase
-    .from('scouts')
-    .select(`
-      id,
-      first_name,
-      last_name,
-      is_active,
-      scout_accounts (id),
-      patrols (name)
-    `)
-    .eq('unit_id', membership.unit_id)
-    .eq('is_active', true)
-    .order('last_name')
-
-  const scouts = (scoutsData as Scout[]) || []
-
-  // Get recent billing records
-  const { data: billingData } = await supabase
-    .from('billing_records')
-    .select(`
-      id,
-      description,
-      total_amount,
-      billing_date,
-      created_at,
-      is_void,
-      void_reason,
-      events (
+  // Get scouts and billing records in parallel
+  const [scoutsResult, billingResult] = await Promise.all([
+    // Get active scouts for billing form
+    supabase
+      .from('scouts')
+      .select(`
         id,
-        title
-      ),
-      billing_charges (
+        first_name,
+        last_name,
+        is_active,
+        scout_accounts (id),
+        patrols (name)
+      `)
+      .eq('unit_id', membership.unit_id)
+      .eq('is_active', true)
+      .order('last_name'),
+    // Get recent billing records
+    supabase
+      .from('billing_records')
+      .select(`
         id,
-        amount,
-        is_paid,
+        description,
+        total_amount,
+        billing_date,
+        created_at,
         is_void,
-        scout_accounts (
-          scout_id,
-          scouts (
-            first_name,
-            last_name
+        void_reason,
+        events (
+          id,
+          title
+        ),
+        billing_charges (
+          id,
+          amount,
+          is_paid,
+          is_void,
+          scout_accounts (
+            scout_id,
+            scouts (
+              first_name,
+              last_name
+            )
           )
         )
-      )
-    `)
-    .eq('unit_id', membership.unit_id)
-    .order('billing_date', { ascending: false })
-    .limit(20)
+      `)
+      .eq('unit_id', membership.unit_id)
+      .order('billing_date', { ascending: false })
+      .limit(20),
+  ])
 
+  const scouts = (scoutsResult.data as Scout[]) || []
   // Cast through unknown since is_void columns are added via migration
-  const billingRecords = (billingData as unknown as BillingRecord[]) || []
+  const billingRecords = (billingResult.data as unknown as BillingRecord[]) || []
 
   return (
     <div className="space-y-6">

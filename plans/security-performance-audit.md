@@ -1,29 +1,33 @@
 # Security, Performance & Code Quality Audit
 
-> **Status:** Complete
+> **Status:** In Progress - Phase 3 Ready
 > **Created:** 2026-01-21
+> **Updated:** 2026-01-22
 > **Author:** Claude
 
 ---
 
 ## Executive Summary
 
-This audit identified **47 issues** across three categories:
-- **Security**: 15 findings (2 Critical, 5 High, 6 Medium, 2 Low)
-- **Performance**: 12 findings (1 Critical, 4 High, 5 Medium, 2 Low)
-- **Code Quality**: 20 findings (5 Critical, 8 High, 7 Medium)
+This audit identified **67+ issues** across three categories:
+- **Security**: 15 findings (2 Critical, 5 High, 6 Medium, 2 Low) - **Phase 1 ✅**
+- **Performance**: 32 findings (3 Critical, 8 High, 15 Medium, 6 Low) - **Phase 2 Partial ✅**
+- **Code Quality**: 20 findings (5 Critical, 8 High, 7 Medium) - **Phase 3 Pending**
 
 ### Critical Items Requiring Immediate Attention
 
-| # | Category | Issue | Risk |
-|---|----------|-------|------|
-| 1 | Security | Debug endpoint exposed without auth | Data exposure |
-| 2 | Security | IDOR in funds.ts - missing unit_id check | Financial fraud |
-| 3 | Security | 119 console.log statements with sensitive data | Data leak |
-| 4 | Performance | N+1 query pattern in advancement page | Page load >5s |
-| 5 | Code Quality | No error boundaries in React app | Full page crashes |
-| 6 | Code Quality | advancement.ts is 2,310 lines | Unmaintainable |
-| 7 | Code Quality | Zero test coverage for critical paths | No regression safety |
+| # | Category | Issue | Risk | Status |
+|---|----------|-------|------|--------|
+| 1 | Security | Debug endpoint exposed without auth | Data exposure | ✅ Fixed |
+| 2 | Security | IDOR in funds.ts - missing unit_id check | Financial fraud | ✅ Verified |
+| 3 | Security | 119 console.log statements with sensitive data | Data leak | ✅ Fixed |
+| 4 | Performance | N+1 query pattern in advancement page | Page load >5s | ✅ Fixed |
+| 5 | Performance | **13 sequential await chains** | Waterfall latency | ⏳ Pending |
+| 6 | Performance | **force-dynamic disables all caching** | No SSR optimization | ⏳ Pending |
+| 7 | Performance | **Barrel imports (39+ exports)** | 200-800ms bundle penalty | ⏳ Pending |
+| 8 | Code Quality | No error boundaries in React app | Full page crashes | ✅ Fixed |
+| 9 | Code Quality | advancement.ts is 2,310 lines | Unmaintainable | ⏳ Pending |
+| 10 | Code Quality | Zero test coverage for critical paths | No regression safety | ⏳ Pending |
 
 ---
 
@@ -379,6 +383,169 @@ const handleFilterAll = useCallback(() => {
 
 ---
 
+## 2.5 Vercel React Best Practices Audit (NEW)
+
+> Audit performed 2026-01-22 using Vercel's React performance guidelines.
+
+### 2.5.1 CRITICAL: Sequential Await Waterfalls (13 locations)
+
+**Impact:** Each sequential await adds full network latency. Can add 500ms-2s per waterfall.
+
+| File | Location | Fix |
+|------|----------|-----|
+| `actions/advancement.ts:308-316` | Sequential rank/badge version fetches | Promise.all |
+| `actions/advancement.ts:554-572` | Sequential badge data fetches | Promise.all |
+| `actions/members.ts:156-172` | Sequential membership checks | Promise.all |
+| `actions/billing.ts:89-105` | Sequential billing queries | Promise.all |
+| `dashboard/layout.tsx:48-62` | Sequential auth + profile + unit | Promise.all |
+| `advancement/page.tsx:89-110` | ✅ Fixed with Promise.all | Done |
+| `api/billing-charges/route.ts:45-67` | Sequential charge queries | Promise.all |
+| `api/payment-links/route.ts:78-98` | Sequential payment lookups | Promise.all |
+| `scouts/[id]/page.tsx:34-52` | Sequential scout data fetches | Promise.all |
+| `billing/page.tsx:67-89` | Sequential billing data | Promise.all |
+| `reports/page.tsx:45-78` | Sequential report queries | Promise.all |
+| `settings/page.tsx:34-56` | Sequential settings loads | Promise.all |
+| `members/page.tsx:45-67` | Sequential member queries | Promise.all |
+
+---
+
+### 2.5.2 CRITICAL: force-dynamic Disables All Caching
+
+**File:** `src/app/(dashboard)/layout.tsx`
+
+```typescript
+export const dynamic = 'force-dynamic'  // Disables ALL caching
+```
+
+**Impact:** Every page render requires fresh data fetch, no ISR/SSG benefits.
+
+**Fix Options:**
+1. Remove `force-dynamic` and use granular `revalidate` per page
+2. Use `unstable_noStore()` only where needed
+3. Implement proper `cache()` wrappers for database calls
+
+---
+
+### 2.5.3 CRITICAL: Barrel File Imports (2 major barrels)
+
+**Rule violated:** `bundle-barrel-imports` - loads entire package on any import
+
+**Barrel 1:** `src/components/advancement/index.ts`
+- **39 exports** from single barrel file
+- Only **1 import** uses this barrel (`src/app/(dashboard)/advancement/page.tsx`)
+- **Fix:** Direct imports from component files
+
+**Barrel 2:** `src/components/scoutbook-sync/index.ts`
+- **30+ exports** from single barrel file
+- Used by 2 files
+- **Fix:** Direct imports from component files
+
+---
+
+### 2.5.4 HIGH: Missing React.cache() (0 instances)
+
+**Rule violated:** `server-cache-react` - per-request deduplication
+
+**Impact:** Same database queries repeated multiple times per request.
+
+**Locations needing cache():**
+```typescript
+// src/lib/data/cached-queries.ts (new file)
+import { cache } from 'react'
+
+export const getCurrentUser = cache(async () => {
+  const supabase = await createClient()
+  return supabase.auth.getUser()
+})
+
+export const getUnitMembership = cache(async (userId: string) => {
+  const supabase = await createClient()
+  return supabase.from('unit_memberships').select('*').eq('user_id', userId)
+})
+```
+
+---
+
+### 2.5.5 HIGH: No React.memo (0 instances in codebase)
+
+**Rule violated:** `rerender-memo` - memoize expensive list items
+
+**Components needing memo:**
+| Component | Reason |
+|-----------|--------|
+| `RequirementItem` in hierarchical-requirements-list.tsx | Rendered 20-50 times per badge |
+| `ScoutListItem` in scout-selection-dialog.tsx | Rendered per scout (5-30 items) |
+| `BadgeCard` in merit-badge-browser.tsx | Rendered 200+ times in grid |
+| `TransactionRow` in ledger-table.tsx | Rendered per transaction |
+| `ChargeRow` in billing-charges-table.tsx | Rendered per charge |
+| `MemberRow` in members-table.tsx | Rendered per member |
+
+---
+
+### 2.5.6 HIGH: Missing Dynamic Imports (20+ large components)
+
+**Rule violated:** `bundle-dynamic-imports` - code split heavy components
+
+| Component | Lines | Bundle Impact | Action |
+|-----------|-------|---------------|--------|
+| `ScoutbookSyncCard` | 1,349 | Heavy | `next/dynamic` |
+| `BulkEntryInterface` | 1,136 | Heavy | `next/dynamic` |
+| `PaymentEntry` | 764 | Heavy (Square SDK) | `next/dynamic, ssr: false` |
+| `HierarchicalRequirementsList` | 562 | Medium | `next/dynamic` |
+| `BulkApprovalSheet` | 533 | Medium | `next/dynamic` |
+| `ScoutRankPanel` | 515 | Medium | `next/dynamic` |
+| `LedgerTable` | 489 | Medium | `next/dynamic` |
+| `ScoutMeritBadgePanel` | 431 | Medium | `next/dynamic` |
+| `MeritBadgeBrowser` | 427 | Medium | `next/dynamic` |
+| Plus 11 more components 400-500 lines each | | | |
+
+---
+
+### 2.5.7 MEDIUM: Inline Arrow Functions Without useCallback (177+ instances)
+
+**Rule violated:** `rerender-functional-setstate` - stable callbacks
+
+**Pattern:**
+```typescript
+// BAD - recreates on every render
+<Button onClick={() => setIsOpen(true)}>
+
+// GOOD - stable reference
+const handleOpen = useCallback(() => setIsOpen(true), [])
+<Button onClick={handleOpen}>
+```
+
+**Files with most violations:**
+| File | Count |
+|------|-------|
+| `bulk-entry-interface.tsx` | 23 |
+| `hierarchical-requirements-list.tsx` | 18 |
+| `scout-rank-panel.tsx` | 15 |
+| `merit-badge-browser.tsx` | 14 |
+| `billing-form.tsx` | 12 |
+| Others | 95+ |
+
+---
+
+### 2.5.8 MEDIUM: Missing Suspense Boundaries
+
+**Rule violated:** `async-suspense-boundaries` - stream content progressively
+
+**Current state:** Zero Suspense boundaries in dashboard routes.
+
+**Recommended additions:**
+```tsx
+// src/app/(dashboard)/advancement/page.tsx
+<Suspense fallback={<RankProgressSkeleton />}>
+  <RankProgress />
+</Suspense>
+<Suspense fallback={<MeritBadgeSkeleton />}>
+  <MeritBadgeProgress />
+</Suspense>
+```
+
+---
+
 ## 3. Code Smells & Technical Debt
 
 ### 3.1 CRITICAL: advancement.ts is 2,310 Lines
@@ -560,7 +727,39 @@ export async function initializeRankProgress(...)
 | Add memoization | Multiple panels | ✅ useMemo for expensive calculations |
 | Convert SELECT * to specific columns | Multiple queries | ✅ Explicit column selection |
 
-### Phase 3: Code Quality (Weeks 3-4)
+### Phase 3: Performance - Vercel Best Practices (Current)
+
+**Priority A: Critical Performance (High Impact) ✅ COMPLETE**
+
+| # | Task | File(s) | Status |
+|---|------|---------|--------|
+| 3.1 | Remove force-dynamic, add noStore() | `dashboard/layout.tsx` | ✅ Done |
+| 3.2 | Parallel await in dashboard layout | `dashboard/layout.tsx` | ✅ N/A (deps) |
+| 3.3 | Parallel await in members.ts | `actions/members.ts` | ✅ Done (3 funcs) |
+| 3.4 | Parallel await in billing page | `billing/page.tsx` | ✅ Done |
+| 3.5 | Parallel await in advancement.ts | `actions/advancement.ts` | ✅ Done
+
+**Priority B: Bundle Optimization (High Impact)**
+
+| # | Task | File(s) | Impact |
+|---|------|---------|--------|
+| 3.6 | Remove advancement barrel, use direct imports | `components/advancement/index.ts` | Critical |
+| 3.7 | Remove scoutbook barrel, use direct imports | `components/scoutbook-sync/index.ts` | High |
+| 3.8 | Dynamic import PaymentEntry (Square SDK) | `payment-entry.tsx` | High |
+| 3.9 | Dynamic import BulkEntryInterface | `bulk-entry-interface.tsx` | Medium |
+| 3.10 | Dynamic import ScoutbookSyncCard | `scoutbook-sync-card.tsx` | Medium |
+
+**Priority C: Re-render Optimization (Medium Impact)**
+
+| # | Task | File(s) | Impact |
+|---|------|---------|--------|
+| 3.11 | Add React.memo to RequirementItem | `hierarchical-requirements-list.tsx` | Medium |
+| 3.12 | Add React.memo to BadgeCard | `merit-badge-browser.tsx` | Medium |
+| 3.13 | Add React.memo to ScoutListItem | `scout-selection-dialog.tsx` | Medium |
+| 3.14 | Create React.cache() wrappers | `lib/data/cached-queries.ts` (new) | Medium |
+| 3.15 | Add Suspense boundaries to advancement | `advancement/page.tsx` | Medium |
+
+### Phase 4: Code Quality (Future)
 
 | Task | File | Est. |
 |------|------|------|
@@ -602,8 +801,35 @@ export async function initializeRankProgress(...)
 
 ---
 
+## Vercel React Best Practices Summary
+
+| Category | Rule | Violations | Priority |
+|----------|------|------------|----------|
+| Eliminating Waterfalls | async-parallel | 13 locations | CRITICAL |
+| Eliminating Waterfalls | force-dynamic | 1 layout | CRITICAL |
+| Bundle Size | bundle-barrel-imports | 2 barrels (69 exports) | CRITICAL |
+| Bundle Size | bundle-dynamic-imports | 20+ components | HIGH |
+| Server Performance | server-cache-react | 0 cache() calls | HIGH |
+| Re-render | rerender-memo | 0 memo() calls | HIGH |
+| Re-render | rerender-functional-setstate | 177+ inline callbacks | MEDIUM |
+| Server Performance | async-suspense-boundaries | 0 Suspense boundaries | MEDIUM |
+
+---
+
+## Task Log
+
+| Date | Task | Commit |
+|------|------|--------|
+| 2026-01-21 | Phase 1 complete (security fixes) | Multiple commits |
+| 2026-01-22 | Phase 2 complete (N+1, O(n²) fixes) | 787676d |
+| 2026-01-22 | Vercel best practices audit added | (plan update) |
+| 2026-01-22 | Phase 3A complete (parallel awaits) | Pending |
+
+---
+
 ## Approval
 
-- [ ] Security findings reviewed by: _____
-- [ ] Performance findings reviewed by: _____
-- [ ] Ready for implementation
+- [x] Security findings reviewed by: Richard
+- [x] Performance findings reviewed by: Richard
+- [x] Vercel best practices audit complete
+- [ ] Phase 3 ready for implementation
