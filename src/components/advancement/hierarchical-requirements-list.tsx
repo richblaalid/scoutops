@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState, useRef, memo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { RequirementApprovalRow } from './requirement-approval-row'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
@@ -271,7 +271,7 @@ function isRequirementComplete(req: Requirement) {
 }
 
 // Recursive requirement node component
-function RequirementNodeView({
+const RequirementNodeView = memo(function RequirementNodeView({
   node,
   unitId,
   canEdit,
@@ -441,7 +441,7 @@ function RequirementNodeView({
       )}
     </div>
   )
-}
+})
 
 // Helper to compute default collapsed nodes based on completed requirements
 function computeDefaultCollapsedNodes(tree: RequirementNode[], collapseCompleted: boolean): Set<string> {
@@ -516,7 +516,7 @@ export function HierarchicalRequirementsList({
     return effective
   }, [defaultCollapsed, toggleState, requirementsKey])
 
-  const toggleNode = (id: string) => {
+  const toggleNode = useCallback((id: string) => {
     setToggleState(prev => {
       // Ensure we're working with current requirements key
       const currentToggles = prev.key === requirementsKey ? prev.toggles : new Set<string>()
@@ -528,7 +528,7 @@ export function HierarchicalRequirementsList({
       }
       return { key: requirementsKey, toggles: next }
     })
-  }
+  }, [requirementsKey])
 
   if (requirements.length === 0) {
     return (

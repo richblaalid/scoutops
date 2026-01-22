@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
@@ -63,7 +63,7 @@ interface RequirementApprovalRowProps {
   }
 }
 
-export function RequirementApprovalRow({
+export const RequirementApprovalRow = memo(function RequirementApprovalRow({
   id,
   requirementProgressId,
   requirementNumber,
@@ -437,7 +437,7 @@ export function RequirementApprovalRow({
       />
     </>
   )
-}
+})
 
 // Note entry component for the multi-note display
 function NoteEntry({ note }: { note: RequirementNote }) {

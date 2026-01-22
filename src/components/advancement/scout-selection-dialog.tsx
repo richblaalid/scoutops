@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, memo, useCallback } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,54 @@ interface ScoutSelectionDialogProps {
   isLoading?: boolean
 }
 
+// Memoized scout list item to prevent re-renders when other scouts change
+interface ScoutListItemProps {
+  scout: Scout
+  isSelected: boolean
+  alreadyCompletedCount: number
+  willComplete: number
+  onToggle: (scoutId: string) => void
+}
+
+const ScoutListItem = memo(function ScoutListItem({
+  scout,
+  isSelected,
+  alreadyCompletedCount,
+  willComplete,
+  onToggle,
+}: ScoutListItemProps) {
+  return (
+    <button
+      onClick={() => onToggle(scout.id)}
+      className={cn(
+        'flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors',
+        isSelected
+          ? 'bg-forest-50 border border-forest-200'
+          : 'hover:bg-stone-50 border border-transparent'
+      )}
+    >
+      <Checkbox
+        checked={isSelected}
+        onCheckedChange={() => onToggle(scout.id)}
+        className="pointer-events-none"
+      />
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100">
+        <User className="h-4 w-4 text-stone-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-stone-900 truncate">
+          {scout.first_name} {scout.last_name}
+        </p>
+        {alreadyCompletedCount > 0 && (
+          <p className="text-xs text-stone-500">
+            {alreadyCompletedCount} already done, {willComplete} new
+          </p>
+        )}
+      </div>
+    </button>
+  )
+})
+
 export function ScoutSelectionDialog({
   open,
   onOpenChange,
@@ -83,7 +131,7 @@ export function ScoutSelectionDialog({
     )
   }, [eligibleScouts, searchQuery])
 
-  const handleScoutToggle = (scoutId: string) => {
+  const handleScoutToggle = useCallback((scoutId: string) => {
     setSelectedScoutIds(prev => {
       const next = new Set(prev)
       if (next.has(scoutId)) {
@@ -93,7 +141,7 @@ export function ScoutSelectionDialog({
       }
       return next
     })
-  }
+  }, [])
 
   const handleSelectAll = () => {
     setSelectedScoutIds(new Set(filteredScouts.map(s => s.id)))
@@ -215,35 +263,14 @@ export function ScoutSelectionDialog({
                 const willComplete = selectedRequirements.length - alreadyCompletedCount
 
                 return (
-                  <button
+                  <ScoutListItem
                     key={scout.id}
-                    onClick={() => handleScoutToggle(scout.id)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors',
-                      isSelected
-                        ? 'bg-forest-50 border border-forest-200'
-                        : 'hover:bg-stone-50 border border-transparent'
-                    )}
-                  >
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={() => handleScoutToggle(scout.id)}
-                      className="pointer-events-none"
-                    />
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100">
-                      <User className="h-4 w-4 text-stone-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-stone-900 truncate">
-                        {scout.first_name} {scout.last_name}
-                      </p>
-                      {alreadyCompletedCount > 0 && (
-                        <p className="text-xs text-stone-500">
-                          {alreadyCompletedCount} already done, {willComplete} new
-                        </p>
-                      )}
-                    </div>
-                  </button>
+                    scout={scout}
+                    isSelected={isSelected}
+                    alreadyCompletedCount={alreadyCompletedCount}
+                    willComplete={willComplete}
+                    onToggle={handleScoutToggle}
+                  />
                 )
               })
             ) : (

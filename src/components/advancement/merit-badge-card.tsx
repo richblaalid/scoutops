@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Award, Star } from 'lucide-react'
@@ -31,7 +32,7 @@ interface MeritBadgeCardProps {
   canEdit: boolean
 }
 
-export function MeritBadgeCard({ badge, scoutId, unitId, canEdit }: MeritBadgeCardProps) {
+export const MeritBadgeCard = memo(function MeritBadgeCard({ badge, scoutId, unitId, canEdit }: MeritBadgeCardProps) {
   const completedCount = badge.scout_merit_badge_requirement_progress.filter(
     (r) => r.status === 'completed' || r.status === 'approved' || r.status === 'awarded'
   ).length
@@ -100,4 +101,4 @@ export function MeritBadgeCard({ badge, scoutId, unitId, canEdit }: MeritBadgeCa
       )}
     </div>
   )
-}
+})
