@@ -173,6 +173,8 @@ interface ScoutProfileTabsProps {
   advancementEnabled: boolean
   canEditScout: boolean
   canEditGuardians: boolean
+  /** Active BSA requirement version ID for merit badge requirements */
+  versionId: string
 }
 
 export function ScoutProfileTabs({
@@ -184,6 +186,7 @@ export function ScoutProfileTabs({
   advancementEnabled,
   canEditScout,
   canEditGuardians,
+  versionId,
 }: ScoutProfileTabsProps) {
   const [activeTab, setActiveTab] = useState(advancementEnabled ? 'advancement' : 'profile')
 
@@ -220,6 +223,7 @@ export function ScoutProfileTabs({
             activityEntries={advancementData.activityEntries}
             activityTotals={advancementData.activityTotals}
             canEdit={canEditScout}
+            versionId={versionId}
           />
         </TabsContent>
       )}

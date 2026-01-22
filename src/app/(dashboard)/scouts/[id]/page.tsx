@@ -1,13 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { EditScoutButton } from '@/components/scouts/edit-scout-button'
-import { ScoutGuardianAssociations } from '@/components/scouts/scout-guardian-associations'
-import { ScoutAdvancementSection } from '@/components/advancement'
+import { ScoutProfileTabs } from '@/components/scouts/scout-profile-tabs'
+import { RankIcon } from '@/components/advancement/rank-icon'
 import { getScoutAdvancementProgress } from '@/app/actions/advancement'
 import { isFeatureEnabled, FeatureFlag } from '@/lib/feature-flags'
+
+// Rank code to image URL mapping
+const RANK_IMAGES: Record<string, string> = {
+  scout: '/images/ranks/scout100.png',
+  tenderfoot: '/images/ranks/tenderfoot100.png',
+  second_class: '/images/ranks/secondclass100.png',
+  first_class: '/images/ranks/firstclass100.png',
+  star: '/images/ranks/star100.png',
+  life: '/images/ranks/life100.png',
+  eagle: '/images/ranks/eagle.png',
+}
 
 interface ScoutPageProps {
   params: Promise<{ id: string }>
@@ -114,9 +123,6 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
   }
 
   const scout = scoutData as Scout
-  const scoutAccount = scout.scout_accounts
-  const billingBalance = scoutAccount?.billing_balance ?? 0
-  const fundsBalance = scoutAccount?.funds_balance ?? 0
 
   // Get recent transactions for this scout
   const { data: transactionsData } = await supabase
@@ -134,7 +140,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         is_posted
       )
     `)
-    .eq('scout_account_id', scoutAccount?.id || '')
+    .eq('scout_account_id', scout.scout_accounts?.id || '')
     .order('id', { ascending: false })
     .limit(10)
 
@@ -225,40 +231,73 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
   // Fetch advancement data if feature is enabled
   const advancementEnabled = isFeatureEnabled(FeatureFlag.ADVANCEMENT_TRACKING)
   type AdvancementData = Awaited<ReturnType<typeof getScoutAdvancementProgress>>
-  const defaultAdvancementData: NonNullable<AdvancementData> = {
-    rankProgress: [],
-    meritBadgeProgress: [],
-    leadershipHistory: [],
-    activityEntries: [],
-    activityTotals: { camping: 0, hiking: 0, service: 0, conservation: 0 },
-  }
-  let advancementData: NonNullable<AdvancementData> = defaultAdvancementData
+  let advancementData: AdvancementData = null
+  let activeVersionId = ''
+
   if (advancementEnabled && membership) {
-    const fetchedData = await getScoutAdvancementProgress(id)
-    if (fetchedData) {
-      advancementData = fetchedData
-    }
+    // Fetch active BSA requirement version for merit badge requirements
+    const { data: versionData } = await supabase
+      .from('bsa_requirement_versions')
+      .select('id')
+      .eq('is_active', true)
+      .order('effective_date', { ascending: false })
+      .limit(1)
+      .single()
+
+    activeVersionId = versionData?.id || ''
+    advancementData = await getScoutAdvancementProgress(id)
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/scouts"
-              className="text-sm text-stone-500 hover:text-stone-700"
-            >
-              Scouts
-            </Link>
-            <span className="text-stone-400">/</span>
-            <span className="text-sm text-stone-900">
-              {scout.first_name} {scout.last_name}
-            </span>
+        <div className="flex items-center gap-4">
+          {/* Rank Badge */}
+          {scout.rank && advancementEnabled && (
+            <div className="hidden sm:block">
+              <RankIcon
+                rank={{
+                  code: scout.rank.toLowerCase().replace(/\s+/g, '_'),
+                  name: scout.rank,
+                  image_url: RANK_IMAGES[scout.rank.toLowerCase().replace(/\s+/g, '_')] || null,
+                }}
+                size="lg"
+              />
+            </div>
+          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/scouts"
+                className="text-sm text-stone-500 hover:text-stone-700"
+              >
+                Scouts
+              </Link>
+              <span className="text-stone-400">/</span>
+              <span className="text-sm text-stone-900">
+                {scout.first_name} {scout.last_name}
+              </span>
+            </div>
+            <div className="mt-2 flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-stone-900">
+                {scout.first_name} {scout.last_name}
+              </h1>
+              {/* Mobile rank badge - smaller, inline */}
+              {scout.rank && advancementEnabled && (
+                <div className="sm:hidden">
+                  <RankIcon
+                    rank={{
+                      code: scout.rank.toLowerCase().replace(/\s+/g, '_'),
+                      name: scout.rank,
+                      image_url: RANK_IMAGES[scout.rank.toLowerCase().replace(/\s+/g, '_')] || null,
+                    }}
+                    size="md"
+                  />
+                </div>
+              )}
+            </div>
           </div>
-          <h1 className="mt-2 text-3xl font-bold text-stone-900">
-            {scout.first_name} {scout.last_name}
-          </h1>
         </div>
         <div className="flex items-center gap-3">
           {canEditScout && (
@@ -305,236 +344,38 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Scout Info */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Scout Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-stone-500">Patrol</p>
-              <p className="font-medium">{scout.patrols?.name || 'Not assigned'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-stone-500">Rank</p>
-              <p className="font-medium">{scout.rank || 'Not set'}</p>
-            </div>
-            {scout.current_position && (
-              <div>
-                <p className="text-sm text-stone-500">Position</p>
-                <p className="font-medium">{scout.current_position}</p>
-              </div>
-            )}
-            {scout.date_of_birth && (
-              <div>
-                <p className="text-sm text-stone-500">Date of Birth</p>
-                <p className="font-medium">{scout.date_of_birth}</p>
-              </div>
-            )}
-            {scout.bsa_member_id && (
-              <div>
-                <p className="text-sm text-stone-500">BSA Member ID</p>
-                <p className="font-medium">{scout.bsa_member_id}</p>
-              </div>
-            )}
-            {scout.date_joined && (
-              <div>
-                <p className="text-sm text-stone-500">Date Joined</p>
-                <p className="font-medium">{scout.date_joined}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Account Balance */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Account Balance</CardTitle>
-            <CardDescription>Current financial status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {/* Scout Funds */}
-              <div>
-                <p className="text-sm font-medium text-stone-500">Scout Funds</p>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <span className={`text-3xl font-bold ${fundsBalance > 0 ? 'text-success' : 'text-stone-900'}`}>
-                    {formatCurrency(fundsBalance)}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-stone-500">
-                  Available savings from fundraising
-                </p>
-              </div>
-
-              {/* Money Owed */}
-              <div>
-                <p className="text-sm font-medium text-stone-500">Money Owed</p>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <span className={`text-3xl font-bold ${billingBalance < 0 ? 'text-error' : 'text-stone-900'}`}>
-                    {billingBalance < 0 ? formatCurrency(Math.abs(billingBalance)) : '$0.00'}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-stone-500">
-                  {billingBalance < 0 ? 'Outstanding charges' : 'All paid up'}
-                </p>
-              </div>
-            </div>
-            {scoutAccount && (
-              <Link
-                href={`/accounts/${scoutAccount.id}`}
-                className="mt-6 inline-block text-sm text-forest-600 hover:text-forest-800"
-              >
-                View full account details
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Guardians Section */}
-      <ScoutGuardianAssociations
-        unitId={scout.unit_id}
-        scoutId={scout.id}
-        scoutName={`${scout.first_name} ${scout.last_name}`}
+      {/* Tabbed Content */}
+      <ScoutProfileTabs
+        scout={{
+          id: scout.id,
+          first_name: scout.first_name,
+          last_name: scout.last_name,
+          patrol_id: scout.patrol_id,
+          rank: scout.rank,
+          current_position: scout.current_position,
+          current_position_2: scout.current_position_2,
+          is_active: scout.is_active,
+          date_of_birth: scout.date_of_birth,
+          bsa_member_id: scout.bsa_member_id,
+          gender: scout.gender,
+          date_joined: scout.date_joined,
+          health_form_status: scout.health_form_status,
+          health_form_expires: scout.health_form_expires,
+          swim_classification: scout.swim_classification,
+          swim_class_date: scout.swim_class_date,
+          unit_id: scout.unit_id,
+          scout_accounts: scout.scout_accounts,
+          patrols: scout.patrols,
+        }}
         guardians={guardians}
+        transactions={transactions}
         availableProfiles={availableProfiles}
-        canEdit={canEditGuardians || false}
+        advancementData={advancementData}
+        advancementEnabled={advancementEnabled}
+        canEditScout={canEditScout || false}
+        canEditGuardians={canEditGuardians || false}
+        versionId={activeVersionId}
       />
-
-      {/* Advancement Section */}
-      {advancementEnabled && (
-        <ScoutAdvancementSection
-          scoutId={scout.id}
-          unitId={scout.unit_id}
-          scoutName={`${scout.first_name} ${scout.last_name}`}
-          currentRank={scout.rank}
-          rankProgress={advancementData.rankProgress}
-          meritBadgeProgress={advancementData.meritBadgeProgress}
-          leadershipHistory={advancementData.leadershipHistory}
-          activityEntries={advancementData.activityEntries}
-          activityTotals={advancementData.activityTotals}
-          canEdit={canEditScout || false}
-        />
-      )}
-
-      {/* Health & Safety */}
-      {(scout.health_form_status || scout.swim_classification) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Health & Safety</CardTitle>
-            <CardDescription>BSA health and safety information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {/* Health Form */}
-              <div>
-                <p className="text-sm font-medium text-stone-500">Health Form</p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      scout.health_form_status === 'current'
-                        ? 'bg-success-light text-success'
-                        : scout.health_form_status === 'expired'
-                        ? 'bg-error-light text-error'
-                        : 'bg-stone-100 text-stone-600'
-                    }`}
-                  >
-                    {scout.health_form_status
-                      ? scout.health_form_status.charAt(0).toUpperCase() + scout.health_form_status.slice(1)
-                      : 'Unknown'}
-                  </span>
-                  {scout.health_form_expires && (
-                    <span className="text-sm text-stone-500">
-                      Expires: {scout.health_form_expires}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Swim Classification */}
-              <div>
-                <p className="text-sm font-medium text-stone-500">Swim Classification</p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      scout.swim_classification === 'swimmer'
-                        ? 'bg-success-light text-success'
-                        : scout.swim_classification === 'beginner'
-                        ? 'bg-warning-light text-warning'
-                        : scout.swim_classification === 'non-swimmer'
-                        ? 'bg-error-light text-error'
-                        : 'bg-stone-100 text-stone-600'
-                    }`}
-                  >
-                    {scout.swim_classification
-                      ? scout.swim_classification.charAt(0).toUpperCase() + scout.swim_classification.slice(1).replace('-', ' ')
-                      : 'Not recorded'}
-                  </span>
-                  {scout.swim_class_date && (
-                    <span className="text-sm text-stone-500">
-                      Tested: {scout.swim_class_date}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>Latest activity on this scout&apos;s account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {transactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b text-left text-sm font-medium text-stone-500">
-                    <th className="pb-3 pr-4">Date</th>
-                    <th className="pb-3 pr-4">Description</th>
-                    <th className="pb-3 pr-4">Type</th>
-                    <th className="pb-3 pr-4 text-right">Debit</th>
-                    <th className="pb-3 text-right">Credit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b last:border-0">
-                      <td className="py-3 pr-4 text-stone-600">
-                        {tx.journal_entries?.entry_date || '—'}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <p className="font-medium text-stone-900">
-                          {tx.journal_entries?.description || tx.memo || '—'}
-                        </p>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className="rounded bg-stone-100 px-2 py-1 text-xs capitalize">
-                          {tx.journal_entries?.entry_type || 'entry'}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-right text-error">
-                        {tx.debit && tx.debit > 0 ? formatCurrency(tx.debit) : '—'}
-                      </td>
-                      <td className="py-3 text-right text-success">
-                        {tx.credit && tx.credit > 0 ? formatCurrency(tx.credit) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-stone-500">No transactions yet</p>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }
