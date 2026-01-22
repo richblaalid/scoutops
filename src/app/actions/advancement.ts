@@ -1465,7 +1465,9 @@ export async function getBsaLeadershipPositions() {
  * Get scout's advancement progress
  */
 export async function getScoutAdvancementProgress(scoutId: string) {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for this read-only query
+  // Authorization is handled by the calling page which checks user role
+  const supabase = createAdminClient()
 
   const { data: rankProgress, error: rankError } = await supabase
     .from('scout_rank_progress')
@@ -1866,7 +1868,20 @@ export async function getMeritBadgeRequirements(meritBadgeId: string, versionId:
 
   const { data, error } = await supabase
     .from('bsa_merit_badge_requirements')
-    .select('*')
+    .select(`
+      id,
+      version_id,
+      merit_badge_id,
+      requirement_number,
+      parent_requirement_id,
+      sub_requirement_letter,
+      description,
+      display_order,
+      is_alternative,
+      alternatives_group,
+      nesting_depth,
+      required_count
+    `)
     .eq('version_id', actualVersionId)
     .eq('merit_badge_id', meritBadgeId)
     .order('display_order')
@@ -1876,7 +1891,21 @@ export async function getMeritBadgeRequirements(meritBadgeId: string, versionId:
     return []
   }
 
-  return data
+  // Return with explicit type to ensure all fields are available
+  return data as Array<{
+    id: string
+    version_id: string
+    merit_badge_id: string
+    requirement_number: string
+    parent_requirement_id: string | null
+    sub_requirement_letter: string | null
+    description: string
+    display_order: number
+    is_alternative: boolean | null
+    alternatives_group: string | null
+    nesting_depth: number | null
+    required_count: number | null
+  }>
 }
 
 /**
@@ -2235,4 +2264,47 @@ export async function getPendingSubmissions(unitId: string) {
   }
 
   return data
+}
+
+/**
+ * Bulk sign off requirements for multiple scouts
+ * Used by the unit-level advancement view (/advancement)
+ * Creates progress records for each scout × requirement combination
+ */
+export async function bulkSignOffForScouts(params: {
+  type: 'rank' | 'merit-badge'
+  requirementIds: string[]
+  scoutIds: string[]
+  unitId: string
+  itemId: string // rank_id or merit_badge_id
+  versionId: string
+  date: string
+  completedBy: string
+}): Promise<ActionResult<{ successCount: number; failedCount: number; errors: string[] }>> {
+  // Convert to the format expected by bulkRecordProgress
+  const entries: Array<{
+    scoutId: string
+    requirementId: string
+    type: 'rank' | 'merit_badge'
+    parentId: string
+  }> = []
+
+  for (const scoutId of params.scoutIds) {
+    for (const requirementId of params.requirementIds) {
+      entries.push({
+        scoutId,
+        requirementId,
+        type: params.type === 'rank' ? 'rank' : 'merit_badge',
+        parentId: params.itemId,
+      })
+    }
+  }
+
+  return bulkRecordProgress({
+    entries,
+    unitId: params.unitId,
+    versionId: params.versionId,
+    completedAt: params.date,
+    notes: `Signed off by ${params.completedBy}`,
+  })
 }
