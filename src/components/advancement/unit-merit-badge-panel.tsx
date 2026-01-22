@@ -98,7 +98,8 @@ export function UnitMeritBadgePanel({
   const { scoutsWithAllComplete, scoutCompletedRequirements } = useMemo(() => {
     const completedMap = new Map<string, Set<string>>()
     const allCompleteSet = new Set<string>()
-    const selectedReqIds = selectedIds
+    // Convert Set to Array once, outside the loop (O(n) instead of O(n²))
+    const selectedReqArray = Array.from(selectedIds)
 
     scouts.forEach(scout => {
       const progress = scout.scout_merit_badge_progress.find(
@@ -117,8 +118,8 @@ export function UnitMeritBadgePanel({
       completedMap.set(scout.id, completedReqs)
 
       // Check if this scout has ALL selected requirements completed
-      if (selectedReqIds.size > 0) {
-        const hasAll = Array.from(selectedReqIds).every(reqId => completedReqs.has(reqId))
+      if (selectedReqArray.length > 0) {
+        const hasAll = selectedReqArray.every(reqId => completedReqs.has(reqId))
         if (hasAll) {
           allCompleteSet.add(scout.id)
         }

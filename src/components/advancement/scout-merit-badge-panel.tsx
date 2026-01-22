@@ -150,23 +150,26 @@ export function ScoutMeritBadgePanel({
       })
   }, [requirements, progressMap])
 
-  // Calculate progress stats
-  const completedCount = formattedRequirements.filter(
-    r => ['completed', 'approved'].includes(r.status)
-  ).length
-  const totalCount = formattedRequirements.length
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-
-  // Multi-select helpers
-  const incompleteRequirements = useMemo(() => {
-    return formattedRequirements.filter(
+  // Calculate progress stats and multi-select helpers in single pass (memoized)
+  const { completedCount, totalCount, progressPercent, incompleteRequirements, incompleteIds } = useMemo(() => {
+    const completed = formattedRequirements.filter(
+      r => ['completed', 'approved'].includes(r.status)
+    ).length
+    const total = formattedRequirements.length
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+    const incomplete = formattedRequirements.filter(
       r => !['completed', 'approved', 'awarded'].includes(r.status)
     )
-  }, [formattedRequirements])
+    const incompleteSet = new Set(incomplete.map(r => r.id))
 
-  const incompleteIds = useMemo(() => {
-    return new Set(incompleteRequirements.map(r => r.id))
-  }, [incompleteRequirements])
+    return {
+      completedCount: completed,
+      totalCount: total,
+      progressPercent: percent,
+      incompleteRequirements: incomplete,
+      incompleteIds: incompleteSet,
+    }
+  }, [formattedRequirements])
 
   const handleSelectionChange = (id: string) => {
     setSelectedIds(prev => {

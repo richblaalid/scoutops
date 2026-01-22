@@ -91,27 +91,68 @@ export default async function AdvancementPage() {
 
   const scouts = (scoutsData || []) as Scout[]
 
-  // Get rank progress for summary calculations (includes dates for actionable lists)
-  const { data: rankProgressData } = await supabase
-    .from('scout_rank_progress')
-    .select(`
-      id,
-      scout_id,
-      status,
-      awarded_at,
-      bsa_ranks (
+  // Extract scout IDs once for all queries
+  const scoutIds = scouts.map((s) => s.id)
+
+  // Run parallel queries for rank progress, merit badges, and pending approvals
+  const [rankProgressResult, meritBadgeResult, pendingApprovalsResult] = await Promise.all([
+    // Get rank progress for summary calculations
+    supabase
+      .from('scout_rank_progress')
+      .select(`
         id,
-        code,
-        name,
-        display_order
-      ),
-      scout_rank_requirement_progress (
+        scout_id,
+        status,
+        awarded_at,
+        bsa_ranks (
+          id,
+          code,
+          name,
+          display_order
+        ),
+        scout_rank_requirement_progress (
+          id,
+          status,
+          completed_at
+        )
+      `)
+      .in('scout_id', scoutIds),
+
+    // Get merit badge progress for summary
+    supabase
+      .from('scout_merit_badge_progress')
+      .select('id, scout_id, status')
+      .in('scout_id', scoutIds),
+
+    // Get pending approvals
+    supabase
+      .from('scout_rank_requirement_progress')
+      .select(`
         id,
         status,
-        completed_at
-      )
-    `)
-    .in('scout_id', scouts.map((s) => s.id))
+        approval_status,
+        submission_notes,
+        submitted_at,
+        scout_rank_progress (
+          id,
+          scout_id,
+          scouts (
+            id,
+            first_name,
+            last_name
+          ),
+          bsa_ranks (
+            name
+          )
+        ),
+        bsa_rank_requirements (
+          requirement_number,
+          description
+        )
+      `)
+      .eq('approval_status', 'pending_approval')
+      .order('submitted_at', { ascending: false }),
+  ])
 
   interface RankProgress {
     id: string
@@ -122,50 +163,11 @@ export default async function AdvancementPage() {
     scout_rank_requirement_progress: Array<{ id: string; status: string; completed_at: string | null }>
   }
 
-  const rankProgress = (rankProgressData || []) as RankProgress[]
-
-  // Get merit badge progress for summary
-  const { data: meritBadgeData } = await supabase
-    .from('scout_merit_badge_progress')
-    .select('id, scout_id, status')
-    .in('scout_id', scouts.map((s) => s.id))
-
   interface MeritBadge {
     id: string
     scout_id: string
     status: string
   }
-
-  const meritBadges = (meritBadgeData || []) as MeritBadge[]
-
-  // Get pending approvals
-  const { data: pendingApprovalsData } = await supabase
-    .from('scout_rank_requirement_progress')
-    .select(`
-      id,
-      status,
-      approval_status,
-      submission_notes,
-      submitted_at,
-      scout_rank_progress (
-        id,
-        scout_id,
-        scouts (
-          id,
-          first_name,
-          last_name
-        ),
-        bsa_ranks (
-          name
-        )
-      ),
-      bsa_rank_requirements (
-        requirement_number,
-        description
-      )
-    `)
-    .eq('approval_status', 'pending_approval')
-    .order('submitted_at', { ascending: false })
 
   interface PendingApproval {
     id: string
@@ -182,7 +184,9 @@ export default async function AdvancementPage() {
     bsa_rank_requirements: { requirement_number: string; description: string } | null
   }
 
-  const pendingApprovals = (pendingApprovalsData || []) as PendingApproval[]
+  const rankProgress = (rankProgressResult.data || []) as RankProgress[]
+  const meritBadges = (meritBadgeResult.data || []) as MeritBadge[]
+  const pendingApprovals = (pendingApprovalsResult.data || []) as PendingApproval[]
 
   // Get merit badges with status 'completed' (awaiting scoutmaster approval)
   const { data: pendingBadgeApprovalsData } = await supabase
@@ -204,7 +208,7 @@ export default async function AdvancementPage() {
       )
     `)
     .eq('status', 'completed')
-    .in('scout_id', scouts.map((s) => s.id))
+    .in('scout_id', scoutIds)
     .order('completed_at', { ascending: false })
 
   interface PendingBadgeApproval {
@@ -240,8 +244,16 @@ export default async function AdvancementPage() {
   const inProgressBadges = meritBadges.filter((b) => b.status === 'in_progress').length
   const earnedBadges = meritBadges.filter((b) => b.status === 'awarded').length
 
-  // Build scout progress map
-  const scoutProgressMapData: Record<
+  // Build lookup map for rank progress by scout ID (O(n) instead of O(n²))
+  const rankProgressByScout = new Map<string, RankProgress[]>()
+  for (const rp of rankProgress) {
+    const existing = rankProgressByScout.get(rp.scout_id) || []
+    existing.push(rp)
+    rankProgressByScout.set(rp.scout_id, existing)
+  }
+
+  // Build scout progress map using lookup (O(1) per scout)
+  const scoutProgressMap = new Map<
     string,
     {
       currentRank: RankProgress | null
@@ -249,10 +261,10 @@ export default async function AdvancementPage() {
       totalCount: number
       progressPercent: number
     }
-  > = {}
+  >()
 
   for (const scout of scouts) {
-    const scoutRanks = rankProgress.filter((r) => r.scout_id === scout.id)
+    const scoutRanks = rankProgressByScout.get(scout.id) || []
     const inProgressRank = scoutRanks.find((r) => r.status === 'in_progress')
 
     if (inProgressRank) {
@@ -260,38 +272,36 @@ export default async function AdvancementPage() {
         (req) => req.status === 'completed' || req.status === 'approved' || req.status === 'awarded'
       ).length
       const total = inProgressRank.scout_rank_requirement_progress.length
-      scoutProgressMapData[scout.id] = {
+      scoutProgressMap.set(scout.id, {
         currentRank: inProgressRank,
         completedCount: completed,
         totalCount: total,
         progressPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
-      }
+      })
     } else {
-      scoutProgressMapData[scout.id] = {
+      scoutProgressMap.set(scout.id, {
         currentRank: null,
         completedCount: 0,
         totalCount: 0,
         progressPercent: 0,
-      }
+      })
     }
   }
-
-  const scoutProgressMap = new Map(Object.entries(scoutProgressMapData))
 
   // ==========================================
   // RANK REQUIREMENTS BROWSER DATA
   // ==========================================
 
-  // Get all ranks
+  // Get all ranks (specific columns instead of SELECT *)
   const { data: ranksData } = await supabase
     .from('bsa_ranks')
-    .select('*')
+    .select('id, code, name, display_order, is_eagle_required, description')
     .order('display_order')
 
-  // Get all rank requirements for active version
+  // Get all rank requirements for active version (specific columns instead of SELECT *)
   const { data: rankRequirementsData } = await supabase
     .from('bsa_rank_requirements')
-    .select('*')
+    .select('id, version_id, rank_id, requirement_number, parent_requirement_id, sub_requirement_letter, description, is_alternative, alternatives_group, display_order')
     .eq('version_id', versionData.id)
     .order('display_order')
 
@@ -371,10 +381,10 @@ export default async function AdvancementPage() {
   // MERIT BADGE BROWSER DATA
   // ==========================================
 
-  // Get all merit badges
+  // Get all merit badges (specific columns instead of SELECT *)
   const { data: badgesData } = await supabase
     .from('bsa_merit_badges')
-    .select('*')
+    .select('id, code, name, category, description, is_eagle_required, is_active, image_url, pamphlet_url')
     .eq('is_active', true)
     .order('name')
 
