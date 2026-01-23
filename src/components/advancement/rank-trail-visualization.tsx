@@ -372,14 +372,20 @@ export function RankTrailVisualization({
                     key={rank.code}
                     className="relative z-10 flex flex-col items-center"
                   >
-                    {/* Clickable badge area */}
-                    <button
-                      type="button"
-                      onClick={() => onRankClick?.(rank.code)}
-                      disabled={!isClickable}
+                    {/* Clickable badge area - using div to avoid focus-induced scrolling */}
+                    <div
+                      role={isClickable ? 'button' : undefined}
+                      tabIndex={isClickable ? 0 : undefined}
+                      onClick={() => isClickable && onRankClick?.(rank.code)}
+                      onKeyDown={(e) => {
+                        if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
+                          e.preventDefault()
+                          onRankClick?.(rank.code)
+                        }
+                      }}
                       className={cn(
                         'relative flex flex-col items-center transition-all duration-200',
-                        isClickable && 'cursor-pointer focus:outline-none',
+                        isClickable && 'cursor-pointer',
                         !isClickable && 'cursor-default'
                       )}
                     >
@@ -435,7 +441,7 @@ export function RankTrailVisualization({
                       >
                         {rank.shortName}
                       </span>
-                    </button>
+                    </div>
                   </div>
                 )
               })}

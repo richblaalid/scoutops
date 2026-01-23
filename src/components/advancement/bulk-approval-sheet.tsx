@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,6 @@ interface Requirement {
 
 interface RankInitData {
   rankId: string
-  versionId: string
 }
 
 interface BulkApprovalSheetProps {
@@ -96,6 +95,13 @@ export function BulkApprovalSheet({
     preSelectedIds ? new Set(preSelectedIds) : new Set()
   )
   const [completedDate, setCompletedDate] = useState(new Date().toISOString().split('T')[0])
+
+  // Sync preSelectedIds to selectedIds when dialog opens (controlled mode)
+  useEffect(() => {
+    if (open && preSelectedIds && preSelectedIds.size > 0) {
+      setSelectedIds(new Set(preSelectedIds))
+    }
+  }, [open, preSelectedIds])
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -122,10 +128,24 @@ export function BulkApprovalSheet({
     ? Math.round((completedCount / sortedRequirements.length) * 100)
     : 0
 
+  // Confirmation mode: when pre-selected IDs are provided, show read-only confirmation
+  const isConfirmationMode = preSelectedIds && preSelectedIds.size > 0
+
   const allSelected = selectedIds.size === incompleteRequirements.length && incompleteRequirements.length > 0
   const someSelected = selectedIds.size > 0
   // Only ranks can have uninitialized progress records; merit badges always have them
   const needsInit = type === 'rank' && initData && incompleteRequirements.some(r => r.requirementProgressId === null)
+
+  // Get the requirements that are selected (for confirmation mode display)
+  const selectedRequirements = useMemo(() => {
+    return incompleteRequirements
+      .filter(req => selectedIds.has(req.id))
+      .sort((a, b) => {
+        const numA = parseFloat(a.requirementNumber || '0')
+        const numB = parseFloat(b.requirementNumber || '0')
+        return numA - numB
+      })
+  }, [incompleteRequirements, selectedIds])
 
   const handleSelectAll = () => {
     if (allSelected) {
@@ -163,7 +183,6 @@ export function BulkApprovalSheet({
             rankId: initData.rankId,
             requirementIds: Array.from(selectedIds),
             unitId,
-            versionId: initData.versionId,
             completedAt: `${completedDate}T12:00:00.000Z`,
             notes: notes || undefined,
           })
@@ -254,28 +273,39 @@ export function BulkApprovalSheet({
             </div>
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-xl font-semibold text-stone-900">
-                Bulk Approve Requirements
+                {isConfirmationMode ? 'Confirm Approval' : 'Bulk Approve Requirements'}
               </DialogTitle>
               <DialogDescription className="mt-1 text-stone-600">
-                Select and approve multiple requirements at once for{' '}
-                <span className="font-medium text-forest-700">{itemName}</span>
+                {isConfirmationMode ? (
+                  <>
+                    Approve {selectedIds.size} requirement{selectedIds.size !== 1 ? 's' : ''} for{' '}
+                    <span className="font-medium text-forest-700">{itemName}</span>
+                  </>
+                ) : (
+                  <>
+                    Select and approve multiple requirements at once for{' '}
+                    <span className="font-medium text-forest-700">{itemName}</span>
+                  </>
+                )}
               </DialogDescription>
             </div>
           </div>
 
-          {/* Progress Overview */}
-          <div className="mt-4 rounded-lg border border-stone-200 bg-white p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-stone-700">Overall Progress</span>
-              <span className="text-sm font-semibold text-forest-700">
-                {completedCount} / {sortedRequirements.length} complete
-              </span>
+          {/* Progress Overview - only shown in selection mode */}
+          {!isConfirmationMode && (
+            <div className="mt-4 rounded-lg border border-stone-200 bg-white p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-stone-700">Overall Progress</span>
+                <span className="text-sm font-semibold text-forest-700">
+                  {completedCount} / {sortedRequirements.length} complete
+                </span>
+              </div>
+              <Progress value={progressPercent} className="h-2" />
+              <p className="mt-2 text-xs text-stone-500">
+                {incompleteRequirements.length} requirement{incompleteRequirements.length !== 1 ? 's' : ''} remaining
+              </p>
             </div>
-            <Progress value={progressPercent} className="h-2" />
-            <p className="mt-2 text-xs text-stone-500">
-              {incompleteRequirements.length} requirement{incompleteRequirements.length !== 1 ? 's' : ''} remaining
-            </p>
-          </div>
+          )}
         </DialogHeader>
 
         {/* Success State */}
@@ -343,9 +373,9 @@ export function BulkApprovalSheet({
             <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-6 py-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-stone-700">
-                  Requirements
+                  {isConfirmationMode ? 'Requirements to Approve' : 'Requirements'}
                 </span>
-                {incompleteRequirements.length > 0 && (
+                {!isConfirmationMode && incompleteRequirements.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -357,7 +387,34 @@ export function BulkApprovalSheet({
                 )}
               </div>
 
-              {incompleteRequirements.length === 0 ? (
+              {isConfirmationMode ? (
+                /* Confirmation Mode: Read-only list of selected requirements */
+                <div className="flex-1 overflow-y-auto min-h-0 rounded-xl border border-forest-200 bg-forest-50/30">
+                  <div className="divide-y divide-forest-100">
+                    {selectedRequirements.map((req) => (
+                      <div
+                        key={req.id}
+                        className="flex items-start gap-3 p-3"
+                      >
+                        {/* Check indicator */}
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-forest-600 text-white mt-0.5">
+                          <Check className="h-3 w-3" strokeWidth={2.5} />
+                        </div>
+
+                        {/* Requirement number badge */}
+                        <div className="shrink-0 flex h-6 min-w-[1.75rem] items-center justify-center rounded-md px-1.5 text-xs font-bold tabular-nums bg-forest-200 text-forest-800">
+                          {req.requirementNumber}
+                        </div>
+
+                        {/* Description */}
+                        <p className="flex-1 text-sm leading-relaxed text-stone-700">
+                          {req.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : incompleteRequirements.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50">
                   <div className="text-center py-8">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
@@ -372,10 +429,10 @@ export function BulkApprovalSheet({
                   </div>
                 </div>
               ) : (
+                /* Selection Mode: Selectable list */
                 <div className="flex-1 overflow-y-auto min-h-0 rounded-xl border border-stone-200 bg-white">
                   <div className="divide-y divide-stone-100">
-                    {sortedRequirements.map((req) => {
-                      const isComplete = ['completed', 'approved', 'awarded'].includes(req.status)
+                    {incompleteRequirements.map((req) => {
                       const isSelected = selectedIds.has(req.id)
 
                       return (
@@ -383,77 +440,54 @@ export function BulkApprovalSheet({
                           key={req.id}
                           className={cn(
                             'group flex items-start gap-4 p-4 transition-all duration-150',
-                            isComplete
-                              ? 'bg-stone-50/80'
-                              : isSelected
-                                ? 'bg-forest-50/70 hover:bg-forest-50'
-                                : 'hover:bg-stone-50 cursor-pointer'
+                            isSelected
+                              ? 'bg-forest-50/70 hover:bg-forest-50'
+                              : 'hover:bg-stone-50 cursor-pointer'
                           )}
-                          onClick={() => !isComplete && handleSelectOne(req.id)}
-                          role={isComplete ? undefined : "button"}
-                          tabIndex={isComplete ? undefined : 0}
+                          onClick={() => handleSelectOne(req.id)}
+                          role="button"
+                          tabIndex={0}
                           onKeyDown={(e) => {
-                            if (!isComplete && (e.key === 'Enter' || e.key === ' ')) {
+                            if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault()
                               handleSelectOne(req.id)
                             }
                           }}
                         >
-                          {/* Checkbox / Check indicator */}
+                          {/* Checkbox */}
                           <div className="pt-0.5">
-                            {isComplete ? (
-                              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-100 border border-emerald-200">
-                                <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />
-                              </div>
-                            ) : (
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => handleSelectOne(req.id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className={cn(
-                                  'h-5 w-5 rounded-md border-2 transition-colors',
-                                  isSelected
-                                    ? 'border-forest-600 bg-forest-600 text-white'
-                                    : 'border-stone-300 group-hover:border-stone-400'
-                                )}
-                              />
-                            )}
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => handleSelectOne(req.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className={cn(
+                                'h-5 w-5 rounded-md border-2 transition-colors',
+                                isSelected
+                                  ? 'border-forest-600 bg-forest-600 text-white'
+                                  : 'border-stone-300 group-hover:border-stone-400'
+                              )}
+                            />
                           </div>
 
                           {/* Requirement number badge */}
                           <div className={cn(
                             'shrink-0 flex h-7 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold tabular-nums transition-colors',
-                            isComplete
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : isSelected
-                                ? 'bg-forest-200 text-forest-800'
-                                : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'
+                            isSelected
+                              ? 'bg-forest-200 text-forest-800'
+                              : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200'
                           )}>
                             {req.requirementNumber}
                           </div>
 
                           {/* Description */}
                           <div className="flex-1 min-w-0">
-                            <p className={cn(
-                              'text-sm leading-relaxed',
-                              isComplete ? 'text-stone-500' : 'text-stone-700'
-                            )}>
+                            <p className="text-sm leading-relaxed text-stone-700">
                               {req.description}
                             </p>
                           </div>
 
-                          {/* Status badge */}
-                          {isComplete && (
-                            <Badge
-                              variant="secondary"
-                              className="shrink-0 bg-emerald-100 text-emerald-700 border-0 text-xs font-medium"
-                            >
-                              Complete
-                            </Badge>
-                          )}
-
-                          {/* Selection indicator for incomplete */}
-                          {!isComplete && isSelected && (
+                          {/* Selection indicator */}
+                          {isSelected && (
                             <div className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-forest-600 text-white">
                               <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
                             </div>
@@ -474,7 +508,11 @@ export function BulkApprovalSheet({
             <div className="flex w-full items-center justify-between gap-4">
               {/* Selection summary */}
               <div className="flex items-center gap-2">
-                {someSelected ? (
+                {isConfirmationMode ? (
+                  <span className="text-sm text-stone-600">
+                    Ready to approve {selectedIds.size} requirement{selectedIds.size !== 1 ? 's' : ''}
+                  </span>
+                ) : someSelected ? (
                   <Badge
                     variant="secondary"
                     className="bg-forest-100 text-forest-700 border-0 text-sm font-medium px-3 py-1"

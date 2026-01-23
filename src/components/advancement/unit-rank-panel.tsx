@@ -9,7 +9,8 @@ import { RankIcon } from './rank-icon'
 import { ScoutSelectionDialog } from './scout-selection-dialog'
 import { MultiSelectActionBar } from './multi-select-action-bar'
 import { cn } from '@/lib/utils'
-import { Award, ListChecks, Loader2 } from 'lucide-react'
+import { Award, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { VersionYearBadge } from '@/components/ui/version-year-badge'
 import { bulkSignOffForScouts } from '@/app/actions/advancement'
 import { useRouter } from 'next/navigation'
 
@@ -21,6 +22,7 @@ interface Rank {
   is_eagle_required: boolean | null
   description: string | null
   image_url?: string | null
+  requirement_version_year?: number | null
 }
 
 interface Requirement {
@@ -28,6 +30,8 @@ interface Requirement {
   requirement_number: string
   description: string
   parent_requirement_id: string | null
+  is_alternative: boolean | null
+  alternatives_group: string | null
 }
 
 interface RequirementProgress {
@@ -56,9 +60,219 @@ interface UnitRankPanelProps {
   requirements: Requirement[]
   scouts: Scout[]
   unitId: string
-  versionId: string
   canEdit: boolean
   currentUserName?: string
+}
+
+// Requirement node for tree structure
+interface RequirementNode {
+  requirement: Requirement
+  children: RequirementNode[]
+}
+
+// Build a hierarchical tree from flat requirements
+function buildRequirementTree(requirements: Requirement[]): RequirementNode[] {
+  const nodeMap = new Map<string, RequirementNode>()
+  const rootNodes: RequirementNode[] = []
+
+  // First pass: create all nodes
+  requirements.forEach(req => {
+    nodeMap.set(req.id, { requirement: req, children: [] })
+  })
+
+  // Second pass: build tree structure
+  requirements.forEach(req => {
+    const node = nodeMap.get(req.id)!
+    if (req.parent_requirement_id && nodeMap.has(req.parent_requirement_id)) {
+      nodeMap.get(req.parent_requirement_id)!.children.push(node)
+    } else {
+      rootNodes.push(node)
+    }
+  })
+
+  // Sort children by requirement number
+  function sortChildren(nodes: RequirementNode[]) {
+    nodes.sort((a, b) => {
+      const numA = parseFloat(a.requirement.requirement_number || '0')
+      const numB = parseFloat(b.requirement.requirement_number || '0')
+      return numA - numB
+    })
+    nodes.forEach(node => sortChildren(node.children))
+  }
+  sortChildren(rootNodes)
+
+  return rootNodes
+}
+
+// Recursive component for rendering requirement nodes
+function RequirementNodeView({
+  node,
+  depth,
+  isMultiSelectMode,
+  selectedIds,
+  onSelectionChange,
+  collapsedNodes,
+  toggleNode,
+}: {
+  node: RequirementNode
+  depth: number
+  isMultiSelectMode: boolean
+  selectedIds: Set<string>
+  onSelectionChange: (id: string) => void
+  collapsedNodes: Set<string>
+  toggleNode: (id: string) => void
+}) {
+  const req = node.requirement
+  const hasChildren = node.children.length > 0
+  const isCollapsed = collapsedNodes.has(req.id)
+  const isSelected = selectedIds.has(req.id)
+
+  // Check if children are alternatives
+  const hasAlternativeChildren = node.children.some(c => c.requirement.is_alternative)
+
+  // For leaf nodes (no children), render just the requirement row
+  if (!hasChildren) {
+    return (
+      <div
+        className={cn(
+          'flex items-start gap-3 rounded-lg border p-2.5 transition-colors',
+          isMultiSelectMode && 'cursor-pointer',
+          isSelected
+            ? 'border-blue-200 bg-blue-50'
+            : depth === 0
+              ? 'border-stone-200 bg-white hover:bg-stone-50'
+              : 'border-stone-100 bg-stone-50 hover:bg-stone-100'
+        )}
+        onClick={() => isMultiSelectMode && onSelectionChange(req.id)}
+      >
+        {isMultiSelectMode && (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onSelectionChange(req.id)}
+            className="mt-0.5"
+          />
+        )}
+        <div className="flex-1">
+          <div className="flex items-start gap-2">
+            <span className={cn(
+              'font-mono font-semibold',
+              depth === 0 ? 'text-sm text-stone-500' : 'text-xs text-stone-400'
+            )}>
+              {req.requirement_number}.
+            </span>
+            <p className={cn(
+              depth === 0 ? 'text-sm text-stone-700' : 'text-xs text-stone-600'
+            )}>
+              {req.description}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // For nodes with children, render collapsible section
+  return (
+    <div className={cn(
+      'rounded-lg border transition-colors',
+      'border-stone-200 bg-stone-50/30'
+    )}>
+      {/* Collapsible Header */}
+      <div
+        className={cn(
+          'flex items-center gap-3 px-3 py-2.5 text-sm transition-colors',
+          'hover:bg-stone-100/50',
+          isCollapsed ? 'rounded-lg' : 'rounded-t-lg',
+          isMultiSelectMode && 'cursor-pointer'
+        )}
+        onClick={() => {
+          if (isMultiSelectMode) {
+            onSelectionChange(req.id)
+          } else {
+            toggleNode(req.id)
+          }
+        }}
+      >
+        {/* Multi-select checkbox OR Expand/Collapse Icon */}
+        {isMultiSelectMode ? (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onSelectionChange(req.id)}
+            className="shrink-0"
+          />
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleNode(req.id)
+            }}
+            className="flex h-5 w-5 shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+        )}
+
+        {/* Requirement Number Badge */}
+        <span className="flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded bg-stone-200 px-1.5 text-xs font-bold text-stone-700">
+          {req.requirement_number}
+        </span>
+
+        {/* Title/Description */}
+        <span className="flex-1 font-medium text-stone-700 line-clamp-1">
+          {req.description.length > 80
+            ? req.description.slice(0, 80) + '...'
+            : req.description}
+        </span>
+
+        {/* Alternatives indicator */}
+        {hasAlternativeChildren && (
+          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+            Options
+          </span>
+        )}
+
+        {/* Child count indicator (when not in multi-select) */}
+        {!isMultiSelectMode && (
+          <span className="text-xs text-stone-400">
+            {node.children.length} sub-req{node.children.length !== 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
+
+      {/* Expanded Content */}
+      {!isCollapsed && (
+        <div className="border-t border-stone-100 px-2 pb-2 pt-1">
+          <div className="space-y-1">
+            {node.children.map((child) => (
+              <div
+                key={child.requirement.id}
+                className={cn(
+                  'ml-2 border-l-2 pl-2',
+                  child.requirement.is_alternative
+                    ? 'border-amber-200'
+                    : 'border-stone-200'
+                )}
+              >
+                <RequirementNodeView
+                  node={child}
+                  depth={depth + 1}
+                  isMultiSelectMode={isMultiSelectMode}
+                  selectedIds={selectedIds}
+                  onSelectionChange={onSelectionChange}
+                  collapsedNodes={collapsedNodes}
+                  toggleNode={toggleNode}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 /**
@@ -70,38 +284,43 @@ export function UnitRankPanel({
   requirements,
   scouts,
   unitId,
-  versionId,
   canEdit,
   currentUserName = 'Leader',
 }: UnitRankPanelProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // Multi-select state
-  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
+  // Multi-select state (always enabled for better UX)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [scoutSelectionOpen, setScoutSelectionOpen] = useState(false)
 
-  // Sort requirements by number, filter to top-level only
-  const sortedRequirements = useMemo(() => {
-    return requirements
-      .filter(r => !r.parent_requirement_id)
-      .sort((a, b) => {
-        const numA = parseFloat(a.requirement_number || '0')
-        const numB = parseFloat(b.requirement_number || '0')
-        return numA - numB
-      })
+  // Build hierarchical tree from requirements
+  const requirementTree = useMemo(() => {
+    return buildRequirementTree(requirements)
   }, [requirements])
 
-  // Get sub-requirements for each parent
-  const getSubRequirements = (parentId: string) => {
-    return requirements
-      .filter(r => r.parent_requirement_id === parentId)
-      .sort((a, b) => {
-        const numA = parseFloat(a.requirement_number || '0')
-        const numB = parseFloat(b.requirement_number || '0')
-        return numA - numB
-      })
+  // Track which parent nodes are collapsed
+  const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set())
+
+  const toggleNode = (id: string) => {
+    setCollapsedNodes(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  // Collect all requirement IDs from a node and its children (for select all)
+  const collectAllIds = (node: RequirementNode): string[] => {
+    const ids = [node.requirement.id]
+    node.children.forEach(child => {
+      ids.push(...collectAllIds(child))
+    })
+    return ids
   }
 
   // Build maps for scout completion status
@@ -158,19 +377,13 @@ export function UnitRankPanel({
   const handleSelectAll = () => {
     // Select all requirements (including sub-requirements)
     const allIds = new Set<string>()
-    sortedRequirements.forEach(req => {
-      allIds.add(req.id)
-      getSubRequirements(req.id).forEach(sub => allIds.add(sub.id))
+    requirementTree.forEach(node => {
+      collectAllIds(node).forEach(id => allIds.add(id))
     })
     setSelectedIds(allIds)
   }
 
   const handleClearSelection = () => {
-    setSelectedIds(new Set())
-  }
-
-  const handleCancelMultiSelect = () => {
-    setIsMultiSelectMode(false)
     setSelectedIds(new Set())
   }
 
@@ -186,14 +399,12 @@ export function UnitRankPanel({
         scoutIds,
         unitId,
         itemId: rank.id,
-        versionId,
         date,
         completedBy: currentUserName,
       })
 
       if (result.success) {
         setScoutSelectionOpen(false)
-        setIsMultiSelectMode(false)
         setSelectedIds(new Set())
         router.refresh()
       }
@@ -218,117 +429,34 @@ export function UnitRankPanel({
       <div className="mb-4 flex items-start gap-4 rounded-lg bg-stone-50 p-4">
         <RankIcon rank={rank} size="lg" />
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-stone-900">{rank.name} Rank</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-stone-900">{rank.name} Rank</h3>
+            <VersionYearBadge year={rank.requirement_version_year} />
+          </div>
           {rank.description && (
             <p className="mt-1 text-sm text-stone-600">{rank.description}</p>
           )}
           <p className="mt-2 text-sm text-stone-500">
-            {totalRequirements} requirements
+            {totalRequirements} requirements • Select to sign off for scouts
           </p>
-
-          {/* Multi-select toggle */}
-          {canEdit && (
-            <div className="mt-3">
-              <Button
-                variant={isMultiSelectMode ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  if (isMultiSelectMode) {
-                    handleCancelMultiSelect()
-                  } else {
-                    setIsMultiSelectMode(true)
-                  }
-                }}
-                className={cn(
-                  'h-8 gap-1.5 text-xs',
-                  isMultiSelectMode && 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                )}
-              >
-                <ListChecks className="h-3.5 w-3.5" />
-                {isMultiSelectMode ? 'Cancel Selection' : 'Select Requirements'}
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Requirements List */}
-      {sortedRequirements.length > 0 ? (
+      {requirementTree.length > 0 ? (
         <div className="space-y-2">
-          {sortedRequirements.map(req => {
-            const subReqs = getSubRequirements(req.id)
-            const isSelected = selectedIds.has(req.id)
-
-            return (
-              <div key={req.id}>
-                {/* Parent requirement */}
-                <div
-                  className={cn(
-                    'flex items-start gap-3 rounded-lg border p-3 transition-colors',
-                    isMultiSelectMode && 'cursor-pointer',
-                    isSelected
-                      ? 'border-blue-200 bg-blue-50'
-                      : 'border-stone-200 bg-white hover:bg-stone-50'
-                  )}
-                  onClick={() => isMultiSelectMode && handleSelectionChange(req.id)}
-                >
-                  {isMultiSelectMode && (
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={() => handleSelectionChange(req.id)}
-                      className="mt-0.5"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <div className="flex items-start gap-2">
-                      <span className="font-mono text-sm font-semibold text-stone-500">
-                        {req.requirement_number}.
-                      </span>
-                      <p className="text-sm text-stone-700">{req.description}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sub-requirements */}
-                {subReqs.length > 0 && (
-                  <div className="ml-6 mt-1 space-y-1">
-                    {subReqs.map(sub => {
-                      const isSubSelected = selectedIds.has(sub.id)
-                      return (
-                        <div
-                          key={sub.id}
-                          className={cn(
-                            'flex items-start gap-3 rounded-lg border p-2.5 transition-colors',
-                            isMultiSelectMode && 'cursor-pointer',
-                            isSubSelected
-                              ? 'border-blue-200 bg-blue-50'
-                              : 'border-stone-100 bg-stone-50 hover:bg-stone-100'
-                          )}
-                          onClick={() => isMultiSelectMode && handleSelectionChange(sub.id)}
-                        >
-                          {isMultiSelectMode && (
-                            <Checkbox
-                              checked={isSubSelected}
-                              onCheckedChange={() => handleSelectionChange(sub.id)}
-                              className="mt-0.5"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <div className="flex items-start gap-2">
-                              <span className="font-mono text-xs font-semibold text-stone-400">
-                                {sub.requirement_number}.
-                              </span>
-                              <p className="text-xs text-stone-600">{sub.description}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {requirementTree.map(node => (
+            <RequirementNodeView
+              key={node.requirement.id}
+              node={node}
+              depth={0}
+              isMultiSelectMode={canEdit}
+              selectedIds={selectedIds}
+              onSelectionChange={handleSelectionChange}
+              collapsedNodes={collapsedNodes}
+              toggleNode={toggleNode}
+            />
+          ))}
         </div>
       ) : (
         <div className="py-12 text-center">
@@ -337,15 +465,14 @@ export function UnitRankPanel({
         </div>
       )}
 
-      {/* Multi-select action bar */}
+      {/* Multi-select action bar - shows when items are selected */}
       <MultiSelectActionBar
         selectedCount={selectedIds.size}
         totalSelectableCount={requirements.length}
         onSelectAll={handleSelectAll}
         onClear={handleClearSelection}
         onSignOff={handleSignOff}
-        onCancel={handleCancelMultiSelect}
-        visible={isMultiSelectMode}
+        visible={selectedIds.size > 0}
       />
 
       {/* Scout selection dialog */}

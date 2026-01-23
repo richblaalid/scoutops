@@ -51,7 +51,6 @@ interface RequirementApprovalRowProps {
   initData?: {
     scoutId: string
     rankId: string
-    versionId: string
   }
   // Merit badge support
   isMeritBadge?: boolean
@@ -59,7 +58,6 @@ interface RequirementApprovalRowProps {
     scoutId: string
     meritBadgeId: string
     meritBadgeProgressId: string
-    versionId: string
   }
 }
 
@@ -127,7 +125,6 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
             rankId: initData.rankId,
             requirementId: id,
             unitId,
-            versionId: initData.versionId,
             completedAt,
             notes: noteText || undefined,
           })
@@ -177,13 +174,13 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
   }
 
   const handleCheckboxChange = (checked: boolean) => {
-    if (!canEdit || isComplete) return
+    if (isComplete) return
 
     if (isMultiSelectMode && onSelectionChange) {
       // In multi-select mode, toggle selection
       onSelectionChange()
-    } else if (checked) {
-      // Normal mode: open completion dialog
+    } else if (canEdit && checked) {
+      // Normal mode: open completion dialog (only if canEdit)
       setCompletionDialogOpen(true)
     }
   }
@@ -206,17 +203,17 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
       >
         {/* Selection/Completion Checkbox */}
         <div className="flex h-6 items-center">
-          {canEdit ? (
+          {(canEdit || isMultiSelectMode) ? (
             <Checkbox
-              checked={isMultiSelectMode ? isSelected : (isComplete || showSuccess)}
-              disabled={isLoading || status === 'approved' || status === 'awarded'}
+              checked={isComplete || showSuccess || (isMultiSelectMode && isSelected)}
+              disabled={isLoading || isComplete}
               onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
               className={cn(
                 'transition-all',
-                // Multi-select mode: blue selection styling
-                isMultiSelectMode && isSelected && 'border-blue-500 bg-blue-500 text-white data-[state=checked]:bg-blue-500',
-                // Normal mode: green completion styling
-                !isMultiSelectMode && (isComplete || showSuccess) && 'border-emerald-500 bg-emerald-500 text-white data-[state=checked]:bg-emerald-500'
+                // Completed requirements always show green
+                (isComplete || showSuccess) && 'border-emerald-500 bg-emerald-500 text-white data-[state=checked]:bg-emerald-500',
+                // Multi-select mode: blue selection styling for incomplete requirements
+                isMultiSelectMode && isSelected && !isComplete && 'border-blue-500 bg-blue-500 text-white data-[state=checked]:bg-blue-500'
               )}
             />
           ) : (

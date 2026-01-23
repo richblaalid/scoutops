@@ -9,7 +9,8 @@ import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
 import { ScoutSelectionDialog } from './scout-selection-dialog'
 import { MultiSelectActionBar } from './multi-select-action-bar'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, Award, Star, ListChecks, Loader2 } from 'lucide-react'
+import { ArrowLeft, Award, Star, Loader2 } from 'lucide-react'
+import { VersionYearBadge } from '@/components/ui/version-year-badge'
 import { bulkSignOffForScouts } from '@/app/actions/advancement'
 import { useRouter } from 'next/navigation'
 import type { BsaMeritBadge, BsaMeritBadgeRequirement } from '@/types/advancement'
@@ -41,7 +42,6 @@ interface UnitMeritBadgePanelProps {
   requirements: BsaMeritBadgeRequirement[]
   scouts: Scout[]
   unitId: string
-  versionId: string
   canEdit: boolean
   isLoading?: boolean
   onBack: () => void
@@ -57,7 +57,6 @@ export function UnitMeritBadgePanel({
   requirements,
   scouts,
   unitId,
-  versionId,
   canEdit,
   isLoading = false,
   onBack,
@@ -66,8 +65,7 @@ export function UnitMeritBadgePanel({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // Multi-select state
-  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
+  // Multi-select state (always enabled for better UX)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [scoutSelectionOpen, setScoutSelectionOpen] = useState(false)
 
@@ -154,11 +152,6 @@ export function UnitMeritBadgePanel({
     setSelectedIds(new Set())
   }
 
-  const handleCancelMultiSelect = () => {
-    setIsMultiSelectMode(false)
-    setSelectedIds(new Set())
-  }
-
   const handleSignOff = () => {
     setScoutSelectionOpen(true)
   }
@@ -171,14 +164,12 @@ export function UnitMeritBadgePanel({
         scoutIds,
         unitId,
         itemId: badge.id,
-        versionId,
         date,
         completedBy: currentUserName,
       })
 
       if (result.success) {
         setScoutSelectionOpen(false)
-        setIsMultiSelectMode(false)
         setSelectedIds(new Set())
         router.refresh()
       }
@@ -234,37 +225,14 @@ export function UnitMeritBadgePanel({
                     Eagle Required
                   </Badge>
                 )}
+                <VersionYearBadge year={badge.requirement_version_year} />
               </div>
               {badge.category && (
                 <p className="mt-1 text-sm text-stone-500">{badge.category}</p>
               )}
               <p className="mt-2 text-sm text-stone-600">
-                {totalRequirements} requirements
+                {totalRequirements} requirements • Select to sign off for scouts
               </p>
-
-              {/* Multi-select toggle */}
-              {canEdit && (
-                <div className="mt-3">
-                  <Button
-                    variant={isMultiSelectMode ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      if (isMultiSelectMode) {
-                        handleCancelMultiSelect()
-                      } else {
-                        setIsMultiSelectMode(true)
-                      }
-                    }}
-                    className={cn(
-                      'h-8 gap-1.5 text-xs',
-                      isMultiSelectMode && 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    )}
-                  >
-                    <ListChecks className="h-3.5 w-3.5" />
-                    {isMultiSelectMode ? 'Cancel Selection' : 'Select Requirements'}
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         </CardHeader>
@@ -282,7 +250,7 @@ export function UnitMeritBadgePanel({
               canEdit={false} // Unit view doesn't edit individual requirements
               defaultCollapseCompleted={false}
               isMeritBadge={true}
-              isMultiSelectMode={isMultiSelectMode}
+              isMultiSelectMode={canEdit}
               selectedIds={selectedIds}
               onSelectionChange={handleSelectionChange}
             />
@@ -295,15 +263,14 @@ export function UnitMeritBadgePanel({
         </CardContent>
       </Card>
 
-      {/* Multi-select action bar */}
+      {/* Multi-select action bar - shows when items are selected */}
       <MultiSelectActionBar
         selectedCount={selectedIds.size}
         totalSelectableCount={requirements.length}
         onSelectAll={handleSelectAll}
         onClear={handleClearSelection}
         onSignOff={handleSignOff}
-        onCancel={handleCancelMultiSelect}
-        visible={isMultiSelectMode}
+        visible={selectedIds.size > 0}
       />
 
       {/* Scout selection dialog */}

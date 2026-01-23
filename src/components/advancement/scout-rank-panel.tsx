@@ -10,7 +10,8 @@ import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
 import { BulkApprovalSheet } from './bulk-approval-sheet'
 import { RankActionDialog } from './rank-action-dialog'
 import { MultiSelectActionBar } from './multi-select-action-bar'
-import { Award, Calendar, Check, CheckSquare, PartyPopper, ShieldCheck, ListChecks, Loader2, AlertCircle } from 'lucide-react'
+import { Award, Calendar, Check, PartyPopper, ShieldCheck, Loader2, AlertCircle } from 'lucide-react'
+import { VersionYearBadge } from '@/components/ui/version-year-badge'
 import { approveRank, awardRank } from '@/app/actions/advancement'
 import { cn } from '@/lib/utils'
 import type { AdvancementStatus } from '@/types/advancement'
@@ -28,6 +29,7 @@ interface RankProgress {
     name: string
     display_order: number
     image_url?: string | null
+    requirement_version_year?: number | null
   }
   scout_rank_requirement_progress: Array<{
     id: string
@@ -55,8 +57,8 @@ interface RankRequirementsData {
     name: string
     display_order: number
     image_url: string | null
+    requirement_version_year?: number | null
   }
-  versionId: string
   requirements: Array<{
     id: string
     requirement_number: string
@@ -64,6 +66,7 @@ interface RankRequirementsData {
     parent_requirement_id: string | null
     is_alternative: boolean | null
     alternatives_group: string | null
+    version_year: number | null
   }>
 }
 
@@ -99,8 +102,7 @@ export function ScoutRankPanel({
   const [approveDialogOpen, setApproveDialogOpen] = useState(false)
   const [awardDialogOpen, setAwardDialogOpen] = useState(false)
 
-  // Multi-select mode state
-  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
+  // Multi-select state (always enabled for better UX)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkApprovalOpen, setBulkApprovalOpen] = useState(false)
 
@@ -195,18 +197,12 @@ export function ScoutRankPanel({
     setSelectedIds(new Set())
   }
 
-  const handleCancelMultiSelect = () => {
-    setIsMultiSelectMode(false)
-    setSelectedIds(new Set())
-  }
-
   const handleSignOff = () => {
     setBulkApprovalOpen(true)
   }
 
   const handleBulkApprovalComplete = () => {
     setBulkApprovalOpen(false)
-    setIsMultiSelectMode(false)
     setSelectedIds(new Set())
   }
 
@@ -214,7 +210,6 @@ export function ScoutRankPanel({
   const initData = hasRawRequirements && rankRequirementsData ? {
     scoutId,
     rankId: rankRequirementsData.rank.id,
-    versionId: rankRequirementsData.versionId,
   } : undefined
 
   // Show loading state while fetching requirements
@@ -255,10 +250,12 @@ export function ScoutRankPanel({
     code: rank.bsa_ranks.code,
     name: rank.bsa_ranks.name,
     image_url: rank.bsa_ranks.image_url,
+    requirement_version_year: rank.bsa_ranks.requirement_version_year,
   } : hasRawRequirements && rankRequirementsData ? {
     code: rankRequirementsData.rank.code,
     name: rankRequirementsData.rank.name,
     image_url: rankRequirementsData.rank.image_url,
+    requirement_version_year: rankRequirementsData.rank.requirement_version_year,
   } : null
 
   if (!rankData) return null
@@ -328,36 +325,13 @@ export function ScoutRankPanel({
 
           {/* Rank Info */}
           <div className="flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-stone-900">{rankData.name}</h2>
-                <Badge className={cn(config.bg, config.text, 'border-0')}>
-                  {config.icon && <Award className="mr-1 h-3 w-3" />}
-                  {config.label}
-                </Badge>
-              </div>
-
-              {/* Multi-select toggle */}
-              {canEdit && !isAwarded && incompleteCount > 0 && (
-                <Button
-                  variant={isMultiSelectMode ? 'secondary' : 'outline'}
-                  size="sm"
-                  onClick={() => {
-                    if (isMultiSelectMode) {
-                      handleCancelMultiSelect()
-                    } else {
-                      setIsMultiSelectMode(true)
-                    }
-                  }}
-                  className={cn(
-                    'h-8 gap-1.5 text-xs',
-                    isMultiSelectMode && 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  )}
-                >
-                  <ListChecks className="h-3.5 w-3.5" />
-                  {isMultiSelectMode ? 'Cancel Selection' : 'Select Multiple'}
-                </Button>
-              )}
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-stone-900">{rankData.name}</h2>
+              <Badge className={cn(config.bg, config.text, 'border-0')}>
+                {config.icon && <Award className="mr-1 h-3 w-3" />}
+                {config.label}
+              </Badge>
+              <VersionYearBadge year={rankData.requirement_version_year} />
             </div>
 
             {/* Progress Bar */}
@@ -461,7 +435,7 @@ export function ScoutRankPanel({
           defaultCollapseCompleted={hasProgressData}
           currentUserName={currentUserName}
           initData={initData}
-          isMultiSelectMode={isMultiSelectMode}
+          isMultiSelectMode={canEdit && !isAwarded}
           selectedIds={selectedIds}
           onSelectionChange={handleSelectionChange}
         />
@@ -496,15 +470,14 @@ export function ScoutRankPanel({
         />
       )}
 
-      {/* Multi-select action bar */}
+      {/* Multi-select action bar - shows when items are selected */}
       <MultiSelectActionBar
         selectedCount={selectedIds.size}
         totalSelectableCount={incompleteRequirementIds.size}
         onSelectAll={handleSelectAll}
         onClear={handleClearSelection}
         onSignOff={handleSignOff}
-        onCancel={handleCancelMultiSelect}
-        visible={isMultiSelectMode}
+        visible={selectedIds.size > 0}
       />
 
       {/* Bulk Approval Sheet - controlled mode for multi-select */}
@@ -520,7 +493,6 @@ export function ScoutRankPanel({
         onComplete={handleBulkApprovalComplete}
         initData={hasRawRequirements && rankRequirementsData ? {
           rankId: rankRequirementsData.rank.id,
-          versionId: rankRequirementsData.versionId,
         } : undefined}
       />
     </Card>

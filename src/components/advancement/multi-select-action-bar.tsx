@@ -18,8 +18,6 @@ interface MultiSelectActionBarProps {
   onClear: () => void
   /** Called when "Sign Off" is clicked - opens bulk approval */
   onSignOff: () => void
-  /** Called when "Cancel" (exit multi-select) is clicked */
-  onCancel: () => void
   /** Whether the action bar is visible */
   visible: boolean
   /** Optional class name for the container */
@@ -32,7 +30,6 @@ export function MultiSelectActionBar({
   onSelectAll,
   onClear,
   onSignOff,
-  onCancel,
   visible,
   className,
 }: MultiSelectActionBarProps) {
@@ -104,31 +101,21 @@ export function MultiSelectActionBar({
         {/* Divider */}
         <div className="h-6 w-px bg-stone-200" />
 
-        {/* Actions */}
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="h-8 text-xs text-stone-500 hover:text-stone-700"
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={onSignOff}
-            disabled={!hasSelection}
-            className={cn(
-              'h-8 gap-1.5',
-              hasSelection
-                ? 'bg-forest-600 hover:bg-forest-700 text-white'
-                : 'bg-stone-100 text-stone-400'
-            )}
-          >
-            <Check className="h-3.5 w-3.5" />
-            Sign Off{hasSelection && ` (${selectedCount})`}
-          </Button>
-        </div>
+        {/* Sign Off Action */}
+        <Button
+          size="sm"
+          onClick={onSignOff}
+          disabled={!hasSelection}
+          className={cn(
+            'h-8 gap-1.5',
+            hasSelection
+              ? 'bg-forest-600 hover:bg-forest-700 text-white'
+              : 'bg-stone-100 text-stone-400'
+          )}
+        >
+          <Check className="h-3.5 w-3.5" />
+          Sign Off{hasSelection && ` (${selectedCount})`}
+        </Button>
       </div>
     </div>
   )

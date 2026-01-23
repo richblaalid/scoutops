@@ -59,7 +59,6 @@ interface RankProgress {
 interface MeritBadgeProgress {
   id: string
   status: string
-  version_id?: string
   started_at: string | null
   completed_at: string | null
   awarded_at: string | null
@@ -131,8 +130,6 @@ interface ScoutAdvancementSectionProps {
   activityEntries: ActivityEntry[]
   activityTotals: ActivityTotals
   canEdit: boolean
-  /** Active BSA requirement version ID - used as fallback when progress records don't have version_id */
-  versionId: string
 }
 
 // Compute the "next" rank based on current rank or progress
@@ -186,7 +183,6 @@ export function ScoutAdvancementSection({
   activityEntries,
   activityTotals,
   canEdit,
-  versionId,
 }: ScoutAdvancementSectionProps) {
   const [activeTab, setActiveTab] = useState('rank')
 
@@ -392,29 +388,28 @@ export function ScoutAdvancementSection({
                 compact
               />
 
-              {/* Scout Rank Panel */}
-              <ScoutRankPanel
-                rank={selectedRankProgress}
-                scoutId={scoutId}
-                unitId={unitId}
-                canEdit={canEdit}
-                rankName={selectedRank.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                currentUserName={currentUserName}
-                rankRequirementsData={fetchedRequirements}
-                isLoading={isLoadingRequirements}
-              />
+              {/* Scout Rank Panel - min-height prevents layout shift during loading */}
+              <div className="min-h-[400px]">
+                <ScoutRankPanel
+                  rank={selectedRankProgress}
+                  scoutId={scoutId}
+                  unitId={unitId}
+                  canEdit={canEdit}
+                  rankName={selectedRank.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                  currentUserName={currentUserName}
+                  rankRequirementsData={fetchedRequirements}
+                  isLoading={isLoadingRequirements}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="badges" className="mt-4">
               {selectedBadge ? (
                 // Detail view for selected badge
-                // Always use active versionId for fetching requirements (not badge's version_id)
-                // Progress matching still works via requirement_id links
                 <ScoutMeritBadgePanel
                   badge={selectedBadge}
                   scoutId={scoutId}
                   unitId={unitId}
-                  versionId={versionId}
                   canEdit={canEdit}
                   onBack={() => setSelectedBadge(null)}
                   currentUserName={currentUserName}
