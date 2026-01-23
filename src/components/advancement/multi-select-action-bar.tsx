@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Check, CheckSquare, X, ListChecks } from 'lucide-react'
@@ -34,12 +36,20 @@ export function MultiSelectActionBar({
   visible,
   className,
 }: MultiSelectActionBarProps) {
-  if (!visible) return null
+  // Use portal to render in document body, bypassing any parent transforms
+  // that would break fixed positioning (e.g., framer-motion animations)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!visible || !mounted) return null
 
   const allSelected = selectedCount === totalSelectableCount && totalSelectableCount > 0
   const hasSelection = selectedCount > 0
 
-  return (
+  const content = (
     <div
       className={cn(
         'fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform',
@@ -122,4 +132,7 @@ export function MultiSelectActionBar({
       </div>
     </div>
   )
+
+  // Render via portal to document.body to escape any CSS containing blocks
+  return createPortal(content, document.body)
 }
