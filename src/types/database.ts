@@ -378,6 +378,7 @@ export type Database = {
           parent_requirement_id: string | null
           required_count: number | null
           requirement_number: string
+          scoutbook_requirement_number: string | null
           sub_requirement_letter: string | null
           version_year: number | null
         }
@@ -394,6 +395,7 @@ export type Database = {
           parent_requirement_id?: string | null
           required_count?: number | null
           requirement_number: string
+          scoutbook_requirement_number?: string | null
           sub_requirement_letter?: string | null
           version_year?: number | null
         }
@@ -410,6 +412,7 @@ export type Database = {
           parent_requirement_id?: string | null
           required_count?: number | null
           requirement_number?: string
+          scoutbook_requirement_number?: string | null
           sub_requirement_letter?: string | null
           version_year?: number | null
         }
@@ -426,6 +429,53 @@ export type Database = {
             columns: ["parent_requirement_id"]
             isOneToOne: false
             referencedRelation: "bsa_merit_badge_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bsa_merit_badge_versions: {
+        Row: {
+          created_at: string | null
+          effective_date: string | null
+          id: string
+          is_current: boolean | null
+          merit_badge_id: string
+          notes: string | null
+          scraped_at: string | null
+          source: string | null
+          updated_at: string | null
+          version_year: number
+        }
+        Insert: {
+          created_at?: string | null
+          effective_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          merit_badge_id: string
+          notes?: string | null
+          scraped_at?: string | null
+          source?: string | null
+          updated_at?: string | null
+          version_year: number
+        }
+        Update: {
+          created_at?: string | null
+          effective_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          merit_badge_id?: string
+          notes?: string | null
+          scraped_at?: string | null
+          source?: string | null
+          updated_at?: string | null
+          version_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bsa_merit_badge_versions_merit_badge_id_fkey"
+            columns: ["merit_badge_id"]
+            isOneToOne: false
+            referencedRelation: "bsa_merit_badges"
             referencedColumns: ["id"]
           },
         ]
@@ -1772,6 +1822,7 @@ export type Database = {
           created_at: string | null
           id: string
           merit_badge_id: string
+          requirement_version_year: number | null
           scout_id: string
           started_at: string | null
           status: Database["public"]["Enums"]["advancement_status"]
@@ -1791,6 +1842,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           merit_badge_id: string
+          requirement_version_year?: number | null
           scout_id: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["advancement_status"]
@@ -1810,6 +1862,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           merit_badge_id?: string
+          requirement_version_year?: number | null
           scout_id?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["advancement_status"]
