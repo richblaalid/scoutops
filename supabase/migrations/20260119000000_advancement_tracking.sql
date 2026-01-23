@@ -116,9 +116,12 @@ CREATE TABLE bsa_merit_badge_requirements (
     nesting_depth INTEGER DEFAULT 0,
     original_scoutbook_id TEXT,
     required_count INTEGER,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(version_year, merit_badge_id, requirement_number, COALESCE(sub_requirement_letter, ''))
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Unique index with COALESCE (can't use COALESCE in table UNIQUE constraint)
+CREATE UNIQUE INDEX idx_mb_requirements_unique
+ON bsa_merit_badge_requirements(version_year, merit_badge_id, requirement_number, COALESCE(sub_requirement_letter, ''));
 
 -- Indexes for requirement lookup
 CREATE INDEX idx_mb_requirements_badge_version ON bsa_merit_badge_requirements(merit_badge_id, version_year);
