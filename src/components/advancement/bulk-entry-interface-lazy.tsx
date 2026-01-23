@@ -84,7 +84,6 @@ interface BulkEntryInterfaceLazyProps {
   badgeRequirements: Requirement[]
   scouts: Scout[]
   unitId: string
-  versionId: string
 }
 
 export function BulkEntryInterfaceLazy(props: BulkEntryInterfaceLazyProps) {

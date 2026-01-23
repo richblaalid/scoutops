@@ -32,7 +32,7 @@ interface MeritBadge {
 
 interface Requirement {
   id: string
-  version_id: string
+  version_year: number | null
   merit_badge_id: string
   requirement_number: string
   sub_requirement_letter: string | null
@@ -72,7 +72,6 @@ interface BadgeRequirementAssignDialogProps {
   badge: MeritBadge
   allScouts: Scout[] // All scouts in the unit (not just those tracking)
   unitId: string
-  versionId: string
 }
 
 type ScoutStatus = 'completed' | 'tracking' | 'not_tracking'
@@ -91,7 +90,6 @@ export function BadgeRequirementAssignDialog({
   badge,
   allScouts,
   unitId,
-  versionId,
 }: BadgeRequirementAssignDialogProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -179,7 +177,6 @@ export function BadgeRequirementAssignDialog({
       const result = await assignMeritBadgeRequirementToScouts({
         requirementId: requirement.id,
         meritBadgeId: badge.id,
-        versionId,
         unitId,
         assignments,
         completedAt,

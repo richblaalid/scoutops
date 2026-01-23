@@ -41,7 +41,7 @@ interface MeritBadge {
 
 interface Requirement {
   id: string
-  version_id: string
+  version_year: number | null
   merit_badge_id: string
   requirement_number: string
   parent_requirement_id: string | null
@@ -82,7 +82,6 @@ interface MeritBadgeDetailSheetProps {
   requirements: Requirement[]
   scouts: Scout[]
   unitId: string
-  versionId: string
   canEdit: boolean
   isLoading?: boolean
 }
@@ -94,7 +93,6 @@ export function MeritBadgeDetailSheet({
   requirements,
   scouts,
   unitId,
-  versionId,
   canEdit,
   isLoading = false,
 }: MeritBadgeDetailSheetProps) {
@@ -421,7 +419,6 @@ export function MeritBadgeDetailSheet({
           badge={badge}
           allScouts={scouts}
           unitId={unitId}
-          versionId={versionId}
         />
       )}
 
@@ -432,7 +429,6 @@ export function MeritBadgeDetailSheet({
         badge={badge}
         scoutsNotStarted={scoutsNotStarted}
         unitId={unitId}
-        versionId={versionId}
       />
     </>
   )

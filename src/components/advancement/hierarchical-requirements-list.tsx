@@ -36,7 +36,6 @@ interface HierarchicalRequirementsListProps {
   initData?: {
     scoutId: string
     rankId: string
-    versionId: string
   }
   // Merit badge support
   isMeritBadge?: boolean
@@ -44,7 +43,6 @@ interface HierarchicalRequirementsListProps {
     scoutId: string
     meritBadgeId: string
     meritBadgeProgressId: string
-    versionId: string
   }
   // Multi-select support for bulk operations
   isMultiSelectMode?: boolean
@@ -289,13 +287,12 @@ const RequirementNodeView = memo(function RequirementNodeView({
   unitId: string
   canEdit: boolean
   currentUserName?: string
-  initData?: { scoutId: string; rankId: string; versionId: string }
+  initData?: { scoutId: string; rankId: string }
   isMeritBadge?: boolean
   meritBadgeInitData?: {
     scoutId: string
     meritBadgeId: string
     meritBadgeProgressId: string
-    versionId: string
   }
   collapsedNodes: Set<string>
   toggleNode: (id: string) => void

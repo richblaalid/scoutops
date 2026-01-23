@@ -20,7 +20,7 @@ interface Rank {
 
 interface Requirement {
   id: string
-  version_id: string
+  version_year: number | null
   rank_id: string
   requirement_number: string
   parent_requirement_id: string | null
@@ -58,7 +58,6 @@ interface RankRequirementsBrowserProps {
   requirements: Requirement[]
   scouts: Scout[]
   unitId: string
-  versionId: string
   canEdit: boolean
   currentUserName?: string
 }
@@ -68,7 +67,6 @@ export function RankRequirementsBrowser({
   requirements,
   scouts,
   unitId,
-  versionId,
   canEdit,
   currentUserName = 'Leader',
 }: RankRequirementsBrowserProps) {
@@ -128,7 +126,6 @@ export function RankRequirementsBrowser({
                   requirements={reqs}
                   scouts={scouts}
                   unitId={unitId}
-                  versionId={versionId}
                   canEdit={canEdit}
                   currentUserName={currentUserName}
                 />

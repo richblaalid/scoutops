@@ -33,11 +33,12 @@ export interface BsaRank {
   description: string | null
   image_url: string | null
   is_eagle_required: boolean | null
+  requirement_version_year?: number | null
 }
 
 export interface BsaRankRequirement {
   id: string
-  version_id: string
+  version_year: number | null
   rank_id: string
   requirement_number: string
   parent_requirement_id: string | null
@@ -58,11 +59,12 @@ export interface BsaMeritBadge {
   description: string | null
   image_url: string | null
   pamphlet_url: string | null
+  requirement_version_year?: number | null
 }
 
 export interface BsaMeritBadgeRequirement {
   id: string
-  version_id: string
+  version_year: number | null
   merit_badge_id: string
   requirement_number: string
   parent_requirement_id: string | null
@@ -73,7 +75,6 @@ export interface BsaMeritBadgeRequirement {
   is_alternative: boolean | null
   alternatives_group: string | null
   nesting_depth: number | null
-  original_scoutbook_id: string | null
   required_count: number | null
 }
 
@@ -113,7 +114,6 @@ export interface RankProgress {
   id: string
   scout_id: string
   rank_id: string
-  version_id: string
   status: AdvancementStatus
   started_at: string | null
   completed_at: string | null
@@ -140,7 +140,6 @@ export interface MeritBadgeProgress {
   id: string
   scout_id: string
   merit_badge_id: string
-  version_id: string
   status: AdvancementStatus
   started_at: string | null
   completed_at: string | null

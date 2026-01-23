@@ -66,7 +66,7 @@ interface Rank {
 
 interface RankRequirement {
   id: string
-  version_id: string
+  version_year: number | null
   rank_id: string
   requirement_number: string
   parent_requirement_id: string | null
@@ -158,7 +158,6 @@ interface UnitAdvancementTabsProps {
   scoutsWithBadgeProgress: ScoutWithBadgeProgress[]
   // Common
   unitId: string
-  versionId: string
   canEdit: boolean
   currentUserName?: string
 }
@@ -177,7 +176,6 @@ export function UnitAdvancementTabs({
   categories,
   scoutsWithBadgeProgress,
   unitId,
-  versionId,
   canEdit,
   currentUserName = 'Leader',
 }: UnitAdvancementTabsProps) {
@@ -207,7 +205,6 @@ export function UnitAdvancementTabs({
           requirements={rankRequirements}
           scouts={scoutsWithRankProgress}
           unitId={unitId}
-          versionId={versionId}
           canEdit={canEdit}
         />
       </TabsContent>
@@ -220,7 +217,6 @@ export function UnitAdvancementTabs({
           scouts={scoutsWithBadgeProgress}
           categories={categories}
           unitId={unitId}
-          versionId={versionId}
           canEdit={canEdit}
           currentUserName={currentUserName}
         />

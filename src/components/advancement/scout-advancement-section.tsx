@@ -187,7 +187,14 @@ export function ScoutAdvancementSection({
   const [activeTab, setActiveTab] = useState('rank')
 
   // State for selected merit badge (for detail view)
-  const [selectedBadge, setSelectedBadge] = useState<MeritBadgeProgress | null>(null)
+  // Store just the ID so we always get fresh data from props after router.refresh()
+  const [selectedBadgeId, setSelectedBadgeId] = useState<string | null>(null)
+
+  // Derive the full badge from meritBadgeProgress so it updates when props change
+  const selectedBadge = useMemo(() => {
+    if (!selectedBadgeId) return null
+    return meritBadgeProgress.find(b => b.id === selectedBadgeId) || null
+  }, [selectedBadgeId, meritBadgeProgress])
 
   // Compute default selected rank
   const defaultSelectedRank = useMemo(() => {
@@ -411,14 +418,14 @@ export function ScoutAdvancementSection({
                   scoutId={scoutId}
                   unitId={unitId}
                   canEdit={canEdit}
-                  onBack={() => setSelectedBadge(null)}
+                  onBack={() => setSelectedBadgeId(null)}
                   currentUserName={currentUserName}
                 />
               ) : (
                 // Grid view with sash layout
                 <MeritBadgeSashView
                     meritBadgeProgress={meritBadgeProgress}
-                    onBadgeClick={setSelectedBadge}
+                    onBadgeClick={(badge) => setSelectedBadgeId(badge.id)}
                     scoutId={scoutId}
                     unitId={unitId}
                     canEdit={canEdit}

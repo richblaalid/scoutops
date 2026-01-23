@@ -32,6 +32,7 @@ import {
   bulkApproveRequirements,
   bulkApproveRequirementsWithInit,
   bulkApproveMeritBadgeRequirements,
+  bulkApproveMeritBadgeRequirementsWithInit,
 } from '@/app/actions/advancement'
 import type { AdvancementStatus } from '@/types/advancement'
 
@@ -45,6 +46,11 @@ interface Requirement {
 
 interface RankInitData {
   rankId: string
+}
+
+interface MeritBadgeInitData {
+  meritBadgeId: string
+  meritBadgeProgressId: string
 }
 
 interface BulkApprovalSheetProps {
@@ -64,6 +70,8 @@ interface BulkApprovalSheetProps {
   onComplete?: () => void
   /** Init data for ranks without progress records (rank type only) */
   initData?: RankInitData
+  /** Init data for merit badges (always needed for sub-requirements) */
+  meritBadgeInitData?: MeritBadgeInitData
   /** Optional controlled open state */
   open?: boolean
   /** Optional callback for controlled open state */
@@ -81,6 +89,7 @@ export function BulkApprovalSheet({
   trigger,
   onComplete,
   initData,
+  meritBadgeInitData,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   preSelectedIds,
@@ -199,17 +208,31 @@ export function BulkApprovalSheet({
           )
         }
       } else {
-        // Merit badge requirements - always have progress records
-        const progressIds = incompleteRequirements
-          .filter(r => selectedIds.has(r.id) && r.requirementProgressId)
-          .map(r => r.requirementProgressId!)
+        // Merit badge requirements
+        if (meritBadgeInitData) {
+          // Use init function to create progress records for sub-requirements
+          response = await bulkApproveMeritBadgeRequirementsWithInit({
+            scoutId,
+            meritBadgeId: meritBadgeInitData.meritBadgeId,
+            meritBadgeProgressId: meritBadgeInitData.meritBadgeProgressId,
+            requirementIds: Array.from(selectedIds),
+            unitId,
+            completedAt: `${completedDate}T12:00:00.000Z`,
+            notes: notes || undefined,
+          })
+        } else {
+          // Fallback: only approve requirements that have progress records
+          const progressIds = incompleteRequirements
+            .filter(r => selectedIds.has(r.id) && r.requirementProgressId)
+            .map(r => r.requirementProgressId!)
 
-        response = await bulkApproveMeritBadgeRequirements(
-          progressIds,
-          unitId,
-          `${completedDate}T12:00:00.000Z`,
-          notes || undefined
-        )
+          response = await bulkApproveMeritBadgeRequirements(
+            progressIds,
+            unitId,
+            `${completedDate}T12:00:00.000Z`,
+            notes || undefined
+          )
+        }
       }
 
       if (response.success && response.data) {

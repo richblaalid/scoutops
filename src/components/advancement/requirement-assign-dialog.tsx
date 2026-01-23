@@ -30,7 +30,7 @@ interface Rank {
 
 interface Requirement {
   id: string
-  version_id: string
+  version_year: number | null
   rank_id: string
   requirement_number: string
   parent_requirement_id: string | null
@@ -70,7 +70,6 @@ interface RequirementAssignDialogProps {
   rank: Rank
   scouts: Scout[]
   unitId: string
-  versionId: string
 }
 
 type ScoutStatus = 'completed' | 'in_progress' | 'not_started'
@@ -89,7 +88,6 @@ export function RequirementAssignDialog({
   rank,
   scouts,
   unitId,
-  versionId,
 }: RequirementAssignDialogProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -163,7 +161,6 @@ export function RequirementAssignDialog({
       const result = await assignRequirementToScouts({
         requirementId: requirement.id,
         rankId: rank.id,
-        versionId,
         unitId,
         scoutIds: Array.from(selectedScoutIds),
         completedAt,

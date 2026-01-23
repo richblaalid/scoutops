@@ -42,23 +42,6 @@ export default async function AdvancementPage() {
   const membership = membershipData as { unit_id: string; role: string }
   const canEdit = ['admin', 'treasurer', 'leader'].includes(membership.role)
 
-  // Get active requirement version
-  const { data: versionData } = await supabase
-    .from('bsa_requirement_versions')
-    .select('id')
-    .eq('is_active', true)
-    .order('effective_date', { ascending: false })
-    .limit(1)
-    .single()
-
-  if (!versionData) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-stone-500">No active BSA requirements version found.</p>
-      </div>
-    )
-  }
-
   // ==========================================
   // SUMMARY DATA
   // ==========================================
@@ -295,14 +278,15 @@ export default async function AdvancementPage() {
   // Get all ranks (specific columns instead of SELECT *)
   const { data: ranksData } = await supabase
     .from('bsa_ranks')
-    .select('id, code, name, display_order, is_eagle_required, description')
+    .select('id, code, name, display_order, is_eagle_required, description, requirement_version_year')
     .order('display_order')
 
-  // Get all rank requirements for active version (specific columns instead of SELECT *)
+  // Get all rank requirements (filtered by version_year matching rank's requirement_version_year)
+  // We need to get all requirements and filter client-side since Supabase doesn't support
+  // joining on a computed column. Components will filter by rank.requirement_version_year
   const { data: rankRequirementsData } = await supabase
     .from('bsa_rank_requirements')
-    .select('id, version_id, rank_id, requirement_number, parent_requirement_id, sub_requirement_letter, description, is_alternative, alternatives_group, display_order')
-    .eq('version_id', versionData.id)
+    .select('id, version_year, rank_id, requirement_number, parent_requirement_id, sub_requirement_letter, description, is_alternative, alternatives_group, display_order')
     .order('display_order')
 
   // Get scouts with detailed rank progress for the browser
@@ -336,11 +320,12 @@ export default async function AdvancementPage() {
     display_order: number
     is_eagle_required: boolean | null
     description: string | null
+    requirement_version_year: number | null
   }
 
   interface RankRequirement {
     id: string
-    version_id: string
+    version_year: number | null
     rank_id: string
     requirement_number: string
     parent_requirement_id: string | null
@@ -384,7 +369,7 @@ export default async function AdvancementPage() {
   // Get all merit badges (specific columns instead of SELECT *)
   const { data: badgesData } = await supabase
     .from('bsa_merit_badges')
-    .select('id, code, name, category, description, is_eagle_required, is_active, image_url, pamphlet_url')
+    .select('id, code, name, category, description, is_eagle_required, is_active, image_url, pamphlet_url, requirement_version_year')
     .eq('is_active', true)
     .order('name')
 
@@ -428,6 +413,7 @@ export default async function AdvancementPage() {
     is_active: boolean | null
     image_url: string | null
     pamphlet_url: string | null
+    requirement_version_year: number | null
   }
 
   interface MeritBadgeRequirementProgress {
@@ -494,7 +480,6 @@ export default async function AdvancementPage() {
         categories={categories}
         scoutsWithBadgeProgress={scoutsWithBadgeProgress}
         unitId={membership.unit_id}
-        versionId={versionData.id}
         canEdit={canEdit}
         currentUserName={currentUserName}
       />

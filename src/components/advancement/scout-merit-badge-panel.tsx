@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -68,6 +69,7 @@ export function ScoutMeritBadgePanel({
   onBack,
   currentUserName = 'Leader',
 }: ScoutMeritBadgePanelProps) {
+  const router = useRouter()
   const [requirements, setRequirements] = useState<BsaMeritBadgeRequirement[]>([])
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(true)
   const [isPending, startTransition] = useTransition()
@@ -196,6 +198,7 @@ export function ScoutMeritBadgePanel({
   const handleBulkApprovalComplete = () => {
     setBulkApprovalOpen(false)
     setSelectedIds(new Set())
+    router.refresh()
   }
 
   const isAwarded = badge.status === 'awarded' || badge.status === 'approved'
@@ -391,6 +394,10 @@ export function ScoutMeritBadgePanel({
         onOpenChange={setBulkApprovalOpen}
         preSelectedIds={selectedIds}
         onComplete={handleBulkApprovalComplete}
+        meritBadgeInitData={{
+          meritBadgeId: badge.bsa_merit_badges.id,
+          meritBadgeProgressId: badge.id,
+        }}
       />
     </Card>
   )

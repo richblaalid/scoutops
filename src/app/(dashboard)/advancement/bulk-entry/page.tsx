@@ -42,33 +42,16 @@ export default async function BulkEntryPage() {
     redirect('/advancement')
   }
 
-  // Get active requirement version
-  const { data: versionData } = await supabase
-    .from('bsa_requirement_versions')
-    .select('id')
-    .eq('is_active', true)
-    .order('effective_date', { ascending: false })
-    .limit(1)
-    .single()
-
-  if (!versionData) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-stone-500">No active BSA requirements version found.</p>
-      </div>
-    )
-  }
-
   // Get all ranks with their requirements
   const { data: ranksData } = await supabase
     .from('bsa_ranks')
     .select('*')
     .order('display_order')
 
+  // Get rank requirements - all of them, will filter by version_year in components
   const { data: rankRequirementsData } = await supabase
     .from('bsa_rank_requirements')
     .select('*')
-    .eq('version_id', versionData.id)
     .order('display_order')
 
   // Get all merit badges with their requirements
@@ -78,10 +61,10 @@ export default async function BulkEntryPage() {
     .eq('is_active', true)
     .order('name')
 
+  // Get merit badge requirements - all of them, will filter by version_year in components
   const { data: badgeRequirementsData } = await supabase
     .from('bsa_merit_badge_requirements')
     .select('*')
-    .eq('version_id', versionData.id)
     .order('display_order')
 
   // Get all active scouts with their progress
@@ -194,7 +177,6 @@ export default async function BulkEntryPage() {
       badgeRequirements={badgeRequirements}
       scouts={scouts}
       unitId={membership.unit_id}
-      versionId={versionData.id}
     />
   )
 }

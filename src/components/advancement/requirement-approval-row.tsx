@@ -23,7 +23,7 @@ import {
   User,
   History,
 } from 'lucide-react'
-import { markRequirementComplete, updateRequirementNotes, markRequirementCompleteWithInit, undoRequirementCompletion, markMeritBadgeRequirement } from '@/app/actions/advancement'
+import { markRequirementComplete, updateRequirementNotes, markRequirementCompleteWithInit, undoRequirementCompletion, undoMeritBadgeRequirementCompletion, markMeritBadgeRequirement, addRankRequirementNoteWithInit, updateMeritBadgeRequirementNotes, addMeritBadgeRequirementNoteWithInit } from '@/app/actions/advancement'
 import { RequirementCompletionDialog } from './requirement-completion-dialog'
 import { RequirementUndoDialog } from './requirement-undo-dialog'
 import { parseNotes, formatNoteTimestamp, getNoteTypeLabel, type RequirementNote } from '@/lib/notes-utils'
@@ -96,8 +96,8 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
   const isDenied = approvalStatus === 'denied'
   // Can approve if we have either a progress ID or init data to create one
   const canApprove = canEdit && !isComplete && !isPending && (requirementProgressId || initData || meritBadgeInitData)
-  // Can undo only completed (not approved/awarded) requirements - ranks only for now
-  const canUndo = canEdit && status === 'completed' && requirementProgressId && !isMeritBadge
+  // Can undo completed or approved requirements (not awarded) - works for both ranks and merit badges
+  const canUndo = canEdit && ['completed', 'approved'].includes(status) && requirementProgressId
 
   // Parse notes from JSON or legacy format
   const parsedNotes = useMemo(() => parseNotes(notes), [notes])
@@ -146,7 +146,9 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
 
     setIsLoading(true)
     try {
-      const result = await undoRequirementCompletion(requirementProgressId, unitId, reason)
+      const result = isMeritBadge
+        ? await undoMeritBadgeRequirementCompletion(requirementProgressId, unitId, reason)
+        : await undoRequirementCompletion(requirementProgressId, unitId, reason)
       if (!result.success) {
         throw new Error(result.error)
       }
@@ -159,11 +161,37 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
   }
 
   const handleSaveNotes = async () => {
-    if (!canEdit || isSavingNotes || !requirementProgressId) return
+    if (!canEdit || isSavingNotes) return
+    if (!requirementProgressId && !initData && !meritBadgeInitData) return
 
     setIsSavingNotes(true)
     try {
-      await updateRequirementNotes(requirementProgressId, unitId, noteValue)
+      if (isMeritBadge) {
+        // Merit badge requirement
+        if (requirementProgressId) {
+          await updateMeritBadgeRequirementNotes(requirementProgressId, unitId, noteValue)
+        } else if (meritBadgeInitData) {
+          await addMeritBadgeRequirementNoteWithInit({
+            meritBadgeProgressId: meritBadgeInitData.meritBadgeProgressId,
+            requirementId: id,
+            unitId,
+            noteText: noteValue,
+          })
+        }
+      } else {
+        // Rank requirement
+        if (requirementProgressId) {
+          await updateRequirementNotes(requirementProgressId, unitId, noteValue)
+        } else if (initData) {
+          await addRankRequirementNoteWithInit({
+            scoutId: initData.scoutId,
+            rankId: initData.rankId,
+            requirementId: id,
+            unitId,
+            noteText: noteValue,
+          })
+        }
+      }
       setNotesOpen(false)
       setNoteValue('')
     } catch (error) {
@@ -185,8 +213,8 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
     }
   }
 
-  // Notes are only available if there's a progress record
-  const canAddNotes = canEdit && requirementProgressId
+  // Notes are available if there's a progress record OR init data to create one
+  const canAddNotes = canEdit && (requirementProgressId || initData || meritBadgeInitData)
 
   return (
     <>

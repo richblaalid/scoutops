@@ -109,26 +109,27 @@ export async function initializeRankProgress(
 
   const adminSupabase = createAdminClient()
 
-  // Get the active requirement version
-  const { data: version } = await adminSupabase
-    .from('bsa_requirement_versions')
-    .select('id')
-    .eq('is_active', true)
-    .order('effective_date', { ascending: false })
-    .limit(1)
+  // Get the rank to find its requirement_version_year
+  const { data: rank } = await adminSupabase
+    .from('bsa_ranks')
+    .select('id, requirement_version_year')
+    .eq('id', rankId)
     .single()
 
-  if (!version) {
-    return { success: false, error: 'No active requirement version found' }
+  if (!rank) {
+    return { success: false, error: 'Rank not found' }
   }
 
-  // Create rank progress record
+  if (!rank.requirement_version_year) {
+    return { success: false, error: 'Rank does not have a version year set' }
+  }
+
+  // Create rank progress record (no version_id needed)
   const { data: progress, error: progressError } = await adminSupabase
     .from('scout_rank_progress')
     .insert({
       scout_id: scoutId,
       rank_id: rankId,
-      version_id: version.id,
       status: 'in_progress',
       started_at: new Date().toISOString(),
     })
@@ -140,12 +141,12 @@ export async function initializeRankProgress(
     return { success: false, error: 'Failed to initialize rank progress' }
   }
 
-  // Get all top-level requirements for this rank and version
+  // Get all top-level requirements for this rank's current version
   const { data: requirements } = await adminSupabase
     .from('bsa_rank_requirements')
     .select('id')
-    .eq('version_id', version.id)
     .eq('rank_id', rankId)
+    .eq('version_year', rank.requirement_version_year)
     .is('parent_requirement_id', null)
 
   if (requirements && requirements.length > 0) {
@@ -259,9 +260,9 @@ export async function undoRequirementCompletion(
     return { success: false, error: 'Requirement progress not found' }
   }
 
-  // Only allow undo on completed requirements (not approved or awarded)
-  if (!['completed'].includes(existing.status)) {
-    return { success: false, error: 'Only completed requirements can be undone' }
+  // Only allow undo on completed or approved requirements (not awarded)
+  if (!['completed', 'approved'].includes(existing.status)) {
+    return { success: false, error: 'Only completed or approved requirements can be undone' }
   }
 
   // Append the undo note with reason
@@ -289,6 +290,81 @@ export async function undoRequirementCompletion(
   }
 
   revalidatePath('/advancement')
+  return { success: true }
+}
+
+/**
+ * Undo a completed/approved merit badge requirement, reverting it to not_started status.
+ * Requires a reason note for the audit trail.
+ */
+export async function undoMeritBadgeRequirementCompletion(
+  requirementProgressId: string,
+  unitId: string,
+  undoReason: string
+): Promise<ActionResult> {
+  const featureCheck = checkFeatureEnabled<void>()
+  if (featureCheck) return featureCheck
+
+  if (!undoReason || undoReason.trim().length === 0) {
+    return { success: false, error: 'A reason is required to undo a completed requirement' }
+  }
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+
+  // Fetch existing requirement progress
+  const { data: existing } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .select('notes, status, scout_merit_badge_progress_id')
+    .eq('id', requirementProgressId)
+    .single()
+
+  if (!existing) {
+    return { success: false, error: 'Requirement progress not found' }
+  }
+
+  // Only allow undo on completed or approved requirements (not awarded)
+  if (!['completed', 'approved'].includes(existing.status)) {
+    return { success: false, error: 'Only completed or approved requirements can be undone' }
+  }
+
+  // Append the undo note with reason
+  const newNotes = appendNote(existing.notes || null, {
+    text: `Undo: ${undoReason.trim()}`,
+    author: auth.fullName,
+    authorId: auth.profileId,
+    type: 'undo',
+  })
+
+  const { error } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .update({
+      status: 'not_started',
+      completed_at: null,
+      completed_by: null,
+      notes: newNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', requirementProgressId)
+
+  if (error) {
+    console.error('Error undoing MB requirement completion:', error)
+    return { success: false, error: 'Failed to undo requirement completion' }
+  }
+
+  // Get scout ID for path revalidation
+  const { data: progress } = await adminSupabase
+    .from('scout_merit_badge_progress')
+    .select('scout_id')
+    .eq('id', existing.scout_merit_badge_progress_id)
+    .single()
+
+  revalidatePath('/advancement')
+  if (progress?.scout_id) {
+    revalidatePath(`/scouts/${progress.scout_id}`)
+  }
   return { success: true }
 }
 
@@ -440,6 +516,273 @@ export async function updateRequirementNotes(
 }
 
 /**
+ * Add a note to a rank requirement, creating progress record if needed.
+ */
+export async function addRankRequirementNoteWithInit(params: {
+  scoutId: string
+  rankId: string
+  requirementId: string
+  unitId: string
+  noteText: string
+}): Promise<ActionResult<{ progressId: string }>> {
+  const featureCheck = checkFeatureEnabled<{ progressId: string }>()
+  if (featureCheck) return featureCheck
+
+  if (!params.noteText || params.noteText.trim().length === 0) {
+    return { success: false, error: 'Note text is required' }
+  }
+
+  const auth = await verifyLeaderRole(params.unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+
+  // Get the rank to find its requirement_version_year
+  const { data: rank } = await adminSupabase
+    .from('bsa_ranks')
+    .select('id, requirement_version_year')
+    .eq('id', params.rankId)
+    .single()
+
+  if (!rank || !rank.requirement_version_year) {
+    return { success: false, error: 'Rank not found or missing version year' }
+  }
+
+  // Check if scout has rank progress for this rank
+  let { data: rankProgress } = await adminSupabase
+    .from('scout_rank_progress')
+    .select('id')
+    .eq('scout_id', params.scoutId)
+    .eq('rank_id', params.rankId)
+    .maybeSingle()
+
+  // Create rank progress if it doesn't exist
+  if (!rankProgress) {
+    const { data: newProgress, error: progressError } = await adminSupabase
+      .from('scout_rank_progress')
+      .insert({
+        scout_id: params.scoutId,
+        rank_id: params.rankId,
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single()
+
+    if (progressError) {
+      console.error('Error creating rank progress:', progressError)
+      return { success: false, error: 'Failed to create rank progress' }
+    }
+
+    rankProgress = newProgress
+
+    // Create all requirement progress records for this rank's current version
+    const { data: requirements } = await adminSupabase
+      .from('bsa_rank_requirements')
+      .select('id')
+      .eq('rank_id', params.rankId)
+      .eq('version_year', rank.requirement_version_year)
+
+    if (requirements && requirements.length > 0) {
+      const reqProgressRecords = requirements.map((req) => ({
+        scout_rank_progress_id: rankProgress!.id,
+        requirement_id: req.id,
+        status: 'not_started' as const,
+      }))
+
+      await adminSupabase.from('scout_rank_requirement_progress').insert(reqProgressRecords)
+    }
+  }
+
+  // Find the requirement progress record
+  const { data: reqProgress } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .select('id, notes')
+    .eq('scout_rank_progress_id', rankProgress.id)
+    .eq('requirement_id', params.requirementId)
+    .maybeSingle()
+
+  if (!reqProgress) {
+    return { success: false, error: 'Requirement progress not found' }
+  }
+
+  // Append the new note
+  const newNotes = appendNote(reqProgress.notes || null, {
+    text: params.noteText.trim(),
+    author: auth.fullName,
+    authorId: auth.profileId,
+    type: 'general',
+  })
+
+  const { error } = await adminSupabase
+    .from('scout_rank_requirement_progress')
+    .update({
+      notes: newNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', reqProgress.id)
+
+  if (error) {
+    console.error('Error adding note:', error)
+    return { success: false, error: 'Failed to add note' }
+  }
+
+  revalidatePath('/advancement')
+  revalidatePath(`/scouts/${params.scoutId}`)
+  return { success: true, data: { progressId: reqProgress.id } }
+}
+
+/**
+ * Add a note to a merit badge requirement (requires existing progress record).
+ */
+export async function updateMeritBadgeRequirementNotes(
+  requirementProgressId: string,
+  unitId: string,
+  noteText: string
+): Promise<ActionResult> {
+  const featureCheck = checkFeatureEnabled<void>()
+  if (featureCheck) return featureCheck
+
+  if (!noteText || noteText.trim().length === 0) {
+    return { success: false, error: 'Note text is required' }
+  }
+
+  const auth = await verifyLeaderRole(unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+
+  // Fetch existing notes to append to
+  const { data: existing } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .select('notes, scout_merit_badge_progress_id')
+    .eq('id', requirementProgressId)
+    .single()
+
+  if (!existing) {
+    return { success: false, error: 'Requirement progress not found' }
+  }
+
+  // Append the new note
+  const newNotes = appendNote(existing.notes || null, {
+    text: noteText.trim(),
+    author: auth.fullName,
+    authorId: auth.profileId,
+    type: 'general',
+  })
+
+  const { error } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .update({
+      notes: newNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', requirementProgressId)
+
+  if (error) {
+    console.error('Error updating MB requirement notes:', error)
+    return { success: false, error: 'Failed to update notes' }
+  }
+
+  // Get scout ID for path revalidation
+  const { data: progress } = await adminSupabase
+    .from('scout_merit_badge_progress')
+    .select('scout_id')
+    .eq('id', existing.scout_merit_badge_progress_id)
+    .single()
+
+  revalidatePath('/advancement')
+  if (progress?.scout_id) {
+    revalidatePath(`/scouts/${progress.scout_id}`)
+  }
+  return { success: true }
+}
+
+/**
+ * Add a note to a merit badge requirement, creating progress record if needed.
+ */
+export async function addMeritBadgeRequirementNoteWithInit(params: {
+  meritBadgeProgressId: string
+  requirementId: string
+  unitId: string
+  noteText: string
+}): Promise<ActionResult<{ progressId: string }>> {
+  const featureCheck = checkFeatureEnabled<{ progressId: string }>()
+  if (featureCheck) return featureCheck
+
+  if (!params.noteText || params.noteText.trim().length === 0) {
+    return { success: false, error: 'Note text is required' }
+  }
+
+  const auth = await verifyLeaderRole(params.unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+
+  // Check if requirement progress already exists
+  let { data: reqProgress } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .select('id, notes')
+    .eq('scout_merit_badge_progress_id', params.meritBadgeProgressId)
+    .eq('requirement_id', params.requirementId)
+    .maybeSingle()
+
+  // Create requirement progress if it doesn't exist
+  if (!reqProgress) {
+    const { data: newProgress, error: createError } = await adminSupabase
+      .from('scout_merit_badge_requirement_progress')
+      .insert({
+        scout_merit_badge_progress_id: params.meritBadgeProgressId,
+        requirement_id: params.requirementId,
+        status: 'not_started',
+      })
+      .select('id, notes')
+      .single()
+
+    if (createError) {
+      console.error('Error creating MB requirement progress:', createError)
+      return { success: false, error: 'Failed to create requirement progress' }
+    }
+
+    reqProgress = newProgress
+  }
+
+  // Append the new note
+  const newNotes = appendNote(reqProgress.notes || null, {
+    text: params.noteText.trim(),
+    author: auth.fullName,
+    authorId: auth.profileId,
+    type: 'general',
+  })
+
+  const { error } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .update({
+      notes: newNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', reqProgress.id)
+
+  if (error) {
+    console.error('Error adding MB note:', error)
+    return { success: false, error: 'Failed to add note' }
+  }
+
+  // Get scout ID for path revalidation
+  const { data: progress } = await adminSupabase
+    .from('scout_merit_badge_progress')
+    .select('scout_id')
+    .eq('id', params.meritBadgeProgressId)
+    .single()
+
+  revalidatePath('/advancement')
+  if (progress?.scout_id) {
+    revalidatePath(`/scouts/${progress.scout_id}`)
+  }
+  return { success: true, data: { progressId: reqProgress.id } }
+}
+
+/**
  * Bulk approve merit badge requirements for a single scout
  */
 export async function bulkApproveMeritBadgeRequirements(
@@ -484,6 +827,105 @@ export async function bulkApproveMeritBadgeRequirements(
   const failedCount = requirementProgressIds.length - successCount
 
   revalidatePath('/advancement')
+  return { success: true, data: { successCount, failedCount } }
+}
+
+/**
+ * Bulk approve merit badge requirements, creating progress records for sub-requirements if needed.
+ * This handles the case where sub-requirements (e.g., 1a, 1b) don't have progress records yet.
+ */
+export async function bulkApproveMeritBadgeRequirementsWithInit(params: {
+  scoutId: string
+  meritBadgeId: string
+  meritBadgeProgressId: string
+  requirementIds: string[]
+  unitId: string
+  completedAt?: string
+  notes?: string
+}): Promise<ActionResult<{ successCount: number; failedCount: number }>> {
+  const featureCheck = checkFeatureEnabled<{ successCount: number; failedCount: number }>()
+  if (featureCheck) return featureCheck
+
+  if (params.requirementIds.length === 0) {
+    return { success: true, data: { successCount: 0, failedCount: 0 } }
+  }
+
+  const auth = await verifyLeaderRole(params.unitId)
+  if ('error' in auth) return { success: false, error: auth.error }
+
+  const adminSupabase = createAdminClient()
+  const timestamp = params.completedAt || new Date().toISOString()
+
+  // Get existing requirement progress records for this merit badge progress
+  const { data: existingProgress } = await adminSupabase
+    .from('scout_merit_badge_requirement_progress')
+    .select('id, requirement_id')
+    .eq('scout_merit_badge_progress_id', params.meritBadgeProgressId)
+
+  const existingProgressByReqId = new Map(
+    existingProgress?.map(p => [p.requirement_id, p.id]) || []
+  )
+
+  // Separate requirements into those with existing progress and those needing creation
+  const requirementsNeedingProgress = params.requirementIds.filter(
+    reqId => !existingProgressByReqId.has(reqId)
+  )
+  const existingProgressIds = params.requirementIds
+    .filter(reqId => existingProgressByReqId.has(reqId))
+    .map(reqId => existingProgressByReqId.get(reqId)!)
+
+  let successCount = 0
+  let failedCount = 0
+
+  // Create progress records for sub-requirements that don't have them
+  if (requirementsNeedingProgress.length > 0) {
+    const newProgressRecords = requirementsNeedingProgress.map(reqId => ({
+      scout_merit_badge_progress_id: params.meritBadgeProgressId,
+      requirement_id: reqId,
+      status: 'completed' as const,
+      completed_at: timestamp,
+      completed_by: auth.profileId,
+      notes: params.notes || null,
+    }))
+
+    const { data: inserted, error: insertError } = await adminSupabase
+      .from('scout_merit_badge_requirement_progress')
+      .insert(newProgressRecords)
+      .select('id')
+
+    if (insertError) {
+      console.error('Error creating MB requirement progress:', insertError)
+      failedCount += requirementsNeedingProgress.length
+    } else {
+      successCount += inserted?.length || 0
+    }
+  }
+
+  // Update existing progress records
+  if (existingProgressIds.length > 0) {
+    const { data, error } = await adminSupabase
+      .from('scout_merit_badge_requirement_progress')
+      .update({
+        status: 'completed',
+        completed_at: timestamp,
+        completed_by: auth.profileId,
+        notes: params.notes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .in('id', existingProgressIds)
+      .not('status', 'in', '("approved")')
+      .select('id')
+
+    if (error) {
+      console.error('Error bulk updating MB requirements:', error)
+      failedCount += existingProgressIds.length
+    } else {
+      successCount += data?.length || 0
+    }
+  }
+
+  revalidatePath('/advancement')
+  revalidatePath(`/scouts/${params.scoutId}`)
   return { success: true, data: { successCount, failedCount } }
 }
 
@@ -722,26 +1164,27 @@ export async function startMeritBadge(
 
   const adminSupabase = createAdminClient()
 
-  // Get the active requirement version
-  const { data: version } = await adminSupabase
-    .from('bsa_requirement_versions')
-    .select('id')
-    .eq('is_active', true)
-    .order('effective_date', { ascending: false })
-    .limit(1)
+  // Get the merit badge to find its requirement_version_year
+  const { data: badge } = await adminSupabase
+    .from('bsa_merit_badges')
+    .select('id, requirement_version_year')
+    .eq('id', meritBadgeId)
     .single()
 
-  if (!version) {
-    return { success: false, error: 'No active requirement version found' }
+  if (!badge) {
+    return { success: false, error: 'Merit badge not found' }
   }
 
-  // Create merit badge progress record
+  if (!badge.requirement_version_year) {
+    return { success: false, error: 'Merit badge does not have a version year set' }
+  }
+
+  // Create merit badge progress record (no version_id needed)
   const { data: progress, error: progressError } = await adminSupabase
     .from('scout_merit_badge_progress')
     .insert({
       scout_id: scoutId,
       merit_badge_id: meritBadgeId,
-      version_id: version.id,
       status: 'in_progress',
       started_at: new Date().toISOString(),
       counselor_name: counselorName,
@@ -755,12 +1198,12 @@ export async function startMeritBadge(
     return { success: false, error: 'Failed to start merit badge tracking' }
   }
 
-  // Get all requirements for this badge and version
+  // Get all requirements for this badge's current version
   const { data: requirements } = await adminSupabase
     .from('bsa_merit_badge_requirements')
     .select('id')
-    .eq('version_id', version.id)
     .eq('merit_badge_id', meritBadgeId)
+    .eq('version_year', badge.requirement_version_year)
     .is('parent_requirement_id', null)
 
   if (requirements && requirements.length > 0) {
@@ -1092,7 +1535,6 @@ export async function bulkLogActivities(
 export async function assignRequirementToScouts(params: {
   requirementId: string
   rankId: string
-  versionId: string
   unitId: string
   scoutIds: string[]
   completedAt: string
@@ -1105,6 +1547,21 @@ export async function assignRequirementToScouts(params: {
   if ('error' in auth) return { success: false, error: auth.error }
 
   const adminSupabase = createAdminClient()
+
+  // Get the rank to find its requirement_version_year
+  const { data: rank } = await adminSupabase
+    .from('bsa_ranks')
+    .select('id, requirement_version_year')
+    .eq('id', params.rankId)
+    .single()
+
+  if (!rank) {
+    return { success: false, error: 'Rank not found' }
+  }
+
+  if (!rank.requirement_version_year) {
+    return { success: false, error: 'Rank does not have a version year set' }
+  }
 
   let successCount = 0
   let failedCount = 0
@@ -1127,7 +1584,6 @@ export async function assignRequirementToScouts(params: {
           .insert({
             scout_id: scoutId,
             rank_id: params.rankId,
-            version_id: params.versionId,
             status: 'in_progress',
             started_at: new Date().toISOString(),
           })
@@ -1143,12 +1599,12 @@ export async function assignRequirementToScouts(params: {
 
         rankProgress = newProgress
 
-        // Create all requirement progress records for this rank
+        // Create all requirement progress records for this rank's current version
         const { data: requirements } = await adminSupabase
           .from('bsa_rank_requirements')
           .select('id')
-          .eq('version_id', params.versionId)
           .eq('rank_id', params.rankId)
+          .eq('version_year', rank.requirement_version_year)
 
         if (requirements && requirements.length > 0) {
           const reqProgressRecords = requirements.map((req) => ({
@@ -1241,7 +1697,6 @@ export async function assignRequirementToScouts(params: {
 export async function assignMeritBadgeRequirementToScouts(params: {
   requirementId: string
   meritBadgeId: string
-  versionId: string
   unitId: string
   assignments: Array<{
     scoutId: string
@@ -1258,6 +1713,17 @@ export async function assignMeritBadgeRequirementToScouts(params: {
   if ('error' in auth) return { success: false, error: auth.error }
 
   const adminSupabase = createAdminClient()
+
+  // Get the merit badge to find its requirement_version_year
+  const { data: badge } = await adminSupabase
+    .from('bsa_merit_badges')
+    .select('id, requirement_version_year')
+    .eq('id', params.meritBadgeId)
+    .single()
+
+  if (!badge) {
+    return { success: false, error: 'Merit badge not found' }
+  }
 
   let successCount = 0
   let failedCount = 0
@@ -1276,7 +1742,6 @@ export async function assignMeritBadgeRequirementToScouts(params: {
           .insert({
             scout_id: assignment.scoutId,
             merit_badge_id: params.meritBadgeId,
-            version_id: params.versionId,
             status: 'in_progress',
             started_at: new Date().toISOString(),
           })
@@ -1556,7 +2021,6 @@ export async function bulkRecordProgress(params: {
     parentId: string // rank_id or merit_badge_id
   }>
   unitId: string
-  versionId: string
   completedAt: string
   notes?: string
 }): Promise<ActionResult<{ successCount: number; failedCount: number; errors: string[] }>> {
@@ -1581,7 +2045,6 @@ export async function bulkRecordProgress(params: {
           entry.scoutId,
           entry.requirementId,
           entry.parentId,
-          params.versionId,
           params.completedAt,
           auth.profileId,
           params.notes
@@ -1600,7 +2063,6 @@ export async function bulkRecordProgress(params: {
           entry.scoutId,
           entry.requirementId,
           entry.parentId,
-          params.versionId,
           params.completedAt,
           auth.profileId,
           params.notes
@@ -1636,11 +2098,25 @@ async function processRankRequirementEntry(
   scoutId: string,
   requirementId: string,
   rankId: string,
-  versionId: string,
   completedAt: string,
   profileId: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Get the rank to find its requirement_version_year
+  const { data: rank } = await adminSupabase
+    .from('bsa_ranks')
+    .select('id, requirement_version_year')
+    .eq('id', rankId)
+    .single()
+
+  if (!rank) {
+    return { success: false, error: 'Rank not found' }
+  }
+
+  if (!rank.requirement_version_year) {
+    return { success: false, error: 'Rank does not have a version year set' }
+  }
+
   // Check if scout has rank progress for this rank
   let { data: rankProgress } = await adminSupabase
     .from('scout_rank_progress')
@@ -1656,7 +2132,6 @@ async function processRankRequirementEntry(
       .insert({
         scout_id: scoutId,
         rank_id: rankId,
-        version_id: versionId,
         status: 'in_progress',
         started_at: new Date().toISOString(),
       })
@@ -1669,12 +2144,12 @@ async function processRankRequirementEntry(
 
     rankProgress = newProgress
 
-    // Create all requirement progress records for this rank
+    // Create all requirement progress records for this rank's current version
     const { data: requirements } = await adminSupabase
       .from('bsa_rank_requirements')
       .select('id')
-      .eq('version_id', versionId)
       .eq('rank_id', rankId)
+      .eq('version_year', rank.requirement_version_year)
 
     if (requirements && requirements.length > 0) {
       const reqProgressRecords = requirements.map((req) => ({
@@ -1744,11 +2219,25 @@ async function processMeritBadgeRequirementEntry(
   scoutId: string,
   requirementId: string,
   meritBadgeId: string,
-  versionId: string,
   completedAt: string,
   profileId: string,
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Get the merit badge to find its requirement_version_year
+  const { data: badge } = await adminSupabase
+    .from('bsa_merit_badges')
+    .select('id, requirement_version_year')
+    .eq('id', meritBadgeId)
+    .single()
+
+  if (!badge) {
+    return { success: false, error: 'Merit badge not found' }
+  }
+
+  if (!badge.requirement_version_year) {
+    return { success: false, error: 'Merit badge does not have a version year set' }
+  }
+
   // Check if scout has badge progress for this merit badge
   let { data: badgeProgress } = await adminSupabase
     .from('scout_merit_badge_progress')
@@ -1764,7 +2253,6 @@ async function processMeritBadgeRequirementEntry(
       .insert({
         scout_id: scoutId,
         merit_badge_id: meritBadgeId,
-        version_id: versionId,
         status: 'in_progress',
         started_at: new Date().toISOString(),
       })
@@ -1777,12 +2265,12 @@ async function processMeritBadgeRequirementEntry(
 
     badgeProgress = newProgress
 
-    // Create all requirement progress records for this badge
+    // Create all requirement progress records for this badge's current version
     const { data: requirements } = await adminSupabase
       .from('bsa_merit_badge_requirements')
       .select('id')
-      .eq('version_id', versionId)
       .eq('merit_badge_id', meritBadgeId)
+      .eq('version_year', badge.requirement_version_year)
 
     if (requirements && requirements.length > 0) {
       const reqProgressRecords = requirements.map((req) => ({
@@ -1848,34 +2336,33 @@ async function processMeritBadgeRequirementEntry(
 
 /**
  * Get requirements for a specific merit badge
- * Fetches on-demand to avoid Supabase 1000 row limit when loading all badges
+ * Fetches requirements based on the badge's requirement_version_year
  */
-export async function getMeritBadgeRequirements(meritBadgeId: string, versionId: string) {
+export async function getMeritBadgeRequirements(meritBadgeId: string) {
   const supabase = await createClient()
 
-  // If versionId is empty, fetch the active version
-  let actualVersionId = versionId
-  if (!actualVersionId) {
-    const { data: version } = await supabase
-      .from('bsa_requirement_versions')
-      .select('id')
-      .eq('is_active', true)
-      .order('effective_date', { ascending: false })
-      .limit(1)
-      .single()
+  // Get the merit badge to find its requirement_version_year
+  const { data: badge } = await supabase
+    .from('bsa_merit_badges')
+    .select('id, requirement_version_year')
+    .eq('id', meritBadgeId)
+    .single()
 
-    if (!version) {
-      console.error('No active requirement version found')
-      return []
-    }
-    actualVersionId = version.id
+  if (!badge) {
+    console.error('Merit badge not found')
+    return []
+  }
+
+  if (!badge.requirement_version_year) {
+    console.error('Merit badge does not have a version year set')
+    return []
   }
 
   const { data, error } = await supabase
     .from('bsa_merit_badge_requirements')
     .select(`
       id,
-      version_id,
+      version_year,
       merit_badge_id,
       requirement_number,
       parent_requirement_id,
@@ -1887,8 +2374,8 @@ export async function getMeritBadgeRequirements(meritBadgeId: string, versionId:
       nesting_depth,
       required_count
     `)
-    .eq('version_id', actualVersionId)
     .eq('merit_badge_id', meritBadgeId)
+    .eq('version_year', badge.requirement_version_year)
     .order('display_order')
 
   if (error) {
@@ -1899,7 +2386,7 @@ export async function getMeritBadgeRequirements(meritBadgeId: string, versionId:
   // Return with explicit type to ensure all fields are available
   return data as Array<{
     id: string
-    version_id: string
+    version_year: number | null
     merit_badge_id: string
     requirement_number: string
     parent_requirement_id: string | null
@@ -1922,7 +2409,6 @@ export async function markRequirementCompleteWithInit(params: {
   rankId: string
   requirementId: string
   unitId: string
-  versionId: string
   completedAt?: string
   notes?: string
 }): Promise<ActionResult<{ requirementProgressId: string }>> {
@@ -1933,6 +2419,21 @@ export async function markRequirementCompleteWithInit(params: {
   if ('error' in auth) return { success: false, error: auth.error }
 
   const adminSupabase = createAdminClient()
+
+  // Get the rank to find its requirement_version_year
+  const { data: rank } = await adminSupabase
+    .from('bsa_ranks')
+    .select('id, requirement_version_year')
+    .eq('id', params.rankId)
+    .single()
+
+  if (!rank) {
+    return { success: false, error: 'Rank not found' }
+  }
+
+  if (!rank.requirement_version_year) {
+    return { success: false, error: 'Rank does not have a version year set' }
+  }
 
   // Check if scout has rank progress for this rank
   let { data: rankProgress } = await adminSupabase
@@ -1949,7 +2450,6 @@ export async function markRequirementCompleteWithInit(params: {
       .insert({
         scout_id: params.scoutId,
         rank_id: params.rankId,
-        version_id: params.versionId,
         status: 'in_progress',
         started_at: new Date().toISOString(),
       })
@@ -1963,12 +2463,12 @@ export async function markRequirementCompleteWithInit(params: {
 
     rankProgress = newProgress
 
-    // Create all requirement progress records for this rank
+    // Create all requirement progress records for this rank's current version
     const { data: requirements } = await adminSupabase
       .from('bsa_rank_requirements')
       .select('id')
-      .eq('version_id', params.versionId)
       .eq('rank_id', params.rankId)
+      .eq('version_year', rank.requirement_version_year)
 
     if (requirements && requirements.length > 0) {
       const reqProgressRecords = requirements.map((req) => ({
@@ -2030,7 +2530,6 @@ export async function bulkApproveRequirementsWithInit(params: {
   rankId: string
   requirementIds: string[]
   unitId: string
-  versionId: string
   completedAt?: string
   notes?: string
 }): Promise<ActionResult<{ successCount: number; failedCount: number; rankProgressId?: string }>> {
@@ -2047,6 +2546,21 @@ export async function bulkApproveRequirementsWithInit(params: {
   const adminSupabase = createAdminClient()
   const timestamp = params.completedAt || new Date().toISOString()
 
+  // Get the rank to find its requirement_version_year
+  const { data: rank } = await adminSupabase
+    .from('bsa_ranks')
+    .select('id, requirement_version_year')
+    .eq('id', params.rankId)
+    .single()
+
+  if (!rank) {
+    return { success: false, error: 'Rank not found' }
+  }
+
+  if (!rank.requirement_version_year) {
+    return { success: false, error: 'Rank does not have a version year set' }
+  }
+
   // Check if scout has rank progress for this rank
   let { data: rankProgress } = await adminSupabase
     .from('scout_rank_progress')
@@ -2062,7 +2576,6 @@ export async function bulkApproveRequirementsWithInit(params: {
       .insert({
         scout_id: params.scoutId,
         rank_id: params.rankId,
-        version_id: params.versionId,
         status: 'in_progress',
         started_at: new Date().toISOString(),
       })
@@ -2076,12 +2589,12 @@ export async function bulkApproveRequirementsWithInit(params: {
 
     rankProgress = newProgress
 
-    // Create all requirement progress records for this rank
+    // Create all requirement progress records for this rank's current version
     const { data: requirements } = await adminSupabase
       .from('bsa_rank_requirements')
       .select('id')
-      .eq('version_id', params.versionId)
       .eq('rank_id', params.rankId)
+      .eq('version_year', rank.requirement_version_year)
 
     if (requirements && requirements.length > 0) {
       const reqProgressRecords = requirements.map((req) => ({
@@ -2129,10 +2642,10 @@ export async function bulkApproveRequirementsWithInit(params: {
 export async function getRankRequirements(rankCode: string) {
   const supabase = await createClient()
 
-  // Get the rank
+  // Get the rank with its requirement_version_year
   const { data: rankData, error: rankError } = await supabase
     .from('bsa_ranks')
-    .select('id, code, name, display_order')
+    .select('id, code, name, display_order, requirement_version_year')
     .eq('code', rankCode)
     .single()
 
@@ -2141,32 +2654,26 @@ export async function getRankRequirements(rankCode: string) {
     return null
   }
 
+  if (!rankData.requirement_version_year) {
+    console.error('Rank does not have a version year set')
+    return null
+  }
+
+  // Capture version year as non-null after the check
+  const versionYear = rankData.requirement_version_year
+
   // Add image_url (images are stored in filesystem, not database)
   const rank = {
     ...rankData,
     image_url: null as string | null,
   }
 
-  // Get the active requirement version
-  const { data: version } = await supabase
-    .from('bsa_requirement_versions')
-    .select('id')
-    .eq('is_active', true)
-    .order('effective_date', { ascending: false })
-    .limit(1)
-    .single()
-
-  if (!version) {
-    console.error('No active requirement version found')
-    return null
-  }
-
-  // Get all requirements for this rank (including sub-requirements)
+  // Get all requirements for this rank's current version
   const { data: requirements, error: reqError } = await supabase
     .from('bsa_rank_requirements')
-    .select('id, requirement_number, description, parent_requirement_id, is_alternative, alternatives_group')
-    .eq('version_id', version.id)
+    .select('id, requirement_number, description, parent_requirement_id, is_alternative, alternatives_group, version_year')
     .eq('rank_id', rank.id)
+    .eq('version_year', versionYear)
     .order('display_order')
 
   if (reqError) {
@@ -2176,7 +2683,6 @@ export async function getRankRequirements(rankCode: string) {
 
   return {
     rank,
-    versionId: version.id,
     requirements: requirements || [],
   }
 }
@@ -2282,7 +2788,6 @@ export async function bulkSignOffForScouts(params: {
   scoutIds: string[]
   unitId: string
   itemId: string // rank_id or merit_badge_id
-  versionId: string
   date: string
   completedBy: string
 }): Promise<ActionResult<{ successCount: number; failedCount: number; errors: string[] }>> {
@@ -2308,7 +2813,6 @@ export async function bulkSignOffForScouts(params: {
   return bulkRecordProgress({
     entries,
     unitId: params.unitId,
-    versionId: params.versionId,
     completedAt: params.date,
     notes: `Signed off by ${params.completedBy}`,
   })

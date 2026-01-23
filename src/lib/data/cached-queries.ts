@@ -85,23 +85,6 @@ export const getCurrentUnit = cache(async () => {
 })
 
 /**
- * Get the active BSA requirement version.
- * Used across advancement pages.
- */
-export const getActiveRequirementVersion = cache(async () => {
-  const supabase = await createClient()
-  const { data: version } = await supabase
-    .from('bsa_requirement_versions')
-    .select('id, name, effective_date')
-    .eq('is_active', true)
-    .order('effective_date', { ascending: false })
-    .limit(1)
-    .single()
-
-  return version
-})
-
-/**
  * Get scouts for the current user's unit.
  * Optionally filter by active status.
  */

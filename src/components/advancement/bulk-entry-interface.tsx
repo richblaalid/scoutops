@@ -100,7 +100,6 @@ interface BulkEntryInterfaceProps {
   badgeRequirements: Requirement[]
   scouts: Scout[]
   unitId: string
-  versionId: string
 }
 
 type EntryMode = 'by-requirement' | 'matrix'
@@ -214,7 +213,6 @@ export function BulkEntryInterface({
   badgeRequirements,
   scouts,
   unitId,
-  versionId,
 }: BulkEntryInterfaceProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -400,7 +398,6 @@ export function BulkEntryInterface({
       const result = await bulkRecordProgress({
         entries,
         unitId,
-        versionId,
         completedAt: new Date().toISOString().split('T')[0],
       })
 

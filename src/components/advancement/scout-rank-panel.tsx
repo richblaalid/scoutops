@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -99,6 +100,7 @@ export function ScoutRankPanel({
   rankRequirementsData,
   isLoading = false,
 }: ScoutRankPanelProps) {
+  const router = useRouter()
   const [approveDialogOpen, setApproveDialogOpen] = useState(false)
   const [awardDialogOpen, setAwardDialogOpen] = useState(false)
 
@@ -204,6 +206,7 @@ export function ScoutRankPanel({
   const handleBulkApprovalComplete = () => {
     setBulkApprovalOpen(false)
     setSelectedIds(new Set())
+    router.refresh()
   }
 
   // Init data for creating progress when marking requirements complete on unstarted ranks

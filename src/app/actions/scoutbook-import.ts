@@ -25,6 +25,69 @@ interface ImportResult {
   activitiesImported: number
 }
 
+/**
+ * Normalize requirement number from CSV format to DB format
+ *
+ * Handles Option A/B badge structures like Cycling requirement 6:
+ * - CSV format: 6A(a)(1) where:
+ *   - 6 = main requirement
+ *   - A = Option A (vs B)
+ *   - (a) = sub-requirement letter → converts to number (a=1, b=2, c=3...)
+ *   - (1) = detail number → converts to letter (1=a, 2=b, 3=c...)
+ * - DB format: 6A1a
+ *
+ * Examples:
+ *   6A(a)(1) → 6A1a
+ *   6A(a)(2) → 6A1b
+ *   6A(b)(1) → 6A2a
+ *   6B(a)(1) → 6B1a
+ *   9b(2) → 9b2 (simpler format without Option A/B)
+ */
+function normalizeRequirementNumber(csvReq: string): string {
+  // Start with the original, trimmed
+  let normalized = csvReq.trim()
+
+  // Pattern for Option A/B style: 6A(a)(1), 6B(b)(2), etc.
+  // Group 1: base (e.g., "6A" or "6B")
+  // Group 2: first parenthetical letter (e.g., "a" from "(a)")
+  // Group 3: second parenthetical number (e.g., "1" from "(1)")
+  const optionPattern = /^(\d+[AB])(?:\(([a-z])\))?(?:\((\d+)\))?$/i
+  const optionMatch = normalized.match(optionPattern)
+
+  if (optionMatch) {
+    const [, base, subLetter, detailNum] = optionMatch
+    let result = base.toUpperCase()
+
+    // Convert letter (a) to number: a=1, b=2, c=3...
+    if (subLetter) {
+      const letterIndex = subLetter.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0) + 1
+      result += letterIndex.toString()
+    }
+
+    // Convert number (1) to letter: 1=a, 2=b, 3=c...
+    if (detailNum) {
+      const numIndex = parseInt(detailNum, 10)
+      const letter = String.fromCharCode('a'.charCodeAt(0) + numIndex - 1)
+      result += letter
+    }
+
+    return result.toLowerCase()
+  }
+
+  // Simpler pattern for non-Option badges: 9b(2) → 9b2
+  // This handles cases like "9b(2)" where (2) is just an additional qualifier
+  const simplePattern = /^([a-z0-9]+)\((\d+)\)$/i
+  const simpleMatch = normalized.match(simplePattern)
+
+  if (simpleMatch) {
+    const [, base, num] = simpleMatch
+    return (base + num).toLowerCase()
+  }
+
+  // No transformation needed, just lowercase
+  return normalized.toLowerCase()
+}
+
 // Helper to verify leader role
 async function verifyLeaderRole(unitId: string) {
   const supabase = await createClient()
@@ -76,35 +139,22 @@ export async function importScoutbookHistory(
 
   const adminSupabase = createAdminClient()
 
-  // Get the active requirement version
-  const { data: version } = await adminSupabase
-    .from('bsa_requirement_versions')
-    .select('id')
-    .eq('is_active', true)
-    .order('effective_date', { ascending: false })
-    .limit(1)
-    .single()
-
-  if (!version) {
-    return { success: false, error: 'No active requirement version found' }
-  }
-
-  // Get rank IDs
+  // Get rank IDs with their version years
   const { data: ranks } = await adminSupabase
     .from('bsa_ranks')
-    .select('id, code, name')
+    .select('id, code, name, requirement_version_year')
     .order('display_order')
 
-  const rankMap = new Map(ranks?.map((r) => [r.code, r.id]) || [])
-  const rankNameMap = new Map(ranks?.map((r) => [r.name.toLowerCase(), r.id]) || [])
+  const rankMap = new Map(ranks?.map((r) => [r.code, r]) || [])
+  const rankNameMap = new Map(ranks?.map((r) => [r.name.toLowerCase(), r]) || [])
 
-  // Get merit badge IDs
+  // Get merit badge IDs with version years
   const { data: meritBadges } = await adminSupabase
     .from('bsa_merit_badges')
-    .select('id, name')
+    .select('id, name, requirement_version_year')
     .eq('is_active', true)
 
-  const badgeNameMap = new Map(meritBadges?.map((mb) => [mb.name.toLowerCase().replace(/[^a-z0-9]+/g, '_'), mb.id]) || [])
+  const badgeNameMap = new Map(meritBadges?.map((mb) => [mb.name.toLowerCase().replace(/[^a-z0-9]+/g, '_'), mb]) || [])
 
   // Get leadership position IDs
   const { data: positions } = await adminSupabase.from('bsa_leadership_positions').select('id, name, code')
@@ -125,11 +175,18 @@ export async function importScoutbookHistory(
 
   // Import rank progress
   for (const rankProgress of selections.rankProgress) {
-    const rankId = rankMap.get(rankProgress.rankCode) || rankNameMap.get(rankProgress.rankName.toLowerCase())
-    if (!rankId) {
+    const rank = rankMap.get(rankProgress.rankCode) || rankNameMap.get(rankProgress.rankName.toLowerCase())
+    if (!rank) {
       console.log(`Rank not found: ${rankProgress.rankCode} / ${rankProgress.rankName}`)
       continue
     }
+
+    if (!rank.requirement_version_year) {
+      console.log(`Rank ${rank.name} does not have a version year set`)
+      continue
+    }
+
+    const rankId = rank.id
 
     // Check if scout already has progress for this rank
     const { data: existingProgress } = await adminSupabase
@@ -161,7 +218,6 @@ export async function importScoutbookHistory(
         .insert({
           scout_id: scoutId,
           rank_id: rankId,
-          version_id: version.id,
           status: rankProgress.completedDate ? 'awarded' : 'in_progress',
           started_at: new Date().toISOString(),
           awarded_at: rankProgress.completedDate || null,
@@ -178,12 +234,12 @@ export async function importScoutbookHistory(
       result.ranksImported++
     }
 
-    // Get requirements for this rank
+    // Get requirements for this rank's current version
     const { data: requirements } = await adminSupabase
       .from('bsa_rank_requirements')
       .select('id, requirement_number')
-      .eq('version_id', version.id)
       .eq('rank_id', rankId)
+      .eq('version_year', rank.requirement_version_year)
 
     const reqMap = new Map(requirements?.map((r) => [r.requirement_number, r.id]) || [])
 
@@ -231,12 +287,14 @@ export async function importScoutbookHistory(
   }
 
   // Import completed merit badges
-  for (const badge of selections.completedMeritBadges) {
-    const badgeId = badgeNameMap.get(badge.normalizedName)
-    if (!badgeId) {
-      console.log(`Badge not found: ${badge.name} (${badge.normalizedName})`)
+  for (const badgeEntry of selections.completedMeritBadges) {
+    const meritBadge = badgeNameMap.get(badgeEntry.normalizedName)
+    if (!meritBadge) {
+      console.log(`Badge not found: ${badgeEntry.name} (${badgeEntry.normalizedName})`)
       continue
     }
+
+    const badgeId = meritBadge.id
 
     // Check if scout already has progress for this badge
     const { data: existingProgress } = await adminSupabase
@@ -252,8 +310,8 @@ export async function importScoutbookHistory(
         .from('scout_merit_badge_progress')
         .update({
           status: 'awarded',
-          completed_at: badge.completedDate,
-          awarded_at: badge.completedDate,
+          completed_at: badgeEntry.completedDate,
+          awarded_at: badgeEntry.completedDate,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingProgress.id)
@@ -262,42 +320,115 @@ export async function importScoutbookHistory(
       await adminSupabase.from('scout_merit_badge_progress').insert({
         scout_id: scoutId,
         merit_badge_id: badgeId,
-        version_id: version.id,
         status: 'awarded',
-        started_at: badge.startDate || badge.completedDate || new Date().toISOString(),
-        completed_at: badge.completedDate,
-        awarded_at: badge.completedDate,
+        started_at: badgeEntry.startDate || badgeEntry.completedDate || new Date().toISOString(),
+        completed_at: badgeEntry.completedDate,
+        awarded_at: badgeEntry.completedDate,
       })
     }
     result.badgesImported++
   }
 
-  // Import partial merit badges
-  for (const badge of selections.partialMeritBadges) {
-    const badgeId = badgeNameMap.get(badge.normalizedName)
-    if (!badgeId) {
-      console.log(`Badge not found: ${badge.name} (${badge.normalizedName})`)
+  // Import partial merit badges with requirement completions
+  for (const badgeEntry of selections.partialMeritBadges) {
+    const meritBadge = badgeNameMap.get(badgeEntry.normalizedName)
+    if (!meritBadge) {
+      console.log(`Badge not found: ${badgeEntry.name} (${badgeEntry.normalizedName})`)
       continue
     }
 
+    if (!meritBadge.requirement_version_year) {
+      console.log(`Badge ${meritBadge.name} does not have a version year set`)
+      continue
+    }
+
+    const badgeId = meritBadge.id
+
     // Check if scout already has progress for this badge
-    const { data: existingProgress } = await adminSupabase
+    let { data: existingProgress } = await adminSupabase
       .from('scout_merit_badge_progress')
       .select('id')
       .eq('scout_id', scoutId)
       .eq('merit_badge_id', badgeId)
       .maybeSingle()
 
+    let progressId: string
+
     if (!existingProgress) {
       // Create new badge progress as in_progress
-      await adminSupabase.from('scout_merit_badge_progress').insert({
-        scout_id: scoutId,
-        merit_badge_id: badgeId,
-        version_id: version.id,
-        status: 'in_progress',
-        started_at: badge.startDate || new Date().toISOString(),
-      })
+      const { data: newProgress } = await adminSupabase
+        .from('scout_merit_badge_progress')
+        .insert({
+          scout_id: scoutId,
+          merit_badge_id: badgeId,
+          status: 'in_progress',
+          started_at: badgeEntry.startDate || new Date().toISOString(),
+        })
+        .select('id')
+        .single()
+
+      if (!newProgress) {
+        console.log(`Failed to create progress for badge: ${badgeEntry.name}`)
+        continue
+      }
+      progressId = newProgress.id
       result.badgesImported++
+    } else {
+      progressId = existingProgress.id
+    }
+
+    // Import individual requirement completions
+    if (badgeEntry.completedRequirements.length > 0) {
+      // Get all requirements for this badge's current version
+      const { data: badgeRequirements } = await adminSupabase
+        .from('bsa_merit_badge_requirements')
+        .select('id, requirement_number, sub_requirement_letter')
+        .eq('merit_badge_id', badgeId)
+        .eq('version_year', meritBadge.requirement_version_year)
+
+      if (badgeRequirements && badgeRequirements.length > 0) {
+        // Create a map for quick lookup: "1a" -> requirement id
+        const reqMap = new Map<string, string>()
+        for (const req of badgeRequirements) {
+          const key = req.sub_requirement_letter
+            ? `${req.requirement_number}${req.sub_requirement_letter}`
+            : req.requirement_number
+          reqMap.set(key.toLowerCase(), req.id)
+        }
+
+        // Import each completed requirement
+        for (const reqNum of badgeEntry.completedRequirements) {
+          // Normalize the CSV requirement format to match DB format
+          // e.g., "6A(a)(1)" -> "6a1a"
+          const normalizedReq = normalizeRequirementNumber(reqNum)
+          const requirementId = reqMap.get(normalizedReq)
+
+          if (!requirementId) {
+            console.log(`Requirement not found for ${badgeEntry.name}: ${reqNum} (normalized: ${normalizedReq})`)
+            continue
+          }
+
+          // Check if this requirement progress already exists
+          const { data: existingReqProgress } = await adminSupabase
+            .from('scout_merit_badge_requirement_progress')
+            .select('id')
+            .eq('scout_merit_badge_progress_id', progressId)
+            .eq('requirement_id', requirementId)
+            .maybeSingle()
+
+          if (!existingReqProgress) {
+            await adminSupabase.from('scout_merit_badge_requirement_progress').insert({
+              scout_merit_badge_progress_id: progressId,
+              requirement_id: requirementId,
+              status: 'completed',
+              completed_at: badgeEntry.startDate || new Date().toISOString(),
+              completed_by: auth.profileId,
+              notes: 'Imported from ScoutBook history',
+            })
+            result.requirementsImported++
+          }
+        }
+      }
     }
   }
 

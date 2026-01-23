@@ -47,7 +47,6 @@ interface MeritBadgeBrowserProps {
   scouts: Scout[]
   categories: string[]
   unitId: string
-  versionId: string
   canEdit: boolean
   currentUserName?: string
 }
@@ -60,7 +59,6 @@ export function MeritBadgeBrowser({
   scouts,
   categories,
   unitId,
-  versionId,
   canEdit,
   currentUserName = 'Leader',
 }: MeritBadgeBrowserProps) {
@@ -146,7 +144,7 @@ export function MeritBadgeBrowser({
     // Fetch requirements on-demand for this specific badge
     startTransition(async () => {
       try {
-        const reqs = await getMeritBadgeRequirements(badge.id, versionId)
+        const reqs = await getMeritBadgeRequirements(badge.id)
         setBadgeRequirements(reqs as BsaMeritBadgeRequirement[])
       } catch (error) {
         console.error('Error fetching requirements:', error)
@@ -170,7 +168,6 @@ export function MeritBadgeBrowser({
         requirements={badgeRequirements}
         scouts={scouts}
         unitId={unitId}
-        versionId={versionId}
         canEdit={canEdit}
         isLoading={isLoadingRequirements}
         onBack={handleBack}

@@ -232,19 +232,8 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
   const advancementEnabled = isFeatureEnabled(FeatureFlag.ADVANCEMENT_TRACKING)
   type AdvancementData = Awaited<ReturnType<typeof getScoutAdvancementProgress>>
   let advancementData: AdvancementData = null
-  let activeVersionId = ''
 
   if (advancementEnabled && membership) {
-    // Fetch active BSA requirement version for merit badge requirements
-    const { data: versionData } = await supabase
-      .from('bsa_requirement_versions')
-      .select('id')
-      .eq('is_active', true)
-      .order('effective_date', { ascending: false })
-      .limit(1)
-      .single()
-
-    activeVersionId = versionData?.id || ''
     advancementData = await getScoutAdvancementProgress(id)
   }
 
@@ -374,7 +363,6 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
         advancementEnabled={advancementEnabled}
         canEditScout={canEditScout || false}
         canEditGuardians={canEditGuardians || false}
-        versionId={activeVersionId}
       />
     </div>
   )

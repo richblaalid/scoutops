@@ -38,7 +38,6 @@ interface StartMeritBadgeDialogProps {
   badge: MeritBadge
   scoutsNotStarted: Scout[]
   unitId: string
-  versionId: string
 }
 
 export function StartMeritBadgeDialog({
@@ -47,7 +46,6 @@ export function StartMeritBadgeDialog({
   badge,
   scoutsNotStarted,
   unitId,
-  versionId,
 }: StartMeritBadgeDialogProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
