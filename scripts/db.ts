@@ -4,17 +4,21 @@
  * Database CLI Tool
  *
  * Commands:
- *   reset        - Clear all data from public tables (keeps schema)
- *   seed:base    - Seed base unit with admin user
- *   seed:test    - Seed test data (scouts, parents, role users)
- *   seed:all     - Run base + test seeds
- *   dump [name]  - Dump current database to a seed file
+ *   reset          - Clear all data from public tables (keeps schema)
+ *   seed:base      - Seed base unit with admin user
+ *   seed:test      - Seed test data (scouts, parents, role users)
+ *   seed:bsa       - Seed BSA reference data (ranks, badges, positions)
+ *   seed:advancement - Seed advancement progress data for test scouts
+ *   seed:all       - Run base + test + bsa + advancement seeds
+ *   dump [name]    - Dump current database to a seed file
  *   restore <file> - Restore from a dump file
  *
  * Usage:
  *   npx tsx scripts/db.ts reset
  *   npx tsx scripts/db.ts seed:base
  *   npx tsx scripts/db.ts seed:test
+ *   npx tsx scripts/db.ts seed:bsa
+ *   npx tsx scripts/db.ts seed:advancement
  *   npx tsx scripts/db.ts seed:all
  *   npx tsx scripts/db.ts dump my-snapshot
  *   npx tsx scripts/db.ts restore supabase/seeds/my-snapshot.json
@@ -31,6 +35,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import { importAll as importBsaReferenceData } from './bsa-reference-data';
 
 // Check for --prod flag
 const isProd = process.argv.includes('--prod');
@@ -130,6 +135,13 @@ async function resetDatabase(): Promise<void> {
     // Event tables
     'event_registrations',
     'events',
+    // Advancement tables (progress records, must be before scouts)
+    'scout_activity_entries',
+    'scout_leadership_history',
+    'scout_merit_badge_requirement_progress',
+    'scout_merit_badge_progress',
+    'scout_rank_requirement_progress',
+    'scout_rank_progress',
     // Scout tables
     'scout_guardians',
     'scout_accounts',
@@ -146,6 +158,12 @@ async function resetDatabase(): Promise<void> {
     'profiles',
     // Waitlist
     'waitlist_entries',
+    // BSA Reference tables (cleared so fresh seed imports clean data)
+    'bsa_merit_badge_requirements',
+    'bsa_merit_badges',
+    'bsa_rank_requirements',
+    'bsa_ranks',
+    'bsa_leadership_positions',
   ];
 
   for (const table of tables) {
@@ -825,6 +843,377 @@ async function seedTestData(): Promise<void> {
   }
 }
 
+/**
+ * Seed advancement data for test scouts
+ * Creates realistic rank progress, merit badges, and leadership positions
+ */
+async function seedAdvancementData(): Promise<void> {
+  console.log('\nSeeding advancement data...');
+
+  // Get ranks with their requirement_version_year
+  const { data: ranks } = await supabase
+    .from('bsa_ranks')
+    .select('id, code, name, requirement_version_year')
+    .order('display_order');
+
+  if (!ranks || ranks.length === 0) {
+    console.log('  Warning: No ranks found, skipping advancement seed');
+    console.log('  Hint: Run "npx tsx scripts/bsa-reference-data.ts import-all" first');
+    return;
+  }
+
+  const rankMap = new Map(ranks.map(r => [r.code, { id: r.id, versionYear: r.requirement_version_year }]));
+  console.log(`  Found ${ranks.length} ranks`);
+
+  // Get merit badge IDs with their requirement_version_year (selecting a subset for testing)
+  const { data: meritBadges } = await supabase
+    .from('bsa_merit_badges')
+    .select('id, name, is_eagle_required, requirement_version_year')
+    .eq('is_active', true)
+    .limit(50);
+
+  if (!meritBadges || meritBadges.length === 0) {
+    console.log('  Warning: No merit badges found, skipping merit badge progress');
+    console.log('  Hint: Run "npx tsx scripts/bsa-reference-data.ts import-all" first');
+  }
+
+  const eagleBadges = meritBadges?.filter(mb => mb.is_eagle_required) || [];
+  const electiveBadges = meritBadges?.filter(mb => !mb.is_eagle_required) || [];
+  console.log(`  Found ${eagleBadges.length} eagle-required badges, ${electiveBadges.length} electives`);
+
+  // Get leadership positions
+  const { data: positions } = await supabase
+    .from('bsa_leadership_positions')
+    .select('id, name, code')
+    .order('name');
+
+  const positionMap = new Map(positions?.map(p => [p.code || p.name.toLowerCase().replace(/\s+/g, '_'), p.id]) || []);
+  console.log(`  Found ${positions?.length || 0} leadership positions`);
+
+  // Scout scenarios from plan:
+  // Alex A. - First Class: Scout+Tenderfoot awarded, First Class ~75% done
+  // Ben B. - Star: Through First Class awarded, Star in progress (4/6 badges)
+  // Charlie C. - Life: Through Star awarded, Life in progress
+  // David D. - Tenderfoot: Scout awarded, Tenderfoot ~50% done
+  // Ethan E. - Second Class: Scout+Tenderfoot awarded, Second Class ~60% done
+  // Frank F. - Scout: Scout just awarded
+  // George G. - First Class: Same as Alex + leadership positions
+  // Henry H. - Star: Star awarded with 6 merit badges
+
+  const scoutIds = {
+    alex: '20000000-0000-4000-a000-000000000001',
+    ben: '20000000-0000-4000-a000-000000000002',
+    charlie: '20000000-0000-4000-a000-000000000003',
+    david: '20000000-0000-4000-a000-000000000004',
+    ethan: '20000000-0000-4000-a000-000000000005',
+    frank: '20000000-0000-4000-a000-000000000006',
+    george: '20000000-0000-4000-a000-000000000007',
+    henry: '20000000-0000-4000-a000-000000000008',
+  };
+
+  // Helper to create rank progress with requirements
+  async function createRankProgress(
+    scoutId: string,
+    rankCode: string,
+    status: 'in_progress' | 'approved' | 'awarded',
+    completionPercent: number,
+    awardedDate?: string
+  ): Promise<string | null> {
+    const rankData = rankMap.get(rankCode);
+    if (!rankData) {
+      console.log(`  Warning: Rank ${rankCode} not found`);
+      return null;
+    }
+
+    const startDate = new Date('2024-06-01');
+
+    // Create rank progress (no version_id needed - versioning is per-item now)
+    const { data: progress, error } = await supabase
+      .from('scout_rank_progress')
+      .insert({
+        scout_id: scoutId,
+        rank_id: rankData.id,
+        status,
+        started_at: startDate.toISOString(),
+        approved_at: status === 'approved' || status === 'awarded' ? awardedDate : null,
+        awarded_at: status === 'awarded' ? awardedDate : null,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.log(`  Warning: Failed to create rank progress: ${error.message}`);
+      return null;
+    }
+
+    // Get requirements for this rank using version_year from the rank
+    const { data: requirements } = await supabase
+      .from('bsa_rank_requirements')
+      .select('id, requirement_number, parent_requirement_id')
+      .eq('rank_id', rankData.id)
+      .eq('version_year', rankData.versionYear)
+      .order('display_order');
+
+    if (!requirements || requirements.length === 0) {
+      return progress.id;
+    }
+
+    // Calculate how many requirements to complete
+    // For approved or awarded ranks, ALL requirements must be completed
+    const totalReqs = requirements.length;
+    const effectivePercent = (status === 'approved' || status === 'awarded') ? 100 : completionPercent;
+    const completedCount = Math.floor(totalReqs * (effectivePercent / 100));
+
+    // Create requirement progress records
+    const reqProgressRecords = requirements.map((req, index) => {
+      const isCompleted = index < completedCount;
+      const completedDate = isCompleted
+        ? new Date(startDate.getTime() + (index * 7 * 24 * 60 * 60 * 1000)) // Space out by weeks
+        : null;
+
+      return {
+        scout_rank_progress_id: progress.id,
+        requirement_id: req.id,
+        status: isCompleted ? 'completed' : 'not_started',
+        completed_at: completedDate?.toISOString() || null,
+      };
+    });
+
+    await supabase.from('scout_rank_requirement_progress').insert(reqProgressRecords);
+
+    return progress.id;
+  }
+
+  // Helper to create merit badge progress
+  async function createMeritBadgeProgress(
+    scoutId: string,
+    badge: { id: string; requirement_version_year: number | null },
+    status: 'in_progress' | 'awarded',
+    completionPercent: number,
+    awardedDate?: string
+  ): Promise<void> {
+    const startDate = new Date('2024-09-01');
+
+    // Create merit badge progress (no version_id needed - versioning is per-item now)
+    const { data: progress, error } = await supabase
+      .from('scout_merit_badge_progress')
+      .insert({
+        scout_id: scoutId,
+        merit_badge_id: badge.id,
+        status,
+        started_at: startDate.toISOString(),
+        completed_at: status === 'awarded' ? awardedDate : null,
+        awarded_at: status === 'awarded' ? awardedDate : null,
+      })
+      .select('id')
+      .single();
+
+    if (error || !progress) return;
+
+    // Get requirements for this badge using version_year from the badge
+    const { data: requirements } = await supabase
+      .from('bsa_merit_badge_requirements')
+      .select('id')
+      .eq('merit_badge_id', badge.id)
+      .eq('version_year', badge.requirement_version_year)
+      .order('display_order');
+
+    if (!requirements || requirements.length === 0) return;
+
+    // For awarded badges, ALL requirements must be completed
+    const effectivePercent = status === 'awarded' ? 100 : completionPercent;
+    const completedCount = Math.floor(requirements.length * (effectivePercent / 100));
+
+    const reqProgressRecords = requirements.map((req, index) => ({
+      scout_merit_badge_progress_id: progress.id,
+      requirement_id: req.id,
+      status: index < completedCount ? 'completed' : 'not_started',
+      completed_at: index < completedCount ? new Date().toISOString() : null,
+    }));
+
+    await supabase.from('scout_merit_badge_requirement_progress').insert(reqProgressRecords);
+  }
+
+  // Helper to create leadership position
+  async function createLeadershipPosition(
+    scoutId: string,
+    positionCode: string,
+    startDate: string,
+    endDate?: string
+  ): Promise<void> {
+    const positionId = positionMap.get(positionCode);
+    if (!positionId) {
+      console.log(`  Warning: Position ${positionCode} not found`);
+      return;
+    }
+
+    await supabase.from('scout_leadership_history').insert({
+      scout_id: scoutId,
+      position_id: positionId,
+      unit_id: UNIT_ID,
+      start_date: startDate,
+      end_date: endDate || null,
+    });
+  }
+
+  // ============================================
+  // ALEX A. - First Class: Scout+Tenderfoot awarded, First Class ~75% done
+  // ============================================
+  console.log('  Creating advancement for Alex A. (First Class in progress)...');
+  await createRankProgress(scoutIds.alex, 'scout', 'awarded', 100, '2024-06-15');
+  await createRankProgress(scoutIds.alex, 'tenderfoot', 'awarded', 100, '2024-09-01');
+  await createRankProgress(scoutIds.alex, 'second_class', 'awarded', 100, '2024-12-01');
+  await createRankProgress(scoutIds.alex, 'first_class', 'in_progress', 75);
+
+  // Merit badges for Alex (2 in progress)
+  if (eagleBadges.length > 0) {
+    await createMeritBadgeProgress(scoutIds.alex, eagleBadges[0], 'in_progress', 60);
+  }
+  if (electiveBadges.length > 0) {
+    await createMeritBadgeProgress(scoutIds.alex, electiveBadges[0], 'in_progress', 40);
+  }
+
+  // ============================================
+  // BEN B. - Star: Through First Class awarded, Star in progress (4/6 badges)
+  // ============================================
+  console.log('  Creating advancement for Ben B. (Star in progress)...');
+  await createRankProgress(scoutIds.ben, 'scout', 'awarded', 100, '2024-03-15');
+  await createRankProgress(scoutIds.ben, 'tenderfoot', 'awarded', 100, '2024-06-01');
+  await createRankProgress(scoutIds.ben, 'second_class', 'awarded', 100, '2024-08-15');
+  await createRankProgress(scoutIds.ben, 'first_class', 'awarded', 100, '2024-11-01');
+  await createRankProgress(scoutIds.ben, 'star', 'in_progress', 60);
+
+  // Merit badges for Ben (4 awarded, 2 in progress for Star)
+  for (let i = 0; i < Math.min(4, eagleBadges.length); i++) {
+    await createMeritBadgeProgress(scoutIds.ben, eagleBadges[i], 'awarded', 100, '2025-01-01');
+  }
+  if (electiveBadges.length > 1) {
+    await createMeritBadgeProgress(scoutIds.ben, electiveBadges[0], 'in_progress', 70);
+    await createMeritBadgeProgress(scoutIds.ben, electiveBadges[1], 'in_progress', 50);
+  }
+
+  // ============================================
+  // CHARLIE C. - Life: Through Star awarded, Life in progress
+  // ============================================
+  console.log('  Creating advancement for Charlie C. (Life in progress)...');
+  await createRankProgress(scoutIds.charlie, 'scout', 'awarded', 100, '2023-06-15');
+  await createRankProgress(scoutIds.charlie, 'tenderfoot', 'awarded', 100, '2023-09-01');
+  await createRankProgress(scoutIds.charlie, 'second_class', 'awarded', 100, '2023-12-01');
+  await createRankProgress(scoutIds.charlie, 'first_class', 'awarded', 100, '2024-03-01');
+  await createRankProgress(scoutIds.charlie, 'star', 'awarded', 100, '2024-09-01');
+  await createRankProgress(scoutIds.charlie, 'life', 'in_progress', 40);
+
+  // Merit badges for Charlie (11 awarded - 6 for Star + 5 for Life progress)
+  for (let i = 0; i < Math.min(6, eagleBadges.length); i++) {
+    await createMeritBadgeProgress(scoutIds.charlie, eagleBadges[i], 'awarded', 100, '2024-08-01');
+  }
+  for (let i = 0; i < Math.min(5, electiveBadges.length); i++) {
+    await createMeritBadgeProgress(scoutIds.charlie, electiveBadges[i], 'awarded', 100, '2025-01-01');
+  }
+
+  // Leadership for Charlie
+  await createLeadershipPosition(scoutIds.charlie, 'quartermaster', '2024-06-01');
+
+  // ============================================
+  // DAVID D. - Tenderfoot: Scout awarded, Tenderfoot ~50% done
+  // ============================================
+  console.log('  Creating advancement for David D. (Tenderfoot in progress)...');
+  await createRankProgress(scoutIds.david, 'scout', 'awarded', 100, '2025-01-01');
+  await createRankProgress(scoutIds.david, 'tenderfoot', 'in_progress', 50);
+
+  // ============================================
+  // ETHAN E. - Second Class: Scout+Tenderfoot awarded, Second Class ~60% done
+  // ============================================
+  console.log('  Creating advancement for Ethan E. (Second Class in progress)...');
+  await createRankProgress(scoutIds.ethan, 'scout', 'awarded', 100, '2024-09-01');
+  await createRankProgress(scoutIds.ethan, 'tenderfoot', 'awarded', 100, '2024-12-15');
+  await createRankProgress(scoutIds.ethan, 'second_class', 'in_progress', 60);
+
+  // One merit badge in progress
+  if (electiveBadges.length > 2) {
+    await createMeritBadgeProgress(scoutIds.ethan, electiveBadges[2], 'in_progress', 30);
+  }
+
+  // ============================================
+  // FRANK F. - Scout: Just awarded
+  // ============================================
+  console.log('  Creating advancement for Frank F. (Scout just awarded)...');
+  await createRankProgress(scoutIds.frank, 'scout', 'awarded', 100, '2025-01-15');
+
+  // ============================================
+  // GEORGE G. - First Class: Same as Alex + leadership positions
+  // ============================================
+  console.log('  Creating advancement for George G. (First Class + leadership)...');
+  await createRankProgress(scoutIds.george, 'scout', 'awarded', 100, '2024-06-01');
+  await createRankProgress(scoutIds.george, 'tenderfoot', 'awarded', 100, '2024-08-15');
+  await createRankProgress(scoutIds.george, 'second_class', 'awarded', 100, '2024-11-01');
+  await createRankProgress(scoutIds.george, 'first_class', 'in_progress', 75);
+
+  // Merit badges
+  if (eagleBadges.length > 1) {
+    await createMeritBadgeProgress(scoutIds.george, eagleBadges[0], 'awarded', 100, '2025-01-01');
+    await createMeritBadgeProgress(scoutIds.george, eagleBadges[1], 'in_progress', 80);
+  }
+
+  // Leadership positions for George
+  await createLeadershipPosition(scoutIds.george, 'patrol_leader', '2024-09-01');
+  await createLeadershipPosition(scoutIds.george, 'historian', '2024-06-01', '2024-08-31');
+
+  // ============================================
+  // HENRY H. - Star: Star awarded with 6 merit badges
+  // ============================================
+  console.log('  Creating advancement for Henry H. (Star awarded)...');
+  await createRankProgress(scoutIds.henry, 'scout', 'awarded', 100, '2024-01-15');
+  await createRankProgress(scoutIds.henry, 'tenderfoot', 'awarded', 100, '2024-04-01');
+  await createRankProgress(scoutIds.henry, 'second_class', 'awarded', 100, '2024-07-01');
+  await createRankProgress(scoutIds.henry, 'first_class', 'awarded', 100, '2024-10-01');
+  await createRankProgress(scoutIds.henry, 'star', 'awarded', 100, '2025-01-15');
+
+  // Merit badges for Henry (6 awarded)
+  for (let i = 0; i < Math.min(4, eagleBadges.length); i++) {
+    await createMeritBadgeProgress(scoutIds.henry, eagleBadges[i], 'awarded', 100, '2025-01-01');
+  }
+  for (let i = 0; i < Math.min(2, electiveBadges.length); i++) {
+    await createMeritBadgeProgress(scoutIds.henry, electiveBadges[i], 'awarded', 100, '2025-01-10');
+  }
+
+  // Leadership for Henry
+  await createLeadershipPosition(scoutIds.henry, 'scribe', '2024-09-01');
+
+  // ============================================
+  // Add activity entries for some scouts
+  // ============================================
+  console.log('  Creating activity entries...');
+
+  const activityEntries = [
+    // Charlie - most experienced
+    { scout_id: scoutIds.charlie, activity_type: 'camping', activity_date: '2024-06-15', value: 2, description: 'Summer Camp' },
+    { scout_id: scoutIds.charlie, activity_type: 'camping', activity_date: '2024-10-12', value: 2, description: 'Fall Camporee' },
+    { scout_id: scoutIds.charlie, activity_type: 'camping', activity_date: '2025-01-04', value: 1, description: 'Polar Bear Campout' },
+    { scout_id: scoutIds.charlie, activity_type: 'hiking', activity_date: '2024-09-21', value: 10, description: 'Day Hike - Enchanted Rock' },
+    { scout_id: scoutIds.charlie, activity_type: 'service', activity_date: '2024-11-15', value: 4, description: 'Food Bank' },
+    // Henry - Star scout
+    { scout_id: scoutIds.henry, activity_type: 'camping', activity_date: '2024-06-15', value: 2, description: 'Summer Camp' },
+    { scout_id: scoutIds.henry, activity_type: 'camping', activity_date: '2024-10-12', value: 2, description: 'Fall Camporee' },
+    { scout_id: scoutIds.henry, activity_type: 'hiking', activity_date: '2024-08-10', value: 5, description: 'Troop Hike' },
+    { scout_id: scoutIds.henry, activity_type: 'service', activity_date: '2024-09-14', value: 3, description: 'Park Cleanup' },
+    // Ben - working on Star
+    { scout_id: scoutIds.ben, activity_type: 'camping', activity_date: '2024-10-12', value: 2, description: 'Fall Camporee' },
+    { scout_id: scoutIds.ben, activity_type: 'service', activity_date: '2024-12-07', value: 2, description: 'Scouting for Food' },
+    // Alex and George
+    { scout_id: scoutIds.alex, activity_type: 'camping', activity_date: '2024-10-12', value: 2, description: 'Fall Camporee' },
+    { scout_id: scoutIds.george, activity_type: 'camping', activity_date: '2024-10-12', value: 2, description: 'Fall Camporee' },
+    { scout_id: scoutIds.george, activity_type: 'service', activity_date: '2024-11-15', value: 4, description: 'Food Bank' },
+  ];
+
+  for (const entry of activityEntries) {
+    await supabase.from('scout_activity_entries').insert(entry);
+  }
+
+  console.log(`  Created ${activityEntries.length} activity entries`);
+  console.log('\n✅ Advancement data seed complete!');
+}
+
 // Tables to dump/restore in dependency order (parents first for restore)
 const DUMP_TABLES = [
   'profiles',
@@ -836,6 +1225,14 @@ const DUMP_TABLES = [
   'scouts',
   'scout_accounts',
   'scout_guardians',
+  // Advancement tables
+  'scout_rank_progress',
+  'scout_rank_requirement_progress',
+  'scout_merit_badge_progress',
+  'scout_merit_badge_requirement_progress',
+  'scout_leadership_history',
+  'scout_activity_entries',
+  // Other tables
   'events',
   'event_registrations',
   'journal_entries',
@@ -1066,9 +1463,19 @@ async function main(): Promise<void> {
     case 'seed:test':
       await seedTestData();
       break;
+    case 'seed:advancement':
+      await seedAdvancementData();
+      break;
+    case 'seed:bsa':
+      console.log('\n📚 Seeding BSA Reference Data...');
+      await importBsaReferenceData();
+      break;
     case 'seed:all':
       await seedBase();
       await seedTestData();
+      console.log('\n📚 Seeding BSA Reference Data...');
+      await importBsaReferenceData();
+      await seedAdvancementData();
       break;
     case 'dump':
       await dumpDatabase(arg);
@@ -1090,13 +1497,15 @@ async function main(): Promise<void> {
       console.log('Usage: npx tsx scripts/db.ts [--prod] <command>');
       console.log('');
       console.log('Commands:');
-      console.log('  reset          - Clear all data from database');
-      console.log('  seed:base      - Seed base unit with admin user');
-      console.log('  seed:test      - Seed test data (scouts, parents, role users)');
-      console.log('  seed:all       - Run base + test seeds');
-      console.log('  dump [name]    - Dump current database to JSON file');
-      console.log('  restore <file> - Restore from a dump file');
-      console.log('  list           - List available dump files');
+      console.log('  reset            - Clear all data from database');
+      console.log('  seed:base        - Seed base unit with admin user');
+      console.log('  seed:test        - Seed test data (scouts, parents, role users)');
+      console.log('  seed:bsa         - Seed BSA reference data (ranks, badges, positions)');
+      console.log('  seed:advancement - Seed advancement progress data for test scouts');
+      console.log('  seed:all         - Run base + test + bsa + advancement seeds');
+      console.log('  dump [name]      - Dump current database to JSON file');
+      console.log('  restore <file>   - Restore from a dump file');
+      console.log('  list             - List available dump files');
       console.log('');
       console.log('Flags:');
       console.log('  --prod         - Use production database (.env.prod)');
