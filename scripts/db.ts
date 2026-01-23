@@ -35,7 +35,10 @@ import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
-import { importAll as importBsaReferenceData } from './bsa-reference-data';
+import {
+  importAll as importBsaReferenceData,
+  importVersionedMeritBadgeRequirements,
+} from './bsa-reference-data';
 
 // Check for --prod flag
 const isProd = process.argv.includes('--prod');
@@ -1470,11 +1473,17 @@ async function main(): Promise<void> {
       console.log('\n📚 Seeding BSA Reference Data...');
       await importBsaReferenceData();
       break;
+    case 'seed:mb-versions':
+      console.log('\n📚 Seeding Versioned Merit Badge Requirements...');
+      await importVersionedMeritBadgeRequirements();
+      break;
     case 'seed:all':
       await seedBase();
       await seedTestData();
       console.log('\n📚 Seeding BSA Reference Data...');
       await importBsaReferenceData();
+      console.log('\n📚 Seeding Versioned Merit Badge Requirements...');
+      await importVersionedMeritBadgeRequirements();
       await seedAdvancementData();
       break;
     case 'dump':
@@ -1501,8 +1510,9 @@ async function main(): Promise<void> {
       console.log('  seed:base        - Seed base unit with admin user');
       console.log('  seed:test        - Seed test data (scouts, parents, role users)');
       console.log('  seed:bsa         - Seed BSA reference data (ranks, badges, positions)');
+      console.log('  seed:mb-versions - Seed versioned merit badge requirements (multi-version)');
       console.log('  seed:advancement - Seed advancement progress data for test scouts');
-      console.log('  seed:all         - Run base + test + bsa + advancement seeds');
+      console.log('  seed:all         - Run base + test + bsa + mb-versions + advancement seeds');
       console.log('  dump [name]      - Dump current database to JSON file');
       console.log('  restore <file>   - Restore from a dump file');
       console.log('  list             - List available dump files');

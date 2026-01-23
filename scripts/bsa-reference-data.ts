@@ -141,6 +141,29 @@ interface LeadershipFile {
   positions: LeadershipPosition[]
 }
 
+// Types for scraped merit badge requirements (from Scoutbook scraper)
+interface ScrapedRequirement {
+  number: string
+  description: string
+  parentNumber: string | null
+  depth: number
+}
+
+interface ScrapedBadgeVersion {
+  badgeName: string
+  badgeSlug: string
+  versionYear: number
+  versionLabel: string
+  requirements: ScrapedRequirement[]
+}
+
+interface ScrapedDataFile {
+  totalBadges: number
+  completedBadges: number
+  currentBadge: string
+  badges: ScrapedBadgeVersion[]
+}
+
 /**
  * Import ranks with bulk inserts
  */
@@ -569,6 +592,217 @@ async function importLeadershipPositions(filename?: string) {
 }
 
 /**
+ * Import scraped merit badge requirements (from Scoutbook scraper)
+ *
+ * Reads from merit-badge-requirements-scraped.json (source of truth)
+ * - 141 badges, 358 versions, 11,289 requirements
+ * - Uses bulk inserts for performance (~20s vs ~30min)
+ * - Processes level-by-level to resolve parent relationships
+ */
+async function importVersionedMeritBadgeRequirements(filename?: string) {
+  const file = filename || 'merit-badge-requirements-scraped.json'
+  console.log('\n=== Importing Scraped Merit Badge Requirements ===')
+  console.log(`  File: ${file}`)
+
+  const data = readJsonFile<ScrapedDataFile>(file)
+  const totalReqs = data.badges.reduce((sum, b) => sum + b.requirements.length, 0)
+  console.log(`  Badges: ${data.totalBadges}`)
+  console.log(`  Badge versions: ${data.badges.length}`)
+  console.log(`  Requirements: ${totalReqs}`)
+
+  const startTime = Date.now()
+
+  // Step 1: Get badge ID map (by code/slug)
+  const { data: badges, error: badgesError } = await supabase
+    .from('bsa_merit_badges')
+    .select('id, code')
+
+  if (badgesError || !badges) {
+    console.error('Error fetching badges:', badgesError)
+    return
+  }
+
+  const badgeCodeToId = new Map(badges.map((b) => [b.code, b.id]))
+  console.log(`  Found ${badges.length} existing badges in DB`)
+
+  // Step 2: Build version records and upsert
+  const versionRecords: {
+    merit_badge_id: string
+    version_year: number
+    is_current: boolean
+    source: string
+    scraped_at: string
+  }[] = []
+
+  const seenVersions = new Set<string>()
+  for (const badge of data.badges) {
+    const badgeId = badgeCodeToId.get(badge.badgeSlug)
+    if (!badgeId) continue
+
+    const versionKey = `${badgeId}:${badge.versionYear}`
+    if (seenVersions.has(versionKey)) continue
+    seenVersions.add(versionKey)
+
+    versionRecords.push({
+      merit_badge_id: badgeId,
+      version_year: badge.versionYear,
+      is_current: badge.versionLabel.includes('(Active)'),
+      source: 'scoutbook',
+      scraped_at: new Date().toISOString(),
+    })
+  }
+
+  for (const batch of chunk(versionRecords, batchSize)) {
+    const { error } = await supabase
+      .from('bsa_merit_badge_versions')
+      .upsert(batch, { onConflict: 'merit_badge_id,version_year' })
+    if (error) {
+      console.error('Error upserting versions:', error)
+    }
+  }
+  console.log(`  Upserted ${versionRecords.length} versions`)
+
+  // Step 3: Delete existing requirements for version years in the import
+  const versionYears = [...new Set(data.badges.map((b) => b.versionYear))]
+  const badgeIds = badges.map((b) => b.id)
+
+  for (const year of versionYears) {
+    const { error } = await supabase
+      .from('bsa_merit_badge_requirements')
+      .delete()
+      .in('merit_badge_id', badgeIds)
+      .eq('version_year', year)
+
+    if (error) {
+      // FK constraint errors are expected if there's scout progress - continue
+      if (!error.message.includes('foreign key constraint')) {
+        console.error(`Error deleting requirements for year ${year}:`, error.message)
+      }
+    }
+  }
+  console.log(`  Cleared requirements for ${versionYears.length} version years`)
+
+  // Step 4: Flatten all requirements with badge context and group by depth
+  type FlatReq = {
+    badgeId: string
+    versionYear: number
+    number: string
+    description: string
+    parentNumber: string | null
+    depth: number
+    displayOrder: number
+  }
+
+  const requirementsByLevel = new Map<number, FlatReq[]>()
+  let maxLevel = 0
+
+  for (const badge of data.badges) {
+    const badgeId = badgeCodeToId.get(badge.badgeSlug)
+    if (!badgeId) continue
+
+    let displayOrder = 1
+    for (const req of badge.requirements) {
+      const level = req.depth
+      maxLevel = Math.max(maxLevel, level)
+
+      if (!requirementsByLevel.has(level)) {
+        requirementsByLevel.set(level, [])
+      }
+      requirementsByLevel.get(level)!.push({
+        badgeId,
+        versionYear: badge.versionYear,
+        number: req.number,
+        description: req.description,
+        parentNumber: req.parentNumber,
+        depth: req.depth,
+        displayOrder: displayOrder++,
+      })
+    }
+  }
+
+  console.log(`  Max nesting depth: ${maxLevel}`)
+
+  // Step 5: Process level by level
+  // Map: badgeId:versionYear:requirementNumber -> database ID
+  const reqDbIdMap = new Map<string, string>()
+  let totalInserted = 0
+
+  for (let level = 0; level <= maxLevel; level++) {
+    const levelReqs = requirementsByLevel.get(level) || []
+    if (levelReqs.length === 0) continue
+
+    const insertRecords: {
+      merit_badge_id: string
+      version_year: number
+      requirement_number: string
+      scoutbook_requirement_number: string
+      description: string
+      display_order: number
+      parent_requirement_id: string | null
+      nesting_depth: number
+    }[] = []
+
+    for (const req of levelReqs) {
+      // Look up parent's database ID
+      let parentDbId: string | null = null
+      if (req.parentNumber) {
+        const parentKey = `${req.badgeId}:${req.versionYear}:${req.parentNumber}`
+        parentDbId = reqDbIdMap.get(parentKey) || null
+      }
+
+      insertRecords.push({
+        merit_badge_id: req.badgeId,
+        version_year: req.versionYear,
+        requirement_number: req.number,
+        scoutbook_requirement_number: req.number, // Scraped format IS scoutbook format
+        description: req.description,
+        display_order: req.displayOrder,
+        parent_requirement_id: parentDbId,
+        nesting_depth: req.depth,
+      })
+    }
+
+    // Insert this level in batches
+    for (const batch of chunk(insertRecords, batchSize)) {
+      const { error } = await supabase.from('bsa_merit_badge_requirements').insert(batch)
+      if (error) {
+        console.error(`Error inserting level ${level} requirements:`, error.message)
+      }
+    }
+
+    // Fetch inserted records to get their database IDs (paginated)
+    let offset = 0
+    const pageSize = 1000
+    while (true) {
+      const { data: inserted } = await supabase
+        .from('bsa_merit_badge_requirements')
+        .select('id, merit_badge_id, version_year, requirement_number')
+        .in('merit_badge_id', badgeIds)
+        .in('version_year', versionYears)
+        .eq('nesting_depth', level)
+        .range(offset, offset + pageSize - 1)
+
+      if (!inserted || inserted.length === 0) break
+
+      for (const row of inserted) {
+        const key = `${row.merit_badge_id}:${row.version_year}:${row.requirement_number}`
+        reqDbIdMap.set(key, row.id)
+      }
+
+      if (inserted.length < pageSize) break
+      offset += pageSize
+    }
+
+    console.log(`  Level ${level}: ${insertRecords.length} requirements`)
+    totalInserted += insertRecords.length
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
+  console.log(`  Total: ${totalInserted} requirements in ${elapsed}s`)
+  console.log('\n=== Scraped Requirements Import Complete ===')
+}
+
+/**
  * Import all BSA reference data
  */
 async function importAll() {
@@ -594,7 +828,13 @@ async function importAll() {
 }
 
 // Export functions for use by other scripts (like db.ts)
-export { importRanks, importMeritBadges, importLeadershipPositions, importAll }
+export {
+  importRanks,
+  importMeritBadges,
+  importLeadershipPositions,
+  importVersionedMeritBadgeRequirements,
+  importAll,
+}
 
 // CLI - only run when executed directly
 const isMainModule = process.argv[1]?.includes('bsa-reference-data')
@@ -620,6 +860,10 @@ if (isMainModule) {
       importLeadershipPositions(arg1)
       break
 
+    case 'import-versioned-reqs':
+      importVersionedMeritBadgeRequirements(arg1)
+      break
+
     default:
       console.log(`
 BSA Reference Data Management CLI
@@ -632,6 +876,7 @@ Commands:
   import-ranks [filename]       Import rank requirements (override config file)
   import-badges [filename]      Import merit badges (override config file)
   import-positions [filename]   Import leadership positions (override config file)
+  import-versioned-reqs [file]  Import multi-version merit badge requirements
 
 Configuration (seed-config.ts):
   Version Year: ${versionYear}

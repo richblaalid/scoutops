@@ -10,6 +10,7 @@ import {
   type ParsedActivities,
 } from '@/lib/import/scoutbook-history-parser'
 import type { ImportSelections } from '@/components/import/scoutbook-history-preview'
+import { scoutbookToDisplayFormat } from '@/lib/format/requirement-number'
 
 interface ActionResult<T = void> {
   success: boolean
@@ -26,66 +27,33 @@ interface ImportResult {
 }
 
 /**
- * Normalize requirement number from CSV format to DB format
+ * Normalize requirement number from Scoutbook CSV format
+ *
+ * The CSV uses Scoutbook's parenthetical format (6A(a)(1)).
+ * We now store this format directly in scoutbook_requirement_number column.
+ *
+ * This function normalizes case and whitespace for matching.
+ */
+function normalizeScoutbookRequirement(csvReq: string): string {
+  // Just trim whitespace - preserve exact format for matching
+  return csvReq.trim()
+}
+
+/**
+ * Legacy: Normalize requirement number from CSV format to display format
  *
  * Handles Option A/B badge structures like Cycling requirement 6:
  * - CSV format: 6A(a)(1) where:
  *   - 6 = main requirement
  *   - A = Option A (vs B)
- *   - (a) = sub-requirement letter → converts to number (a=1, b=2, c=3...)
- *   - (1) = detail number → converts to letter (1=a, 2=b, 3=c...)
- * - DB format: 6A1a
+ *   - (a) = sub-requirement letter
+ *   - (1) = detail number
+ * - Display format: 6Aa1
  *
- * Examples:
- *   6A(a)(1) → 6A1a
- *   6A(a)(2) → 6A1b
- *   6A(b)(1) → 6A2a
- *   6B(a)(1) → 6B1a
- *   9b(2) → 9b2 (simpler format without Option A/B)
+ * @deprecated Use normalizeScoutbookRequirement and match against scoutbook_requirement_number
  */
 function normalizeRequirementNumber(csvReq: string): string {
-  // Start with the original, trimmed
-  let normalized = csvReq.trim()
-
-  // Pattern for Option A/B style: 6A(a)(1), 6B(b)(2), etc.
-  // Group 1: base (e.g., "6A" or "6B")
-  // Group 2: first parenthetical letter (e.g., "a" from "(a)")
-  // Group 3: second parenthetical number (e.g., "1" from "(1)")
-  const optionPattern = /^(\d+[AB])(?:\(([a-z])\))?(?:\((\d+)\))?$/i
-  const optionMatch = normalized.match(optionPattern)
-
-  if (optionMatch) {
-    const [, base, subLetter, detailNum] = optionMatch
-    let result = base.toUpperCase()
-
-    // Convert letter (a) to number: a=1, b=2, c=3...
-    if (subLetter) {
-      const letterIndex = subLetter.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0) + 1
-      result += letterIndex.toString()
-    }
-
-    // Convert number (1) to letter: 1=a, 2=b, 3=c...
-    if (detailNum) {
-      const numIndex = parseInt(detailNum, 10)
-      const letter = String.fromCharCode('a'.charCodeAt(0) + numIndex - 1)
-      result += letter
-    }
-
-    return result.toLowerCase()
-  }
-
-  // Simpler pattern for non-Option badges: 9b(2) → 9b2
-  // This handles cases like "9b(2)" where (2) is just an additional qualifier
-  const simplePattern = /^([a-z0-9]+)\((\d+)\)$/i
-  const simpleMatch = normalized.match(simplePattern)
-
-  if (simpleMatch) {
-    const [, base, num] = simpleMatch
-    return (base + num).toLowerCase()
-  }
-
-  // No transformation needed, just lowercase
-  return normalized.toLowerCase()
+  return scoutbookToDisplayFormat(csvReq.trim()).toLowerCase()
 }
 
 // Helper to verify leader role
@@ -355,6 +323,11 @@ export async function importScoutbookHistory(
     let progressId: string
 
     if (!existingProgress) {
+      // Determine version year from CSV or badge default
+      const versionYear = badgeEntry.version
+        ? parseInt(badgeEntry.version, 10)
+        : meritBadge.requirement_version_year
+
       // Create new badge progress as in_progress
       const { data: newProgress } = await adminSupabase
         .from('scout_merit_badge_progress')
@@ -363,6 +336,7 @@ export async function importScoutbookHistory(
           merit_badge_id: badgeId,
           status: 'in_progress',
           started_at: badgeEntry.startDate || new Date().toISOString(),
+          requirement_version_year: versionYear,
         })
         .select('id')
         .single()
@@ -379,32 +353,52 @@ export async function importScoutbookHistory(
 
     // Import individual requirement completions
     if (badgeEntry.completedRequirements.length > 0) {
-      // Get all requirements for this badge's current version
+      // Determine version year: use CSV version if available, otherwise badge default
+      const versionYear = badgeEntry.version
+        ? parseInt(badgeEntry.version, 10)
+        : meritBadge.requirement_version_year
+
+      // Get all requirements for this badge's version
       const { data: badgeRequirements } = await adminSupabase
         .from('bsa_merit_badge_requirements')
-        .select('id, requirement_number, sub_requirement_letter')
+        .select('id, requirement_number, scoutbook_requirement_number, sub_requirement_letter')
         .eq('merit_badge_id', badgeId)
-        .eq('version_year', meritBadge.requirement_version_year)
+        .eq('version_year', versionYear)
 
       if (badgeRequirements && badgeRequirements.length > 0) {
-        // Create a map for quick lookup: "1a" -> requirement id
-        const reqMap = new Map<string, string>()
+        // Create maps for quick lookup - prefer scoutbook format, fallback to legacy
+        const scoutbookReqMap = new Map<string, string>()
+        const legacyReqMap = new Map<string, string>()
+
         for (const req of badgeRequirements) {
-          const key = req.sub_requirement_letter
+          // Primary: Use scoutbook_requirement_number if available
+          if (req.scoutbook_requirement_number) {
+            scoutbookReqMap.set(req.scoutbook_requirement_number, req.id)
+          }
+
+          // Fallback: Use legacy format (requirement_number + sub_requirement_letter)
+          const legacyKey = req.sub_requirement_letter
             ? `${req.requirement_number}${req.sub_requirement_letter}`
             : req.requirement_number
-          reqMap.set(key.toLowerCase(), req.id)
+          legacyReqMap.set(legacyKey.toLowerCase(), req.id)
         }
 
         // Import each completed requirement
         for (const reqNum of badgeEntry.completedRequirements) {
-          // Normalize the CSV requirement format to match DB format
-          // e.g., "6A(a)(1)" -> "6a1a"
-          const normalizedReq = normalizeRequirementNumber(reqNum)
-          const requirementId = reqMap.get(normalizedReq)
+          const normalizedScoutbook = normalizeScoutbookRequirement(reqNum)
+          const normalizedLegacy = normalizeRequirementNumber(reqNum)
+
+          // Try scoutbook format first, then legacy format
+          let requirementId = scoutbookReqMap.get(normalizedScoutbook)
+          if (!requirementId) {
+            requirementId = legacyReqMap.get(normalizedLegacy)
+          }
 
           if (!requirementId) {
-            console.log(`Requirement not found for ${badgeEntry.name}: ${reqNum} (normalized: ${normalizedReq})`)
+            console.log(
+              `Requirement not found for ${badgeEntry.name}: ${reqNum} ` +
+                `(scoutbook: ${normalizedScoutbook}, legacy: ${normalizedLegacy})`
+            )
             continue
           }
 
