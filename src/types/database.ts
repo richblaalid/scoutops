@@ -366,52 +366,52 @@ export type Database = {
       }
       bsa_merit_badge_requirements: {
         Row: {
+          alternatives_group: string | null
           created_at: string | null
           description: string
           display_order: number
           id: string
-          merit_badge_id: string
-          parent_requirement_id: string | null
-          requirement_number: string
-          sub_requirement_letter: string | null
-          version_id: string
           is_alternative: boolean | null
-          alternatives_group: string | null
+          merit_badge_id: string
           nesting_depth: number | null
           original_scoutbook_id: string | null
+          parent_requirement_id: string | null
           required_count: number | null
+          requirement_number: string
+          sub_requirement_letter: string | null
+          version_year: number | null
         }
         Insert: {
+          alternatives_group?: string | null
           created_at?: string | null
           description: string
           display_order: number
           id?: string
-          merit_badge_id: string
-          parent_requirement_id?: string | null
-          requirement_number: string
-          sub_requirement_letter?: string | null
-          version_id: string
           is_alternative?: boolean | null
-          alternatives_group?: string | null
+          merit_badge_id: string
           nesting_depth?: number | null
           original_scoutbook_id?: string | null
+          parent_requirement_id?: string | null
           required_count?: number | null
+          requirement_number: string
+          sub_requirement_letter?: string | null
+          version_year?: number | null
         }
         Update: {
+          alternatives_group?: string | null
           created_at?: string | null
           description?: string
           display_order?: number
           id?: string
-          merit_badge_id?: string
-          parent_requirement_id?: string | null
-          requirement_number?: string
-          sub_requirement_letter?: string | null
-          version_id?: string
           is_alternative?: boolean | null
-          alternatives_group?: string | null
+          merit_badge_id?: string
           nesting_depth?: number | null
           original_scoutbook_id?: string | null
+          parent_requirement_id?: string | null
           required_count?: number | null
+          requirement_number?: string
+          sub_requirement_letter?: string | null
+          version_year?: number | null
         }
         Relationships: [
           {
@@ -428,13 +428,6 @@ export type Database = {
             referencedRelation: "bsa_merit_badge_requirements"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "bsa_merit_badge_requirements_version_id_fkey"
-            columns: ["version_id"]
-            isOneToOne: false
-            referencedRelation: "bsa_requirement_versions"
-            referencedColumns: ["id"]
-          },
         ]
       }
       bsa_merit_badges: {
@@ -449,6 +442,7 @@ export type Database = {
           is_eagle_required: boolean | null
           name: string
           pamphlet_url: string | null
+          requirement_version_year: number | null
           updated_at: string | null
         }
         Insert: {
@@ -462,6 +456,7 @@ export type Database = {
           is_eagle_required?: boolean | null
           name: string
           pamphlet_url?: string | null
+          requirement_version_year?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -475,6 +470,7 @@ export type Database = {
           is_eagle_required?: boolean | null
           name?: string
           pamphlet_url?: string | null
+          requirement_version_year?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -491,7 +487,7 @@ export type Database = {
           rank_id: string
           requirement_number: string
           sub_requirement_letter: string | null
-          version_id: string
+          version_year: number | null
         }
         Insert: {
           alternatives_group?: string | null
@@ -504,7 +500,7 @@ export type Database = {
           rank_id: string
           requirement_number: string
           sub_requirement_letter?: string | null
-          version_id: string
+          version_year?: number | null
         }
         Update: {
           alternatives_group?: string | null
@@ -517,7 +513,7 @@ export type Database = {
           rank_id?: string
           requirement_number?: string
           sub_requirement_letter?: string | null
-          version_id?: string
+          version_year?: number | null
         }
         Relationships: [
           {
@@ -534,13 +530,6 @@ export type Database = {
             referencedRelation: "bsa_ranks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "bsa_rank_requirements_version_id_fkey"
-            columns: ["version_id"]
-            isOneToOne: false
-            referencedRelation: "bsa_requirement_versions"
-            referencedColumns: ["id"]
-          },
         ]
       }
       bsa_ranks: {
@@ -553,6 +542,7 @@ export type Database = {
           image_url: string | null
           is_eagle_required: boolean | null
           name: string
+          requirement_version_year: number | null
         }
         Insert: {
           code: string
@@ -563,6 +553,7 @@ export type Database = {
           image_url?: string | null
           is_eagle_required?: boolean | null
           name: string
+          requirement_version_year?: number | null
         }
         Update: {
           code?: string
@@ -573,39 +564,7 @@ export type Database = {
           image_url?: string | null
           is_eagle_required?: boolean | null
           name?: string
-        }
-        Relationships: []
-      }
-      bsa_requirement_versions: {
-        Row: {
-          created_at: string | null
-          effective_date: string
-          id: string
-          is_active: boolean | null
-          notes: string | null
-          sunset_date: string | null
-          updated_at: string | null
-          version_year: number
-        }
-        Insert: {
-          created_at?: string | null
-          effective_date: string
-          id?: string
-          is_active?: boolean | null
-          notes?: string | null
-          sunset_date?: string | null
-          updated_at?: string | null
-          version_year: number
-        }
-        Update: {
-          created_at?: string | null
-          effective_date?: string
-          id?: string
-          is_active?: boolean | null
-          notes?: string | null
-          sunset_date?: string | null
-          updated_at?: string | null
-          version_year?: number
+          requirement_version_year?: number | null
         }
         Relationships: []
       }
@@ -1819,7 +1778,6 @@ export type Database = {
           sync_session_id: string | null
           synced_at: string | null
           updated_at: string | null
-          version_id: string
         }
         Insert: {
           approved_at?: string | null
@@ -1839,7 +1797,6 @@ export type Database = {
           sync_session_id?: string | null
           synced_at?: string | null
           updated_at?: string | null
-          version_id: string
         }
         Update: {
           approved_at?: string | null
@@ -1859,7 +1816,6 @@ export type Database = {
           sync_session_id?: string | null
           synced_at?: string | null
           updated_at?: string | null
-          version_id?: string
         }
         Relationships: [
           {
@@ -1895,13 +1851,6 @@ export type Database = {
             columns: ["sync_session_id"]
             isOneToOne: false
             referencedRelation: "sync_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scout_merit_badge_progress_version_id_fkey"
-            columns: ["version_id"]
-            isOneToOne: false
-            referencedRelation: "bsa_requirement_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -1981,7 +1930,6 @@ export type Database = {
           sync_session_id: string | null
           synced_at: string | null
           updated_at: string | null
-          version_id: string
         }
         Insert: {
           approved_at?: string | null
@@ -1999,7 +1947,6 @@ export type Database = {
           sync_session_id?: string | null
           synced_at?: string | null
           updated_at?: string | null
-          version_id: string
         }
         Update: {
           approved_at?: string | null
@@ -2017,7 +1964,6 @@ export type Database = {
           sync_session_id?: string | null
           synced_at?: string | null
           updated_at?: string | null
-          version_id?: string
         }
         Relationships: [
           {
@@ -2053,13 +1999,6 @@ export type Database = {
             columns: ["sync_session_id"]
             isOneToOne: false
             referencedRelation: "sync_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scout_rank_progress_version_id_fkey"
-            columns: ["version_id"]
-            isOneToOne: false
-            referencedRelation: "bsa_requirement_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -3126,7 +3065,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_active_requirement_version: { Args: never; Returns: string }
       get_auth_user_email: { Args: never; Returns: string }
       get_current_profile_id: { Args: never; Returns: string }
       get_parent_unit: { Args: { p_unit_id: string }; Returns: string }
@@ -3134,6 +3072,22 @@ export type Database = {
       get_user_active_unit_ids: { Args: never; Returns: string[] }
       initialize_scout_rank_progress: {
         Args: { p_rank_id: string; p_scout_id: string; p_version_id?: string }
+        Returns: string
+      }
+      insert_merit_badge_requirement: {
+        Args: {
+          p_alternatives_group: string
+          p_description: string
+          p_display_order: number
+          p_is_alternative: boolean
+          p_merit_badge_id: string
+          p_nesting_depth: number
+          p_original_scoutbook_id: string
+          p_required_count: number
+          p_requirement_number: string
+          p_sub_requirement_letter: string
+          p_version_id: string
+        }
         Returns: string
       }
       is_leadership_position_current: {
@@ -3170,6 +3124,10 @@ export type Database = {
       update_billing_description: {
         Args: { p_billing_record_id: string; p_new_description: string }
         Returns: Json
+      }
+      update_requirement_parent: {
+        Args: { p_id: string; p_parent_id: string }
+        Returns: undefined
       }
       user_has_role: {
         Args: {
