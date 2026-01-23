@@ -300,9 +300,12 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
               <tr key={scout.id} className="border-b border-stone-200 dark:border-stone-700 last:border-0">
                 <td className="py-3 pr-4">
                   <div>
-                    <p className="font-medium text-stone-900 dark:text-stone-100">
+                    <Link
+                      href={`/scouts/${scout.id}`}
+                      className="font-medium text-stone-900 hover:text-forest-600 dark:text-stone-100 dark:hover:text-forest-400"
+                    >
                       {scout.first_name} {scout.last_name}
-                    </p>
+                    </Link>
                     {scout.bsa_member_id && (
                       <p className="text-xs text-stone-500 dark:text-stone-400">BSA# {scout.bsa_member_id}</p>
                     )}
