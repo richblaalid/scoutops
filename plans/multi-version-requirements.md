@@ -132,7 +132,7 @@ CREATE TABLE bsa_merit_badge_versions (
 
 ## Implementation Phases
 
-### Phase 0: Foundation
+### Phase 0: Foundation ✅ COMPLETE
 
 #### 0.1 Schema Updates
 - [x] **0.1.1** Add `requirement_version_year` to `scout_merit_badge_progress`
@@ -145,25 +145,46 @@ CREATE TABLE bsa_merit_badge_versions (
 - [x] **0.2.2** Migrate existing requirements to populate `scoutbook_requirement_number`
 - [x] **0.2.3** Update import logic to use Scoutbook format for matching
 
-### Phase 1: Scoutbook Scraper Extension
+#### 0.3 Performant Seeding (Added)
+- [x] **0.3.1** Create Playwright-based Scoutbook scraper
+- [x] **0.3.2** Scrape all 141 badges with 358 versions (11,289 requirements)
+- [x] **0.3.3** Create bulk import function (~14s vs ~30min)
+- [x] **0.3.4** Add `seed:mb-versions` command to db.ts
+- [x] **0.3.5** Integrate into `db:fresh` workflow
 
-#### 1.1 Extension Updates
-- [ ] **1.1.1** Add merit badge page detection to content script
-- [ ] **1.1.2** Create requirement extraction logic for Scoutbook DOM
-- [ ] **1.1.3** Add version dropdown detection and iteration
-- [ ] **1.1.4** Create "Capture Requirements" UI in extension popup
+### Phase 1: Scoutbook Scraper ✅ COMPLETE (via Playwright)
 
-#### 1.2 Scraping Automation
-- [ ] **1.2.1** Implement auto-navigation to next merit badge
-- [ ] **1.2.2** Add progress indicator and pause/resume controls
-- [ ] **1.2.3** Handle rate limiting and error recovery
-- [ ] **1.2.4** Store scraped data locally before sync
+> **Note**: Instead of Chrome extension approach, we used Playwright for scraping.
+> This was faster to implement and captured all required data.
 
-#### 1.3 API Endpoint
-- [ ] **1.3.1** Create `/api/scoutbook/requirements-sync` endpoint
-- [ ] **1.3.2** Add staging table for scraped requirements
-- [ ] **1.3.3** Implement review UI for staged requirements
-- [ ] **1.3.4** Create confirmation/import action
+#### 1.1 Scraper Implementation
+- [x] **1.1.1** Create Playwright scraper (`scripts/scrape-all-merit-badges.ts`)
+- [x] **1.1.2** Extract requirements from Scoutbook DOM
+- [x] **1.1.3** Iterate through all version dropdowns
+- [x] **1.1.4** Save to JSON source of truth file
+
+#### 1.2 Data Storage
+- [x] **1.2.1** Store scraped data in `data/merit-badge-requirements-scraped.json`
+- [x] **1.2.2** Track version metadata (year, is_current, source)
+- [x] **1.2.3** Preserve parent/child relationships via parentNumber
+
+#### 1.3 Seeding Infrastructure
+- [x] **1.3.1** Bulk import with level-by-level processing
+- [x] **1.3.2** Badge slug normalization for mismatched codes
+- [x] **1.3.3** Integrated into `npm run db:fresh`
+
+### Phase 2: Import Improvements
+
+#### 2.1 Version-Aware Import
+- [x] **2.1.1** Update Scoutbook CSV import to extract version year
+- [x] **2.1.2** Match requirements against correct version using `scoutbook_requirement_number`
+- [ ] **2.1.3** Fall back to current version with warning if historical not found
+- [ ] **2.1.4** Store version on `scout_merit_badge_progress` creation
+
+#### 2.2 Import Feedback
+- [ ] **2.2.1** Surface unmatched requirements to user
+- [ ] **2.2.2** Show version mismatch warnings
+- [ ] **2.2.3** Allow manual requirement mapping for edge cases
 
 ### Phase 2: Import Improvements
 
@@ -206,20 +227,23 @@ CREATE TABLE bsa_merit_badge_versions (
 
 ## File Changes
 
-### New Files
-- `supabase/migrations/YYYYMMDD_multi_version_requirements.sql`
+### Created Files (Phase 0-1)
+- `supabase/migrations/20260123000000_multi_version_requirements.sql` - Schema changes
 - `src/lib/format/requirement-number.ts` - Format conversion functions
-- `src/app/api/scoutbook/requirements-sync/route.ts` - Scraper API
+- `tests/unit/requirement-number.test.ts` - Unit tests for format conversion
+- `scripts/scrape-all-merit-badges.ts` - Playwright-based Scoutbook scraper
+- `scripts/import-scraped-requirements.ts` - Original import script (slower)
+- `data/merit-badge-requirements-scraped.json` - **Source of truth** (11,289 requirements)
+
+### Modified Files (Phase 0-1)
+- `scripts/bsa-reference-data.ts` - Added `importVersionedMeritBadgeRequirements()` bulk import
+- `scripts/db.ts` - Added `seed:mb-versions` command, integrated into `seed:all`
+- `src/app/actions/scoutbook-import.ts` - Version-aware import with `scoutbook_requirement_number` matching
+
+### Future Files (Phase 2-4)
+- `src/app/api/scoutbook/requirements-sync/route.ts` - Scraper API (if needed)
 - `src/components/advancement/version-switch-dialog.tsx` - Version switch UI
 - `src/components/advancement/requirement-mapping.tsx` - Mapping UI
-- `chuckbox-extension/src/lib/mb-extractor.ts` - Merit badge extraction
-
-### Modified Files
-- `chuckbox-extension/src/content/content-script.ts` - Add MB page detection
-- `chuckbox-extension/src/popup/popup.tsx` - Add capture UI
-- `src/app/actions/scoutbook-import.ts` - Version-aware import
-- `src/app/actions/advancement.ts` - Version switch actions
-- `src/components/advancement/scout-merit-badge-panel.tsx` - Version display
 
 ## Scraper Technical Details
 
@@ -306,25 +330,33 @@ interface ScrapedBadgeVersion {
 
 ## Success Metrics
 
-1. **Scrape Coverage**: 100+ merit badges with version history captured
-2. **Import Success Rate**: 95%+ of Scoutbook CSV requirements match
-3. **Version Tracking**: 100% of progress records have version_year
-4. **User Satisfaction**: Leaders can switch versions with confidence
+| Metric | Target | Actual | Status |
+|--------|--------|--------|--------|
+| Scrape Coverage | 100+ badges | **141 badges, 358 versions** | ✅ |
+| Requirements Captured | - | **11,289 requirements** | ✅ |
+| Seed Performance | < 60s | **~14 seconds** | ✅ |
+| Import Success Rate | 95%+ match | TBD (needs CSV testing) | ⏳ |
+| Version Tracking | 100% progress w/ version | TBD (Phase 2) | ⏳ |
 
 ## Task Log
 
 | Date | Task | Commit |
 |------|------|--------|
-| 2026-01-23 | 0.1.1-0.1.4: Schema updates migration | pending |
-| 2026-01-23 | 0.2.1: Format conversion functions | pending |
-| 2026-01-23 | 0.2.2: Import script for scraped data | pending |
-| 2026-01-23 | 0.2.3: Updated import logic for Scoutbook format | pending |
+| 2026-01-23 | Phase 0: Schema updates, format conversion, import logic | `b098f7d` |
+| 2026-01-23 | Phase 1: Playwright scraper, 11,289 requirements scraped | `b098f7d` |
+| 2026-01-23 | Performant seeding (~14s), db:fresh integration | `b098f7d` |
+| 2026-01-23 | Fix badge slug normalization (AI, Fish & Wildlife) | `9d1269c` |
+
+## Resolved Questions
+
+1. **Scoutbook DOM Structure**: ✅ Ant Design components with `.ant-table` for requirements
+2. **Version Dropdown Behavior**: ✅ Updates in-place without page reload
+3. **Badge ID Mapping**: ✅ Use badge slug/code with normalization map for mismatches
 
 ## Open Questions
 
-1. **Scoutbook DOM Structure**: Need to inspect actual page structure during scraping development
-2. **Version Dropdown Behavior**: Does selecting a version reload page or update in-place?
-3. **Badge ID Mapping**: How do Scoutbook badge IDs map to our internal IDs?
+1. **Version switching UI**: How should leaders map old requirements to new when switching versions?
+2. **Progress migration**: Should existing progress records be backfilled with version_year?
 
 ## Appendix: Scoutbook Requirement Format Reference
 
