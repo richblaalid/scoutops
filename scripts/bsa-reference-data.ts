@@ -625,6 +625,13 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
   const badgeCodeToId = new Map(badges.map((b) => [b.code, b.id]))
   console.log(`  Found ${badges.length} existing badges in DB`)
 
+  // Normalize scraped slugs to DB codes (handle naming mismatches)
+  const SLUG_TO_CODE: Record<string, string> = {
+    artificial_intelligence_ai: 'artificial_intelligence',
+    fish_and_wildlife_management: 'fish_wildlife_management',
+  }
+  const normalizeSlug = (slug: string) => SLUG_TO_CODE[slug] || slug
+
   // Step 2: Build version records and upsert
   const versionRecords: {
     merit_badge_id: string
@@ -636,7 +643,7 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
 
   const seenVersions = new Set<string>()
   for (const badge of data.badges) {
-    const badgeId = badgeCodeToId.get(badge.badgeSlug)
+    const badgeId = badgeCodeToId.get(normalizeSlug(badge.badgeSlug))
     if (!badgeId) continue
 
     const versionKey = `${badgeId}:${badge.versionYear}`
@@ -697,7 +704,7 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
   let maxLevel = 0
 
   for (const badge of data.badges) {
-    const badgeId = badgeCodeToId.get(badge.badgeSlug)
+    const badgeId = badgeCodeToId.get(normalizeSlug(badge.badgeSlug))
     if (!badgeId) continue
 
     let displayOrder = 1
