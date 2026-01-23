@@ -31,21 +31,6 @@ CREATE TYPE activity_type AS ENUM (
 -- Platform-level tables for BSA official requirements
 -- ============================================
 
--- Requirement version tracking (annual updates, effective Jan 1)
-CREATE TABLE bsa_requirement_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    version_year INTEGER NOT NULL UNIQUE,
-    effective_date DATE NOT NULL,
-    sunset_date DATE,
-    is_active BOOLEAN DEFAULT true,
-    notes TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Index for finding active version
-CREATE INDEX idx_bsa_requirement_versions_active ON bsa_requirement_versions(is_active, effective_date);
-
 -- 7 Scouts BSA ranks
 CREATE TABLE bsa_ranks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -54,16 +39,23 @@ CREATE TABLE bsa_ranks (
     display_order INTEGER NOT NULL,
     is_eagle_required BOOLEAN DEFAULT true,
     description TEXT,
+    image_url TEXT,
+    requirement_version_year INTEGER,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Index for display ordering
 CREATE INDEX idx_bsa_ranks_display_order ON bsa_ranks(display_order);
 
+-- Comments for bsa_ranks
+COMMENT ON COLUMN bsa_ranks.requirement_version_year IS
+  'Year the BSA last updated requirements for this rank (e.g., 2022, 2016)';
+COMMENT ON COLUMN bsa_ranks.image_url IS 'URL to rank badge image';
+
 -- Rank requirements with nested sub-requirements
 CREATE TABLE bsa_rank_requirements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    version_id UUID NOT NULL REFERENCES bsa_requirement_versions(id) ON DELETE CASCADE,
+    version_year INTEGER NOT NULL,
     rank_id UUID NOT NULL REFERENCES bsa_ranks(id) ON DELETE CASCADE,
     requirement_number TEXT NOT NULL,
     parent_requirement_id UUID REFERENCES bsa_rank_requirements(id) ON DELETE CASCADE,
@@ -73,12 +65,16 @@ CREATE TABLE bsa_rank_requirements (
     alternatives_group TEXT,
     display_order INTEGER NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(version_id, rank_id, requirement_number, sub_requirement_letter)
+    UNIQUE(version_year, rank_id, requirement_number, sub_requirement_letter)
 );
 
 -- Indexes for requirement lookup
-CREATE INDEX idx_bsa_rank_requirements_version_rank ON bsa_rank_requirements(version_id, rank_id);
+CREATE INDEX idx_rank_requirements_rank_version ON bsa_rank_requirements(rank_id, version_year);
 CREATE INDEX idx_bsa_rank_requirements_parent ON bsa_rank_requirements(parent_requirement_id);
+
+-- Comments for bsa_rank_requirements
+COMMENT ON COLUMN bsa_rank_requirements.version_year IS
+  'BSA version year for these requirements (e.g., 2022, 2016). Query by joining to bsa_ranks.requirement_version_year for current requirements.';
 
 -- 141+ merit badges
 CREATE TABLE bsa_merit_badges (
@@ -89,6 +85,8 @@ CREATE TABLE bsa_merit_badges (
     category TEXT,
     description TEXT,
     image_url TEXT,
+    pamphlet_url TEXT,
+    requirement_version_year INTEGER,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -98,23 +96,44 @@ CREATE TABLE bsa_merit_badges (
 CREATE INDEX idx_bsa_merit_badges_eagle ON bsa_merit_badges(is_eagle_required) WHERE is_active = true;
 CREATE INDEX idx_bsa_merit_badges_category ON bsa_merit_badges(category) WHERE is_active = true;
 
--- Merit badge requirements (versioned)
+-- Comments for bsa_merit_badges
+COMMENT ON COLUMN bsa_merit_badges.pamphlet_url IS 'URL to the official BSA merit badge pamphlet PDF on filestore.scouting.org';
+COMMENT ON COLUMN bsa_merit_badges.requirement_version_year IS
+  'Year the BSA last updated requirements for this merit badge';
+
+-- Merit badge requirements (versioned by year)
 CREATE TABLE bsa_merit_badge_requirements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    version_id UUID NOT NULL REFERENCES bsa_requirement_versions(id) ON DELETE CASCADE,
+    version_year INTEGER NOT NULL,
     merit_badge_id UUID NOT NULL REFERENCES bsa_merit_badges(id) ON DELETE CASCADE,
     requirement_number TEXT NOT NULL,
     parent_requirement_id UUID REFERENCES bsa_merit_badge_requirements(id) ON DELETE CASCADE,
     sub_requirement_letter TEXT,
     description TEXT NOT NULL,
     display_order INTEGER NOT NULL,
+    is_alternative BOOLEAN DEFAULT false,
+    alternatives_group TEXT,
+    nesting_depth INTEGER DEFAULT 0,
+    original_scoutbook_id TEXT,
+    required_count INTEGER,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(version_id, merit_badge_id, requirement_number, sub_requirement_letter)
+    UNIQUE(version_year, merit_badge_id, requirement_number, COALESCE(sub_requirement_letter, ''))
 );
 
 -- Indexes for requirement lookup
-CREATE INDEX idx_bsa_mb_requirements_version_badge ON bsa_merit_badge_requirements(version_id, merit_badge_id);
+CREATE INDEX idx_mb_requirements_badge_version ON bsa_merit_badge_requirements(merit_badge_id, version_year);
 CREATE INDEX idx_bsa_mb_requirements_parent ON bsa_merit_badge_requirements(parent_requirement_id);
+CREATE INDEX idx_bsa_mb_requirements_scoutbook_id ON bsa_merit_badge_requirements(original_scoutbook_id) WHERE original_scoutbook_id IS NOT NULL;
+CREATE INDEX idx_bsa_mb_requirements_alternatives_group ON bsa_merit_badge_requirements(merit_badge_id, alternatives_group) WHERE alternatives_group IS NOT NULL;
+
+-- Comments for bsa_merit_badge_requirements
+COMMENT ON COLUMN bsa_merit_badge_requirements.version_year IS
+  'BSA version year for these requirements. Query by joining to bsa_merit_badges.requirement_version_year for current requirements.';
+COMMENT ON COLUMN bsa_merit_badge_requirements.is_alternative IS 'True if this is one option in an OR group (e.g., "Do ONE of the following")';
+COMMENT ON COLUMN bsa_merit_badge_requirements.alternatives_group IS 'Groups related alternatives together (e.g., "5_options" for all choices under requirement 5)';
+COMMENT ON COLUMN bsa_merit_badge_requirements.nesting_depth IS 'Depth level in the hierarchy (0=top, 1=sub-requirement, 2=sub-sub, etc.)';
+COMMENT ON COLUMN bsa_merit_badge_requirements.original_scoutbook_id IS 'Original requirement ID from Scoutbook exports (e.g., "6A(a)(1)") for import matching';
+COMMENT ON COLUMN bsa_merit_badge_requirements.required_count IS 'Number of alternatives that must be completed (e.g., 1 for "Do ONE", 2 for "Do TWO")';
 
 -- Valid leadership positions for rank advancement
 CREATE TABLE bsa_leadership_positions (
@@ -141,7 +160,6 @@ CREATE TABLE scout_rank_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     scout_id UUID NOT NULL REFERENCES scouts(id) ON DELETE CASCADE,
     rank_id UUID NOT NULL REFERENCES bsa_ranks(id) ON DELETE RESTRICT,
-    version_id UUID NOT NULL REFERENCES bsa_requirement_versions(id) ON DELETE RESTRICT,
     status advancement_status NOT NULL DEFAULT 'not_started',
     started_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ,
@@ -197,7 +215,6 @@ CREATE TABLE scout_merit_badge_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     scout_id UUID NOT NULL REFERENCES scouts(id) ON DELETE CASCADE,
     merit_badge_id UUID NOT NULL REFERENCES bsa_merit_badges(id) ON DELETE RESTRICT,
-    version_id UUID NOT NULL REFERENCES bsa_requirement_versions(id) ON DELETE RESTRICT,
     status advancement_status NOT NULL DEFAULT 'not_started',
     -- Counselor info (can be unit adult or external)
     counselor_name TEXT,
@@ -381,33 +398,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get current active requirement version
-CREATE OR REPLACE FUNCTION get_active_requirement_version()
-RETURNS UUID AS $$
-    SELECT id FROM bsa_requirement_versions
-    WHERE is_active = true
-    AND effective_date <= CURRENT_DATE
-    ORDER BY effective_date DESC
-    LIMIT 1;
-$$ LANGUAGE sql STABLE;
-
 -- Function to initialize rank progress for a scout
+-- Creates progress record and requirement progress for all requirements matching the rank's version year
 CREATE OR REPLACE FUNCTION initialize_scout_rank_progress(
     p_scout_id UUID,
-    p_rank_id UUID,
-    p_version_id UUID DEFAULT NULL
+    p_rank_id UUID
 )
 RETURNS UUID AS $$
 DECLARE
-    v_version_id UUID;
     v_progress_id UUID;
+    v_version_year INTEGER;
 BEGIN
-    -- Use active version if not specified
-    v_version_id := COALESCE(p_version_id, get_active_requirement_version());
+    -- Get the version year from the rank
+    SELECT requirement_version_year INTO v_version_year
+    FROM bsa_ranks WHERE id = p_rank_id;
 
     -- Create rank progress record
-    INSERT INTO scout_rank_progress (scout_id, rank_id, version_id, status, started_at)
-    VALUES (p_scout_id, p_rank_id, v_version_id, 'in_progress', NOW())
+    INSERT INTO scout_rank_progress (scout_id, rank_id, status, started_at)
+    VALUES (p_scout_id, p_rank_id, 'in_progress', NOW())
     ON CONFLICT (scout_id, rank_id) DO UPDATE SET updated_at = NOW()
     RETURNING id INTO v_progress_id;
 
@@ -415,7 +423,7 @@ BEGIN
     INSERT INTO scout_rank_requirement_progress (scout_rank_progress_id, requirement_id)
     SELECT v_progress_id, brr.id
     FROM bsa_rank_requirements brr
-    WHERE brr.version_id = v_version_id
+    WHERE brr.version_year = v_version_year
     AND brr.rank_id = p_rank_id
     AND brr.parent_requirement_id IS NULL  -- Only top-level requirements
     ON CONFLICT (scout_rank_progress_id, requirement_id) DO NOTHING;
@@ -429,7 +437,6 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 
 -- Enable RLS on all new tables
-ALTER TABLE bsa_requirement_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bsa_ranks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bsa_rank_requirements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bsa_merit_badges ENABLE ROW LEVEL SECURITY;
@@ -445,11 +452,6 @@ ALTER TABLE merit_badge_counselors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_staged_advancement ENABLE ROW LEVEL SECURITY;
 
 -- BSA Reference tables: Read-only for authenticated users
-CREATE POLICY "BSA reference versions viewable by authenticated users"
-    ON bsa_requirement_versions FOR SELECT
-    TO authenticated
-    USING (true);
-
 CREATE POLICY "BSA ranks viewable by authenticated users"
     ON bsa_ranks FOR SELECT
     TO authenticated
@@ -901,10 +903,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply triggers to new tables
-CREATE TRIGGER update_bsa_requirement_versions_updated_at
-    BEFORE UPDATE ON bsa_requirement_versions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_bsa_merit_badges_updated_at
     BEFORE UPDATE ON bsa_merit_badges
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -933,7 +931,6 @@ CREATE TRIGGER update_scout_leadership_history_updated_at
 -- SECTION 9: COMMENTS
 -- ============================================
 
-COMMENT ON TABLE bsa_requirement_versions IS 'Tracks BSA requirement versions (annual updates effective Jan 1)';
 COMMENT ON TABLE bsa_ranks IS 'The 7 Scouts BSA ranks from Scout to Eagle';
 COMMENT ON TABLE bsa_rank_requirements IS 'Individual requirements for each rank, versioned annually';
 COMMENT ON TABLE bsa_merit_badges IS 'All 141+ BSA merit badges';
