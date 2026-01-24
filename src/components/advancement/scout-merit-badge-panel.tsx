@@ -5,14 +5,23 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { MeritBadgeIcon } from './merit-badge-icon'
 import { HierarchicalRequirementsList } from './hierarchical-requirements-list'
 import { MultiSelectActionBar } from './multi-select-action-bar'
 import { BulkApprovalSheet } from './bulk-approval-sheet'
+import { VersionSwitchDialog } from './version-switch-dialog'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, Award, Calendar, Check, Star, User, Loader2 } from 'lucide-react'
+import { ArrowLeft, Award, Calendar, Check, Star, User, Loader2, ChevronDown, History } from 'lucide-react'
 import { VersionYearBadge } from '@/components/ui/version-year-badge'
-import { getMeritBadgeRequirements } from '@/app/actions/advancement'
+import { getMeritBadgeRequirements, getMeritBadgeVersions } from '@/app/actions/advancement'
 import type { AdvancementStatus, BsaMeritBadgeRequirement } from '@/types/advancement'
 
 interface MeritBadgeProgress {
@@ -22,6 +31,7 @@ interface MeritBadgeProgress {
   completed_at: string | null
   awarded_at: string | null
   counselor_name: string | null
+  requirement_version_year?: number | null
   bsa_merit_badges: {
     id: string
     code: string | null
@@ -29,7 +39,6 @@ interface MeritBadgeProgress {
     is_eagle_required: boolean | null
     category: string | null
     image_url?: string | null
-    requirement_version_year?: number | null
   }
   scout_merit_badge_requirement_progress: Array<{
     id: string
@@ -78,12 +87,25 @@ export function ScoutMeritBadgePanel({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkApprovalOpen, setBulkApprovalOpen] = useState(false)
 
-  // Fetch requirements on mount
+  // Version switching state
+  const [availableVersions, setAvailableVersions] = useState<Array<{
+    version_year: number
+    is_current: boolean | null
+    source: string | null
+  }>>([])
+  const [versionSwitchOpen, setVersionSwitchOpen] = useState(false)
+  const [targetVersionYear, setTargetVersionYear] = useState<number | null>(null)
+
+  // Fetch requirements on mount - use the scout's progress version year if available
   useEffect(() => {
     setIsLoadingRequirements(true)
     startTransition(async () => {
       try {
-        const reqs = await getMeritBadgeRequirements(badge.bsa_merit_badges.id)
+        // Pass the scout's progress version year to get the correct requirements
+        const reqs = await getMeritBadgeRequirements(
+          badge.bsa_merit_badges.id,
+          badge.requirement_version_year ?? undefined
+        )
         setRequirements(reqs as BsaMeritBadgeRequirement[])
       } catch (error) {
         console.error('Error fetching requirements:', error)
@@ -91,7 +113,28 @@ export function ScoutMeritBadgePanel({
         setIsLoadingRequirements(false)
       }
     })
+  }, [badge.bsa_merit_badges.id, badge.requirement_version_year])
+
+  // Fetch available versions
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const result = await getMeritBadgeVersions(badge.bsa_merit_badges.id)
+        if (result.success && result.data) {
+          setAvailableVersions(result.data.versions)
+        }
+      } catch (error) {
+        console.error('Error fetching versions:', error)
+      }
+    })
   }, [badge.bsa_merit_badges.id])
+
+  // Check if scout is on an older (non-current) version
+  const isOnOlderVersion = useMemo(() => {
+    if (!badge.requirement_version_year || availableVersions.length === 0) return false
+    const currentVersion = availableVersions.find(v => v.is_current)
+    return currentVersion && currentVersion.version_year !== badge.requirement_version_year
+  }, [badge.requirement_version_year, availableVersions])
 
   // Build progress map for quick lookup - keyed by requirement_number for cross-version matching
   const progressMap = useMemo(() => {
@@ -276,8 +319,55 @@ export function ScoutMeritBadgePanel({
                 {config.icon && <Award className="mr-1 h-3 w-3" />}
                 {config.label}
               </Badge>
-              <VersionYearBadge year={badge.bsa_merit_badges.requirement_version_year} />
+              {/* Version badge with switch dropdown */}
+              {canEdit && availableVersions.length > 1 && !isAwarded ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 gap-1 px-2 py-0">
+                      <VersionYearBadge year={badge.requirement_version_year} />
+                      <ChevronDown className="h-3 w-3 text-stone-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuLabel className="text-xs">
+                      Switch Requirement Version
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {availableVersions.map((v) => (
+                      <DropdownMenuItem
+                        key={v.version_year}
+                        disabled={v.version_year === badge.requirement_version_year}
+                        onClick={() => {
+                          setTargetVersionYear(v.version_year)
+                          setVersionSwitchOpen(true)
+                        }}
+                      >
+                        <History className="mr-2 h-4 w-4" />
+                        {v.version_year}
+                        {v.is_current && (
+                          <span className="ml-2 text-xs text-forest-600">(Current)</span>
+                        )}
+                        {v.version_year === badge.requirement_version_year && (
+                          <Check className="ml-auto h-4 w-4 text-forest-600" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <VersionYearBadge year={badge.requirement_version_year} />
+              )}
             </div>
+
+            {/* Older version warning */}
+            {isOnOlderVersion && (
+              <div className="mt-2 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm">
+                <History className="h-4 w-4 text-amber-500" />
+                <span className="text-amber-700">
+                  Working on older requirements version. Consider updating to the current version.
+                </span>
+              </div>
+            )}
 
             {/* Badge metadata */}
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-stone-500">
@@ -399,6 +489,27 @@ export function ScoutMeritBadgePanel({
           meritBadgeProgressId: badge.id,
         }}
       />
+
+      {/* Version Switch Dialog */}
+      {targetVersionYear && (
+        <VersionSwitchDialog
+          open={versionSwitchOpen}
+          onOpenChange={setVersionSwitchOpen}
+          meritBadgeId={badge.bsa_merit_badges.id}
+          meritBadgeName={badge.bsa_merit_badges.name}
+          progressId={badge.id}
+          scoutId={scoutId}
+          unitId={unitId}
+          currentVersionYear={badge.requirement_version_year || 0}
+          targetVersionYear={targetVersionYear}
+          currentProgress={badge.scout_merit_badge_requirement_progress}
+          onComplete={() => {
+            setVersionSwitchOpen(false)
+            setTargetVersionYear(null)
+            router.refresh()
+          }}
+        />
+      )}
     </Card>
   )
 }

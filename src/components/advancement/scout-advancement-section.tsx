@@ -63,6 +63,7 @@ interface MeritBadgeProgress {
   completed_at: string | null
   awarded_at: string | null
   counselor_name: string | null
+  requirement_version_year?: number | null
   bsa_merit_badges: {
     id: string
     code: string | null

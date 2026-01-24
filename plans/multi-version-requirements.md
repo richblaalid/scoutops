@@ -186,31 +186,31 @@ CREATE TABLE bsa_merit_badge_versions (
 - [x] **2.2.2** Show version mismatch warnings
 - [x] **2.2.3** Allow manual requirement mapping for edge cases (grouped warning display with guidance)
 
-### Phase 3: Version Switching
+### Phase 3: Version Switching ✅ COMPLETE
 
 #### 3.1 Version Switch UI
-- [ ] **3.1.1** Add "Switch Version" action to merit badge detail view
-- [ ] **3.1.2** Create side-by-side requirement comparison component
-- [ ] **3.1.3** Implement requirement mapping suggestions (fuzzy match)
-- [ ] **3.1.4** Build leader confirmation workflow
+- [x] **3.1.1** Add "Switch Version" action to merit badge detail view
+- [x] **3.1.2** Create side-by-side requirement comparison component
+- [x] **3.1.3** Implement requirement mapping suggestions (fuzzy match)
+- [x] **3.1.4** Build leader confirmation workflow
 
 #### 3.2 Backend Logic
-- [ ] **3.2.1** Create version switch action with mapping
-- [ ] **3.2.2** Preserve old progress as historical record
-- [ ] **3.2.3** Create new progress records for mapped requirements
-- [ ] **3.2.4** Handle unmapped requirements (mark as needing re-completion)
+- [x] **3.2.1** Create version switch action with mapping
+- [x] **3.2.2** Preserve old progress as historical record (via notes on new records)
+- [x] **3.2.3** Create new progress records for mapped requirements
+- [x] **3.2.4** Handle unmapped requirements (tracked via unmappedCount)
 
-### Phase 4: Query & Display Updates
+### Phase 4: Query & Display Updates ✅ COMPLETE
 
 #### 4.1 Query Updates
-- [ ] **4.1.1** Update requirement fetching to use `progress.requirement_version_year`
-- [ ] **4.1.2** Add version info to all requirement queries
-- [ ] **4.1.3** Update bulk approval to handle version context
+- [x] **4.1.1** Update requirement fetching to use `progress.requirement_version_year`
+- [x] **4.1.2** Add version info to all requirement queries
+- [x] **4.1.3** Update bulk approval to handle version context (inherits from 4.1.1)
 
 #### 4.2 UI Updates
-- [ ] **4.2.1** Display version info on merit badge detail view
-- [ ] **4.2.2** Show "older version" indicator when not on current
-- [ ] **4.2.3** Add version selector for leaders viewing badge info
+- [x] **4.2.1** Display version info on merit badge detail view
+- [x] **4.2.2** Show "older version" indicator when not on current
+- [x] **4.2.3** Add version selector for leaders viewing badge info (covered by Phase 3 version switch dropdown)
 
 ## File Changes
 
@@ -335,6 +335,8 @@ interface ScrapedBadgeVersion {
 | 2026-01-23 | Fix badge slug normalization (AI, Fish & Wildlife) | `9d1269c` |
 | 2026-01-23 | Fix badge version year to match active version from scraped data | `af78c62` |
 | 2026-01-23 | Phase 2: Version fallback, warnings UI, unmatched requirements display | `af78c62` |
+| 2026-01-23 | Phase 3: Version switch UI + backend with requirement mapping | pending |
+| 2026-01-23 | Phase 4: Query & display updates with version-aware fetching | pending |
 
 ## Resolved Questions
 
