@@ -893,8 +893,10 @@ export {
 const isMainModule = process.argv[1]?.includes('bsa-reference-data')
 
 if (isMainModule) {
-  const command = process.argv[2]
-  const arg1 = process.argv[3]
+  // Filter out flags like --prod to get positional arguments
+  const args = process.argv.slice(2).filter(arg => !arg.startsWith('--'))
+  const command = args[0]
+  const arg1 = args[1] // Optional filename argument (not a flag)
 
   switch (command) {
     case 'import-all':
