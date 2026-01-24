@@ -46,14 +46,7 @@ interface PendingBadgeApproval {
   bsa_merit_badges: { id: string; name: string; is_eagle_required: boolean | null } | null
 }
 
-interface ScoutProgressData {
-  currentRank: RankProgress | null
-  completedCount: number
-  totalCount: number
-  progressPercent: number
-}
-
-// Types for RankRequirementsBrowser
+// Types for prefetched rank browser data
 interface Rank {
   id: string
   code: string
@@ -63,7 +56,7 @@ interface Rank {
   description: string | null
 }
 
-interface RankRequirement {
+interface Requirement {
   id: string
   version_year: number | null
   rank_id: string
@@ -98,69 +91,27 @@ interface ScoutWithRankProgress {
   scout_rank_progress: ScoutRankProgress[]
 }
 
-// Types for MeritBadgeBrowser
-interface MeritBadge {
-  id: string
-  code: string
-  name: string
-  category: string | null
-  description: string | null
-  is_eagle_required: boolean | null
-  is_active: boolean | null
-  image_url: string | null
-  pamphlet_url: string | null
-}
-
-interface MeritBadgeRequirementProgress {
-  id: string
-  requirement_id: string
-  status: string
-  completed_at?: string | null
-  completed_by?: string | null
-  notes?: string | null
-}
-
-interface BadgeProgress {
-  id: string
-  merit_badge_id: string
-  status: string
-  counselor_name: string | null
-  started_at: string | null
-  completed_at: string | null
-  awarded_at: string | null
-  scout_merit_badge_requirement_progress: MeritBadgeRequirementProgress[]
-}
-
-interface ScoutWithBadgeProgress {
-  id: string
-  first_name: string
-  last_name: string
-  is_active: boolean | null
-  scout_merit_badge_progress: BadgeProgress[]
+interface PrefetchedRankData {
+  ranks: Rank[]
+  requirements: Requirement[]
+  scouts: ScoutWithRankProgress[]
 }
 
 interface UnitAdvancementContentProps {
-  // Summary data
+  // Summary tab data (loaded upfront)
   scouts: Scout[]
   rankProgress: RankProgress[]
   pendingApprovals: PendingApproval[]
   pendingBadgeApprovals: PendingBadgeApproval[]
-  scoutProgressMap: Record<string, ScoutProgressData>
   stats: {
     rankProgressPercent: number
     scoutsWorkingOnRanks: number
     meritBadgesInProgress: number
     meritBadgesEarned: number
   }
-  // Rank Requirements Browser data
-  ranks: Rank[]
-  rankRequirements: RankRequirement[]
-  scoutsWithRankProgress: ScoutWithRankProgress[]
-  // Merit Badge Browser data
-  badges: MeritBadge[]
-  categories: string[]
-  scoutsWithBadgeProgress: ScoutWithBadgeProgress[]
-  // Common
+  // Prefetched rank browser data (for instant Ranks tab load)
+  prefetchedRankData?: PrefetchedRankData
+  // Common props
   unitId: string
   canEdit: boolean
   currentUserName?: string
@@ -171,14 +122,8 @@ export function UnitAdvancementContent({
   rankProgress,
   pendingApprovals,
   pendingBadgeApprovals,
-  scoutProgressMap,
   stats,
-  ranks,
-  rankRequirements,
-  scoutsWithRankProgress,
-  badges,
-  categories,
-  scoutsWithBadgeProgress,
+  prefetchedRankData,
   unitId,
   canEdit,
   currentUserName = 'Leader',
@@ -200,20 +145,14 @@ export function UnitAdvancementContent({
         onPendingApprovalsClick={canEdit ? () => setShowPendingModal(true) : undefined}
       />
 
-      {/* Tabbed Content */}
+      {/* Tabbed Content - Ranks prefetched, Merit Badges lazy loaded */}
       <UnitAdvancementTabs
         scouts={scouts}
         rankProgress={rankProgress}
-        scoutProgressMap={scoutProgressMap}
         pendingApprovals={pendingApprovals}
         pendingBadgeApprovals={pendingBadgeApprovals}
         onPendingApprovalsClick={canEdit ? () => setShowPendingModal(true) : undefined}
-        ranks={ranks}
-        rankRequirements={rankRequirements}
-        scoutsWithRankProgress={scoutsWithRankProgress}
-        badges={badges}
-        categories={categories}
-        scoutsWithBadgeProgress={scoutsWithBadgeProgress}
+        prefetchedRankData={prefetchedRankData}
         unitId={unitId}
         canEdit={canEdit}
         currentUserName={currentUserName}

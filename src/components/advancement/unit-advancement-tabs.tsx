@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Award, Medal, BarChart3 } from 'lucide-react'
-import { RankRequirementsBrowser } from './rank-requirements-browser'
-import { MeritBadgeBrowser } from './merit-badge-browser'
+import { LazyRankBrowser } from './lazy-rank-browser'
+import { LazyMeritBadgeBrowser } from './lazy-merit-badge-browser'
 import { AdvancementSummaryView } from './advancement-summary-view'
 
 interface Scout {
@@ -47,14 +48,7 @@ interface PendingBadgeApproval {
   bsa_merit_badges: { id: string; name: string; is_eagle_required: boolean | null } | null
 }
 
-interface ScoutProgressData {
-  currentRank: RankProgress | null
-  completedCount: number
-  totalCount: number
-  progressPercent: number
-}
-
-// Types for RankRequirementsBrowser
+// Types for prefetched rank browser data
 interface Rank {
   id: string
   code: string
@@ -64,7 +58,7 @@ interface Rank {
   description: string | null
 }
 
-interface RankRequirement {
+interface Requirement {
   id: string
   version_year: number | null
   rank_id: string
@@ -99,64 +93,22 @@ interface ScoutWithRankProgress {
   scout_rank_progress: ScoutRankProgress[]
 }
 
-// Types for MeritBadgeBrowser
-interface MeritBadge {
-  id: string
-  code: string
-  name: string
-  category: string | null
-  description: string | null
-  is_eagle_required: boolean | null
-  is_active: boolean | null
-  image_url: string | null
-  pamphlet_url: string | null
-}
-
-interface MeritBadgeRequirementProgress {
-  id: string
-  requirement_id: string
-  status: string
-  completed_at?: string | null
-  completed_by?: string | null
-  notes?: string | null
-}
-
-interface BadgeProgress {
-  id: string
-  merit_badge_id: string
-  status: string
-  counselor_name: string | null
-  started_at: string | null
-  completed_at: string | null
-  awarded_at: string | null
-  scout_merit_badge_requirement_progress: MeritBadgeRequirementProgress[]
-}
-
-interface ScoutWithBadgeProgress {
-  id: string
-  first_name: string
-  last_name: string
-  is_active: boolean | null
-  scout_merit_badge_progress: BadgeProgress[]
+interface PrefetchedRankData {
+  ranks: Rank[]
+  requirements: Requirement[]
+  scouts: ScoutWithRankProgress[]
 }
 
 interface UnitAdvancementTabsProps {
-  // Summary tab data
+  // Summary tab data (loaded upfront)
   scouts: Scout[]
   rankProgress: RankProgress[]
-  scoutProgressMap: Record<string, ScoutProgressData>
   pendingApprovals: PendingApproval[]
   pendingBadgeApprovals: PendingBadgeApproval[]
   onPendingApprovalsClick?: () => void
-  // Rank Requirements Browser data
-  ranks: Rank[]
-  rankRequirements: RankRequirement[]
-  scoutsWithRankProgress: ScoutWithRankProgress[]
-  // Merit Badge Browser data
-  badges: MeritBadge[]
-  categories: string[]
-  scoutsWithBadgeProgress: ScoutWithBadgeProgress[]
-  // Common
+  // Prefetched rank browser data (for instant Ranks tab load)
+  prefetchedRankData?: PrefetchedRankData
+  // Common props for lazy-loaded tabs
   unitId: string
   canEdit: boolean
   currentUserName?: string
@@ -165,24 +117,29 @@ interface UnitAdvancementTabsProps {
 export function UnitAdvancementTabs({
   scouts,
   rankProgress,
-  scoutProgressMap,
   pendingApprovals,
   pendingBadgeApprovals,
   onPendingApprovalsClick,
-  ranks,
-  rankRequirements,
-  scoutsWithRankProgress,
-  badges,
-  categories,
-  scoutsWithBadgeProgress,
+  prefetchedRankData,
   unitId,
   canEdit,
   currentUserName = 'Leader',
 }: UnitAdvancementTabsProps) {
-  // Combine all pending approvals for the summary view
-  const totalPendingCount = pendingApprovals.length + pendingBadgeApprovals.length
+  // Track which tabs have been visited to enable lazy loading
+  // Ranks tab is the default and has data prefetched server-side
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(['ranks']))
+
+  const handleTabChange = (value: string) => {
+    setVisitedTabs((prev) => {
+      if (prev.has(value)) return prev
+      const next = new Set(prev)
+      next.add(value)
+      return next
+    })
+  }
+
   return (
-    <Tabs defaultValue="ranks" className="w-full">
+    <Tabs defaultValue="ranks" className="w-full" onValueChange={handleTabChange}>
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="ranks" className="gap-1.5">
           <Award className="h-4 w-4 hidden sm:inline" />
@@ -198,31 +155,30 @@ export function UnitAdvancementTabs({
         </TabsTrigger>
       </TabsList>
 
-      {/* Rank Requirements Tab */}
+      {/* Rank Requirements Tab - Prefetched server-side for instant load */}
       <TabsContent value="ranks" className="mt-4">
-        <RankRequirementsBrowser
-          ranks={ranks}
-          requirements={rankRequirements}
-          scouts={scoutsWithRankProgress}
-          unitId={unitId}
-          canEdit={canEdit}
-        />
+        {visitedTabs.has('ranks') && (
+          <LazyRankBrowser
+            unitId={unitId}
+            canEdit={canEdit}
+            currentUserName={currentUserName}
+            prefetchedData={prefetchedRankData}
+          />
+        )}
       </TabsContent>
 
-      {/* Merit Badges Tab */}
+      {/* Merit Badges Tab - Lazy loaded on click */}
       <TabsContent value="badges" className="mt-4">
-        <MeritBadgeBrowser
-          badges={badges}
-          requirements={[]} // Requirements fetched on-demand per badge
-          scouts={scoutsWithBadgeProgress}
-          categories={categories}
-          unitId={unitId}
-          canEdit={canEdit}
-          currentUserName={currentUserName}
-        />
+        {visitedTabs.has('badges') && (
+          <LazyMeritBadgeBrowser
+            unitId={unitId}
+            canEdit={canEdit}
+            currentUserName={currentUserName}
+          />
+        )}
       </TabsContent>
 
-      {/* Summary Tab - Actionable Lists */}
+      {/* Summary Tab - Data loaded upfront */}
       <TabsContent value="summary" className="mt-4">
         <AdvancementSummaryView
           scouts={scouts}

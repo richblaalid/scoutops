@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef, memo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { RequirementApprovalRow } from './requirement-approval-row'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import type { AdvancementStatus } from '@/types/advancement'
 
@@ -337,31 +338,67 @@ const RequirementNodeView = memo(function RequirementNodeView({
   }
 
   // For nodes with children, render collapsible section
+  const isSelected = selectedIds?.has(req.id) ?? false
+
+  const handleParentClick = (e: React.MouseEvent) => {
+    // In multi-select mode, clicking the row toggles selection
+    if (isMultiSelectMode && onSelectionChange && !isComplete) {
+      // Don't trigger if clicking directly on checkbox or expand button
+      const target = e.target as HTMLElement
+      if (target.closest('[role="checkbox"]') || target.closest('button')) {
+        return
+      }
+      onSelectionChange(req.id)
+    } else {
+      // Normal mode: toggle collapse
+      toggleNode(req.id)
+    }
+  }
+
   return (
     <div className={cn(
       'rounded-lg border transition-colors',
       isComplete
         ? 'border-emerald-200 bg-emerald-50/30'
-        : 'border-stone-200 bg-stone-50/30'
+        : 'border-stone-200 bg-stone-50/30',
+      isSelected && 'border-blue-200 bg-blue-50/30'
     )}>
       {/* Collapsible Header */}
-      <button
-        onClick={() => toggleNode(req.id)}
+      <div
+        onClick={handleParentClick}
         className={cn(
           'flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors',
           'hover:bg-stone-100/50',
           isCollapsed ? 'rounded-lg' : 'rounded-t-lg',
-          isComplete && 'hover:bg-emerald-100/50'
+          isComplete && 'hover:bg-emerald-100/50',
+          isMultiSelectMode && !isComplete && 'cursor-pointer'
         )}
       >
-        {/* Expand/Collapse Icon */}
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-stone-400">
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </span>
+        {/* Multi-select checkbox OR Expand/Collapse Icon */}
+        {isMultiSelectMode && !isComplete ? (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onSelectionChange?.(req.id)}
+            className={cn(
+              'shrink-0',
+              isSelected && 'border-blue-500 bg-blue-500 text-white data-[state=checked]:bg-blue-500'
+            )}
+          />
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleNode(req.id)
+            }}
+            className="flex h-5 w-5 shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+        )}
 
         {/* Requirement Number Badge */}
         <span className={cn(
@@ -390,6 +427,23 @@ const RequirementNodeView = memo(function RequirementNodeView({
           </span>
         )}
 
+        {/* Expand/Collapse button (in multi-select mode) */}
+        {isMultiSelectMode && !isComplete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleNode(req.id)
+            }}
+            className="flex h-5 w-5 shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+        )}
+
         {/* Status Indicator */}
         {isComplete ? (
           <span className="flex items-center gap-1 text-xs text-emerald-600">
@@ -401,7 +455,7 @@ const RequirementNodeView = memo(function RequirementNodeView({
             {stats.completed}/{stats.total}
           </span>
         )}
-      </button>
+      </div>
 
       {/* Expanded Content */}
       {!isCollapsed && (

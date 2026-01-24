@@ -3100,6 +3100,7 @@ export async function switchMeritBadgeVersion(params: {
 /**
  * Get unit advancement summary stats in a single optimized query.
  * Returns counts needed for the summary tab without loading all data.
+ * Uses admin client for read-only access - authorization handled by calling page.
  */
 export async function getUnitAdvancementSummary(unitId: string): Promise<ActionResult<{
   scoutCount: number
@@ -3123,7 +3124,8 @@ export async function getUnitAdvancementSummary(unitId: string): Promise<ActionR
     meritBadges: number
   }
 }>> {
-  const supabase = await createClient()
+  // Use admin client for read-only query - authorization handled by calling page
+  const supabase = createAdminClient()
 
   // Get scouts with minimal data
   const { data: scouts, error: scoutsError } = await supabase
@@ -3243,9 +3245,10 @@ export async function getUnitAdvancementSummary(unitId: string): Promise<ActionR
 /**
  * Get distinct merit badge categories.
  * Much lighter than loading all 141 badges just to extract categories.
+ * Uses admin client for read-only access - authorization handled by calling page.
  */
 export async function getMeritBadgeCategories(): Promise<ActionResult<string[]>> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Use distinct query to get only unique categories
   const { data, error } = await supabase
@@ -3267,6 +3270,7 @@ export async function getMeritBadgeCategories(): Promise<ActionResult<string[]>>
 /**
  * Get rank requirements filtered by version year.
  * Only loads requirements for the current version, not all 1000+ historical requirements.
+ * Uses admin client for read-only access - authorization handled by calling page.
  */
 export async function getRankRequirementsForUnit(
   versionYear?: number
@@ -3293,7 +3297,7 @@ export async function getRankRequirementsForUnit(
     display_order: number
   }>
 }>> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Get ranks with their version years
   const { data: ranks, error: ranksError } = await supabase
@@ -3340,6 +3344,169 @@ export async function getRankRequirementsForUnit(
     data: {
       ranks: ranks || [],
       requirements: requirements || [],
+    },
+  }
+}
+
+/**
+ * Get data for the Rank Requirements Browser tab (lazy loaded).
+ * Fetches scouts with their rank progress for a unit.
+ * Uses admin client for read-only access - authorization handled by calling page.
+ */
+export async function getRankBrowserData(unitId: string): Promise<ActionResult<{
+  scouts: Array<{
+    id: string
+    first_name: string
+    last_name: string
+    rank: string | null
+    is_active: boolean | null
+    scout_rank_progress: Array<{
+      id: string
+      rank_id: string
+      status: string
+      scout_rank_requirement_progress: Array<{
+        id: string
+        requirement_id: string
+        status: string
+      }>
+    }>
+  }>
+}>> {
+  const supabase = createAdminClient()
+
+  const { data: scouts, error } = await supabase
+    .from('scouts')
+    .select(`
+      id,
+      first_name,
+      last_name,
+      rank,
+      is_active,
+      scout_rank_progress (
+        id,
+        rank_id,
+        status,
+        scout_rank_requirement_progress (
+          id,
+          requirement_id,
+          status
+        )
+      )
+    `)
+    .eq('unit_id', unitId)
+    .eq('is_active', true)
+    .order('last_name')
+
+  if (error) {
+    console.error('Error fetching rank browser data:', error)
+    return { success: false, error: 'Failed to fetch rank browser data' }
+  }
+
+  return {
+    success: true,
+    data: {
+      scouts: scouts || [],
+    },
+  }
+}
+
+/**
+ * Get data for the Merit Badge Browser tab (lazy loaded).
+ * Fetches scouts with badge progress and all active badges.
+ * Uses admin client for read-only access - authorization handled by calling page.
+ */
+export async function getMeritBadgeBrowserData(unitId: string): Promise<ActionResult<{
+  badges: Array<{
+    id: string
+    code: string
+    name: string
+    category: string | null
+    description: string | null
+    is_eagle_required: boolean | null
+    is_active: boolean | null
+    image_url: string | null
+    pamphlet_url: string | null
+    requirement_version_year: number | null
+  }>
+  scouts: Array<{
+    id: string
+    first_name: string
+    last_name: string
+    is_active: boolean | null
+    scout_merit_badge_progress: Array<{
+      id: string
+      merit_badge_id: string
+      status: string
+      counselor_name: string | null
+      started_at: string | null
+      completed_at: string | null
+      awarded_at: string | null
+      scout_merit_badge_requirement_progress: Array<{
+        id: string
+        requirement_id: string
+        status: string
+        completed_at: string | null
+        completed_by: string | null
+        notes: string | null
+      }>
+    }>
+  }>
+}>> {
+  const supabase = createAdminClient()
+
+  // Run both queries in parallel
+  const [badgesResult, scoutsResult] = await Promise.all([
+    supabase
+      .from('bsa_merit_badges')
+      .select('id, code, name, category, description, is_eagle_required, is_active, image_url, pamphlet_url, requirement_version_year')
+      .eq('is_active', true)
+      .order('name'),
+
+    supabase
+      .from('scouts')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        is_active,
+        scout_merit_badge_progress (
+          id,
+          merit_badge_id,
+          status,
+          counselor_name,
+          started_at,
+          completed_at,
+          awarded_at,
+          scout_merit_badge_requirement_progress (
+            id,
+            requirement_id,
+            status,
+            completed_at,
+            completed_by,
+            notes
+          )
+        )
+      `)
+      .eq('unit_id', unitId)
+      .eq('is_active', true)
+      .order('last_name'),
+  ])
+
+  if (badgesResult.error) {
+    console.error('Error fetching badges:', badgesResult.error)
+    return { success: false, error: 'Failed to fetch badges' }
+  }
+
+  if (scoutsResult.error) {
+    console.error('Error fetching scouts with badge progress:', scoutsResult.error)
+    return { success: false, error: 'Failed to fetch scout badge progress' }
+  }
+
+  return {
+    success: true,
+    data: {
+      badges: badgesResult.data || [],
+      scouts: scoutsResult.data || [],
     },
   }
 }

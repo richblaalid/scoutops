@@ -213,12 +213,40 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
     }
   }
 
+  // Handle row click - makes entire card clickable for selection
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't trigger if clicking on interactive elements
+    const target = e.target as HTMLElement
+    const isInteractiveElement =
+      target.closest('button') ||
+      target.closest('input') ||
+      target.closest('[role="checkbox"]') ||
+      target.closest('[data-radix-popper-content-wrapper]') ||
+      target.tagName === 'A'
+
+    if (isInteractiveElement) {
+      return
+    }
+
+    // Don't trigger if already complete or loading
+    if (isComplete || isLoading) return
+
+    // In multi-select mode (always on when canEdit), toggle selection
+    if (isMultiSelectMode && onSelectionChange) {
+      onSelectionChange()
+    } else if (canApprove) {
+      // Fallback: open completion dialog if can approve
+      setCompletionDialogOpen(true)
+    }
+  }
+
   // Notes are available if there's a progress record OR init data to create one
   const canAddNotes = canEdit && (requirementProgressId || initData || meritBadgeInitData)
 
   return (
     <>
       <div
+        onClick={handleRowClick}
         className={cn(
           'group relative flex items-start gap-2 rounded-lg p-2 transition-all sm:gap-3 sm:p-3',
           showSuccess && 'bg-emerald-50 ring-1 ring-emerald-200',
@@ -226,7 +254,9 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
           isPending && 'bg-amber-50',
           isDenied && 'bg-red-50',
           !isComplete && !isPending && !isDenied && 'hover:bg-stone-50',
-          isSelected && 'bg-blue-50 ring-1 ring-blue-200'
+          isSelected && 'bg-blue-50 ring-1 ring-blue-200',
+          // Clickable cursor when row can be interacted with
+          !isComplete && !isLoading && (isMultiSelectMode || canApprove) && 'cursor-pointer'
         )}
       >
         {/* Selection/Completion Checkbox */}

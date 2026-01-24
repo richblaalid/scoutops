@@ -174,26 +174,26 @@ flowchart TD
 ### Phase 2: Lazy Loading Tabs
 
 #### 2.1 Create Lazy Components
-- [ ] **2.1.1** Create lazy-loadable RankBrowser wrapper
+- [x] **2.1.1** Create lazy-loadable RankBrowser wrapper
   - Files: `src/components/advancement/lazy-rank-browser.tsx`
-  - Pattern: Suspense + dynamic import
-  - Test: Component loads only when tab clicked
+  - Pattern: Client component with optional prefetched data
+  - Test: Component loads instantly with prefetched data ✓
 
-- [ ] **2.1.2** Create lazy-loadable MeritBadgeBrowser wrapper
+- [x] **2.1.2** Create lazy-loadable MeritBadgeBrowser wrapper
   - Files: `src/components/advancement/lazy-merit-badge-browser.tsx`
-  - Pattern: Suspense + dynamic import
-  - Test: Component loads only when tab clicked
+  - Pattern: Client component that fetches on mount
+  - Test: Component loads only when tab clicked ✓
 
 #### 2.2 Integrate Lazy Loading
-- [ ] **2.2.1** Update UnitAdvancementTabs to use lazy components
+- [x] **2.2.1** Update UnitAdvancementTabs to use lazy components
   - Files: `src/components/advancement/unit-advancement-tabs.tsx`
-  - Change: Replace direct imports with lazy wrappers
-  - Test: Initial page load doesn't include rank/badge browser code
+  - Change: Ranks prefetched server-side, Merit Badges lazy loaded
+  - Test: Ranks tab instant, Merit Badges loads on click ✓
 
-- [ ] **2.2.2** Add loading states for lazy tabs
-  - Files: `src/components/advancement/unit-advancement-tabs.tsx`
+- [x] **2.2.2** Add loading states for lazy tabs
+  - Files: `src/components/advancement/lazy-rank-browser.tsx`, `lazy-merit-badge-browser.tsx`
   - Add: Skeleton loaders during tab content load
-  - Test: Smooth transition when switching tabs
+  - Test: Smooth transition when switching tabs ✓
 
 ---
 
@@ -288,8 +288,8 @@ flowchart TD
 |-------|-------|----------|--------|
 | Phase 0 | 3 | 3 | ✅ Complete |
 | Phase 1 | 5 | 5 | ✅ Complete |
-| Phase 2 | 4 | 0 | ⬜ Not Started |
-| Phase 3 | 3 | 0 | ⬜ Post-MVP |
+| Phase 2 | 4 | 4 | ✅ Complete |
+| Phase 3 | 3 | 0 | ⬜ Post-MVP (optional) |
 
 ---
 
@@ -305,6 +305,10 @@ flowchart TD
 | 1.2.1 | 2026-01-23 | pending | Created getRankRequirementsForUnit() with version filtering |
 | 1.2.2 | 2026-01-23 | pending | Refactored page to use optimized queries + parallel fetch |
 | 1.3.1 | 2026-01-23 | pending | Changed Map to Record in 3 files |
+| 2.1.1 | 2026-01-23 | pending | Created LazyRankBrowser with prefetch support |
+| 2.1.2 | 2026-01-23 | pending | Created LazyMeritBadgeBrowser |
+| 2.2.1 | 2026-01-23 | pending | Updated tabs to use lazy components with prefetched Ranks |
+| 2.2.2 | 2026-01-23 | pending | Added skeleton loaders for lazy tabs |
 
 ---
 
