@@ -2,6 +2,12 @@
  * Test fixtures for common data structures
  */
 
+// Re-export advancement fixtures
+export * from './advancement'
+
+// Re-export scoutbook import fixtures
+export * from './scoutbook'
+
 // Unit fixtures
 export const mockUnit = {
   id: 'unit_123',

@@ -25,6 +25,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock environment variables
-vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://localhost:54321')
-vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'test-anon-key')
+// Mock environment variables only if not running integration tests
+// Integration tests need real credentials from .env.local
+const hasIntegrationEnv = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('supabase.co')
+if (!hasIntegrationEnv) {
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://localhost:54321')
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'test-anon-key')
+}
