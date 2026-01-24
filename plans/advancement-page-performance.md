@@ -142,32 +142,32 @@ flowchart TD
 ### Phase 1: Server-Side Query Optimization
 
 #### 1.1 Summary Stats Optimization
-- [ ] **1.1.1** Create optimized `getUnitAdvancementSummary()` action
+- [x] **1.1.1** Create optimized `getUnitAdvancementSummary()` action
   - Files: `src/app/actions/advancement.ts`
   - Returns: Scout count, in-progress counts, pending approvals count
-  - Test: Returns same data as current queries, fewer DB calls
+  - Test: Returns same data as current queries, fewer DB calls ✓
 
-- [ ] **1.1.2** Create `getMeritBadgeCategories()` action
+- [x] **1.1.2** Create `getMeritBadgeCategories()` action
   - Files: `src/app/actions/advancement.ts`
   - Returns: Distinct categories only (not all 141 badges)
-  - Test: Returns ~10 categories vs 141 badge objects
+  - Test: Returns ~10 categories vs 141 badge objects ✓
 
 #### 1.2 Rank Requirements Filtering
-- [ ] **1.2.1** Create `getRankRequirementsForUnit()` action
+- [x] **1.2.1** Create `getRankRequirementsForUnit()` action
   - Files: `src/app/actions/advancement.ts`
   - Filters: By rank_id and version_year (from unit settings or default)
-  - Test: Returns ~150 requirements vs 1000+
+  - Test: Returns ~150 requirements vs 1000+ ✓
 
-- [ ] **1.2.2** Update advancement page to use filtered query
+- [x] **1.2.2** Update advancement page to use filtered query
   - Files: `src/app/(dashboard)/advancement/page.tsx`
   - Remove: Lines 287-290 that load ALL requirements
-  - Test: Same UI behavior, less data transferred
+  - Test: Same UI behavior, less data transferred ✓
 
 #### 1.3 Fix Map Serialization
-- [ ] **1.3.1** Replace Map with plain object in props
-  - Files: `src/app/(dashboard)/advancement/page.tsx`
-  - Change: `Map<string, RankProgress[]>` → `Record<string, RankProgress[]>`
-  - Test: Props serialize correctly, no console warnings
+- [x] **1.3.1** Replace Map with plain object in props
+  - Files: `src/app/(dashboard)/advancement/page.tsx`, `unit-advancement-content.tsx`, `unit-advancement-tabs.tsx`
+  - Change: `Map<string, ScoutProgressData>` → `Record<string, ScoutProgressData>`
+  - Test: Props serialize correctly, no console warnings ✓
 
 ---
 
@@ -287,7 +287,7 @@ flowchart TD
 | Phase | Total | Complete | Status |
 |-------|-------|----------|--------|
 | Phase 0 | 3 | 3 | ✅ Complete |
-| Phase 1 | 5 | 0 | 🔄 In Progress |
+| Phase 1 | 5 | 5 | ✅ Complete |
 | Phase 2 | 4 | 0 | ⬜ Not Started |
 | Phase 3 | 3 | 0 | ⬜ Post-MVP |
 
@@ -297,9 +297,14 @@ flowchart TD
 
 | Task | Date | Commit | Notes |
 |------|------|--------|-------|
-| 0.1.1 | 2026-01-23 | pending | Installed @vercel/analytics@1.6.1 |
-| 0.1.2 | 2026-01-23 | pending | Added Analytics to root layout |
-| 0.2.1 | 2026-01-23 | pending | Documented 12 queries, identified 3 redundant scout queries |
+| 0.1.1 | 2026-01-23 | 24bf334 | Installed @vercel/analytics@1.6.1 |
+| 0.1.2 | 2026-01-23 | 24bf334 | Added Analytics to root layout |
+| 0.2.1 | 2026-01-23 | 24bf334 | Documented 12 queries, identified 3 redundant scout queries |
+| 1.1.1 | 2026-01-23 | pending | Created getUnitAdvancementSummary() |
+| 1.1.2 | 2026-01-23 | pending | Created getMeritBadgeCategories() |
+| 1.2.1 | 2026-01-23 | pending | Created getRankRequirementsForUnit() with version filtering |
+| 1.2.2 | 2026-01-23 | pending | Refactored page to use optimized queries + parallel fetch |
+| 1.3.1 | 2026-01-23 | pending | Changed Map to Record in 3 files |
 
 ---
 

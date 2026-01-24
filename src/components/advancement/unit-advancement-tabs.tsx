@@ -144,7 +144,7 @@ interface UnitAdvancementTabsProps {
   // Summary tab data
   scouts: Scout[]
   rankProgress: RankProgress[]
-  scoutProgressMap: Map<string, ScoutProgressData>
+  scoutProgressMap: Record<string, ScoutProgressData>
   pendingApprovals: PendingApproval[]
   pendingBadgeApprovals: PendingBadgeApproval[]
   onPendingApprovalsClick?: () => void

@@ -145,7 +145,7 @@ interface UnitAdvancementContentProps {
   rankProgress: RankProgress[]
   pendingApprovals: PendingApproval[]
   pendingBadgeApprovals: PendingBadgeApproval[]
-  scoutProgressMap: Map<string, ScoutProgressData>
+  scoutProgressMap: Record<string, ScoutProgressData>
   stats: {
     rankProgressPercent: number
     scoutsWorkingOnRanks: number

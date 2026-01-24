@@ -3092,3 +3092,254 @@ export async function switchMeritBadgeVersion(params: {
     return { success: false, error: 'Failed to switch version' }
   }
 }
+
+// ==========================================
+// OPTIMIZED UNIT ADVANCEMENT QUERIES
+// ==========================================
+
+/**
+ * Get unit advancement summary stats in a single optimized query.
+ * Returns counts needed for the summary tab without loading all data.
+ */
+export async function getUnitAdvancementSummary(unitId: string): Promise<ActionResult<{
+  scoutCount: number
+  scouts: Array<{
+    id: string
+    first_name: string
+    last_name: string
+    rank: string | null
+    patrol_name: string | null
+  }>
+  rankStats: {
+    scoutsWorkingOnRanks: number
+    avgProgressPercent: number
+  }
+  badgeStats: {
+    inProgress: number
+    earned: number
+  }
+  pendingApprovals: {
+    rankRequirements: number
+    meritBadges: number
+  }
+}>> {
+  const supabase = await createClient()
+
+  // Get scouts with minimal data
+  const { data: scouts, error: scoutsError } = await supabase
+    .from('scouts')
+    .select(`
+      id,
+      first_name,
+      last_name,
+      rank,
+      patrols (name)
+    `)
+    .eq('unit_id', unitId)
+    .eq('is_active', true)
+    .order('last_name')
+
+  if (scoutsError) {
+    console.error('Error fetching scouts:', scoutsError)
+    return { success: false, error: 'Failed to fetch scouts' }
+  }
+
+  const scoutIds = scouts?.map(s => s.id) || []
+
+  if (scoutIds.length === 0) {
+    return {
+      success: true,
+      data: {
+        scoutCount: 0,
+        scouts: [],
+        rankStats: { scoutsWorkingOnRanks: 0, avgProgressPercent: 0 },
+        badgeStats: { inProgress: 0, earned: 0 },
+        pendingApprovals: { rankRequirements: 0, meritBadges: 0 },
+      },
+    }
+  }
+
+  // Run parallel queries for stats only
+  const [rankProgressResult, badgeProgressResult, pendingRankResult, pendingBadgeResult] = await Promise.all([
+    // Rank progress with requirement counts
+    supabase
+      .from('scout_rank_progress')
+      .select(`
+        id,
+        scout_id,
+        status,
+        scout_rank_requirement_progress (
+          status
+        )
+      `)
+      .in('scout_id', scoutIds)
+      .eq('status', 'in_progress'),
+
+    // Merit badge counts by status
+    supabase
+      .from('scout_merit_badge_progress')
+      .select('id, status')
+      .in('scout_id', scoutIds),
+
+    // Pending rank requirement approvals count
+    supabase
+      .from('scout_rank_requirement_progress')
+      .select('id', { count: 'exact', head: true })
+      .eq('approval_status', 'pending_approval'),
+
+    // Pending merit badge approvals count
+    supabase
+      .from('scout_merit_badge_progress')
+      .select('id', { count: 'exact', head: true })
+      .in('scout_id', scoutIds)
+      .eq('status', 'completed'),
+  ])
+
+  // Calculate rank stats
+  const inProgressRanks = rankProgressResult.data || []
+  let totalReqs = 0
+  let completedReqs = 0
+  for (const rp of inProgressRanks) {
+    const reqs = rp.scout_rank_requirement_progress || []
+    totalReqs += reqs.length
+    completedReqs += reqs.filter((r: { status: string }) =>
+      ['completed', 'approved', 'awarded'].includes(r.status)
+    ).length
+  }
+  const avgProgressPercent = totalReqs > 0 ? Math.round((completedReqs / totalReqs) * 100) : 0
+
+  // Calculate badge stats
+  const badgeProgress = badgeProgressResult.data || []
+  const inProgressBadges = badgeProgress.filter(b => b.status === 'in_progress').length
+  const earnedBadges = badgeProgress.filter(b => b.status === 'awarded').length
+
+  return {
+    success: true,
+    data: {
+      scoutCount: scouts?.length || 0,
+      scouts: (scouts || []).map(s => ({
+        id: s.id,
+        first_name: s.first_name,
+        last_name: s.last_name,
+        rank: s.rank,
+        patrol_name: (s.patrols as { name: string } | null)?.name || null,
+      })),
+      rankStats: {
+        scoutsWorkingOnRanks: inProgressRanks.length,
+        avgProgressPercent,
+      },
+      badgeStats: {
+        inProgress: inProgressBadges,
+        earned: earnedBadges,
+      },
+      pendingApprovals: {
+        rankRequirements: pendingRankResult.count || 0,
+        meritBadges: pendingBadgeResult.count || 0,
+      },
+    },
+  }
+}
+
+/**
+ * Get distinct merit badge categories.
+ * Much lighter than loading all 141 badges just to extract categories.
+ */
+export async function getMeritBadgeCategories(): Promise<ActionResult<string[]>> {
+  const supabase = await createClient()
+
+  // Use distinct query to get only unique categories
+  const { data, error } = await supabase
+    .from('bsa_merit_badges')
+    .select('category')
+    .eq('is_active', true)
+    .not('category', 'is', null)
+
+  if (error) {
+    console.error('Error fetching categories:', error)
+    return { success: false, error: 'Failed to fetch categories' }
+  }
+
+  // Extract unique categories
+  const categories = [...new Set(data?.map(b => b.category).filter(Boolean) as string[])]
+  return { success: true, data: categories.sort() }
+}
+
+/**
+ * Get rank requirements filtered by version year.
+ * Only loads requirements for the current version, not all 1000+ historical requirements.
+ */
+export async function getRankRequirementsForUnit(
+  versionYear?: number
+): Promise<ActionResult<{
+  ranks: Array<{
+    id: string
+    code: string
+    name: string
+    display_order: number
+    is_eagle_required: boolean | null
+    description: string | null
+    requirement_version_year: number | null
+  }>
+  requirements: Array<{
+    id: string
+    rank_id: string
+    version_year: number | null
+    requirement_number: string
+    parent_requirement_id: string | null
+    sub_requirement_letter: string | null
+    description: string
+    is_alternative: boolean | null
+    alternatives_group: string | null
+    display_order: number
+  }>
+}>> {
+  const supabase = await createClient()
+
+  // Get ranks with their version years
+  const { data: ranks, error: ranksError } = await supabase
+    .from('bsa_ranks')
+    .select('id, code, name, display_order, is_eagle_required, description, requirement_version_year')
+    .order('display_order')
+
+  if (ranksError) {
+    console.error('Error fetching ranks:', ranksError)
+    return { success: false, error: 'Failed to fetch ranks' }
+  }
+
+  // Build query for requirements - filter by version year if provided
+  let reqQuery = supabase
+    .from('bsa_rank_requirements')
+    .select('id, rank_id, version_year, requirement_number, parent_requirement_id, sub_requirement_letter, description, is_alternative, alternatives_group, display_order')
+    .order('display_order')
+
+  // If version year specified, filter to that year
+  // Otherwise, filter to each rank's requirement_version_year
+  if (versionYear) {
+    reqQuery = reqQuery.eq('version_year', versionYear)
+  } else {
+    // Get only requirements matching each rank's current version
+    const rankVersionYears = [...new Set(
+      (ranks || [])
+        .map(r => r.requirement_version_year)
+        .filter((y): y is number => y !== null)
+    )]
+    if (rankVersionYears.length > 0) {
+      reqQuery = reqQuery.in('version_year', rankVersionYears)
+    }
+  }
+
+  const { data: requirements, error: reqError } = await reqQuery
+
+  if (reqError) {
+    console.error('Error fetching rank requirements:', reqError)
+    return { success: false, error: 'Failed to fetch requirements' }
+  }
+
+  return {
+    success: true,
+    data: {
+      ranks: ranks || [],
+      requirements: requirements || [],
+    },
+  }
+}
