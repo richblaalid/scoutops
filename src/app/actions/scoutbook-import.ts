@@ -213,54 +213,66 @@ export async function importScoutbookHistory(
       result.ranksImported++
     }
 
-    // Get requirements for this rank's current version
+    // Get ALL requirements for this rank's current version
     const { data: requirements } = await adminSupabase
       .from('bsa_rank_requirements')
       .select('id, requirement_number')
       .eq('rank_id', rankId)
       .eq('version_year', rank.requirement_version_year)
 
-    const reqMap = new Map(requirements?.map((r) => [r.requirement_number, r.id]) || [])
+    if (!requirements || requirements.length === 0) continue
 
-    // Import requirement completions
+    const reqMap = new Map(requirements.map((r) => [r.requirement_number, r.id]))
+
+    // Build a map of completed requirements from the CSV
+    const completedReqMap = new Map<string, string>()
     for (const req of rankProgress.requirements) {
-      if (!req.completedDate) continue
+      if (req.completedDate) {
+        completedReqMap.set(req.requirementNumber, req.completedDate)
+      }
+    }
 
-      const reqId = reqMap.get(req.requirementNumber)
-      if (!reqId) continue
+    // Get existing requirement progress records for this rank
+    const { data: existingReqProgress } = await adminSupabase
+      .from('scout_rank_requirement_progress')
+      .select('id, requirement_id, status')
+      .eq('scout_rank_progress_id', progressId)
 
-      // Check if requirement progress already exists
-      const { data: existingReqProgress } = await adminSupabase
-        .from('scout_rank_requirement_progress')
-        .select('id, status')
-        .eq('scout_rank_progress_id', progressId)
-        .eq('requirement_id', reqId)
-        .maybeSingle()
+    const existingByReqId = new Map(
+      existingReqProgress?.map((r) => [r.requirement_id, r]) || []
+    )
 
-      if (existingReqProgress) {
-        // Only update if not already completed
-        if (!['completed', 'approved', 'awarded'].includes(existingReqProgress.status)) {
+    // Process ALL requirements - create missing ones, update completed ones
+    for (const [reqNumber, reqId] of reqMap) {
+      const existing = existingByReqId.get(reqId)
+      const completedDate = completedReqMap.get(reqNumber)
+
+      if (existing) {
+        // Update if we have a completion date and it's not already completed
+        if (completedDate && !['completed', 'approved', 'awarded'].includes(existing.status)) {
           await adminSupabase
             .from('scout_rank_requirement_progress')
             .update({
               status: 'completed',
-              completed_at: req.completedDate,
+              completed_at: completedDate,
               completed_by: auth.profileId,
               updated_at: new Date().toISOString(),
             })
-            .eq('id', existingReqProgress.id)
+            .eq('id', existing.id)
           result.requirementsImported++
         }
       } else {
-        // Create new requirement progress
+        // Create new requirement progress for ALL requirements
         await adminSupabase.from('scout_rank_requirement_progress').insert({
           scout_rank_progress_id: progressId,
           requirement_id: reqId,
-          status: 'completed',
-          completed_at: req.completedDate,
-          completed_by: auth.profileId,
+          status: completedDate ? 'completed' : 'not_started',
+          completed_at: completedDate || null,
+          completed_by: completedDate ? auth.profileId : null,
         })
-        result.requirementsImported++
+        if (completedDate) {
+          result.requirementsImported++
+        }
       }
     }
   }
