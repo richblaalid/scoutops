@@ -173,31 +173,18 @@ CREATE TABLE bsa_merit_badge_versions (
 - [x] **1.3.2** Badge slug normalization for mismatched codes
 - [x] **1.3.3** Integrated into `npm run db:fresh`
 
-### Phase 2: Import Improvements
+### Phase 2: Import Improvements ✅ COMPLETE
 
 #### 2.1 Version-Aware Import
 - [x] **2.1.1** Update Scoutbook CSV import to extract version year
 - [x] **2.1.2** Match requirements against correct version using `scoutbook_requirement_number`
-- [ ] **2.1.3** Fall back to current version with warning if historical not found
-- [ ] **2.1.4** Store version on `scout_merit_badge_progress` creation
+- [x] **2.1.3** Fall back to current version with warning if historical not found
+- [x] **2.1.4** Store version on `scout_merit_badge_progress` creation
 
 #### 2.2 Import Feedback
-- [ ] **2.2.1** Surface unmatched requirements to user
-- [ ] **2.2.2** Show version mismatch warnings
-- [ ] **2.2.3** Allow manual requirement mapping for edge cases
-
-### Phase 2: Import Improvements
-
-#### 2.1 Version-Aware Import
-- [ ] **2.1.1** Update Scoutbook CSV import to extract version year
-- [ ] **2.1.2** Match requirements against correct version
-- [ ] **2.1.3** Fall back to current version with warning if historical not found
-- [ ] **2.1.4** Store version on `scout_merit_badge_progress` creation
-
-#### 2.2 Import Feedback
-- [ ] **2.2.1** Surface unmatched requirements to user
-- [ ] **2.2.2** Show version mismatch warnings
-- [ ] **2.2.3** Allow manual requirement mapping for edge cases
+- [x] **2.2.1** Surface unmatched requirements to user
+- [x] **2.2.2** Show version mismatch warnings
+- [x] **2.2.3** Allow manual requirement mapping for edge cases (grouped warning display with guidance)
 
 ### Phase 3: Version Switching
 
@@ -346,6 +333,8 @@ interface ScrapedBadgeVersion {
 | 2026-01-23 | Phase 1: Playwright scraper, 11,289 requirements scraped | `b098f7d` |
 | 2026-01-23 | Performant seeding (~14s), db:fresh integration | `b098f7d` |
 | 2026-01-23 | Fix badge slug normalization (AI, Fish & Wildlife) | `9d1269c` |
+| 2026-01-23 | Fix badge version year to match active version from scraped data | `af78c62` |
+| 2026-01-23 | Phase 2: Version fallback, warnings UI, unmatched requirements display | `af78c62` |
 
 ## Resolved Questions
 

@@ -669,6 +669,28 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
   }
   console.log(`  Upserted ${versionRecords.length} versions`)
 
+  // Step 2b: Update badge requirement_version_year to match active version
+  const activeVersionByBadgeId = new Map<string, number>()
+  for (const v of versionRecords) {
+    if (v.is_current) {
+      activeVersionByBadgeId.set(v.merit_badge_id, v.version_year)
+    }
+  }
+
+  let badgesUpdated = 0
+  for (const [badgeId, activeYear] of activeVersionByBadgeId) {
+    const { error } = await supabase
+      .from('bsa_merit_badges')
+      .update({ requirement_version_year: activeYear })
+      .eq('id', badgeId)
+    if (error) {
+      console.error(`Error updating badge ${badgeId} version year:`, error.message)
+    } else {
+      badgesUpdated++
+    }
+  }
+  console.log(`  Updated ${badgesUpdated} badges with active version year`)
+
   // Step 3: Delete existing requirements for version years in the import
   const versionYears = [...new Set(data.badges.map((b) => b.versionYear))]
   const badgeIds = badges.map((b) => b.id)

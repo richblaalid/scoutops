@@ -17,7 +17,7 @@ import {
   ScoutbookHistoryPreview,
   type ImportSelections,
 } from '@/components/import/scoutbook-history-preview'
-import { ArrowLeft, FileSpreadsheet, CheckCircle, AlertCircle, User } from 'lucide-react'
+import { ArrowLeft, FileSpreadsheet, CheckCircle, AlertCircle, AlertTriangle, User } from 'lucide-react'
 import Link from 'next/link'
 import { useUnit } from '@/components/providers/unit-context'
 import {
@@ -32,12 +32,22 @@ import {
 
 type ImportStep = 'upload' | 'select-scout' | 'preview' | 'result'
 
+interface ImportWarning {
+  type: 'version_fallback' | 'requirement_not_found' | 'version_mismatch'
+  badge?: string
+  requirement?: string
+  message: string
+  requestedVersion?: number
+  usedVersion?: number
+}
+
 interface ImportResult {
   ranksImported: number
   requirementsImported: number
   badgesImported: number
   leadershipImported: number
   activitiesImported: number
+  warnings?: ImportWarning[]
 }
 
 interface ScoutOption {
@@ -361,6 +371,85 @@ export default function AdvancementImportPage() {
                   <p className="text-sm text-stone-500">Leadership positions</p>
                 </div>
               </div>
+
+              {/* Warnings Section */}
+              {result.warnings && result.warnings.length > 0 && (() => {
+                const versionFallbacks = result.warnings.filter(w => w.type === 'version_fallback')
+                const notFoundReqs = result.warnings.filter(w => w.type === 'requirement_not_found')
+                const otherWarnings = result.warnings.filter(
+                  w => w.type !== 'version_fallback' && w.type !== 'requirement_not_found'
+                )
+
+                return (
+                  <div className="mt-6 space-y-4">
+                    {/* Version Fallbacks */}
+                    {versionFallbacks.length > 0 && (
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-4 w-4 text-blue-600" />
+                          <h4 className="font-medium text-blue-800">
+                            Version Adjustments ({versionFallbacks.length})
+                          </h4>
+                        </div>
+                        <p className="text-sm text-blue-700 mb-2">
+                          These badges used a different requirement version than requested:
+                        </p>
+                        <ul className="text-sm text-blue-600 space-y-1">
+                          {versionFallbacks.map((w, i) => (
+                            <li key={i}>
+                              <span className="font-medium">{w.badge}</span>: {w.requestedVersion} →{' '}
+                              {w.usedVersion}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Unmatched Requirements */}
+                    {notFoundReqs.length > 0 && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600" />
+                          <h4 className="font-medium text-amber-800">
+                            Unmatched Requirements ({notFoundReqs.length})
+                          </h4>
+                        </div>
+                        <p className="text-sm text-amber-700 mb-2">
+                          These requirements could not be matched and were skipped. You can sign them
+                          off manually in the scout&apos;s profile:
+                        </p>
+                        <div className="max-h-40 overflow-y-auto">
+                          <ul className="text-sm text-amber-600 space-y-1">
+                            {notFoundReqs.map((w, i) => (
+                              <li key={i}>
+                                <span className="font-medium">{w.badge}</span>: requirement{' '}
+                                <code className="bg-amber-100 px-1 rounded">{w.requirement}</code>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Other Warnings */}
+                    {otherWarnings.length > 0 && (
+                      <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-4 w-4 text-stone-600" />
+                          <h4 className="font-medium text-stone-800">
+                            Other Warnings ({otherWarnings.length})
+                          </h4>
+                        </div>
+                        <ul className="text-sm text-stone-600 space-y-1">
+                          {otherWarnings.map((w, i) => (
+                            <li key={i}>{w.message}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
 

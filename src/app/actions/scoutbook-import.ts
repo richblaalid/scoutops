@@ -18,12 +18,22 @@ interface ActionResult<T = void> {
   data?: T
 }
 
+interface ImportWarning {
+  type: 'version_fallback' | 'requirement_not_found' | 'version_mismatch'
+  badge?: string
+  requirement?: string
+  message: string
+  requestedVersion?: number
+  usedVersion?: number
+}
+
 interface ImportResult {
   ranksImported: number
   requirementsImported: number
   badgesImported: number
   leadershipImported: number
   activitiesImported: number
+  warnings: ImportWarning[]
 }
 
 /**
@@ -139,6 +149,7 @@ export async function importScoutbookHistory(
     badgesImported: 0,
     leadershipImported: 0,
     activitiesImported: 0,
+    warnings: [],
   }
 
   // Import rank progress
@@ -354,18 +365,59 @@ export async function importScoutbookHistory(
     // Import individual requirement completions
     if (badgeEntry.completedRequirements.length > 0) {
       // Determine version year: use CSV version if available, otherwise badge default
-      const versionYear = badgeEntry.version
+      const requestedVersionYear = badgeEntry.version
         ? parseInt(badgeEntry.version, 10)
         : meritBadge.requirement_version_year
 
-      // Get all requirements for this badge's version
-      const { data: badgeRequirements } = await adminSupabase
+      // Get all requirements for the requested version
+      let { data: badgeRequirements } = await adminSupabase
         .from('bsa_merit_badge_requirements')
         .select('id, requirement_number, scoutbook_requirement_number, sub_requirement_letter')
         .eq('merit_badge_id', badgeId)
-        .eq('version_year', versionYear)
+        .eq('version_year', requestedVersionYear)
+
+      let usedVersionYear = requestedVersionYear
+
+      // If no requirements found for requested version, fall back to current version
+      if (!badgeRequirements || badgeRequirements.length === 0) {
+        // Get the current active version for this badge
+        const { data: currentVersion } = await adminSupabase
+          .from('bsa_merit_badge_versions')
+          .select('version_year')
+          .eq('merit_badge_id', badgeId)
+          .eq('is_current', true)
+          .maybeSingle()
+
+        if (currentVersion && currentVersion.version_year !== requestedVersionYear) {
+          // Try fetching requirements for the current version
+          const { data: fallbackRequirements } = await adminSupabase
+            .from('bsa_merit_badge_requirements')
+            .select('id, requirement_number, scoutbook_requirement_number, sub_requirement_letter')
+            .eq('merit_badge_id', badgeId)
+            .eq('version_year', currentVersion.version_year)
+
+          if (fallbackRequirements && fallbackRequirements.length > 0) {
+            badgeRequirements = fallbackRequirements
+            usedVersionYear = currentVersion.version_year
+
+            result.warnings.push({
+              type: 'version_fallback',
+              badge: badgeEntry.name,
+              message: `Requirements for ${requestedVersionYear} not found, using current version ${currentVersion.version_year}`,
+              requestedVersion: requestedVersionYear,
+              usedVersion: currentVersion.version_year,
+            })
+          }
+        }
+      }
 
       if (badgeRequirements && badgeRequirements.length > 0) {
+        // Update progress record with the actually used version year (task 2.1.4)
+        await adminSupabase
+          .from('scout_merit_badge_progress')
+          .update({ requirement_version_year: usedVersionYear })
+          .eq('id', progressId)
+
         // Create maps for quick lookup - prefer scoutbook format, fallback to legacy
         const scoutbookReqMap = new Map<string, string>()
         const legacyReqMap = new Map<string, string>()
@@ -395,10 +447,13 @@ export async function importScoutbookHistory(
           }
 
           if (!requirementId) {
-            console.log(
-              `Requirement not found for ${badgeEntry.name}: ${reqNum} ` +
-                `(scoutbook: ${normalizedScoutbook}, legacy: ${normalizedLegacy})`
-            )
+            result.warnings.push({
+              type: 'requirement_not_found',
+              badge: badgeEntry.name,
+              requirement: reqNum,
+              message: `Requirement ${reqNum} not found in ${badgeEntry.name} (version ${usedVersionYear})`,
+              usedVersion: usedVersionYear,
+            })
             continue
           }
 
