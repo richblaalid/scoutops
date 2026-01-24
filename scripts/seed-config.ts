@@ -20,11 +20,15 @@ export const BSA_SEED_CONFIG = {
 
   /**
    * Data file paths (relative to project root data/ directory)
+   *
+   * Note: Merit badge requirements are imported from
+   * merit-badge-requirements-scraped.json via importVersionedMeritBadgeRequirements()
    */
   files: {
     ranks: 'ranks-2025.json',
-    meritBadges: 'merit-badges-source-v2.json',
     leadershipPositions: 'leadership-positions-2025.json',
+    // Merit badge requirements use: merit-badge-requirements-scraped.json
+    // Imported via: importVersionedMeritBadgeRequirements()
   },
 
   /**

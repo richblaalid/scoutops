@@ -1471,18 +1471,18 @@ async function main(): Promise<void> {
       break;
     case 'seed:bsa':
       console.log('\n📚 Seeding BSA Reference Data...');
+      // Import ranks and leadership positions from importAll
+      // Merit badges come from the scraped versioned requirements file
       await importBsaReferenceData();
-      break;
-    case 'seed:mb-versions':
       console.log('\n📚 Seeding Versioned Merit Badge Requirements...');
       await importVersionedMeritBadgeRequirements();
       break;
     case 'seed:all':
       await seedBase();
       await seedTestData();
-      console.log('\n📚 Seeding BSA Reference Data...');
+      console.log('\n📚 Seeding BSA Reference Data (ranks, positions)...');
       await importBsaReferenceData();
-      console.log('\n📚 Seeding Versioned Merit Badge Requirements...');
+      console.log('\n📚 Seeding Versioned Merit Badge Requirements (from scraped data)...');
       await importVersionedMeritBadgeRequirements();
       await seedAdvancementData();
       break;

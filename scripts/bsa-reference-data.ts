@@ -21,15 +21,21 @@ import * as path from 'path'
 import dotenv from 'dotenv'
 import { BSA_SEED_CONFIG } from './seed-config'
 
-// Load environment variables
-dotenv.config({ path: '.env.local' })
+// Detect --prod flag for environment switching
+const isProd = process.argv.includes('--prod')
+const envFile = isProd ? '.env.prod' : '.env.local'
+dotenv.config({ path: envFile })
+
+// Display which environment we're using
+const envLabel = isProd ? '🔴 PRODUCTION' : '🟢 Development'
+console.log(`Environment: ${envLabel}`)
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Error: Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-  console.error('Make sure .env.local is configured correctly')
+  console.error(`Make sure ${envFile} is configured correctly`)
   process.exit(1)
 }
 
@@ -377,9 +383,21 @@ function flattenRequirements(
 /**
  * Import merit badges with bulk inserts (supports source-v2 format)
  * Handles multi-level nesting by processing level by level.
+ *
+ * DEPRECATED: Use importVersionedMeritBadgeRequirements() instead,
+ * which imports from merit-badge-requirements-scraped.json and
+ * includes all historical versions.
  */
 async function importMeritBadges(filename?: string) {
-  const file = filename || files.meritBadges
+  if (!filename) {
+    console.error('\n❌ Error: import-badges requires a filename')
+    console.error('   The default merit badges file has been removed.')
+    console.error('   Use import-versioned-reqs instead for merit badge requirements.')
+    console.error('')
+    console.error('   npx tsx scripts/bsa-reference-data.ts import-versioned-reqs')
+    return
+  }
+  const file = filename
   console.log('\n=== Importing Merit Badges ===')
   console.log(`  File: ${file}`)
 
@@ -832,28 +850,34 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
 }
 
 /**
- * Import all BSA reference data
+ * Import BSA reference data (ranks and leadership positions only)
+ *
+ * NOTE: Merit badge requirements are imported separately via
+ * importVersionedMeritBadgeRequirements() which uses the scraped
+ * multi-version data from merit-badge-requirements-scraped.json
  */
 async function importAll() {
   console.log('\n╔════════════════════════════════════════╗')
   console.log('║   BSA Reference Data Import            ║')
+  console.log('║   (Ranks & Leadership Positions)       ║')
   console.log('╚════════════════════════════════════════╝')
   console.log(`\nConfiguration:`)
   console.log(`  Version Year: ${versionYear}`)
   console.log(`  Batch Size: ${batchSize}`)
   console.log(`  Files:`)
   console.log(`    Ranks: ${files.ranks}`)
-  console.log(`    Merit Badges: ${files.meritBadges}`)
   console.log(`    Positions: ${files.leadershipPositions}`)
+  console.log(`  Note: Merit badges imported separately via import-versioned-reqs`)
 
   const startTime = Date.now()
 
   await importRanks()
-  await importMeritBadges()
+  // Merit badges are imported via importVersionedMeritBadgeRequirements()
+  // which uses merit-badge-requirements-scraped.json (all historical versions)
   await importLeadershipPositions()
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
-  console.log(`\n✅ All BSA Reference Data Imported in ${elapsed}s`)
+  console.log(`\n✅ BSA Reference Data Imported in ${elapsed}s`)
 }
 
 // Export functions for use by other scripts (like db.ts)
@@ -898,24 +922,28 @@ if (isMainModule) {
 BSA Reference Data Management CLI
 
 Usage:
-  npx tsx scripts/bsa-reference-data.ts <command> [options]
+  npx tsx scripts/bsa-reference-data.ts <command> [options] [--prod]
 
 Commands:
-  import-all                    Import all data using config from seed-config.ts
+  import-all                    Import ranks and leadership positions
   import-ranks [filename]       Import rank requirements (override config file)
-  import-badges [filename]      Import merit badges (override config file)
   import-positions [filename]   Import leadership positions (override config file)
-  import-versioned-reqs [file]  Import multi-version merit badge requirements
+  import-versioned-reqs [file]  Import merit badge requirements (all versions)
+  import-badges [filename]      DEPRECATED - use import-versioned-reqs instead
+
+Options:
+  --prod                        Use production database (.env.prod)
 
 Configuration (seed-config.ts):
   Version Year: ${versionYear}
   Ranks File: ${files.ranks}
-  Merit Badges File: ${files.meritBadges}
   Positions File: ${files.leadershipPositions}
+  Merit Badges: merit-badge-requirements-scraped.json (via import-versioned-reqs)
 
 Examples:
   npx tsx scripts/bsa-reference-data.ts import-all
-  npx tsx scripts/bsa-reference-data.ts import-badges merit-badges-2026.json
+  npx tsx scripts/bsa-reference-data.ts import-all --prod
+  npx tsx scripts/bsa-reference-data.ts import-versioned-reqs
 `)
   }
 }
