@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Bricolage_Grotesque, DM_Sans, Source_Serif_4 } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import { PostHogProvider } from '@/components/providers/posthog-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import './globals.css'
@@ -41,6 +42,7 @@ export default function RootLayout({
         <ThemeProvider>
           <PostHogProvider>{children}</PostHogProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )
