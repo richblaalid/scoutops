@@ -446,6 +446,17 @@ export async function importScoutbookHistory(
             requirementId = legacyReqMap.get(normalizedLegacy)
           }
 
+          // Fallback: Handle Scoutbook export format like "9b(2)" which might be stored as "9(2)"
+          // This happens when Scoutbook exports "9b(2)" meaning "9b, option 2" but our
+          // scraped data stores it as "9(2)" because the DOM shows options at same level as 9a/9b/9c
+          if (!requirementId) {
+            const alternateMatch = normalizedScoutbook.match(/^(\d+)[a-z](\(\d+\))$/i)
+            if (alternateMatch) {
+              const alternateFormat = `${alternateMatch[1]}${alternateMatch[2]}`
+              requirementId = scoutbookReqMap.get(alternateFormat)
+            }
+          }
+
           if (!requirementId) {
             result.warnings.push({
               type: 'requirement_not_found',
