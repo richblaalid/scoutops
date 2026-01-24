@@ -32,6 +32,19 @@ interface NextRequirement {
   rankId: string
 }
 
+// Helper to compare alphanumeric requirement numbers (e.g., "2a" < "2b" < "3" < "10a")
+function compareRequirementNumbers(a: string, b: string): number {
+  const parseReq = (s: string) => {
+    const match = s.match(/^(\d+)([a-z]*)$/i)
+    if (!match) return { num: 0, suffix: s }
+    return { num: parseInt(match[1], 10), suffix: match[2].toLowerCase() }
+  }
+  const parsedA = parseReq(a)
+  const parsedB = parseReq(b)
+  if (parsedA.num !== parsedB.num) return parsedA.num - parsedB.num
+  return parsedA.suffix.localeCompare(parsedB.suffix)
+}
+
 function getNextRequirements(rankProgress: RankProgress[], limit: number = 5): NextRequirement[] {
   const items: NextRequirement[] = []
 
@@ -41,9 +54,9 @@ function getNextRequirements(rankProgress: RankProgress[], limit: number = 5): N
 
   // Get incomplete requirements, sorted by requirement number
   const sortedReqs = [...currentRank.scout_rank_requirement_progress].sort((a, b) => {
-    const numA = parseFloat(a.bsa_rank_requirements?.requirement_number || '0')
-    const numB = parseFloat(b.bsa_rank_requirements?.requirement_number || '0')
-    return numA - numB
+    const numA = a.bsa_rank_requirements?.requirement_number || '0'
+    const numB = b.bsa_rank_requirements?.requirement_number || '0'
+    return compareRequirementNumbers(numA, numB)
   })
 
   for (const req of sortedReqs) {

@@ -108,14 +108,33 @@ export function ScoutRankPanel({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkApprovalOpen, setBulkApprovalOpen] = useState(false)
 
+  // Helper to compare alphanumeric requirement numbers (e.g., "2a" < "2b" < "3" < "10a")
+  const compareRequirementNumbers = (a: string, b: string): number => {
+    // Extract numeric prefix and letter suffix
+    const parseReq = (s: string) => {
+      const match = s.match(/^(\d+)([a-z]*)$/i)
+      if (!match) return { num: 0, suffix: s }
+      return { num: parseInt(match[1], 10), suffix: match[2].toLowerCase() }
+    }
+    const parsedA = parseReq(a)
+    const parsedB = parseReq(b)
+
+    // Compare numeric part first
+    if (parsedA.num !== parsedB.num) {
+      return parsedA.num - parsedB.num
+    }
+    // Then compare suffix alphabetically
+    return parsedA.suffix.localeCompare(parsedB.suffix)
+  }
+
   // Sort requirements by number - handle both progress data and raw requirements
   const sortedRequirements = useMemo(() => {
     if (rank) {
       // Has progress data
       return [...rank.scout_rank_requirement_progress].sort((a, b) => {
-        const numA = parseFloat(a.bsa_rank_requirements?.requirement_number || '0')
-        const numB = parseFloat(b.bsa_rank_requirements?.requirement_number || '0')
-        return numA - numB
+        const numA = a.bsa_rank_requirements?.requirement_number || '0'
+        const numB = b.bsa_rank_requirements?.requirement_number || '0'
+        return compareRequirementNumbers(numA, numB)
       })
     }
     return []
@@ -125,9 +144,7 @@ export function ScoutRankPanel({
   const sortedRawRequirements = useMemo(() => {
     if (!rank && rankRequirementsData) {
       return [...rankRequirementsData.requirements].sort((a, b) => {
-        const numA = parseFloat(a.requirement_number || '0')
-        const numB = parseFloat(b.requirement_number || '0')
-        return numA - numB
+        return compareRequirementNumbers(a.requirement_number || '0', b.requirement_number || '0')
       })
     }
     return []

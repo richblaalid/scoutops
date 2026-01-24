@@ -70,6 +70,19 @@ interface RequirementNode {
   children: RequirementNode[]
 }
 
+// Helper to compare alphanumeric requirement numbers (e.g., "2a" < "2b" < "3" < "10a")
+function compareRequirementNumbers(a: string, b: string): number {
+  const parseReq = (s: string) => {
+    const match = s.match(/^(\d+)([a-z]*)$/i)
+    if (!match) return { num: 0, suffix: s }
+    return { num: parseInt(match[1], 10), suffix: match[2].toLowerCase() }
+  }
+  const parsedA = parseReq(a)
+  const parsedB = parseReq(b)
+  if (parsedA.num !== parsedB.num) return parsedA.num - parsedB.num
+  return parsedA.suffix.localeCompare(parsedB.suffix)
+}
+
 // Build a hierarchical tree from flat requirements
 function buildRequirementTree(requirements: Requirement[]): RequirementNode[] {
   const nodeMap = new Map<string, RequirementNode>()
@@ -93,9 +106,9 @@ function buildRequirementTree(requirements: Requirement[]): RequirementNode[] {
   // Sort children by requirement number
   function sortChildren(nodes: RequirementNode[]) {
     nodes.sort((a, b) => {
-      const numA = parseFloat(a.requirement.requirement_number || '0')
-      const numB = parseFloat(b.requirement.requirement_number || '0')
-      return numA - numB
+      const numA = a.requirement.requirement_number || '0'
+      const numB = b.requirement.requirement_number || '0'
+      return compareRequirementNumbers(numA, numB)
     })
     nodes.forEach(node => sortChildren(node.children))
   }
