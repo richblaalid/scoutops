@@ -265,6 +265,27 @@
 }
 
 /*
+ * Touch Target Utilities
+ * Ensure minimum 44x44px touch targets for mobile accessibility
+ */
+@layer utilities {
+  /* Ensure 44px minimum clickable area for small visual elements */
+  .touch-target-44 {
+    @apply relative min-h-[44px] min-w-[44px] inline-flex items-center justify-center;
+  }
+
+  /* For text links - adds invisible touch padding around the link */
+  .link-touch-target {
+    @apply relative py-2 -my-2;
+  }
+
+  /* Variant with horizontal padding too */
+  .link-touch-target-x {
+    @apply relative py-2 px-2 -my-2 -mx-2;
+  }
+}
+
+/*
  * Form Element Utilities
  * Consistent styling for native form elements
  */

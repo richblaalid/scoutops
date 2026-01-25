@@ -310,7 +310,7 @@ const nunito = Nunito({
   - Changes: Increase default to h-11 (44px), icon to w-11 h-11
   - Test: Measure button heights, verify 44px minimum
 
-- [ ] **2.4.2** Add touch-target utility class to globals.css
+- [x] **2.4.2** Add touch-target utility class to globals.css
   - Files: `src/app/globals.css`
   - Changes: Add .touch-target-44 and .link-touch-target classes
   - Test: Classes available and working
