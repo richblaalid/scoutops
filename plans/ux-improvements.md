@@ -241,10 +241,15 @@ const nunito = Nunito({
   - Test: Screenshots at all breakpoints, compare with audit baseline
 
 #### 1.2 Performance - Scout Detail Page
-- [ ] **1.2.1** Identify parallelizable queries in scout detail page
+- [x] **1.2.1** Identify parallelizable queries in scout detail page
   - Files: `src/app/(dashboard)/scouts/[id]/page.tsx`
   - Changes: Map query dependencies, identify parallel groups
   - Test: Document shows query groups
+  - **Analysis:**
+    - Group 1 (after auth): Scout details + Profile query
+    - Group 2 (after scout+profile): Transactions + Guardians + Membership
+    - Group 3 (after membership): Unit members + Advancement
+    - Group 4 (after unit members): Available profiles
 
 - [ ] **1.2.2** Refactor data fetching with Promise.all()
   - Files: `src/app/(dashboard)/scouts/[id]/page.tsx`
@@ -414,10 +419,10 @@ const nunito = Nunito({
 | Phase | Total | Complete | Status |
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
-| Phase 1 | 6 | 3 | 🔄 In Progress |
+| Phase 1 | 6 | 4 | 🔄 In Progress |
 | Phase 2 | 10 | 0 | ⬜ Not Started |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **7** | 🔄 In Progress |
+| **Total** | **24** | **8** | 🔄 In Progress |
 
 ---
 
