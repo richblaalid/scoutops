@@ -630,6 +630,72 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
 
   const startTime = Date.now()
 
+  // Normalize scraped slugs to DB codes (handle naming mismatches)
+  const SLUG_TO_CODE: Record<string, string> = {
+    artificial_intelligence_ai: 'artificial_intelligence',
+    fish_and_wildlife_management: 'fish_wildlife_management',
+  }
+  const normalizeSlug = (slug: string) => SLUG_TO_CODE[slug] || slug
+
+  // Step 0: Create badges from canonical data file (has full metadata including images)
+  try {
+    const canonicalFile = 'merit-badges-canonical.json'
+    interface CanonicalBadge {
+      code: string
+      name: string
+      is_eagle_required: boolean
+      category: string | null
+      description: string | null
+      image_url: string | null
+      pamphlet_url: string | null
+      is_active: boolean
+    }
+    interface CanonicalData {
+      badges: CanonicalBadge[]
+    }
+    const canonicalData = readJsonFile<CanonicalData>(canonicalFile)
+
+    const badgeRecords = canonicalData.badges.map(b => ({
+      code: b.code,
+      name: b.name,
+      is_eagle_required: b.is_eagle_required,
+      category: b.category,
+      description: b.description,
+      image_url: b.image_url,
+      pamphlet_url: b.pamphlet_url,
+      is_active: b.is_active ?? true,
+    }))
+
+    for (const batch of chunk(badgeRecords, batchSize)) {
+      const { error } = await supabase
+        .from('bsa_merit_badges')
+        .upsert(batch, { onConflict: 'code' })
+      if (error) {
+        console.error('Error upserting badges:', error)
+      }
+    }
+    console.log(`  Upserted ${badgeRecords.length} merit badges (from canonical data)`)
+  } catch (e) {
+    console.log(`  Warning: Could not load canonical badge data, using minimal badge info`)
+    // Fallback: create minimal badges from scraped data
+    const uniqueBadges = new Map<string, { name: string; code: string }>()
+    for (const badge of data.badges) {
+      const code = normalizeSlug(badge.badgeSlug)
+      if (!uniqueBadges.has(code)) {
+        uniqueBadges.set(code, { name: badge.badgeName, code })
+      }
+    }
+    const badgeRecords = Array.from(uniqueBadges.values()).map(b => ({
+      code: b.code,
+      name: b.name,
+      is_active: true,
+    }))
+    for (const batch of chunk(badgeRecords, batchSize)) {
+      await supabase.from('bsa_merit_badges').upsert(batch, { onConflict: 'code' })
+    }
+    console.log(`  Upserted ${badgeRecords.length} merit badges (minimal)`)
+  }
+
   // Step 1: Get badge ID map (by code/slug)
   const { data: badges, error: badgesError } = await supabase
     .from('bsa_merit_badges')
@@ -641,14 +707,7 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
   }
 
   const badgeCodeToId = new Map(badges.map((b) => [b.code, b.id]))
-  console.log(`  Found ${badges.length} existing badges in DB`)
-
-  // Normalize scraped slugs to DB codes (handle naming mismatches)
-  const SLUG_TO_CODE: Record<string, string> = {
-    artificial_intelligence_ai: 'artificial_intelligence',
-    fish_and_wildlife_management: 'fish_wildlife_management',
-  }
-  const normalizeSlug = (slug: string) => SLUG_TO_CODE[slug] || slug
+  console.log(`  Found ${badges.length} badges in DB`)
 
   // Step 2: Build version records and upsert
   const versionRecords: {
@@ -850,6 +909,87 @@ async function importVersionedMeritBadgeRequirements(filename?: string) {
 }
 
 /**
+ * Validate seeded BSA reference data integrity.
+ * Throws an error if critical data is missing or incomplete.
+ *
+ * Expected counts (approximate):
+ * - 141 merit badges with image_url and category
+ * - 140+ rank requirements
+ * - 11,000+ merit badge requirements
+ * - 18 leadership positions
+ */
+async function validateSeedData(): Promise<{ valid: boolean; errors: string[] }> {
+  console.log('\n=== Validating Seed Data ===')
+  const errors: string[] = []
+
+  // Check merit badges have required fields
+  const { data: badgesWithoutImages } = await supabase
+    .from('bsa_merit_badges')
+    .select('code, name')
+    .is('image_url', null)
+
+  if (badgesWithoutImages && badgesWithoutImages.length > 0) {
+    errors.push(`${badgesWithoutImages.length} badges missing image_url: ${badgesWithoutImages.slice(0, 3).map(b => b.code).join(', ')}...`)
+  }
+
+  const { data: badgesWithoutCategory } = await supabase
+    .from('bsa_merit_badges')
+    .select('code, name')
+    .is('category', null)
+
+  if (badgesWithoutCategory && badgesWithoutCategory.length > 0) {
+    errors.push(`${badgesWithoutCategory.length} badges missing category: ${badgesWithoutCategory.slice(0, 3).map(b => b.code).join(', ')}...`)
+  }
+
+  // Check expected counts
+  const { count: badgeCount } = await supabase
+    .from('bsa_merit_badges')
+    .select('*', { count: 'exact', head: true })
+
+  if (!badgeCount || badgeCount < 140) {
+    errors.push(`Expected 140+ merit badges, found ${badgeCount}`)
+  }
+
+  const { count: rankReqCount } = await supabase
+    .from('bsa_rank_requirements')
+    .select('*', { count: 'exact', head: true })
+
+  if (!rankReqCount || rankReqCount < 140) {
+    errors.push(`Expected 140+ rank requirements, found ${rankReqCount}`)
+  }
+
+  const { count: mbReqCount } = await supabase
+    .from('bsa_merit_badge_requirements')
+    .select('*', { count: 'exact', head: true })
+
+  if (!mbReqCount || mbReqCount < 10000) {
+    errors.push(`Expected 10,000+ merit badge requirements, found ${mbReqCount}`)
+  }
+
+  const { count: positionCount } = await supabase
+    .from('bsa_leadership_positions')
+    .select('*', { count: 'exact', head: true })
+
+  if (!positionCount || positionCount < 15) {
+    errors.push(`Expected 15+ leadership positions, found ${positionCount}`)
+  }
+
+  // Report results
+  if (errors.length > 0) {
+    console.log('  ❌ Validation FAILED:')
+    errors.forEach(e => console.log(`    - ${e}`))
+  } else {
+    console.log('  ✅ Validation passed:')
+    console.log(`    - ${badgeCount} merit badges (all with images and categories)`)
+    console.log(`    - ${rankReqCount} rank requirements`)
+    console.log(`    - ${mbReqCount} merit badge requirements`)
+    console.log(`    - ${positionCount} leadership positions`)
+  }
+
+  return { valid: errors.length === 0, errors }
+}
+
+/**
  * Import BSA reference data (ranks and leadership positions only)
  *
  * NOTE: Merit badge requirements are imported separately via
@@ -887,6 +1027,7 @@ export {
   importLeadershipPositions,
   importVersionedMeritBadgeRequirements,
   importAll,
+  validateSeedData,
 }
 
 // CLI - only run when executed directly

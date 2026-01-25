@@ -38,6 +38,7 @@ import * as path from 'path';
 import {
   importAll as importBsaReferenceData,
   importVersionedMeritBadgeRequirements,
+  validateSeedData,
 } from './bsa-reference-data';
 
 // Check for --prod flag
@@ -1476,6 +1477,12 @@ async function main(): Promise<void> {
       await importBsaReferenceData();
       console.log('\n📚 Seeding Versioned Merit Badge Requirements...');
       await importVersionedMeritBadgeRequirements();
+      // Validate seeded data integrity
+      const bsaValidation = await validateSeedData();
+      if (!bsaValidation.valid) {
+        console.error('\n❌ BSA seed validation failed! Check data files and seeder.');
+        process.exit(1);
+      }
       break;
     case 'seed:all':
       await seedBase();
@@ -1484,6 +1491,12 @@ async function main(): Promise<void> {
       await importBsaReferenceData();
       console.log('\n📚 Seeding Versioned Merit Badge Requirements (from scraped data)...');
       await importVersionedMeritBadgeRequirements();
+      // Validate seeded data integrity
+      const allValidation = await validateSeedData();
+      if (!allValidation.valid) {
+        console.error('\n❌ BSA seed validation failed! Check data files and seeder.');
+        process.exit(1);
+      }
       await seedAdvancementData();
       break;
     case 'dump':

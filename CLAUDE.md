@@ -48,6 +48,32 @@ npm run db:dump -- before-testing  # Save current state
 npm run db:restore -- supabase/seeds/before-testing.json  # Restore
 ```
 
+### BSA Reference Data Seeding
+
+The application seeds BSA official reference data (ranks, merit badges, leadership positions) from canonical data files. This data is critical for advancement tracking.
+
+**Canonical data files** (source of truth in `data/`):
+| File | Purpose |
+|------|---------|
+| `merit-badges-canonical.json` | Merit badge definitions (141 badges with images, categories, pamphlet URLs) |
+| `merit-badge-requirements-scraped.json` | Requirement text and structure (11k+ requirements across 358 versions) |
+| `ranks-2025.json` | Rank requirements (144 requirements for 7 ranks) |
+| `leadership-positions-2025.json` | Leadership positions (18 positions) |
+
+**Rules for modifying seeders** (`scripts/bsa-reference-data.ts`, `scripts/db.ts`):
+- NEVER reduce data quality when modifying seeders (e.g., removing fields like `image_url`, `category`)
+- Always test with `npm run db:fresh` after any seeder changes
+- The seed process validates expected counts - if validation fails, the seeder exits with error
+- When adding new badge/requirement fields, update both the canonical data file AND the seeder
+
+**Expected counts after seeding:**
+- 141 merit badges (all with `image_url` and `category`)
+- 144+ rank requirements
+- 11,000+ merit badge requirements
+- 18 leadership positions
+
+**Seed validation**: The seeder automatically validates data integrity. If critical fields are missing or counts are too low, the seed process will fail with an error message.
+
 ## Architecture
 
 ### Tech Stack
