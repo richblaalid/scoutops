@@ -333,22 +333,22 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
                   </td>
                   {canManage && (
                     <td className="py-3 pl-4 sm:pl-6 whitespace-nowrap">
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <Link
                           href={`/adults/${adult.id}`}
-                          className="text-sm text-forest-600 hover:text-forest-800 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
+                          className="text-sm text-forest-600 hover:text-forest-800 rounded link-touch-target focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                         >
                           View
                         </Link>
                         <button
-                          className="text-sm text-forest-600 hover:text-forest-800 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
+                          className="text-sm text-forest-600 hover:text-forest-800 rounded link-touch-target focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                           onClick={() => setEditingAdult(adult)}
                         >
                           Edit
                         </button>
                         {!adult.user_id && (
                           <button
-                            className="text-sm text-stone-500 hover:text-stone-700 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
+                            className="text-sm text-stone-500 hover:text-stone-700 rounded link-touch-target focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
                             onClick={() => setInvitingAdult(adult)}
                           >
                             Invite

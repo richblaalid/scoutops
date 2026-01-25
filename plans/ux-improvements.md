@@ -315,7 +315,7 @@ const nunito = Nunito({
   - Changes: Add .touch-target-44 and .link-touch-target classes
   - Test: Classes available and working
 
-- [ ] **2.4.3** Apply touch targets to table action links
+- [x] **2.4.3** Apply touch targets to table action links
   - Files: Scout list, account list components
   - Changes: Apply touch-target classes to View/Edit/Account links
   - Test: Links have adequate touch area on mobile
@@ -421,9 +421,9 @@ const nunito = Nunito({
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
 | Phase 1 | 6 | 6 | ✅ Complete |
-| Phase 2 | 10 | 5 | 🔄 In Progress |
+| Phase 2 | 10 | 10 | ✅ Complete |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **15** | 🔄 In Progress |
+| **Total** | **24** | **20** | 🔄 In Progress |
 
 ---
 

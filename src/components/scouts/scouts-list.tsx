@@ -349,23 +349,23 @@ export function ScoutsList({ scouts, canManage, unitId }: ScoutsListProps) {
                 </td>
                 {canManage && (
                   <td className="py-3 pl-4 sm:pl-6 whitespace-nowrap">
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Link
                         href={`/scouts/${scout.id}`}
-                        className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
+                        className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300 rounded link-touch-target focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                       >
                         View
                       </Link>
                       <button
                         onClick={() => setEditingScout(scout)}
-                        className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
+                        className="text-sm text-forest-600 hover:text-forest-800 dark:text-forest-400 dark:hover:text-forest-300 rounded link-touch-target focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                       >
                         Edit
                       </button>
                       {accountId && (
                         <Link
                           href={`/finances/accounts/${accountId}`}
-                          className="text-sm text-forest-600 hover:text-forest-800 hidden sm:inline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
+                          className="text-sm text-forest-600 hover:text-forest-800 hidden sm:inline rounded link-touch-target focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                         >
                           Account
                         </Link>
