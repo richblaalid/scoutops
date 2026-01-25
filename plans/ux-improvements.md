@@ -276,7 +276,7 @@ const nunito = Nunito({
   - Changes: Add skeleton with form structure
   - Test: Skeleton visible on navigation to settings
 
-- [ ] **2.1.3** Create loading.tsx for accounts page
+- [x] **2.1.3** Create loading.tsx for accounts page
   - Files: `src/app/(dashboard)/accounts/loading.tsx`
   - Changes: Add skeleton with table structure
   - Test: Skeleton visible on navigation to accounts
