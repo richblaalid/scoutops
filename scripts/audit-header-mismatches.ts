@@ -175,6 +175,8 @@ function findIssues(badgeName: string, year: number, reqs: Requirement[]): Issue
   const issues: Issue[] = []
   const reqMap = new Map(reqs.map(r => [r.id, r]))
   const reqByNumber = new Map(reqs.map(r => [r.requirement_number, r]))
+  // Case-insensitive lookup map
+  const reqByNumberUpper = new Map(reqs.map(r => [r.requirement_number.toUpperCase(), r]))
 
   for (const req of reqs) {
     // Issue 1: Should be a header but isn't
@@ -252,7 +254,7 @@ function findIssues(badgeName: string, year: number, reqs: Requirement[]): Issue
     const letterParenMatch = req.requirement_number.match(/^(\d+)([a-z])\((\d+)\)$/i)
     if (letterParenMatch) {
       const baseWithLetter = letterParenMatch[1] + letterParenMatch[2]
-      const expectedParent = reqByNumber.get(baseWithLetter) || reqByNumber.get(baseWithLetter.toUpperCase())
+      const expectedParent = reqByNumberUpper.get(baseWithLetter.toUpperCase())
 
       if (!expectedParent) {
         issues.push({
@@ -265,14 +267,17 @@ function findIssues(badgeName: string, year: number, reqs: Requirement[]): Issue
         })
       } else if (req.parent_requirement_id !== expectedParent.id) {
         const currentParent = req.parent_requirement_id ? reqMap.get(req.parent_requirement_id) : null
-        issues.push({
-          badgeName,
-          versionYear: year,
-          requirementNumber: req.requirement_number,
-          issueType: 'wrong_parent',
-          description: req.description,
-          details: `Parent is "${currentParent?.requirement_number || '(none)'}", should be "${baseWithLetter}"`,
-        })
+        // Skip if parent numbers match (handles duplicate requirement IDs)
+        if (currentParent?.requirement_number.toUpperCase() !== baseWithLetter.toUpperCase()) {
+          issues.push({
+            badgeName,
+            versionYear: year,
+            requirementNumber: req.requirement_number,
+            issueType: 'wrong_parent',
+            description: req.description,
+            details: `Parent is "${currentParent?.requirement_number || '(none)'}", should be "${baseWithLetter}"`,
+          })
+        }
       }
     }
   }
