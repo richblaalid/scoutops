@@ -32,58 +32,61 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
 
   if (!user) return null
 
-  // Get scout details
-  const { data: scoutData } = await supabase
-    .from('scouts')
-    .select(`
-      id,
-      first_name,
-      last_name,
-      patrol_id,
-      rank,
-      current_position,
-      current_position_2,
-      is_active,
-      date_of_birth,
-      bsa_member_id,
-      gender,
-      date_joined,
-      health_form_status,
-      health_form_expires,
-      swim_classification,
-      swim_class_date,
-      created_at,
-      updated_at,
-      unit_id,
-      scout_accounts (
+  // Group 1: Parallel fetch of scout details and user profile
+  const [scoutResult, profileResult] = await Promise.all([
+    supabase
+      .from('scouts')
+      .select(`
         id,
-        billing_balance,
-        funds_balance
-      ),
-      units (
-        id,
-        name,
-        unit_number
-      ),
-      patrols (
-        name
-      )
-    `)
-    .eq('id', id)
-    .single()
+        first_name,
+        last_name,
+        patrol_id,
+        rank,
+        current_position,
+        current_position_2,
+        is_active,
+        date_of_birth,
+        bsa_member_id,
+        gender,
+        date_joined,
+        health_form_status,
+        health_form_expires,
+        swim_classification,
+        swim_class_date,
+        created_at,
+        updated_at,
+        unit_id,
+        scout_accounts (
+          id,
+          billing_balance,
+          funds_balance
+        ),
+        units (
+          id,
+          name,
+          unit_number
+        ),
+        patrols (
+          name
+        )
+      `)
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single(),
+  ])
+
+  const scoutData = scoutResult.data
+  const profileData = profileResult.data
 
   if (!scoutData) {
     notFound()
   }
 
-  // Get user's profile
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  // Get user's unit membership to check role
+  // Get user's unit membership to check role (depends on profile)
   const { data: membershipData } = profileData
     ? await supabase
         .from('unit_memberships')
@@ -124,25 +127,47 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
 
   const scout = scoutData as Scout
 
-  // Get recent transactions for this scout
-  const { data: transactionsData } = await supabase
-    .from('journal_lines')
-    .select(`
-      id,
-      debit,
-      credit,
-      memo,
-      journal_entries (
+  // Group 2: Parallel fetch of transactions and guardians (both depend only on scout id)
+  const [transactionsResult, guardiansResult] = await Promise.all([
+    supabase
+      .from('journal_lines')
+      .select(`
         id,
-        entry_date,
-        description,
-        entry_type,
-        is_posted
-      )
-    `)
-    .eq('scout_account_id', scout.scout_accounts?.id || '')
-    .order('id', { ascending: false })
-    .limit(10)
+        debit,
+        credit,
+        memo,
+        journal_entries (
+          id,
+          entry_date,
+          description,
+          entry_type,
+          is_posted
+        )
+      `)
+      .eq('scout_account_id', scout.scout_accounts?.id || '')
+      .order('id', { ascending: false })
+      .limit(10),
+    supabase
+      .from('scout_guardians')
+      .select(`
+        id,
+        relationship,
+        is_primary,
+        profile_id,
+        profiles (
+          id,
+          first_name,
+          last_name,
+          full_name,
+          email,
+          member_type,
+          position,
+          user_id
+        )
+      `)
+      .eq('scout_id', id)
+      .order('is_primary', { ascending: false }),
+  ])
 
   interface Transaction {
     id: string
@@ -158,29 +183,7 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     } | null
   }
 
-  const transactions = (transactionsData as Transaction[]) || []
-
-  // Get linked guardians for this scout
-  const { data: guardiansData } = await supabase
-    .from('scout_guardians')
-    .select(`
-      id,
-      relationship,
-      is_primary,
-      profile_id,
-      profiles (
-        id,
-        first_name,
-        last_name,
-        full_name,
-        email,
-        member_type,
-        position,
-        user_id
-      )
-    `)
-    .eq('scout_id', id)
-    .order('is_primary', { ascending: false })
+  const transactions = (transactionsResult.data as Transaction[]) || []
 
   interface Guardian {
     id: string
@@ -199,42 +202,49 @@ export default async function ScoutPage({ params }: ScoutPageProps) {
     }
   }
 
-  const guardians = ((guardiansData || []) as Guardian[]).filter(g => g.profiles !== null)
+  const guardians = ((guardiansResult.data || []) as Guardian[]).filter(g => g.profiles !== null)
 
-  // Get available profiles (adults in this unit) for adding guardians
-  let availableProfiles: { id: string; first_name: string | null; last_name: string | null; full_name: string | null; email: string | null; member_type: string | null; user_id: string | null }[] = []
-
-  if (canEditGuardians && membership) {
-    // Get profile IDs from unit memberships (active, roster, or invited)
-    const { data: membersData } = await supabase
-      .from('unit_memberships')
-      .select('profile_id')
-      .eq('unit_id', membership.unit_id)
-      .in('status', ['active', 'roster', 'invited'])
-
-    const profileIds = (membersData || [])
-      .map(m => m.profile_id)
-      .filter((id): id is string => id !== null)
-
-    if (profileIds.length > 0) {
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, full_name, email, member_type, user_id')
-        .in('id', profileIds)
-        .order('last_name', { ascending: true, nullsFirst: false })
-        .order('first_name', { ascending: true, nullsFirst: false })
-
-      availableProfiles = (profilesData || []) as typeof availableProfiles
-    }
-  }
-
-  // Fetch advancement data if feature is enabled
+  // Group 3: Parallel fetch of unit members (for available profiles) and advancement data
   const advancementEnabled = isFeatureEnabled(FeatureFlag.ADVANCEMENT_TRACKING)
   type AdvancementData = Awaited<ReturnType<typeof getScoutAdvancementProgress>>
+
+  let availableProfiles: { id: string; first_name: string | null; last_name: string | null; full_name: string | null; email: string | null; member_type: string | null; user_id: string | null }[] = []
   let advancementData: AdvancementData = null
 
-  if (advancementEnabled && membership) {
-    advancementData = await getScoutAdvancementProgress(id)
+  if (membership) {
+    // Run unit members fetch and advancement fetch in parallel
+    const [membersResult, advancementResult] = await Promise.all([
+      canEditGuardians
+        ? supabase
+            .from('unit_memberships')
+            .select('profile_id')
+            .eq('unit_id', membership.unit_id)
+            .in('status', ['active', 'roster', 'invited'])
+        : Promise.resolve({ data: null }),
+      advancementEnabled
+        ? getScoutAdvancementProgress(id)
+        : Promise.resolve(null),
+    ])
+
+    advancementData = advancementResult
+
+    // Group 4: Fetch available profiles if we have member IDs
+    if (canEditGuardians && membersResult.data) {
+      const profileIds = (membersResult.data || [])
+        .map(m => m.profile_id)
+        .filter((profileId): profileId is string => profileId !== null)
+
+      if (profileIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, full_name, email, member_type, user_id')
+          .in('id', profileIds)
+          .order('last_name', { ascending: true, nullsFirst: false })
+          .order('first_name', { ascending: true, nullsFirst: false })
+
+        availableProfiles = (profilesData || []) as typeof availableProfiles
+      }
+    }
   }
 
   return (

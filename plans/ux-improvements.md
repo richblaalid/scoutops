@@ -251,7 +251,7 @@ const nunito = Nunito({
     - Group 3 (after membership): Unit members + Advancement
     - Group 4 (after unit members): Available profiles
 
-- [ ] **1.2.2** Refactor data fetching with Promise.all()
+- [x] **1.2.2** Refactor data fetching with Promise.all()
   - Files: `src/app/(dashboard)/scouts/[id]/page.tsx`
   - Changes: Group independent queries into Promise.all() calls
   - Test: Network tab shows parallel requests
@@ -419,10 +419,10 @@ const nunito = Nunito({
 | Phase | Total | Complete | Status |
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
-| Phase 1 | 6 | 4 | 🔄 In Progress |
+| Phase 1 | 6 | 5 | 🔄 In Progress |
 | Phase 2 | 10 | 0 | ⬜ Not Started |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **8** | 🔄 In Progress |
+| **Total** | **24** | **9** | 🔄 In Progress |
 
 ---
 
@@ -434,6 +434,11 @@ const nunito = Nunito({
 | 0.1.2 | 2026-01-25 | beaabf9 | Updated Tailwind font-family to Nunito |
 | 0.2.1 | 2026-01-25 | beaabf9 | Updated forest colors to Pine palette |
 | 0.2.2 | 2026-01-25 | beaabf9 | Updated CSS variables for Pine colors |
+| 1.1.1 | 2026-01-25 | 0594a90 | Adjusted typography weights for Nunito |
+| 1.1.2 | 2026-01-25 | 2e83a4e | Button font-semibold → font-bold |
+| 1.1.3 | 2026-01-25 | dfec9fb | Visual regression check verified |
+| 1.2.1 | 2026-01-25 | 336d58a | Analyzed query dependencies |
+| 1.2.2 | 2026-01-25 | 277b3e5 | Parallel data fetching with Promise.all |
 
 ---
 
