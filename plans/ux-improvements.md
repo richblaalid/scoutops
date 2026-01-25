@@ -226,7 +226,7 @@ const nunito = Nunito({
 ### Phase 1: High Priority Fixes
 
 #### 1.1 Typography Implementation
-- [ ] **1.1.1** Audit and adjust font weights for Nunito
+- [x] **1.1.1** Audit and adjust font weights for Nunito
   - Files: `src/app/globals.css` (typography utilities)
   - Changes: Adjust font-weight values for Nunito's weight scale
   - Test: Headings, body, labels have appropriate visual weight
@@ -414,10 +414,10 @@ const nunito = Nunito({
 | Phase | Total | Complete | Status |
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
-| Phase 1 | 6 | 0 | ⬜ Not Started |
+| Phase 1 | 6 | 1 | 🔄 In Progress |
 | Phase 2 | 10 | 0 | ⬜ Not Started |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **4** | 🔄 In Progress |
+| **Total** | **24** | **5** | 🔄 In Progress |
 
 ---
 
@@ -425,10 +425,10 @@ const nunito = Nunito({
 
 | Task | Date | Commit | Notes |
 |------|------|--------|-------|
-| 0.1.1 | 2026-01-25 | pending | Replaced Bricolage/DM Sans with Nunito |
-| 0.1.2 | 2026-01-25 | pending | Updated Tailwind font-family to Nunito |
-| 0.2.1 | 2026-01-25 | pending | Updated forest colors to Pine palette |
-| 0.2.2 | 2026-01-25 | pending | Updated CSS variables for Pine colors |
+| 0.1.1 | 2026-01-25 | beaabf9 | Replaced Bricolage/DM Sans with Nunito |
+| 0.1.2 | 2026-01-25 | beaabf9 | Updated Tailwind font-family to Nunito |
+| 0.2.1 | 2026-01-25 | beaabf9 | Updated forest colors to Pine palette |
+| 0.2.2 | 2026-01-25 | beaabf9 | Updated CSS variables for Pine colors |
 
 ---
 

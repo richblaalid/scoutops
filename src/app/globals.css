@@ -200,66 +200,67 @@
 /*
  * Typography Utility Classes
  * Semantic text styles for consistent typography across the app
+ * Font weights adjusted for Nunito (Brand Guide v3)
  */
 @layer utilities {
-  /* Page titles - main headings */
+  /* Page titles - main headings (Nunito 800) */
   .text-page-title {
-    @apply text-3xl font-bold tracking-tight text-foreground;
+    @apply text-3xl font-extrabold tracking-tight text-foreground;
   }
 
-  /* Section titles - card headers, major sections */
+  /* Section titles - card headers, major sections (Nunito 700) */
   .text-section-title {
-    @apply text-xl font-semibold tracking-tight text-foreground;
+    @apply text-xl font-bold tracking-tight text-foreground;
   }
 
-  /* Subsection titles - minor headings within cards */
+  /* Subsection titles - minor headings within cards (Nunito 600) */
   .text-subsection-title {
-    @apply text-lg font-medium text-foreground;
+    @apply text-lg font-semibold text-foreground;
   }
 
-  /* Card titles - consistent with CardTitle component */
+  /* Card titles - consistent with CardTitle component (Nunito 700) */
   .text-card-title {
-    @apply text-lg font-semibold leading-none tracking-tight text-foreground;
+    @apply text-lg font-bold leading-none tracking-tight text-foreground;
   }
 
-  /* Body text - standard readable content */
+  /* Body text - standard readable content (Nunito 400) */
   .text-body {
     @apply text-sm text-foreground leading-relaxed;
   }
 
-  /* Body large - emphasized body text */
+  /* Body large - emphasized body text (Nunito 400) */
   .text-body-lg {
     @apply text-base text-foreground leading-relaxed;
   }
 
-  /* Muted text - secondary information */
+  /* Muted text - secondary information (Nunito 400) */
   .text-muted-sm {
     @apply text-sm text-muted-foreground;
   }
 
-  /* Caption text - labels, hints, metadata */
+  /* Caption text - labels, hints, metadata (Nunito 400) */
   .text-caption {
     @apply text-xs text-muted-foreground;
   }
 
-  /* Label text - form labels */
+  /* Label text - form labels (Nunito 600) */
   .text-label {
-    @apply text-sm font-medium text-foreground;
+    @apply text-sm font-semibold text-foreground;
   }
 
-  /* Data display - numbers, stats, values */
+  /* Data display - numbers, stats, values (Nunito 800) */
   .text-data {
-    @apply text-2xl font-bold tabular-nums text-foreground;
+    @apply text-2xl font-extrabold tabular-nums text-foreground;
   }
 
-  /* Data small - smaller metrics */
+  /* Data small - smaller metrics (Nunito 700) */
   .text-data-sm {
-    @apply text-lg font-semibold tabular-nums text-foreground;
+    @apply text-lg font-bold tabular-nums text-foreground;
   }
 
-  /* Link text */
+  /* Link text (Nunito 600) */
   .text-link {
-    @apply text-sm font-medium text-primary hover:underline;
+    @apply text-sm font-semibold text-primary hover:underline;
   }
 }
 
