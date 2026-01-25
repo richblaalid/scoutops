@@ -271,7 +271,7 @@ const nunito = Nunito({
   - Changes: Add skeleton with table structure
   - Test: Skeleton visible on navigation to roster
 
-- [ ] **2.1.2** Create loading.tsx for settings page
+- [x] **2.1.2** Create loading.tsx for settings page
   - Files: `src/app/(dashboard)/settings/loading.tsx`
   - Changes: Add skeleton with form structure
   - Test: Skeleton visible on navigation to settings
