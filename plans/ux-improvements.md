@@ -256,7 +256,7 @@ const nunito = Nunito({
   - Changes: Group independent queries into Promise.all() calls
   - Test: Network tab shows parallel requests
 
-- [ ] **1.2.3** Add loading.tsx skeleton for scout detail
+- [x] **1.2.3** Add loading.tsx skeleton for scout detail
   - Files: `src/app/(dashboard)/scouts/[id]/loading.tsx`
   - Changes: Create skeleton matching page layout
   - Test: Skeleton appears during page load
@@ -419,10 +419,10 @@ const nunito = Nunito({
 | Phase | Total | Complete | Status |
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
-| Phase 1 | 6 | 5 | 🔄 In Progress |
+| Phase 1 | 6 | 6 | ✅ Complete |
 | Phase 2 | 10 | 0 | ⬜ Not Started |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **9** | 🔄 In Progress |
+| **Total** | **24** | **10** | 🔄 In Progress |
 
 ---
 
@@ -439,6 +439,7 @@ const nunito = Nunito({
 | 1.1.3 | 2026-01-25 | dfec9fb | Visual regression check verified |
 | 1.2.1 | 2026-01-25 | 336d58a | Analyzed query dependencies |
 | 1.2.2 | 2026-01-25 | 277b3e5 | Parallel data fetching with Promise.all |
+| 1.2.3 | 2026-01-25 | f6b913e | Added scout detail loading skeleton |
 
 ---
 
