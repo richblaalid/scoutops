@@ -236,7 +236,7 @@ const nunito = Nunito({
   - Changes: Adjust font-semibold to font-bold for Nunito
   - Test: Buttons have correct visual weight
 
-- [ ] **1.1.3** Visual regression check on all major pages
+- [x] **1.1.3** Visual regression check on all major pages
   - Files: N/A (testing task)
   - Test: Screenshots at all breakpoints, compare with audit baseline
 
@@ -414,10 +414,10 @@ const nunito = Nunito({
 | Phase | Total | Complete | Status |
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
-| Phase 1 | 6 | 2 | 🔄 In Progress |
+| Phase 1 | 6 | 3 | 🔄 In Progress |
 | Phase 2 | 10 | 0 | ⬜ Not Started |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **6** | 🔄 In Progress |
+| **Total** | **24** | **7** | 🔄 In Progress |
 
 ---
 
