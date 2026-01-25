@@ -301,6 +301,7 @@ export default async function PaymentsPage() {
         <CollapsibleCard
           title="Add Scout Funds"
           description="Credit fundraising earnings to scout accounts (e.g., wreath sales, popcorn sales)"
+          defaultOpen
         >
           <AddFundsForm
             unitId={membership.unit_id}

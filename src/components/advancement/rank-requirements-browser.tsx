@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { UnitRankPanel } from './unit-rank-panel'
-import { RankIcon } from './rank-icon'
+import { RankTrailVisualization } from './rank-trail-visualization'
 import { Award } from 'lucide-react'
 
 interface Rank {
@@ -81,59 +80,54 @@ export function RankRequirementsBrowser({
     )
   )
 
+  // Get requirements for the selected rank
+  const currentRequirements = requirements.filter((req) => req.rank_id === currentRank?.id)
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-forest-600" />
-              Scouts BSA Rank Requirements
-            </CardTitle>
-            <CardDescription>
-              Select requirements and sign off for multiple scouts
-            </CardDescription>
+    <div className="space-y-4">
+      {/* Trail to Eagle rank selector */}
+      <RankTrailVisualization
+        rankProgress={[]}
+        currentRank={null}
+        selectedRank={selectedRank}
+        onRankClick={setSelectedRank}
+        selectorMode
+        compact
+      />
+
+      {/* Requirements panel for selected rank */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-forest-600" />
+                {currentRank?.name || 'Rank'} Requirements
+              </CardTitle>
+              <CardDescription>
+                Select requirements and sign off for multiple scouts
+              </CardDescription>
+            </div>
+            {scoutsWorkingOnRank.length > 0 && (
+              <Badge variant="secondary">
+                {scoutsWorkingOnRank.length} scout{scoutsWorkingOnRank.length !== 1 ? 's' : ''} working on {currentRank?.name}
+              </Badge>
+            )}
           </div>
-          {scoutsWorkingOnRank.length > 0 && (
-            <Badge variant="secondary">
-              {scoutsWorkingOnRank.length} scout{scoutsWorkingOnRank.length !== 1 ? 's' : ''} working on {currentRank?.name}
-            </Badge>
+        </CardHeader>
+        <CardContent>
+          {currentRank && (
+            <UnitRankPanel
+              rank={currentRank}
+              requirements={currentRequirements}
+              scouts={scouts}
+              unitId={unitId}
+              canEdit={canEdit}
+              currentUserName={currentUserName}
+            />
           )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={selectedRank} onValueChange={setSelectedRank}>
-          <TabsList className="mb-4 flex h-auto flex-wrap gap-1">
-            {ranks.map((rank) => (
-              <TabsTrigger
-                key={rank.code}
-                value={rank.code}
-                className="flex items-center gap-1.5 text-xs sm:text-sm"
-              >
-                <RankIcon rank={rank} size="sm" />
-                <span className="hidden sm:inline">{rank.name}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {ranks.map((rank) => {
-            const reqs = requirements.filter((req) => req.rank_id === rank.id)
-
-            return (
-              <TabsContent key={rank.code} value={rank.code} className="mt-0">
-                <UnitRankPanel
-                  rank={rank}
-                  requirements={reqs}
-                  scouts={scouts}
-                  unitId={unitId}
-                  canEdit={canEdit}
-                  currentUserName={currentUserName}
-                />
-              </TabsContent>
-            )
-          })}
-        </Tabs>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

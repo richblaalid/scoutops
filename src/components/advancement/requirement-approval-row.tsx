@@ -251,13 +251,13 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
       <div
         onClick={handleRowClick}
         className={cn(
-          'group relative flex items-start gap-2 rounded-lg p-2 transition-all sm:gap-3 sm:p-3',
-          showSuccess && 'bg-emerald-50 ring-1 ring-emerald-200',
-          isComplete && !showSuccess && 'bg-emerald-50/50',
-          isPending && 'bg-amber-50',
-          isDenied && 'bg-red-50',
-          !isComplete && !isPending && !isDenied && 'hover:bg-stone-50',
-          isSelected && 'bg-blue-50 ring-1 ring-blue-200',
+          'group relative flex items-start gap-2 rounded-lg border p-2 transition-all sm:gap-3 sm:p-3',
+          showSuccess && 'border-emerald-200 bg-emerald-50 ring-1 ring-emerald-200',
+          isComplete && !showSuccess && 'border-emerald-200 bg-emerald-50/30',
+          isPending && 'border-amber-200 bg-amber-50',
+          isDenied && 'border-red-200 bg-red-50',
+          !isComplete && !isPending && !isDenied && !isSelected && 'border-stone-300 bg-stone-100/50 hover:bg-stone-100',
+          isSelected && 'border-blue-200 bg-blue-50 ring-1 ring-blue-200',
           // Clickable cursor when row can be interacted with
           !isComplete && !isLoading && (isMultiSelectMode || canApprove) && 'cursor-pointer'
         )}
@@ -305,7 +305,10 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
                   (isComplete || showSuccess) && 'text-stone-500 line-through decoration-emerald-400'
                 )}
               >
-                <span className="mr-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-stone-100 px-1 text-xs font-bold text-stone-600">
+                <span className={cn(
+                  'mr-1.5 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-xs font-bold',
+                  isComplete ? 'bg-emerald-200 text-emerald-800' : 'bg-stone-300 text-stone-700'
+                )}>
                   {displayLabel ?? requirementNumber}
                 </span>
                 {description}

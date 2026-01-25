@@ -19,6 +19,8 @@ interface RankTrailVisualizationProps {
   onRankClick?: (rankCode: string) => void
   selectedRank?: string | null
   compact?: boolean
+  /** Selector mode for unit-level views - hides progress, shows all ranks equally */
+  selectorMode?: boolean
 }
 
 // All BSA ranks in order for the trail with image URLs
@@ -141,11 +143,20 @@ export function RankTrailVisualization({
   onRankClick,
   selectedRank,
   compact = false,
+  selectorMode = false,
 }: RankTrailVisualizationProps) {
   const [guideOpen, setGuideOpen] = useState(false)
 
   const ranksWithState = useMemo(() => {
     return ALL_RANKS.map(rank => {
+      // In selector mode, treat all ranks as selectable (no progress state)
+      if (selectorMode) {
+        return {
+          ...rank,
+          state: 'future' as RankState,
+          progressPercent: 0,
+        }
+      }
       const stateInfo = getRankState(rank.code, rankProgress, currentRank)
       const progressPercent = calculateProgress(stateInfo.progress)
       return {
@@ -154,7 +165,7 @@ export function RankTrailVisualization({
         progressPercent,
       }
     })
-  }, [rankProgress, currentRank])
+  }, [rankProgress, currentRank, selectorMode])
 
   const currentInProgressRank = ranksWithState.find(r => r.state === 'in_progress')
   const progressPercent = currentInProgressRank?.progressPercent || 0
@@ -169,44 +180,31 @@ export function RankTrailVisualization({
         compact ? 'p-3 sm:p-4' : 'p-4 sm:p-6'
       )}>
         {/* Trail background imagery - full width, positioned at bottom */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-full overflow-hidden opacity-[0.04]">
-          {/* Pine tree silhouettes - uses percentage-based positioning for full width coverage */}
+        {/* CSS opacity applied to container flattens all children into one layer first, preventing overlap darkening */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-full overflow-hidden opacity-[0.06]">
+          {/* Pine tree silhouettes */}
           <svg
             className="absolute bottom-0 left-0 right-0 h-full w-full"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
-            {/* Trees drawn with percentage-based x coordinates for full width coverage */}
-            <g fill="currentColor" className="text-forest-900">
-              {/* Tree 1 - 3% */}
+            <g fill="#2d5a3d">
               <path d="M3 100 L3.8 82 L3.4 82 L4.2 65 L3.6 65 L4.5 45 L5.4 65 L4.8 65 L5.6 82 L5.2 82 L6 100Z" />
-              {/* Tree 2 - 8% */}
               <path d="M8 100 L8.6 85 L8.3 85 L9 70 L8.5 70 L9.3 52 L10.1 70 L9.6 70 L10.3 85 L10 85 L10.6 100Z" />
-              {/* Tree 3 - 15% */}
               <path d="M15 100 L15.8 80 L15.4 80 L16.2 62 L15.6 62 L16.5 40 L17.4 62 L16.8 62 L17.6 80 L17.2 80 L18 100Z" />
-              {/* Tree 4 - 22% */}
               <path d="M22 100 L22.6 87 L22.3 87 L23 73 L22.5 73 L23.3 55 L24.1 73 L23.6 73 L24.3 87 L24 87 L24.6 100Z" />
-              {/* Tree 5 - 30% */}
               <path d="M30 100 L30.8 82 L30.4 82 L31.2 65 L30.6 65 L31.5 45 L32.4 65 L31.8 65 L32.6 82 L32.2 82 L33 100Z" />
-              {/* Tree 6 - 38% */}
               <path d="M38 100 L38.5 88 L38.2 88 L38.8 75 L38.4 75 L39.2 58 L40 75 L39.5 75 L40.2 88 L39.8 88 L40.5 100Z" />
-              {/* Tree 7 - 47% */}
               <path d="M47 100 L47.8 80 L47.4 80 L48.2 62 L47.6 62 L48.5 40 L49.4 62 L48.8 62 L49.6 80 L49.2 80 L50 100Z" />
-              {/* Tree 8 - 55% */}
               <path d="M55 100 L55.6 85 L55.3 85 L56 70 L55.5 70 L56.3 52 L57.1 70 L56.6 70 L57.3 85 L57 85 L57.6 100Z" />
-              {/* Tree 9 - 63% */}
               <path d="M63 100 L63.8 82 L63.4 82 L64.2 65 L63.6 65 L64.5 45 L65.4 65 L64.8 65 L65.6 82 L65.2 82 L66 100Z" />
-              {/* Tree 10 - 72% */}
               <path d="M72 100 L72.5 88 L72.2 88 L72.8 75 L72.4 75 L73.2 58 L74 75 L73.5 75 L74.2 88 L73.8 88 L74.5 100Z" />
-              {/* Tree 11 - 80% */}
               <path d="M80 100 L80.8 80 L80.4 80 L81.2 62 L80.6 62 L81.5 40 L82.4 62 L81.8 62 L82.6 80 L82.2 80 L83 100Z" />
-              {/* Tree 12 - 88% */}
               <path d="M88 100 L88.6 85 L88.3 85 L89 70 L88.5 70 L89.3 52 L90.1 70 L89.6 70 L90.3 85 L90 85 L90.6 100Z" />
-              {/* Tree 13 - 95% */}
               <path d="M95 100 L95.6 87 L95.3 87 L96 73 L95.5 73 L96.3 55 L97.1 73 L96.6 73 L97.3 87 L97 87 L97.6 100Z" />
             </g>
           </svg>
-          {/* Mountain range silhouette - full width */}
+          {/* Mountain range silhouette */}
           <svg
             className="absolute bottom-0 left-0 right-0 h-1/3 w-full"
             viewBox="0 0 100 100"
@@ -214,8 +212,7 @@ export function RankTrailVisualization({
           >
             <path
               d="M0 100 L5 70 L12 85 L22 50 L30 75 L40 55 L50 35 L60 60 L70 45 L80 70 L88 50 L95 75 L100 60 L100 100Z"
-              fill="currentColor"
-              className="text-forest-900"
+              fill="#2d5a3d"
             />
           </svg>
         </div>
@@ -235,16 +232,16 @@ export function RankTrailVisualization({
                 'font-bold tracking-tight text-forest-800',
                 compact ? 'text-sm' : 'text-base'
               )}>
-                Trail to Eagle
+                {selectorMode ? 'Select Rank' : 'Trail to Eagle'}
               </h3>
               <p className="text-[10px] font-medium uppercase tracking-wider text-forest-600/70">
-                Rank Advancement
+                {selectorMode ? 'Click a rank to view requirements' : 'Rank Advancement'}
               </p>
             </div>
           </div>
 
-          {/* Guide Compass Button - more prominent */}
-          <Popover open={guideOpen} onOpenChange={setGuideOpen}>
+          {/* Guide Compass Button - only show in non-selector mode */}
+          {!selectorMode && <Popover open={guideOpen} onOpenChange={setGuideOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
@@ -329,24 +326,24 @@ export function RankTrailVisualization({
                 })}
               </div>
             </PopoverContent>
-          </Popover>
+          </Popover>}
         </div>
 
         {/* Trail visualization */}
         <div className="relative">
           {/* Scrollable container for mobile */}
-          <div className="scrollbar-hide -mx-3 overflow-x-auto px-3 sm:-mx-4 sm:px-4 md:mx-0 md:overflow-visible md:px-0">
+          <div className="px-4 sm:px-5 md:px-6">
             <div className={cn(
               'relative flex items-end justify-between',
-              compact ? 'min-w-[500px] pb-2 pt-4 md:min-w-0' : 'min-w-[580px] pb-2 pt-8 md:min-w-0'
+              compact ? 'pb-2 pt-4' : 'pb-2 pt-6 sm:pt-8'
             )}>
               {/* Trail path background - styled like a dirt path */}
-              <div className="absolute inset-x-0 bottom-[46px] h-2 sm:bottom-[50px] md:bottom-[54px]">
+              <div className="absolute inset-x-4 bottom-[38px] h-1.5 sm:inset-x-5 sm:bottom-[46px] sm:h-2 md:inset-x-6 md:bottom-[54px]">
                 {/* Path base */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-b from-stone-300 to-stone-400 shadow-inner" />
 
-                {/* Completed trail */}
-                {(() => {
+                {/* Completed trail - hidden in selector mode */}
+                {!selectorMode && (() => {
                   const lastAwarded = ranksWithState.filter(r => r.state === 'awarded').length
                   const inProgressIndex = ranksWithState.findIndex(r => r.state === 'in_progress')
                   const progressWidth = inProgressIndex >= 0
@@ -393,8 +390,8 @@ export function RankTrailVisualization({
                       <div
                         className={cn(
                           'relative transition-transform duration-200',
-                          'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12',
-                          isSelected && 'scale-150',
+                          'h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12',
+                          isSelected && 'scale-150 sm:scale-[1.75] md:scale-[2]',
                           isClickable && !isSelected && 'hover:scale-110'
                         )}
                       >
@@ -403,7 +400,7 @@ export function RankTrailVisualization({
                           src={rank.image_url}
                           alt={rank.name}
                           fill
-                          sizes="(max-width: 640px) 40px, (max-width: 768px) 44px, 48px"
+                          sizes="(max-width: 640px) 32px, (max-width: 768px) 40px, 48px"
                           className="object-contain drop-shadow-md"
                         />
                       </div>
@@ -411,9 +408,16 @@ export function RankTrailVisualization({
                       {/* Status indicator - positioned below the badge */}
                       <div className={cn(
                         'mt-1.5 flex h-5 items-center justify-center transition-all duration-200',
-                        isSelected && 'mt-3'
+                        isSelected && 'mt-3 sm:mt-4 md:mt-5'
                       )}>
-                        {rank.state === 'awarded' ? (
+                        {selectorMode ? (
+                          /* In selector mode, show a simple indicator for selected state */
+                          isSelected ? (
+                            <div className="h-2 w-2 rounded-full bg-forest-500" />
+                          ) : (
+                            <div className="h-2 w-2 rounded-full bg-stone-300" />
+                          )
+                        ) : rank.state === 'awarded' ? (
                           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 shadow-sm">
                             <Check className="h-3 w-3 text-white" strokeWidth={3} />
                           </div>
@@ -432,11 +436,15 @@ export function RankTrailVisualization({
                       {/* Rank name - using shortName for consistent width */}
                       <span
                         className={cn(
-                          'mt-1 whitespace-nowrap text-center text-[10px] font-medium sm:text-xs',
-                          rank.state === 'awarded' && 'text-stone-700',
-                          rank.state === 'in_progress' && 'text-forest-700',
-                          rank.state === 'future' && 'text-stone-500',
-                          isSelected && 'font-semibold text-forest-700'
+                          'mt-1 whitespace-nowrap text-center text-xs font-semibold sm:text-sm',
+                          selectorMode
+                            ? isSelected ? 'font-bold text-forest-700' : 'text-stone-600'
+                            : cn(
+                                rank.state === 'awarded' && 'text-stone-700',
+                                rank.state === 'in_progress' && 'text-forest-700',
+                                rank.state === 'future' && 'text-stone-500',
+                                isSelected && 'font-bold text-forest-700'
+                              )
                         )}
                       >
                         {rank.shortName}
@@ -448,12 +456,10 @@ export function RankTrailVisualization({
             </div>
           </div>
 
-          {/* Scroll hint for mobile */}
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-stone-100 to-transparent md:hidden" />
         </div>
 
-        {/* Journey stats - hidden in compact mode */}
-        {!compact && (
+        {/* Journey stats - hidden in compact mode and selector mode */}
+        {!compact && !selectorMode && (
           <div className="relative mt-4 flex items-center justify-center gap-4 border-t border-stone-200/60 pt-4 text-xs text-stone-500">
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-amber-500" />
