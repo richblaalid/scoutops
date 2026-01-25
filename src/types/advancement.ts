@@ -76,6 +76,8 @@ export interface BsaMeritBadgeRequirement {
   alternatives_group: string | null
   nesting_depth: number | null
   required_count: number | null
+  // Header support - headers are description-only, not approvable
+  is_header: boolean | null
 }
 
 export interface BsaLeadershipPosition {

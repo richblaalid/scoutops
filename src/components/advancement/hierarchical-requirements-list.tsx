@@ -23,6 +23,8 @@ interface Requirement {
   alternativesGroup?: string | null
   nestingDepth?: number | null
   requiredCount?: number | null
+  // Header support - headers are description-only, not approvable
+  isHeader?: boolean | null
 }
 
 interface HierarchicalRequirementsListProps {
@@ -49,6 +51,50 @@ interface HierarchicalRequirementsListProps {
   isMultiSelectMode?: boolean
   selectedIds?: Set<string>
   onSelectionChange?: (id: string) => void
+}
+
+/**
+ * Extract just the last part of a requirement number for display in nested views.
+ * The full hierarchy is visible from the tree structure, so we only need to show
+ * the leaf identifier.
+ *
+ * Examples:
+ * - "4 Option A (1)(a)" → "a"
+ * - "4 Option A (1)" → "1"
+ * - "4 Option A" → "Option A"
+ * - "4" → "4"
+ * - "1(a)" → "a"
+ * - "1a" → "a" (for simple formats)
+ */
+function getDisplayLabel(reqNum: string, hasParent: boolean): string {
+  // If no parent, show the full requirement number (it's a root)
+  if (!hasParent) {
+    return reqNum
+  }
+
+  // Check for parenthetical suffix like (a), (b), (1), (2)
+  const parenMatch = reqNum.match(/\(([^)]+)\)$/)
+  if (parenMatch) {
+    return parenMatch[1] // Return just the content inside last parens
+  }
+
+  // Check for "Option X" pattern
+  const optionMatch = reqNum.match(/Option\s+([A-Z])(?:\s|$)/i)
+  if (optionMatch) {
+    // If it's just "4 Option A", show "Option A"
+    if (reqNum.match(/^\d+\s+Option\s+[A-Z]$/i)) {
+      return `Option ${optionMatch[1]}`
+    }
+  }
+
+  // Check for simple letter suffix like "1a", "2b"
+  const simpleMatch = reqNum.match(/\d+([a-z])$/i)
+  if (simpleMatch) {
+    return simpleMatch[1].toLowerCase()
+  }
+
+  // Fallback: return the full number
+  return reqNum
 }
 
 // Parse requirement number to extract group number, sub-letters, and depth
@@ -251,9 +297,13 @@ function buildTreeFromParsing(requirements: Requirement[]): RequirementNode[] {
 }
 
 // Calculate completion stats for a node and its children
+// Headers are excluded from counts since they're not approvable
 function getNodeStats(node: RequirementNode): { completed: number; total: number } {
-  let completed = isRequirementComplete(node.requirement) ? 1 : 0
-  let total = 1
+  const isHeader = node.requirement.isHeader === true
+
+  // Headers don't count toward completion
+  let completed = !isHeader && isRequirementComplete(node.requirement) ? 1 : 0
+  let total = isHeader ? 0 : 1
 
   node.children.forEach(child => {
     const childStats = getNodeStats(child)
@@ -304,20 +354,24 @@ const RequirementNodeView = memo(function RequirementNodeView({
   const hasChildren = node.children.length > 0
   const isCollapsed = collapsedNodes.has(node.requirement.id)
   const stats = getNodeStats(node)
-  const isComplete = stats.completed === stats.total
+  const isComplete = stats.completed === stats.total && stats.total > 0
   const req = node.requirement
+  const isHeader = req.isHeader === true
+  const hasParent = !!req.parentRequirementId
+  const displayLabel = getDisplayLabel(req.requirementNumber, hasParent)
 
   // Check if this node's children are alternatives
   const hasAlternativeChildren = node.children.some(c => c.requirement.isAlternative)
   const requiredCount = req.requiredCount
 
-  // For leaf nodes (no children), render just the requirement row
-  if (!hasChildren) {
+  // For leaf nodes (no children) that are NOT headers, render requirement row
+  if (!hasChildren && !isHeader) {
     return (
       <RequirementApprovalRow
         id={req.id}
         requirementProgressId={req.requirementProgressId}
         requirementNumber={req.requirementNumber}
+        displayLabel={displayLabel}
         description={req.description}
         status={req.status}
         completedAt={req.completedAt}
@@ -337,10 +391,15 @@ const RequirementNodeView = memo(function RequirementNodeView({
     )
   }
 
-  // For nodes with children, render collapsible section
+  // For nodes with children (or headers), render collapsible section
   const isSelected = selectedIds?.has(req.id) ?? false
 
   const handleParentClick = (e: React.MouseEvent) => {
+    // Headers are never selectable - just toggle collapse
+    if (isHeader) {
+      toggleNode(req.id)
+      return
+    }
     // In multi-select mode, clicking the row toggles selection
     if (isMultiSelectMode && onSelectionChange && !isComplete) {
       // Don't trigger if clicking directly on checkbox or expand button
@@ -358,10 +417,12 @@ const RequirementNodeView = memo(function RequirementNodeView({
   return (
     <div className={cn(
       'rounded-lg border transition-colors',
-      isComplete
-        ? 'border-emerald-200 bg-emerald-50/30'
-        : 'border-stone-200 bg-stone-50/30',
-      isSelected && 'border-blue-200 bg-blue-50/30'
+      isHeader
+        ? 'border-stone-300 bg-stone-100/50'  // Header styling - more prominent
+        : isComplete
+          ? 'border-emerald-200 bg-emerald-50/30'
+          : 'border-stone-200 bg-stone-50/30',
+      isSelected && !isHeader && 'border-blue-200 bg-blue-50/30'
     )}>
       {/* Collapsible Header */}
       <div
@@ -370,12 +431,29 @@ const RequirementNodeView = memo(function RequirementNodeView({
           'flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors',
           'hover:bg-stone-100/50',
           isCollapsed ? 'rounded-lg' : 'rounded-t-lg',
-          isComplete && 'hover:bg-emerald-100/50',
-          isMultiSelectMode && !isComplete && 'cursor-pointer'
+          isComplete && !isHeader && 'hover:bg-emerald-100/50',
+          isMultiSelectMode && !isComplete && !isHeader && 'cursor-pointer'
         )}
       >
-        {/* Multi-select checkbox OR Expand/Collapse Icon */}
-        {isMultiSelectMode && !isComplete ? (
+        {/* Headers: Always show expand/collapse icon, never checkbox */}
+        {/* Non-headers in multi-select: Show checkbox */}
+        {/* Non-headers normal mode: Show expand/collapse */}
+        {isHeader ? (
+          // Headers always have expand/collapse, never checkbox
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleNode(req.id)
+            }}
+            className="flex h-5 w-5 shrink-0 items-center justify-center text-stone-500 hover:text-stone-700"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+        ) : isMultiSelectMode && !isComplete ? (
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onSelectionChange?.(req.id)}
@@ -400,20 +478,26 @@ const RequirementNodeView = memo(function RequirementNodeView({
           </button>
         )}
 
-        {/* Requirement Number Badge */}
+        {/* Requirement Number Badge - show abbreviated label for nested items */}
         <span className={cn(
           'flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded px-1.5 text-xs font-bold',
-          isComplete
-            ? 'bg-emerald-200 text-emerald-800'
-            : 'bg-stone-200 text-stone-700'
+          isHeader
+            ? 'bg-stone-300 text-stone-700'  // Header badge styling
+            : isComplete
+              ? 'bg-emerald-200 text-emerald-800'
+              : 'bg-stone-200 text-stone-700'
         )}>
-          {req.requirementNumber}
+          {displayLabel}
         </span>
 
         {/* Title/Description */}
         <span className={cn(
-          'flex-1 font-medium line-clamp-1',
-          isComplete ? 'text-emerald-700' : 'text-stone-700'
+          'flex-1 line-clamp-1',
+          isHeader
+            ? 'font-semibold text-stone-600 italic'  // Header text styling
+            : isComplete
+              ? 'font-medium text-emerald-700'
+              : 'font-medium text-stone-700'
         )}>
           {req.description.length > 80
             ? req.description.slice(0, 80) + '...'
@@ -427,8 +511,8 @@ const RequirementNodeView = memo(function RequirementNodeView({
           </span>
         )}
 
-        {/* Expand/Collapse button (in multi-select mode) */}
-        {isMultiSelectMode && !isComplete && (
+        {/* Expand/Collapse button (in multi-select mode for non-headers) */}
+        {isMultiSelectMode && !isComplete && !isHeader && (
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -444,8 +528,13 @@ const RequirementNodeView = memo(function RequirementNodeView({
           </button>
         )}
 
-        {/* Status Indicator */}
-        {isComplete ? (
+        {/* Status Indicator - headers show child count, non-headers show completion */}
+        {isHeader ? (
+          // Headers just show how many sub-requirements
+          <span className="text-xs text-stone-400">
+            {stats.total} sub-req{stats.total !== 1 ? 's' : ''}
+          </span>
+        ) : isComplete ? (
           <span className="flex items-center gap-1 text-xs text-emerald-600">
             <Check className="h-3.5 w-3.5" />
             Complete

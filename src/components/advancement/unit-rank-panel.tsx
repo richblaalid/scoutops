@@ -83,6 +83,39 @@ function compareRequirementNumbers(a: string, b: string): number {
   return parsedA.suffix.localeCompare(parsedB.suffix)
 }
 
+/**
+ * Extract just the last part of a requirement number for display in nested views.
+ * The full hierarchy is visible from the tree structure, so we only need to show
+ * the leaf identifier.
+ */
+function getDisplayLabel(reqNum: string, hasParent: boolean): string {
+  if (!hasParent) {
+    return reqNum
+  }
+
+  // Check for parenthetical suffix like (a), (b), (1), (2)
+  const parenMatch = reqNum.match(/\(([^)]+)\)$/)
+  if (parenMatch) {
+    return parenMatch[1]
+  }
+
+  // Check for "Option X" pattern
+  const optionMatch = reqNum.match(/Option\s+([A-Z])(?:\s|$)/i)
+  if (optionMatch) {
+    if (reqNum.match(/^\d+\s+Option\s+[A-Z]$/i)) {
+      return `Option ${optionMatch[1]}`
+    }
+  }
+
+  // Check for simple letter suffix like "1a", "2b"
+  const simpleMatch = reqNum.match(/\d+([a-z])$/i)
+  if (simpleMatch) {
+    return simpleMatch[1].toLowerCase()
+  }
+
+  return reqNum
+}
+
 // Build a hierarchical tree from flat requirements
 function buildRequirementTree(requirements: Requirement[]): RequirementNode[] {
   const nodeMap = new Map<string, RequirementNode>()
@@ -139,6 +172,8 @@ function RequirementNodeView({
   const hasChildren = node.children.length > 0
   const isCollapsed = collapsedNodes.has(req.id)
   const isSelected = selectedIds.has(req.id)
+  const hasParent = !!req.parent_requirement_id
+  const displayLabel = getDisplayLabel(req.requirement_number, hasParent)
 
   // Check if children are alternatives
   const hasAlternativeChildren = node.children.some(c => c.requirement.is_alternative)
@@ -168,10 +203,10 @@ function RequirementNodeView({
         <div className="flex-1">
           <div className="flex items-start gap-2">
             <span className={cn(
-              'font-mono font-semibold',
-              depth === 0 ? 'text-sm text-stone-500' : 'text-xs text-stone-400'
+              'flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded px-1 text-xs font-bold',
+              depth === 0 ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600'
             )}>
-              {req.requirement_number}.
+              {displayLabel}
             </span>
             <p className={cn(
               depth === 0 ? 'text-sm text-stone-700' : 'text-xs text-stone-600'
@@ -231,7 +266,7 @@ function RequirementNodeView({
 
         {/* Requirement Number Badge */}
         <span className="flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded bg-stone-200 px-1.5 text-xs font-bold text-stone-700">
-          {req.requirement_number}
+          {displayLabel}
         </span>
 
         {/* Title/Description */}

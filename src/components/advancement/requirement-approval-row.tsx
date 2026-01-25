@@ -33,6 +33,8 @@ interface RequirementApprovalRowProps {
   id: string
   requirementProgressId: string | null // Can be null for unstarted ranks
   requirementNumber: string
+  // Display label shows abbreviated version for nested items (e.g., "4 Option A (1)(a)" → "a")
+  displayLabel?: string
   description: string
   status: AdvancementStatus
   completedAt: string | null
@@ -65,6 +67,7 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
   id,
   requirementProgressId,
   requirementNumber,
+  displayLabel,
   description,
   status,
   completedAt,
@@ -302,8 +305,8 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
                   (isComplete || showSuccess) && 'text-stone-500 line-through decoration-emerald-400'
                 )}
               >
-                <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded bg-stone-100 text-xs font-bold text-stone-600">
-                  {requirementNumber}
+                <span className="mr-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-stone-100 px-1 text-xs font-bold text-stone-600">
+                  {displayLabel ?? requirementNumber}
                 </span>
                 {description}
               </p>
