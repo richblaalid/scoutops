@@ -56,7 +56,7 @@ export function BillingRecordCard({
   const perScoutAmount = activeCharges.length > 0 ? collectibleTotal / activeCharges.length : 0
 
   return (
-    <div className={`rounded-lg border transition-colors ${isVoid ? 'border-stone-200 bg-stone-50' : 'border-stone-200 bg-white hover:border-amber-200'}`}>
+    <div className={`rounded-lg border shadow-sm transition-all duration-200 ${isVoid ? 'border-stone-200 bg-stone-50' : 'border-stone-200 bg-white hover:border-amber-200 hover:shadow-md hover:-translate-y-0.5'}`}>
       {/* Clickable Header - using div with role="button" to allow nested interactive elements */}
       <div
         role="button"
@@ -82,25 +82,25 @@ export function BillingRecordCard({
         {/* Main Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className={`font-semibold ${isVoid ? 'text-stone-500 line-through' : 'text-stone-900'}`}>
+            <span className={`font-semibold truncate ${isVoid ? 'text-stone-500 line-through' : 'text-stone-900'}`}>
               {description}
             </span>
             {isVoid && (
-              <span className="inline-flex items-center rounded bg-stone-200 px-1.5 py-0.5 text-xs font-medium text-stone-600">
+              <span className="inline-flex items-center rounded bg-stone-200 px-1.5 py-0.5 text-xs font-medium text-stone-600 flex-shrink-0">
                 Voided
               </span>
             )}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-sm text-stone-500">
-            <span>{formatDate(createdAt || billingDate)}</span>
-            <span className="text-stone-300">·</span>
-            <span>{activeCharges.length} scouts @ {formatCurrency(perScoutAmount)}</span>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-stone-500">
+            <span className="whitespace-nowrap">{formatDate(createdAt || billingDate)}</span>
+            <span className="text-stone-300 hidden sm:inline">·</span>
+            <span className="whitespace-nowrap">{activeCharges.length} scouts @ {formatCurrency(perScoutAmount)}</span>
           </div>
         </div>
 
-        {/* Status Summary */}
+        {/* Status Summary - hidden on mobile, shown on sm+ */}
         {!isVoid && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="hidden sm:flex items-center gap-2 text-sm flex-shrink-0">
             {paidCount > 0 && (
               <span className="inline-flex items-center rounded bg-forest-100 px-2 py-1 text-xs font-medium text-forest-700">
                 {paidCount} paid
@@ -115,7 +115,7 @@ export function BillingRecordCard({
         )}
 
         {/* Total */}
-        <div className="text-right ml-2">
+        <div className="text-right ml-2 flex-shrink-0">
           <span className={`text-lg font-bold ${isVoid ? 'text-stone-400' : 'text-stone-900'}`}>
             {formatCurrency(collectibleTotal)}
           </span>
@@ -151,19 +151,19 @@ export function BillingRecordCard({
               const scoutName = `${charge.scout_accounts?.scouts?.first_name || ''} ${charge.scout_accounts?.scouts?.last_name || ''}`
 
               return (
-                <div key={charge.id} className={`flex items-center gap-3 px-4 py-3 ${chargeIsVoid ? 'bg-stone-100' : ''}`}>
-                  {/* Spacer to align with expand icon */}
-                  <div className="w-5 flex-shrink-0" />
+                <div key={charge.id} className={`flex items-center gap-2 sm:gap-3 px-4 py-3 ${chargeIsVoid ? 'bg-stone-100' : ''}`}>
+                  {/* Spacer to align with expand icon - hidden on mobile */}
+                  <div className="w-5 flex-shrink-0 hidden sm:block" />
 
                   {/* Scout name - aligned with card title */}
                   <div className="flex-1 min-w-0">
-                    <span className={`font-medium ${chargeIsVoid ? 'line-through text-stone-400' : 'text-stone-900'}`}>
+                    <span className={`font-medium truncate block ${chargeIsVoid ? 'line-through text-stone-400' : 'text-stone-900'}`}>
                       {scoutName}
                     </span>
                   </div>
 
                   {/* Amount and Status - right aligned with total */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                     {chargeIsVoid ? (
                       <span className="inline-flex items-center rounded bg-stone-200 px-2 py-0.5 text-xs font-medium text-stone-500">
                         Voided
@@ -177,7 +177,7 @@ export function BillingRecordCard({
                         Unpaid
                       </span>
                     )}
-                    <span className={`text-right min-w-[70px] ${chargeIsVoid ? 'text-stone-400' : 'text-stone-700'}`}>
+                    <span className={`text-right min-w-[60px] sm:min-w-[70px] ${chargeIsVoid ? 'text-stone-400' : 'text-stone-700'}`}>
                       {formatCurrency(charge.amount)}
                     </span>
                   </div>

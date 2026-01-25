@@ -141,8 +141,8 @@ export function AgingReport({ charges }: AgingReportProps) {
               key={bucket.label}
               onClick={() => setExpandedBucket(expandedBucket === bucket.label ? null : bucket.label)}
               className={cn(
-                'text-left rounded-lg border p-4 transition-all',
-                bucket.charges.length > 0 ? 'hover:border-stone-400 cursor-pointer' : 'opacity-50 cursor-default',
+                'text-left rounded-lg border p-4 shadow-sm transition-all duration-200',
+                bucket.charges.length > 0 ? 'hover:border-stone-400 hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : 'opacity-50 cursor-default',
                 expandedBucket === bucket.label && 'ring-2 ring-forest-600 border-forest-600'
               )}
               disabled={bucket.charges.length === 0}

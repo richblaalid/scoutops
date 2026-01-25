@@ -279,7 +279,7 @@ export default async function DashboardPage() {
                     <Link
                       key={account.id}
                       href={`/finances/accounts/${account.id}`}
-                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-amber-50/50 hover:border-amber-200 dark:hover:bg-amber-900/10 dark:hover:border-amber-700/30"
+                      className="flex items-center justify-between rounded-lg border p-4 shadow-sm transition-all duration-200 hover:bg-amber-50/50 hover:border-amber-200 hover:shadow-md hover:-translate-y-0.5 dark:hover:bg-amber-900/10 dark:hover:border-amber-700/30"
                     >
                       <div>
                         <p className="font-medium text-stone-900">
@@ -374,11 +374,11 @@ export default async function DashboardPage() {
           <CardTitle className="text-lg">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {isFinancialRole(role) && (
               <Link
                 href="/settings/import"
-                className="inline-flex items-center gap-2.5 rounded-lg bg-green-700 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-green-800 shadow-sm"
+                className="inline-flex items-center justify-center gap-2.5 rounded-lg bg-green-700 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-green-800 shadow-sm w-full sm:w-auto"
               >
                 <RefreshCw className="h-5 w-5" />
                 Sync Scoutbook
@@ -388,7 +388,7 @@ export default async function DashboardPage() {
             {isFinancialRole(role) && scoutsOwing > 0 && (
               <button
                 disabled
-                className="inline-flex items-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed w-full sm:w-auto"
                 title="Coming soon"
               >
                 <Mail className="h-5 w-5" />
@@ -399,7 +399,7 @@ export default async function DashboardPage() {
             {/* Future: Record Attendance */}
             <button
               disabled
-              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed w-full sm:w-auto"
               title="Coming soon"
             >
               <CalendarCheck className="h-5 w-5" />
@@ -409,7 +409,7 @@ export default async function DashboardPage() {
             {/* Future: Advancement Tracking */}
             <button
               disabled
-              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed w-full sm:w-auto"
               title="Coming soon"
             >
               <Award className="h-5 w-5" />
