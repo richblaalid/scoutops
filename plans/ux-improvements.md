@@ -282,10 +282,11 @@ const nunito = Nunito({
   - Test: Skeleton visible on navigation to accounts
 
 #### 2.2 Accessibility - Contrast
-- [ ] **2.2.1** Fix "Coming soon" label contrast
+- [x] **2.2.1** Fix "Coming soon" label contrast
   - Files: `src/app/(dashboard)/dashboard/page.tsx` (or component)
   - Changes: Change tan-500 to tan-700 for labels
   - Test: Contrast checker shows 4.5:1+ ratio
+  - Note: Already uses amber-700/800 which meets 4.5:1 ratio
 
 - [ ] **2.2.2** Audit and fix muted text contrast
   - Files: Multiple components using text-stone-400
