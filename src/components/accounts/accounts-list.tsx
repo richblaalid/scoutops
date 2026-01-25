@@ -282,7 +282,7 @@ export function AccountsList({ accounts, showPatrolFilter = true }: AccountsList
                     <td className="py-3 pl-4 sm:pl-6 whitespace-nowrap">
                       <Link
                         href={`/finances/accounts/${account.id}`}
-                        className="text-sm text-forest-600 hover:text-forest-800"
+                        className="text-sm text-forest-600 hover:text-forest-800 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                       >
                         View
                       </Link>

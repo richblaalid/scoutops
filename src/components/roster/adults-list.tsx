@@ -336,19 +336,19 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
                       <div className="flex gap-2">
                         <Link
                           href={`/adults/${adult.id}`}
-                          className="text-sm text-forest-600 hover:text-forest-800"
+                          className="text-sm text-forest-600 hover:text-forest-800 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                         >
                           View
                         </Link>
                         <button
-                          className="text-sm text-forest-600 hover:text-forest-800"
+                          className="text-sm text-forest-600 hover:text-forest-800 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600 focus-visible:ring-offset-2"
                           onClick={() => setEditingAdult(adult)}
                         >
                           Edit
                         </button>
                         {!adult.user_id && (
                           <button
-                            className="text-sm text-stone-500 hover:text-stone-700"
+                            className="text-sm text-stone-500 hover:text-stone-700 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2"
                             onClick={() => setInvitingAdult(adult)}
                           >
                             Invite

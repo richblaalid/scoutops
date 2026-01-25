@@ -299,7 +299,7 @@ const nunito = Nunito({
   - Changes: Add ring-offset-background for better visibility
   - Test: Tab through buttons, focus ring clearly visible
 
-- [ ] **2.3.2** Add focus styles to table action links
+- [x] **2.3.2** Add focus styles to table action links
   - Files: Components with table action links
   - Changes: Add focus-visible ring classes
   - Test: Tab through table rows, links show focus
