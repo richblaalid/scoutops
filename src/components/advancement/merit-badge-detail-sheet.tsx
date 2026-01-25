@@ -48,6 +48,7 @@ interface Requirement {
   sub_requirement_letter: string | null
   description: string
   display_order: number
+  is_header?: boolean | null
 }
 
 interface RequirementProgress {
@@ -332,7 +333,7 @@ export function MeritBadgeDetailSheet({
                           </div>
                           <p className="mt-2 text-sm text-stone-900">{mainReq.description}</p>
                         </div>
-                        {canEdit && scoutsTracking.length > 0 && subReqs.length === 0 && (
+                        {canEdit && scoutsTracking.length > 0 && subReqs.length === 0 && !mainReq.is_header && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -371,7 +372,7 @@ export function MeritBadgeDetailSheet({
                                       {subReq.description}
                                     </p>
                                   </div>
-                                  {canEdit && scoutsTracking.length > 0 && (
+                                  {canEdit && scoutsTracking.length > 0 && !subReq.is_header && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
