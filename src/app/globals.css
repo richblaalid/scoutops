@@ -32,8 +32,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 24 10% 10%;
 
-    /* Primary - Pine Green */
-    --primary: 157 39% 22%;             /* pine-800: #234D3E */
+    /* Primary - Pine Green (Brand Guide v3) */
+    --primary: 160 37% 22%;             /* Pine 800: #234D3E */
     --primary-foreground: 33 56% 95%;   /* cream-300 for contrast */
 
     /* Secondary - Light cream for subtle backgrounds */
@@ -55,24 +55,24 @@
     /* Border & Input */
     --border: 30 6% 90%;                /* stone-200: #E7E5E4 */
     --input: 30 6% 90%;
-    --ring: 157 39% 22%;                /* pine-800 for focus rings */
+    --ring: 160 37% 22%;                /* Pine 800 for focus rings */
 
-    /* Chart colors - Chuckbox branded */
-    --chart-1: 157 39% 22%;             /* pine-800 */
-    --chart-2: 24 97% 46%;              /* campfire-500 */
-    --chart-3: 160 84% 39%;             /* success green */
-    --chart-4: 152 39% 39%;             /* pine-600 */
-    --chart-5: 32 95% 44%;              /* warning amber */
+    /* Chart colors - Chuckbox branded (Brand Guide v3) */
+    --chart-1: 160 37% 22%;             /* Pine 800: #234D3E */
+    --chart-2: 24 97% 46%;              /* Campfire 500: #E85D04 */
+    --chart-3: 160 84% 39%;             /* Success green */
+    --chart-4: 157 39% 33%;             /* Pine 600: #3D8B6A */
+    --chart-5: 32 95% 44%;              /* Warning amber */
 
     /* Sidebar */
     --sidebar: 0 0% 100%;
     --sidebar-foreground: 24 10% 10%;
-    --sidebar-primary: 157 39% 22%;
+    --sidebar-primary: 160 37% 22%;
     --sidebar-primary-foreground: 33 56% 95%;
     --sidebar-accent: 30 54% 89%;
     --sidebar-accent-foreground: 24 6% 32%;
     --sidebar-border: 30 6% 90%;
-    --sidebar-ring: 157 39% 22%;
+    --sidebar-ring: 160 37% 22%;
 
     /* Semantic colors (for direct use) */
     --success: 160 84% 39%;             /* #059669 */
@@ -93,7 +93,7 @@
     --popover: 24 10% 16%;
     --popover-foreground: 40 20% 98%;
 
-    --primary: 152 39% 39%;             /* pine-600: #3D8B6A - lighter for dark mode */
+    --primary: 157 39% 33%;             /* Pine 600: #3D8B6A - lighter for dark mode */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 24 6% 26%;             /* stone-700 */

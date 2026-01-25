@@ -218,7 +218,7 @@ function findMissingParents(badgeId: string, badgeName: string, year: number, re
     const optionParenMatch = req.requirement_number.match(/^(\d+[A-Z])\((\d+)\)$/i)
     if (optionParenMatch) {
       const expectedParent = optionParenMatch[1].toUpperCase()
-      if (!existingNumbers.has(expectedParent)) {
+      if (!existingNumbersUpper.has(expectedParent)) {
         if (!orphansByParent.has(expectedParent)) orphansByParent.set(expectedParent, [])
         orphansByParent.get(expectedParent)!.push(req)
       }
@@ -229,7 +229,7 @@ function findMissingParents(badgeId: string, badgeName: string, year: number, re
     const optionLetterMatch = req.requirement_number.match(/^(\d+[A-Z])([a-z])$/i)
     if (optionLetterMatch) {
       const expectedParent = optionLetterMatch[1].toUpperCase()
-      if (!existingNumbers.has(expectedParent)) {
+      if (!existingNumbersUpper.has(expectedParent)) {
         if (!orphansByParent.has(expectedParent)) orphansByParent.set(expectedParent, [])
         orphansByParent.get(expectedParent)!.push(req)
       }
@@ -241,10 +241,10 @@ function findMissingParents(badgeId: string, badgeName: string, year: number, re
     if (deepMatch) {
       const expectedParent = deepMatch[1]
       const normalizedParent = expectedParent.charAt(0) + expectedParent.slice(1, -1).toUpperCase() + expectedParent.slice(-1).toLowerCase()
-      if (!existingNumbers.has(normalizedParent.toUpperCase()) && !existingNumbers.has(normalizedParent)) {
+      if (!existingNumbersUpper.has(normalizedParent.toUpperCase()) && !existingNumbersUpper.has(normalizedParent.toUpperCase())) {
         // The immediate parent doesn't exist - but we might need the Option parent first
         const optionParent = expectedParent.slice(0, -1).toUpperCase()
-        if (!existingNumbers.has(optionParent)) {
+        if (!existingNumbersUpper.has(optionParent)) {
           if (!orphansByParent.has(optionParent)) orphansByParent.set(optionParent, [])
           // Don't add this child directly - it needs the intermediate parent
         }
