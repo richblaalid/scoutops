@@ -266,7 +266,7 @@ const nunito = Nunito({
 ### Phase 2: Medium Priority Fixes
 
 #### 2.1 Loading States
-- [ ] **2.1.1** Create loading.tsx for roster page
+- [x] **2.1.1** Create loading.tsx for roster page
   - Files: `src/app/(dashboard)/roster/loading.tsx`
   - Changes: Add skeleton with table structure
   - Test: Skeleton visible on navigation to roster
