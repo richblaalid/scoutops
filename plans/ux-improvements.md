@@ -288,9 +288,9 @@ const nunito = Nunito({
   - Test: Contrast checker shows 4.5:1+ ratio
   - Note: Already uses amber-700/800 which meets 4.5:1 ratio
 
-- [ ] **2.2.2** Audit and fix muted text contrast
-  - Files: Multiple components using text-stone-400
-  - Changes: Update to text-stone-500 or text-stone-600 where needed
+- [x] **2.2.2** Audit and fix muted text contrast
+  - Files: `src/app/globals.css`
+  - Changes: Updated --muted-foreground from stone-500 to stone-600
   - Test: All muted text meets 4.5:1 ratio
 
 #### 2.3 Accessibility - Focus Indicators
@@ -421,9 +421,9 @@ const nunito = Nunito({
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
 | Phase 1 | 6 | 6 | ✅ Complete |
-| Phase 2 | 10 | 0 | ⬜ Not Started |
+| Phase 2 | 10 | 5 | 🔄 In Progress |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **10** | 🔄 In Progress |
+| **Total** | **24** | **15** | 🔄 In Progress |
 
 ---
 

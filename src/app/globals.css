@@ -42,7 +42,7 @@
 
     /* Muted */
     --muted: 40 6% 96%;                 /* stone-100 */
-    --muted-foreground: 24 5% 45%;      /* stone-500: #78716C */
+    --muted-foreground: 24 6% 32%;      /* stone-600: #57534E - WCAG AA compliant */
 
     /* Accent - Campfire Orange */
     --accent: 24 97% 46%;               /* campfire-500: #E85D04 */
