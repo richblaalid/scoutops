@@ -305,7 +305,7 @@ const nunito = Nunito({
   - Test: Tab through table rows, links show focus
 
 #### 2.4 Touch Targets
-- [ ] **2.4.1** Update button sizes for touch targets
+- [x] **2.4.1** Update button sizes for touch targets
   - Files: `src/components/ui/button.tsx`
   - Changes: Increase default to h-11 (44px), icon to w-11 h-11
   - Test: Measure button heights, verify 44px minimum

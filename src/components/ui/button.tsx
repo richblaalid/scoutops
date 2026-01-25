@@ -36,10 +36,10 @@ const buttonVariants = cva(
           "bg-warning text-white shadow-sm hover:bg-warning-dark hover:-translate-y-0.5 active:translate-y-0",
       },
       size: {
-        default: "h-10 px-5 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
+        default: "h-11 px-5 py-2.5",  // 44px min touch target
+        sm: "h-9 rounded-md px-4 text-xs",  // 36px - acceptable for secondary actions
         lg: "h-12 rounded-md px-8 text-base",
-        icon: "h-10 w-10",
+        icon: "h-11 w-11",  // 44px touch target
         // Inline size for text-level links without height/padding constraints
         inline: "h-auto p-0 text-sm font-normal",
       },
