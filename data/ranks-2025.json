@@ -7,6 +7,7 @@
       "name": "Scout",
       "display_order": 1,
       "is_eagle_required": true,
+      "requirement_version_year": 2024,
       "description": "The first rank in Scouts BSA, demonstrating basic Scouting skills and understanding of the Scout Oath and Law.",
       "requirements": [
         {
@@ -34,22 +35,20 @@
           "description": "Repeat from memory the Pledge of Allegiance. In your own words, explain its meaning."
         },
         {
-          "number": "2",
-          "description": "After attending at least one Scout troop meeting, do the following:",
-          "sub_requirements": [
-            {
-              "letter": "a",
-              "description": "Describe how the Scouts in the troop provide its leadership."
-            },
-            {
-              "letter": "b",
-              "description": "Describe the four steps of Scout advancement."
-            },
-            {
-              "letter": "c",
-              "description": "Describe what the troop ones and rank expectations are for a new Scout joining the troop."
-            }
-          ]
+          "number": "2a",
+          "description": "Describe how the Scouts in the troop provide its leadership."
+        },
+        {
+          "number": "2b",
+          "description": "Describe the four steps of Scout advancement."
+        },
+        {
+          "number": "2c",
+          "description": "Describe what the Scouts BSA ranks are and how they are earned."
+        },
+        {
+          "number": "2d",
+          "description": "Describe what merit badges are and how they are earned."
         },
         {
           "number": "3a",
@@ -72,8 +71,12 @@
           "description": "Tell what you need to know about pocketknife safety."
         },
         {
-          "number": "6",
-          "description": "With your parent or guardian, complete the exercises in the pamphlet How to Protect Your Children From Child Abuse: A Parent's Guide and earn the Cyber Chip award for your grade."
+          "number": "6a",
+          "description": "With your parent or guardian, complete the exercises in the pamphlet How to Protect Your Children From Child Abuse: A Parent's Guide."
+        },
+        {
+          "number": "6b",
+          "description": "View the Personal Safety Awareness videos for your grade (with your parent or guardian's permission)."
         },
         {
           "number": "7",
@@ -86,6 +89,7 @@
       "name": "Tenderfoot",
       "display_order": 2,
       "is_eagle_required": true,
+      "requirement_version_year": 2024,
       "description": "The second rank in Scouts BSA, building on Scout skills with camping, citizenship, and personal fitness.",
       "requirements": [
         {
@@ -157,6 +161,10 @@
           "description": "Explain the rules of safe hiking, both on the highway and cross-country, during the day and at night."
         },
         {
+          "number": "5d",
+          "description": "Explain why it is important to hike on trails or other durable surfaces, and give examples of durable surfaces you saw on your outing."
+        },
+        {
           "number": "6a",
           "description": "Record your best in the following tests: push-ups, pull-ups or curl-ups or sit-ups, sit-and-reach or V-sit, one-mile walk/run."
         },
@@ -199,6 +207,7 @@
       "name": "Second Class",
       "display_order": 3,
       "is_eagle_required": true,
+      "requirement_version_year": 2024,
       "description": "Building stronger outdoor skills, first aid, and citizenship.",
       "requirements": [
         {
@@ -287,11 +296,15 @@
         },
         {
           "number": "6c",
-          "description": "Tell what utility services exist in your home or meeting place. Describe potential hazards associated with these utilities and tell how to respond in emergency situations."
+          "description": "Tell what you can do while on a campout or hike to prevent or reduce the occurrence of the injuries listed in Second Class requirements 6a and 6b."
         },
         {
           "number": "6d",
-          "description": "Develop an emergency action plan for your home that includes what to do in case of fire, move, chemical, or water, and natural disasters."
+          "description": "Explain what to do in case of accidents that require emergency response in the home and backcountry. Explain what constitutes an emergency and what information you will need to provide to a responder."
+        },
+        {
+          "number": "6e",
+          "description": "Tell how you should respond if you come upon the scene of a vehicular accident."
         },
         {
           "number": "7a",
@@ -352,6 +365,7 @@
       "name": "First Class",
       "display_order": 4,
       "is_eagle_required": true,
+      "requirement_version_year": 2024,
       "description": "Mastery of outdoor skills, leadership, and service to others.",
       "requirements": [
         {
@@ -513,6 +527,7 @@
       "name": "Star",
       "display_order": 5,
       "is_eagle_required": true,
+      "requirement_version_year": 2024,
       "description": "First rank after First Class, focusing on merit badges, leadership, and service.",
       "requirements": [
         {
@@ -534,11 +549,15 @@
         },
         {
           "number": "5",
-          "description": "While a First Class Scout, serve actively in your troop for four months in one or more of the following positions of responsibility: Scout troop. Boy Scout-elected: Patrol leader, senior patrol leader, assistant senior patrol leader, troop guide, Order of the Arrow troop representative, den chief, scribe, librarian, historian, quartermaster, bugler, junior assistant Scoutmaster, chaplain aide, instructor, webmaster, or outdoor ethics guide. Boy Scout-appointed (by Scoutmaster): troop guide, Order of the Arrow troop representative, den chief, scribe, leave no trace trainer, instructor, or chaplain aide.\n\nVarsity Scout team. Varsity Scout-elected: Varsity Scout team captain, Varsity Scout co-captain. Varsity Scout-appointed (by Varsity Scout Coach): Program manager, team secretary, Order of the Arrow team representative, den chief, chaplain aide, historian, or webmaster.\n\nVenturing crew/Sea Scout ship. Crew/ship: President, vice president, secretary, treasurer, den chief, historian, guide, quartermaster, boatswain, boatswain's mate, yeoman, purser, storekeeper, or webmaster."
+          "description": "While a First Class Scout, serve actively in your troop for four months in one or more of the following positions of responsibility: Scout troop - Patrol leader, senior patrol leader, assistant senior patrol leader, troop guide, Order of the Arrow troop representative, den chief, scribe, librarian, historian, quartermaster, bugler, junior assistant Scoutmaster, chaplain aide, instructor, webmaster, or outdoor ethics guide."
         },
         {
-          "number": "6",
-          "description": "With your parent or guardian, complete the exercises in the pamphlet How to Protect Your Children From Child Abuse: A Parent's Guide and earn the Cyber Chip award for your grade."
+          "number": "6a",
+          "description": "With your parent or guardian, complete the exercises in the pamphlet How to Protect Your Children From Child Abuse: A Parent's Guide."
+        },
+        {
+          "number": "6b",
+          "description": "View the Personal Safety Awareness videos for your grade (with your parent or guardian's permission)."
         },
         {
           "number": "7",
@@ -555,6 +574,7 @@
       "name": "Life",
       "display_order": 6,
       "is_eagle_required": true,
+      "requirement_version_year": 2016,
       "description": "Second-to-last rank before Eagle, demonstrating continued growth in leadership and merit badges.",
       "requirements": [
         {
@@ -575,45 +595,11 @@
         },
         {
           "number": "5",
-          "description": "While a Star Scout, serve actively in your troop for six months in one or more of the following positions of responsibility (or carry out a Scoutmaster-approved leadership project to help the troop): Scout troop. Boy Scout-elected: Patrol leader, senior patrol leader, assistant senior patrol leader, troop guide, Order of the Arrow troop representative, den chief, scribe, librarian, historian, quartermaster, bugler, junior assistant Scoutmaster, chaplain aide, instructor, webmaster, or outdoor ethics guide. Boy Scout-appointed (by Scoutmaster): troop guide, Order of the Arrow troop representative, den chief, scribe, leave no trace trainer, instructor, or chaplain aide.\n\nVarsity Scout team. Varsity Scout-elected: Varsity Scout team captain, Varsity Scout co-captain. Varsity Scout-appointed (by Varsity Scout Coach): Program manager, team secretary, Order of the Arrow team representative, den chief, chaplain aide, historian, or webmaster.\n\nVenturing crew/Sea Scout ship. Crew/ship: President, vice president, secretary, treasurer, den chief, historian, guide, quartermaster, boatswain, boatswain's mate, yeoman, purser, storekeeper, or webmaster."
+          "description": "While a Star Scout, serve actively in your troop for six months in one or more of the following positions of responsibility (or carry out a Scoutmaster-approved leadership project to help the troop): Scout troop - Patrol leader, senior patrol leader, assistant senior patrol leader, troop guide, Order of the Arrow troop representative, den chief, scribe, librarian, historian, quartermaster, bugler, junior assistant Scoutmaster, chaplain aide, instructor, webmaster, or outdoor ethics guide."
         },
         {
           "number": "6",
-          "description": "While a Star Scout, use the Teaching EDGE method to teach another Scout (preferably younger than you) the skills from ONE of the following choices, so that the Scout is prepared to pass those requirements to their Scoutmaster's satisfaction.",
-          "sub_requirements": [
-            {
-              "letter": "a",
-              "description": "Tenderfoot 4a and 4b"
-            },
-            {
-              "letter": "b",
-              "description": "Second Class 2b, 2c, and 2d"
-            },
-            {
-              "letter": "c",
-              "description": "Second Class 3a and 3d"
-            },
-            {
-              "letter": "d",
-              "description": "First Class 3a, 3b, 3c, and 3d"
-            },
-            {
-              "letter": "e",
-              "description": "First Class 4a and 4b"
-            },
-            {
-              "letter": "f",
-              "description": "Second Class 6a and 6b"
-            },
-            {
-              "letter": "g",
-              "description": "First Class 7a and 7b"
-            },
-            {
-              "letter": "h",
-              "description": "Three requirements from one of the required Eagle merit badges, as approved by your Scoutmaster"
-            }
-          ]
+          "description": "While a Star Scout, use the Teaching EDGE method to teach another Scout (preferably younger than you) the skills from one of the following choices, so that the Scout is prepared to pass those requirements to their Scoutmaster's satisfaction: (a) Tenderfoot 4a and 4b, (b) Second Class 2b, 2c, and 2d, (c) Second Class 3a and 3d, (d) First Class 3a, 3b, 3c, and 3d, (e) First Class 4a and 4b, (f) Second Class 6a and 6b, (g) First Class 7a and 7b, or (h) Three requirements from one of the required Eagle merit badges, as approved by your Scoutmaster."
         },
         {
           "number": "7",
@@ -630,6 +616,7 @@
       "name": "Eagle",
       "display_order": 7,
       "is_eagle_required": true,
+      "requirement_version_year": 2022,
       "description": "The highest rank in Scouts BSA, demonstrating exceptional leadership, service, and character.",
       "requirements": [
         {
@@ -646,7 +633,7 @@
         },
         {
           "number": "4",
-          "description": "While a Life Scout, serve actively in your troop for six months in one or more of the following positions of responsibility: Scout troop. Boy Scout-elected: Patrol leader, senior patrol leader, assistant senior patrol leader, troop guide, Order of the Arrow troop representative, den chief, scribe, librarian, historian, quartermaster, bugler, junior assistant Scoutmaster, chaplain aide, instructor, webmaster, or outdoor ethics guide. Boy Scout-appointed (by Scoutmaster): troop guide, Order of the Arrow troop representative, den chief, scribe, leave no trace trainer, instructor, or chaplain aide."
+          "description": "While a Life Scout, serve actively in your troop for six months in one or more of the following positions of responsibility: Scout troop - Patrol leader, senior patrol leader, assistant senior patrol leader, troop guide, Order of the Arrow troop representative, den chief, scribe, librarian, historian, quartermaster, bugler, junior assistant Scoutmaster, chaplain aide, instructor, webmaster, or outdoor ethics guide."
         },
         {
           "number": "5",
