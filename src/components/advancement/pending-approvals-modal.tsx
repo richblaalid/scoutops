@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, CheckCircle2, Award, Medal, Star } from 'lucide-react'
 import { bulkApproveParentSubmissions, bulkAwardMeritBadges } from '@/app/actions/advancement'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 interface PendingApproval {
@@ -242,10 +243,21 @@ export function PendingApprovalsModal({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-stone-900">
-                            {approval.scout_rank_progress?.scouts?.first_name}{' '}
-                            {approval.scout_rank_progress?.scouts?.last_name}
-                          </span>
+                          {approval.scout_rank_progress?.scouts?.id ? (
+                            <Link
+                              href={`/scouts/${approval.scout_rank_progress.scouts.id}`}
+                              className="font-medium text-stone-900 hover:text-forest-600 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {approval.scout_rank_progress.scouts.first_name}{' '}
+                              {approval.scout_rank_progress.scouts.last_name}
+                            </Link>
+                          ) : (
+                            <span className="font-medium text-stone-900">
+                              {approval.scout_rank_progress?.scouts?.first_name}{' '}
+                              {approval.scout_rank_progress?.scouts?.last_name}
+                            </span>
+                          )}
                           <Badge variant="outline" className="text-xs">
                             {approval.scout_rank_progress?.bsa_ranks?.name}
                           </Badge>
@@ -311,9 +323,19 @@ export function PendingApprovalsModal({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-stone-900">
-                            {badge.scouts?.first_name} {badge.scouts?.last_name}
-                          </span>
+                          {badge.scouts?.id ? (
+                            <Link
+                              href={`/scouts/${badge.scouts.id}`}
+                              className="font-medium text-stone-900 hover:text-forest-600 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {badge.scouts.first_name} {badge.scouts.last_name}
+                            </Link>
+                          ) : (
+                            <span className="font-medium text-stone-900">
+                              {badge.scouts?.first_name} {badge.scouts?.last_name}
+                            </span>
+                          )}
                           <Badge
                             variant="outline"
                             className={cn(

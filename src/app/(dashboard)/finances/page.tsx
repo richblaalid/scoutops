@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { AccessDenied } from '@/components/ui/access-denied'
 import { formatCurrency } from '@/lib/utils'
 import { canAccessPage, isFinancialRole } from '@/lib/roles'
@@ -333,19 +332,23 @@ export default async function FinancesOverviewPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href="/finances/payments">
-                <CreditCard className="mr-2 h-4 w-4" />
+          <CardContent>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                href="/finances/payments"
+                className="inline-flex items-center justify-center gap-2.5 rounded-lg bg-green-700 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-green-800 shadow-sm w-full sm:w-auto"
+              >
+                <CreditCard className="h-5 w-5" />
                 Record Payment
               </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/finances/billing">
-                <Receipt className="mr-2 h-4 w-4" />
+              <Link
+                href="/finances/billing"
+                className="inline-flex items-center justify-center gap-2.5 rounded-lg bg-amber-600 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-amber-700 shadow-sm w-full sm:w-auto"
+              >
+                <Receipt className="h-5 w-5" />
                 Create Billing
               </Link>
-            </Button>
+            </div>
           </CardContent>
         </Card>
       )}

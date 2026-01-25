@@ -301,9 +301,12 @@ export function AdultsList({ adults, canManage, unitId }: AdultsListProps) {
                 <tr key={adult.id} className="border-b last:border-0">
                   <td className="py-3 pr-4">
                     <div>
-                      <p className="font-medium text-stone-900">
+                      <Link
+                        href={`/adults/${adult.id}`}
+                        className="font-medium text-stone-900 hover:text-forest-600"
+                      >
                         {adult.first_name} {adult.last_name}
-                      </p>
+                      </Link>
                       <p className="text-xs text-stone-500">BSA# {adult.bsa_member_id}</p>
                       {/* Show position on mobile under name */}
                       {adult.position && (
