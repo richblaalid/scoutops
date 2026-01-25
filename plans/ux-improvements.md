@@ -231,7 +231,7 @@ const nunito = Nunito({
   - Changes: Adjust font-weight values for Nunito's weight scale
   - Test: Headings, body, labels have appropriate visual weight
 
-- [ ] **1.1.2** Update Button component typography
+- [x] **1.1.2** Update Button component typography
   - Files: `src/components/ui/button.tsx`
   - Changes: Adjust font-semibold to font-bold for Nunito
   - Test: Buttons have correct visual weight
@@ -414,10 +414,10 @@ const nunito = Nunito({
 | Phase | Total | Complete | Status |
 |-------|-------|----------|--------|
 | Phase 0 | 4 | 4 | ✅ Complete |
-| Phase 1 | 6 | 1 | 🔄 In Progress |
+| Phase 1 | 6 | 2 | 🔄 In Progress |
 | Phase 2 | 10 | 0 | ⬜ Not Started |
 | Phase 3 | 4 | 0 | ⬜ Not Started |
-| **Total** | **24** | **5** | 🔄 In Progress |
+| **Total** | **24** | **6** | 🔄 In Progress |
 
 ---
 
