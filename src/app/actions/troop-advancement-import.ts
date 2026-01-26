@@ -447,9 +447,11 @@ export async function importStagedAdvancement(
   }
 
   // Load all rank requirements
+  // NOTE: Must specify limit > 1000 as Supabase defaults to 1000 rows
   const { data: allRankRequirements } = await adminSupabase
     .from('bsa_rank_requirements')
     .select('id, rank_id, requirement_number, version_year')
+    .limit(10000)
 
   const rankReqMap = new Map(
     (allRankRequirements || []).map((r) => [
@@ -459,9 +461,12 @@ export async function importStagedAdvancement(
   )
 
   // Load all merit badge requirements
+  // NOTE: Must specify limit > 1000 as Supabase defaults to 1000 rows
+  // We have ~11,000+ requirements across all badges and versions
   const { data: allBadgeRequirements } = await adminSupabase
     .from('bsa_merit_badge_requirements')
     .select('id, merit_badge_id, requirement_number, version_year')
+    .limit(50000)
 
   const badgeReqMap = new Map(
     (allBadgeRequirements || []).map((r) => [
