@@ -164,15 +164,41 @@ function normalizeId(id: string): string {
 }
 
 // Check if two IDs match (accounting for format variations)
-function idsMatch(csvId: string, uiLabel: string): boolean {
+function idsMatch(csvId: string, uiLabel: string, parentNumber?: string | null, currentOption?: string | null): boolean {
   const normCsv = normalizeId(csvId)
   const normUi = normalizeId(uiLabel)
 
-  // Direct match
+  // Direct match (e.g., "1" matches "1", "1a" matches "1a")
   if (normCsv === normUi) return true
 
-  // Check if CSV ID contains the UI label (for complex IDs like "4a1 Triathlon Option")
-  if (normCsv.includes(normUi) && normUi.length > 0) return true
+  // Try constructing full ID from parent + label FIRST
+  // e.g., parent="2" + label="(a)" → "2a" should match CSV "2a"
+  // This is the most common case for sub-requirements
+  if (parentNumber && uiLabel) {
+    const compositeId = normalizeId(parentNumber + uiLabel)
+    if (normCsv === compositeId) return true
+  }
+
+  // Try matching with option context
+  // e.g., parent="6" + label="(a)" + option="avian" → check "6a avian"
+  if (currentOption && parentNumber && uiLabel) {
+    const compositeWithOption = normalizeId(parentNumber + uiLabel + ' ' + currentOption)
+    if (normCsv === compositeWithOption) return true
+
+    // Also try formats like "6a avian", "2a[1] Ice", "7a Alpine"
+    const csvLower = csvId.toLowerCase()
+    const baseId = normalizeId(parentNumber + uiLabel)
+    if (csvLower.includes(currentOption) && csvLower.startsWith(baseId)) return true
+
+    // Handle bracket notation: CSV "2a[1] Ice" should match label "(1)" under parent "2a" with option "ice"
+    // Try matching the bracket format: parent + "[" + label + "] " + option
+    const bracketId = `${parentNumber}[${normalizeId(uiLabel)}] ${currentOption}`.toLowerCase()
+    if (csvLower === bracketId) return true
+  }
+
+  // For complex IDs like "4a1 Triathlon Option", check if CSV starts with the label pattern
+  // Only use this for multi-part IDs where direct/composite match failed
+  if (normUi.length > 1 && normCsv.startsWith(normUi)) return true
 
   return false
 }
@@ -325,6 +351,68 @@ function mergeBadgeVersion(
   const csvIdSet = new Set(requirementIds.map(normalizeId))
   const matchedCsvIds = new Set<string>()
 
+  // Track current option context for badges with multiple options
+  // (e.g., Animal Science with Beef/Dairy/Horse options, Skating with Ice/Inline/Rolling)
+  let currentOption: string | null = null
+
+  // Extract option name from description like "Avian Option", "Beef Cattle Option", "Ice Skating Option"
+  function extractOptionName(description: string): string | null {
+    const descLower = description.toLowerCase()
+
+    // Map full option names to CSV short names
+    const optionMappings: Record<string, string> = {
+      'beef cattle': 'beef',
+      'dairying': 'dairy',
+      'dairy': 'dairy',
+      'horse': 'horse',
+      'sheep': 'sheep',
+      'hog': 'hog',
+      'avian': 'avian',
+      'rabbit': 'rabbit',
+      'poultry': 'avian',
+      'ice skating': 'ice',
+      'ice': 'ice',
+      'inline skating': 'line',
+      'inline': 'line',
+      'roller skating': 'roll',
+      'rolling': 'roll',
+      'roll': 'roll',
+      'board': 'board',
+      'skateboard': 'board',
+      'alpine': 'alpine',
+      'nordic': 'nordic',
+      'snowshoe': 'shoe',
+      'snow': 'snow',
+      'triathlon': 'triathlon',
+      'duathlon': 'duathlon',
+      'aquathlon': 'aquathlon',
+      'aquabike': 'aquabike',
+      'option a': 'opt a',
+      'option b': 'opt b',
+      'option c': 'opt c',
+      'opt 1': 'opt 1',
+      'opt 2': 'opt 2',
+      'opt 3': 'opt 3',
+    }
+
+    // Try to find a mapping
+    for (const [pattern, shortName] of Object.entries(optionMappings)) {
+      if (descLower.includes(pattern)) {
+        return shortName
+      }
+    }
+
+    // Fallback: extract first word before "Option"
+    const optionMatch = description.match(/^(.+?)\s*Option$/i)
+    if (optionMatch) {
+      // Take first word of the match
+      const firstWord = optionMatch[1].trim().split(/\s+/)[0].toLowerCase()
+      return firstWord
+    }
+
+    return null
+  }
+
   // Process scraped requirements
   const processedReqs: Array<{
     scoutbook_id: string
@@ -339,13 +427,26 @@ function mergeBadgeVersion(
   for (let i = 0; i < scrapedVersion.requirements.length; i++) {
     const scraped = scrapedVersion.requirements[i]
 
+    // Check if this is an option header (no label, description describes option)
+    if (!scraped.displayLabel && scraped.description) {
+      const optName = extractOptionName(scraped.description)
+      if (optName) {
+        currentOption = optName
+      }
+    }
+
+    // Reset option context when we hit a new main requirement number
+    if (scraped.displayLabel && /^\d+$/.test(scraped.displayLabel.replace(/[()[\].]/g, ''))) {
+      currentOption = null
+    }
+
     // Try to match to CSV ID
     let matchedCsvId: string | null = null
 
     if (scraped.displayLabel) {
       // Look for exact or fuzzy match in CSV IDs
       for (const csvId of requirementIds) {
-        if (idsMatch(csvId, scraped.displayLabel)) {
+        if (idsMatch(csvId, scraped.displayLabel, scraped.parentNumber, currentOption)) {
           matchedCsvId = csvId
           matchedCsvIds.add(normalizeId(csvId))
           break
