@@ -1,0 +1,287 @@
+{
+  "generated": "2026-01-28T14:40:00.785Z",
+  "mode": "applied",
+  "versionsFixed": 40,
+  "details": [
+    {
+      "badge": "Animal Science",
+      "version": 2025,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 44
+    },
+    {
+      "badge": "Archaeology",
+      "version": 2014,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 27
+    },
+    {
+      "badge": "Citizenship in Society",
+      "version": 2021,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 38
+    },
+    {
+      "badge": "Citizenship in the Nation",
+      "version": 2022,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 26
+    },
+    {
+      "badge": "Citizenship in the World",
+      "version": 2016,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 32
+    },
+    {
+      "badge": "Collections",
+      "version": 2021,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 21
+    },
+    {
+      "badge": "Electricity",
+      "version": 2021,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 24
+    },
+    {
+      "badge": "Electronics",
+      "version": 2025,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 23
+    },
+    {
+      "badge": "Environmental Science",
+      "version": 2025,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 32
+    },
+    {
+      "badge": "Exploration",
+      "version": 2026,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 35
+    },
+    {
+      "badge": "Family Life",
+      "version": 2015,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 21
+    },
+    {
+      "badge": "Family Life",
+      "version": 2019,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 19
+    },
+    {
+      "badge": "Fingerprinting",
+      "version": 2025,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 14
+    },
+    {
+      "badge": "Fire Safety",
+      "version": 2017,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 34
+    },
+    {
+      "badge": "First Aid",
+      "version": 2018,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 43
+    },
+    {
+      "badge": "First Aid",
+      "version": 2025,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 106
+    },
+    {
+      "badge": "Forestry",
+      "version": 2006,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 34
+    },
+    {
+      "badge": "Genealogy",
+      "version": 2006,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 22
+    },
+    {
+      "badge": "Kayaking",
+      "version": 2012,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 36
+    },
+    {
+      "badge": "Mammal Study",
+      "version": 2026,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 20
+    },
+    {
+      "badge": "Mining in Society",
+      "version": 2016,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 30
+    },
+    {
+      "badge": "Mining in Society",
+      "version": 2022,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 30
+    },
+    {
+      "badge": "Nature",
+      "version": 2020,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 39
+    },
+    {
+      "badge": "Nature",
+      "version": 2023,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 38
+    },
+    {
+      "badge": "Nuclear Science",
+      "version": 2017,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 27
+    },
+    {
+      "badge": "Orienteering",
+      "version": 2013,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 26
+    },
+    {
+      "badge": "Radio",
+      "version": 2009,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 35
+    },
+    {
+      "badge": "Radio",
+      "version": 2017,
+      "beforeDepth": 2,
+      "afterDepth": 2,
+      "reqCount": 51
+    },
+    {
+      "badge": "Railroading",
+      "version": 2019,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 42
+    },
+    {
+      "badge": "Railroading",
+      "version": 2022,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 47
+    },
+    {
+      "badge": "Reptile and Amphibian Study",
+      "version": 2023,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 20
+    },
+    {
+      "badge": "Rifle Shooting",
+      "version": 2025,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 49
+    },
+    {
+      "badge": "Safety",
+      "version": 2024,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 22
+    },
+    {
+      "badge": "Signs, Signals, and Codes",
+      "version": 2026,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 28
+    },
+    {
+      "badge": "Swimming",
+      "version": 2014,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 19
+    },
+    {
+      "badge": "Traffic Safety",
+      "version": 2007,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 24
+    },
+    {
+      "badge": "Traffic Safety",
+      "version": 2020,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 24
+    },
+    {
+      "badge": "Traffic Safety",
+      "version": 2022,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 23
+    },
+    {
+      "badge": "Traffic Safety",
+      "version": 2026,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 33
+    },
+    {
+      "badge": "Weather",
+      "version": 2018,
+      "beforeDepth": 1,
+      "afterDepth": 1,
+      "reqCount": 14
+    }
+  ]
+}

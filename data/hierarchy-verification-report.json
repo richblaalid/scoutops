@@ -1,0 +1,1470 @@
+{
+  "generated": "2026-01-28T14:40:01.102Z",
+  "summary": {
+    "totalBadges": 141,
+    "totalVersions": 361,
+    "totalRequirements": 10916,
+    "totalHeaders": 1668,
+    "totalCompletable": 9248,
+    "issueCount": 91,
+    "issuesByType": {
+      "empty_header_children": 91
+    }
+  },
+  "versionsWithIssues": [
+    {
+      "badge": "Archery",
+      "version": 2016,
+      "stats": {
+        "totalRequirements": 49,
+        "headers": 5,
+        "completable": 44,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Archery",
+          "version": 2016,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Archery",
+      "version": 2019,
+      "stats": {
+        "totalRequirements": 52,
+        "headers": 9,
+        "completable": 43,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Archery",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "5A(e)",
+          "details": "Header 5A(e) (5A(e)) has no children"
+        },
+        {
+          "badge": "Archery",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "5A(f)",
+          "details": "Header 5A(f) (5A(f)) has no children"
+        },
+        {
+          "badge": "Archery",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "5B(e)",
+          "details": "Header 5B(e) (5B(e)) has no children"
+        },
+        {
+          "badge": "Archery",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "5B(f)",
+          "details": "Header 5B(f) (5B(f)) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Archery",
+      "version": 2023,
+      "stats": {
+        "totalRequirements": 49,
+        "headers": 9,
+        "completable": 40,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Archery",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "5A(d)",
+          "details": "Header 5A(d) (5A(d)) has no children"
+        },
+        {
+          "badge": "Archery",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "5A(f)",
+          "details": "Header 5A(f) (5A(f)) has no children"
+        },
+        {
+          "badge": "Archery",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "5B(d)",
+          "details": "Header 5B(d) (5B(d)) has no children"
+        },
+        {
+          "badge": "Archery",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "5B(f)",
+          "details": "Header 5B(f) (5B(f)) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Archery",
+      "version": 2025,
+      "stats": {
+        "totalRequirements": 42,
+        "headers": 5,
+        "completable": 37,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Archery",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Athletics",
+      "version": 2012,
+      "stats": {
+        "totalRequirements": 39,
+        "headers": 6,
+        "completable": 33,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Athletics",
+          "version": 2012,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Athletics",
+      "version": 2018,
+      "stats": {
+        "totalRequirements": 40,
+        "headers": 6,
+        "completable": 34,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Athletics",
+          "version": 2018,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Athletics",
+      "version": 2022,
+      "stats": {
+        "totalRequirements": 40,
+        "headers": 6,
+        "completable": 34,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Athletics",
+          "version": 2022,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Athletics",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 49,
+        "headers": 7,
+        "completable": 42,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Athletics",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Bird Study",
+      "version": 2013,
+      "stats": {
+        "totalRequirements": 27,
+        "headers": 4,
+        "completable": 23,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Bird Study",
+          "version": 2013,
+          "type": "empty_header_children",
+          "requirement": "7",
+          "details": "Header 7 (7) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Bird Study",
+      "version": 2019,
+      "stats": {
+        "totalRequirements": 33,
+        "headers": 5,
+        "completable": 28,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Bird Study",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "8",
+          "details": "Header 8 (8) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Cycling",
+      "version": 2014,
+      "stats": {
+        "totalRequirements": 31,
+        "headers": 3,
+        "completable": 28,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Cycling",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "7",
+          "details": "Header 7 (7) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Cycling",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 35,
+        "headers": 5,
+        "completable": 30,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Cycling",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "6A(e)",
+          "details": "Header 6A(e) (6A(e)) has no children"
+        },
+        {
+          "badge": "Cycling",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "6B(c)",
+          "details": "Header 6B(c) (6B(c)) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Disabilities Awareness",
+      "version": 2017,
+      "stats": {
+        "totalRequirements": 25,
+        "headers": 4,
+        "completable": 21,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Disabilities Awareness",
+          "version": 2017,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Disabilities Awareness",
+      "version": 2021,
+      "stats": {
+        "totalRequirements": 24,
+        "headers": 4,
+        "completable": 20,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Disabilities Awareness",
+          "version": 2021,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Drafting",
+      "version": 2015,
+      "stats": {
+        "totalRequirements": 21,
+        "headers": 4,
+        "completable": 17,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Drafting",
+          "version": 2015,
+          "type": "empty_header_children",
+          "requirement": "6",
+          "details": "Header 6 (6) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Drafting",
+      "version": 2025,
+      "stats": {
+        "totalRequirements": 24,
+        "headers": 5,
+        "completable": 19,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Drafting",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "7",
+          "details": "Header 7 (7) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Entrepreneurship",
+      "version": 2014,
+      "stats": {
+        "totalRequirements": 22,
+        "headers": 1,
+        "completable": 21,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Entrepreneurship",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Environmental Science",
+      "version": 2020,
+      "stats": {
+        "totalRequirements": 30,
+        "headers": 3,
+        "completable": 27,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Environmental Science",
+          "version": 2020,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        },
+        {
+          "badge": "Environmental Science",
+          "version": 2020,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        },
+        {
+          "badge": "Environmental Science",
+          "version": 2020,
+          "type": "empty_header_children",
+          "requirement": "6",
+          "details": "Header 6 (6) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Environmental Science",
+      "version": 2023,
+      "stats": {
+        "totalRequirements": 30,
+        "headers": 3,
+        "completable": 27,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Environmental Science",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        },
+        {
+          "badge": "Environmental Science",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        },
+        {
+          "badge": "Environmental Science",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "6",
+          "details": "Header 6 (6) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Fingerprinting",
+      "version": 2004,
+      "stats": {
+        "totalRequirements": 8,
+        "headers": 1,
+        "completable": 7,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Fingerprinting",
+          "version": 2004,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "First Aid",
+      "version": 2025,
+      "stats": {
+        "totalRequirements": 105,
+        "headers": 16,
+        "completable": 89,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "First Aid",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "10.",
+          "details": "Header 10. (10.) has no children"
+        },
+        {
+          "badge": "First Aid",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "15.",
+          "details": "Header 15. (15.) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Geology",
+      "version": 2010,
+      "stats": {
+        "totalRequirements": 34,
+        "headers": 2,
+        "completable": 32,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Geology",
+          "version": 2010,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Geology",
+      "version": 2020,
+      "stats": {
+        "totalRequirements": 35,
+        "headers": 2,
+        "completable": 33,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Geology",
+          "version": 2020,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Geology",
+      "version": 2023,
+      "stats": {
+        "totalRequirements": 35,
+        "headers": 2,
+        "completable": 33,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Geology",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Geology",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 38,
+        "headers": 3,
+        "completable": 35,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Geology",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Golf",
+      "version": 2024,
+      "stats": {
+        "totalRequirements": 47,
+        "headers": 1,
+        "completable": 46,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Golf",
+          "version": 2024,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Journalism",
+      "version": 2007,
+      "stats": {
+        "totalRequirements": 16,
+        "headers": 3,
+        "completable": 13,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Journalism",
+          "version": 2007,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Journalism",
+      "version": 2024,
+      "stats": {
+        "totalRequirements": 16,
+        "headers": 3,
+        "completable": 13,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Journalism",
+          "version": 2024,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Metalwork",
+      "version": 2008,
+      "stats": {
+        "totalRequirements": 34,
+        "headers": 3,
+        "completable": 31,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Metalwork",
+          "version": 2008,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Metalwork",
+      "version": 2025,
+      "stats": {
+        "totalRequirements": 36,
+        "headers": 4,
+        "completable": 32,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Metalwork",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Multisport",
+      "version": 2025,
+      "stats": {
+        "totalRequirements": 53,
+        "headers": 6,
+        "completable": 47,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Multisport",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Multisport",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 57,
+        "headers": 7,
+        "completable": 50,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Multisport",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Nature",
+      "version": 2014,
+      "stats": {
+        "totalRequirements": 22,
+        "headers": 3,
+        "completable": 19,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Nature",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        },
+        {
+          "badge": "Nature",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "6",
+          "details": "Header 6 (6) has no children"
+        },
+        {
+          "badge": "Nature",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "7",
+          "details": "Header 7 (7) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Nature",
+      "version": 2020,
+      "stats": {
+        "totalRequirements": 38,
+        "headers": 3,
+        "completable": 35,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Nature",
+          "version": 2020,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Nature",
+      "version": 2023,
+      "stats": {
+        "totalRequirements": 37,
+        "headers": 3,
+        "completable": 34,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Nature",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Nature",
+      "version": 2025,
+      "stats": {
+        "totalRequirements": 30,
+        "headers": 4,
+        "completable": 26,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Nature",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        },
+        {
+          "badge": "Nature",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "7.",
+          "details": "Header 7. (7.) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Personal Management",
+      "version": 2016,
+      "stats": {
+        "totalRequirements": 54,
+        "headers": 10,
+        "completable": 44,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Personal Management",
+          "version": 2016,
+          "type": "empty_header_children",
+          "requirement": "1B0",
+          "details": "Header 1B0 (1B0) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Personal Management",
+      "version": 2019,
+      "stats": {
+        "totalRequirements": 60,
+        "headers": 10,
+        "completable": 50,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Personal Management",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "1B0",
+          "details": "Header 1B0 (1B0) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Plant Science",
+      "version": 2014,
+      "stats": {
+        "totalRequirements": 80,
+        "headers": 1,
+        "completable": 79,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Plant Science",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "8",
+          "details": "Header 8 (8) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Plant Science",
+      "version": 2017,
+      "stats": {
+        "totalRequirements": 80,
+        "headers": 1,
+        "completable": 79,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Plant Science",
+          "version": 2017,
+          "type": "empty_header_children",
+          "requirement": "8",
+          "details": "Header 8 (8) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Plant Science",
+      "version": 2023,
+      "stats": {
+        "totalRequirements": 80,
+        "headers": 1,
+        "completable": 79,
+        "maxDepth": 0
+      },
+      "issues": [
+        {
+          "badge": "Plant Science",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "8",
+          "details": "Header 8 (8) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Plant Science",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 80,
+        "headers": 2,
+        "completable": 78,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Plant Science",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "8",
+          "details": "Header 8 (8) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Public Health",
+      "version": 2018,
+      "stats": {
+        "totalRequirements": 29,
+        "headers": 5,
+        "completable": 24,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Public Health",
+          "version": 2018,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Public Health",
+      "version": 2021,
+      "stats": {
+        "totalRequirements": 25,
+        "headers": 3,
+        "completable": 22,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Public Health",
+          "version": 2021,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Public Health",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 30,
+        "headers": 5,
+        "completable": 25,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Public Health",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "5",
+          "details": "Header 5 (5) has no children"
+        },
+        {
+          "badge": "Public Health",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "7",
+          "details": "Header 7 (7) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Radio",
+      "version": 2009,
+      "stats": {
+        "totalRequirements": 34,
+        "headers": 5,
+        "completable": 29,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Radio",
+          "version": 2009,
+          "type": "empty_header_children",
+          "requirement": "9",
+          "details": "Header 9 (9) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Radio",
+      "version": 2017,
+      "stats": {
+        "totalRequirements": 50,
+        "headers": 9,
+        "completable": 41,
+        "maxDepth": 2
+      },
+      "issues": [
+        {
+          "badge": "Radio",
+          "version": 2017,
+          "type": "empty_header_children",
+          "requirement": "9A",
+          "details": "Header 9A (9A) has no children"
+        },
+        {
+          "badge": "Radio",
+          "version": 2017,
+          "type": "empty_header_children",
+          "requirement": "9B(c)",
+          "details": "Header 9B(c) (9B(c)) has no children"
+        },
+        {
+          "badge": "Radio",
+          "version": 2017,
+          "type": "empty_header_children",
+          "requirement": "9B(d)",
+          "details": "Header 9B(d) (9B(d)) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Radio",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 68,
+        "headers": 8,
+        "completable": 60,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Radio",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        },
+        {
+          "badge": "Radio",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "8",
+          "details": "Header 8 (8) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Railroading",
+      "version": 2016,
+      "stats": {
+        "totalRequirements": 40,
+        "headers": 6,
+        "completable": 34,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Railroading",
+          "version": 2016,
+          "type": "empty_header_children",
+          "requirement": "8",
+          "details": "Header 8 (8) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Railroading",
+      "version": 2022,
+      "stats": {
+        "totalRequirements": 46,
+        "headers": 9,
+        "completable": 37,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Railroading",
+          "version": 2022,
+          "type": "empty_header_children",
+          "requirement": "7A",
+          "details": "Header 7A (7A) has no children"
+        },
+        {
+          "badge": "Railroading",
+          "version": 2022,
+          "type": "empty_header_children",
+          "requirement": "7B",
+          "details": "Header 7B (7B) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Rifle Shooting",
+      "version": 2002,
+      "stats": {
+        "totalRequirements": 48,
+        "headers": 2,
+        "completable": 46,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Rifle Shooting",
+          "version": 2002,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Rifle Shooting",
+      "version": 2017,
+      "stats": {
+        "totalRequirements": 50,
+        "headers": 2,
+        "completable": 48,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Rifle Shooting",
+          "version": 2017,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Rifle Shooting",
+      "version": 2019,
+      "stats": {
+        "totalRequirements": 53,
+        "headers": 4,
+        "completable": 49,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Rifle Shooting",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "2A",
+          "details": "Header 2A (2A) has no children"
+        },
+        {
+          "badge": "Rifle Shooting",
+          "version": 2019,
+          "type": "empty_header_children",
+          "requirement": "2B",
+          "details": "Header 2B (2B) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Salesmanship",
+      "version": 2014,
+      "stats": {
+        "totalRequirements": 24,
+        "headers": 4,
+        "completable": 20,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Salesmanship",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "6",
+          "details": "Header 6 (6) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Salesmanship",
+      "version": 2017,
+      "stats": {
+        "totalRequirements": 26,
+        "headers": 5,
+        "completable": 21,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Salesmanship",
+          "version": 2017,
+          "type": "empty_header_children",
+          "requirement": "6",
+          "details": "Header 6 (6) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Salesmanship",
+      "version": 2023,
+      "stats": {
+        "totalRequirements": 26,
+        "headers": 5,
+        "completable": 21,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Salesmanship",
+          "version": 2023,
+          "type": "empty_header_children",
+          "requirement": "6",
+          "details": "Header 6 (6) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Scouting Heritage",
+      "version": 2014,
+      "stats": {
+        "totalRequirements": 21,
+        "headers": 2,
+        "completable": 19,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Scouting Heritage",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Scouting Heritage",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 27,
+        "headers": 3,
+        "completable": 24,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Scouting Heritage",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Shotgun Shooting",
+      "version": 2014,
+      "stats": {
+        "totalRequirements": 39,
+        "headers": 4,
+        "completable": 35,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Shotgun Shooting",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "2A",
+          "details": "Header 2A (2A) has no children"
+        },
+        {
+          "badge": "Shotgun Shooting",
+          "version": 2014,
+          "type": "empty_header_children",
+          "requirement": "2B",
+          "details": "Header 2B (2B) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Shotgun Shooting",
+      "version": 2025,
+      "stats": {
+        "totalRequirements": 39,
+        "headers": 2,
+        "completable": 37,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Shotgun Shooting",
+          "version": 2025,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Shotgun Shooting",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 37,
+        "headers": 2,
+        "completable": 35,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Shotgun Shooting",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Skating",
+      "version": 2016,
+      "stats": {
+        "totalRequirements": 50,
+        "headers": 2,
+        "completable": 48,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Skating",
+          "version": 2016,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Skating",
+      "version": 2024,
+      "stats": {
+        "totalRequirements": 69,
+        "headers": 2,
+        "completable": 67,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Skating",
+          "version": 2024,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Skating",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 65,
+        "headers": 2,
+        "completable": 63,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Skating",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "2",
+          "details": "Header 2 (2) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Snow Sports",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 57,
+        "headers": 4,
+        "completable": 53,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Snow Sports",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "7",
+          "details": "Header 7 (7) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Whitewater",
+      "version": 2015,
+      "stats": {
+        "totalRequirements": 44,
+        "headers": 8,
+        "completable": 36,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Whitewater",
+          "version": 2015,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Whitewater",
+      "version": 2020,
+      "stats": {
+        "totalRequirements": 53,
+        "headers": 12,
+        "completable": 41,
+        "maxDepth": 2
+      },
+      "issues": [
+        {
+          "badge": "Whitewater",
+          "version": 2020,
+          "type": "empty_header_children",
+          "requirement": "4A",
+          "details": "Header 4A (4A) has no children"
+        },
+        {
+          "badge": "Whitewater",
+          "version": 2020,
+          "type": "empty_header_children",
+          "requirement": "4B(c)",
+          "details": "Header 4B(c) (4B(c)) has no children"
+        }
+      ]
+    },
+    {
+      "badge": "Whitewater",
+      "version": 2026,
+      "stats": {
+        "totalRequirements": 51,
+        "headers": 9,
+        "completable": 42,
+        "maxDepth": 1
+      },
+      "issues": [
+        {
+          "badge": "Whitewater",
+          "version": 2026,
+          "type": "empty_header_children",
+          "requirement": "4",
+          "details": "Header 4 (4) has no children"
+        }
+      ]
+    }
+  ],
+  "complexBadges": []
+}
