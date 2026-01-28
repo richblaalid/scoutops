@@ -164,36 +164,94 @@ function normalizeId(id: string): string {
 }
 
 // Check if two IDs match (accounting for format variations)
-function idsMatch(csvId: string, uiLabel: string, parentNumber?: string | null, currentOption?: string | null): boolean {
+function idsMatch(
+  csvId: string,
+  uiLabel: string,
+  parentNumber?: string | null,
+  currentOption?: string | null,
+  currentLetter?: string | null,
+  letterIsHeader?: boolean
+): boolean {
   const normCsv = normalizeId(csvId)
   const normUi = normalizeId(uiLabel)
 
   // Direct match (e.g., "1" matches "1", "1a" matches "1a")
   if (normCsv === normUi) return true
 
-  // Try constructing full ID from parent + label FIRST
+  // Try constructing full ID from parent + label
   // e.g., parent="2" + label="(a)" → "2a" should match CSV "2a"
-  // This is the most common case for sub-requirements
   if (parentNumber && uiLabel) {
     const compositeId = normalizeId(parentNumber + uiLabel)
     if (normCsv === compositeId) return true
   }
 
+  // For bracket notation like "2d[1]": parent="2", currentLetter="d", label="(1)"
+  // Build: parent + letter + "[" + label + "]" = "2d[1]"
+  if (letterIsHeader && currentLetter && parentNumber && /^\d+$/.test(normUi)) {
+    const bracketId = `${parentNumber}${currentLetter}[${normUi}]`.toLowerCase()
+    if (normCsv === bracketId) return true
+
+    // Also try without brackets: "2d1" for CSV like "2d1"
+    const noBracketId = `${parentNumber}${currentLetter}${normUi}`.toLowerCase()
+    if (normCsv === noBracketId) return true
+
+    // Try parenthetical format: "2d(1)" for CSV like "2d(1)" or "3a(1)"
+    const parenId = `${parentNumber}${currentLetter}${normUi}`.toLowerCase()
+    if (normCsv === parenId) return true
+  }
+
   // Try matching with option context
-  // e.g., parent="6" + label="(a)" + option="avian" → check "6a avian"
+  // currentOption can be: "a", "b", "1", "2" (letter/number), or full names like "avian", "beef"
   if (currentOption && parentNumber && uiLabel) {
+    const csvLower = csvId.toLowerCase()
+
+    // Try "parent + label + space + option" format (e.g., "6a avian")
     const compositeWithOption = normalizeId(parentNumber + uiLabel + ' ' + currentOption)
     if (normCsv === compositeWithOption) return true
 
-    // Also try formats like "6a avian", "2a[1] Ice", "7a Alpine"
-    const csvLower = csvId.toLowerCase()
+    // Also check if CSV contains the option and starts with parent+label
     const baseId = normalizeId(parentNumber + uiLabel)
     if (csvLower.includes(currentOption) && csvLower.startsWith(baseId)) return true
 
-    // Handle bracket notation: CSV "2a[1] Ice" should match label "(1)" under parent "2a" with option "ice"
-    // Try matching the bracket format: parent + "[" + label + "] " + option
-    const bracketId = `${parentNumber}[${normalizeId(uiLabel)}] ${currentOption}`.toLowerCase()
-    if (csvLower === bracketId) return true
+    // Handle "2a Opt a" format: parent + letter + " opt " + option letter
+    // currentOption is just "a", so construct "2a opt a"
+    if (/^[a-z]$/i.test(currentOption)) {
+      const optFormatId = `${parentNumber}${normUi} opt ${currentOption}`.toLowerCase()
+      if (csvLower.replace(/\s+/g, ' ') === optFormatId) return true
+    }
+
+    // Handle bracket notation with option: CSV "2a[1] Ice"
+    if (currentLetter && /^\d+$/.test(normUi)) {
+      const bracketOptId = `${parentNumber}${currentLetter}[${normUi}] ${currentOption}`.toLowerCase()
+      if (csvLower === bracketOptId) return true
+    }
+  }
+
+  // Option format without letter: "5 Option A(1)" where parent="5", option="a", label="(1)"
+  if (currentOption && parentNumber && /^\d+$/.test(normUi)) {
+    const csvLower = csvId.toLowerCase()
+
+    // Try "5 Option A(1)" format - option is just "a"
+    if (/^[a-z]$/i.test(currentOption)) {
+      const csvMatch = csvId.match(/^(\d+)\s+Option\s+([A-Z])\s*\((\d+)\)/i)
+      if (csvMatch && csvMatch[1] === parentNumber && csvMatch[2].toLowerCase() === currentOption && csvMatch[3] === normUi) {
+        return true
+      }
+
+      // Also try with subLetter: "5 Option A(1)(a)"
+      const csvMatchSub = csvId.match(/^(\d+)\s+Option\s+([A-Z])\s*\((\d+)\)\(([a-z])\)/i)
+      if (csvMatchSub && csvMatchSub[1] === parentNumber && csvMatchSub[2].toLowerCase() === currentOption) {
+        // Could match subNum or subLetter
+        if (csvMatchSub[3] === normUi || csvMatchSub[4] === normUi) return true
+      }
+    }
+
+    // Try numeric option format: "5 option 1 2" normalized
+    if (/^\d+$/.test(currentOption)) {
+      const optionNumId = `${parentNumber} option ${currentOption} ${normUi}`.toLowerCase()
+      const normCsvSpaced = csvId.toLowerCase().replace(/[()[\]]/g, ' ').replace(/\s+/g, ' ').trim()
+      if (normCsvSpaced === optionNumId) return true
+    }
   }
 
   // For complex IDs like "4a1 Triathlon Option", check if CSV starts with the label pattern
@@ -351,13 +409,27 @@ function mergeBadgeVersion(
   const csvIdSet = new Set(requirementIds.map(normalizeId))
   const matchedCsvIds = new Set<string>()
 
-  // Track current option context for badges with multiple options
-  // (e.g., Animal Science with Beef/Dairy/Horse options, Skating with Ice/Inline/Rolling)
+  // Track context: option, current letter (for bracket notation like "2d[1]")
   let currentOption: string | null = null
+  let currentLetter: string | null = null
+  let letterIsHeader: boolean = false
 
-  // Extract option name from description like "Avian Option", "Beef Cattle Option", "Ice Skating Option"
+  // Extract option name from description like "Avian Option", "Beef Cattle Option", "Option A—Sprinting"
   function extractOptionName(description: string): string | null {
     const descLower = description.toLowerCase()
+
+    // Check for "Option X" or "Option X—..." pattern first (e.g., "Option A—Sprinting")
+    // Return just the letter/number - idsMatch will try both "option a" and "opt a" formats
+    const optionLetterMatch = description.match(/^Option\s+([A-Z])(?:\s*[—\-–.\s]|$)/i)
+    if (optionLetterMatch) {
+      return optionLetterMatch[1].toLowerCase()  // Just "a", "b", etc.
+    }
+
+    // Check for "Option N" pattern (e.g., "Option 1", "Option 2")
+    const optionNumberMatch = description.match(/^Option\s+(\d+)(?:\s*[—\-–.\s]|$)/i)
+    if (optionNumberMatch) {
+      return optionNumberMatch[1]  // Just "1", "2", etc.
+    }
 
     // Map full option names to CSV short names
     const optionMappings: Record<string, string> = {
@@ -379,20 +451,28 @@ function mergeBadgeVersion(
       'roll': 'roll',
       'board': 'board',
       'skateboard': 'board',
+      'alpine skiing': 'alpine',
       'alpine': 'alpine',
+      'nordic skiing': 'nordic',
       'nordic': 'nordic',
       'snowshoe': 'shoe',
+      'snowshoeing': 'shoe',
+      'snowboard': 'snow',
       'snow': 'snow',
       'triathlon': 'triathlon',
       'duathlon': 'duathlon',
       'aquathlon': 'aquathlon',
       'aquabike': 'aquabike',
-      'option a': 'opt a',
-      'option b': 'opt b',
-      'option c': 'opt c',
+      'group 1': 'grp 1',
+      'group 2': 'grp 2',
+      'group h': 'grp h',
+      'group i': 'grp i',
       'opt 1': 'opt 1',
       'opt 2': 'opt 2',
       'opt 3': 'opt 3',
+      'opt a': 'opt a',
+      'opt b': 'opt b',
+      'opt c': 'opt c',
     }
 
     // Try to find a mapping
@@ -402,11 +482,10 @@ function mergeBadgeVersion(
       }
     }
 
-    // Fallback: extract first word before "Option"
-    const optionMatch = description.match(/^(.+?)\s*Option$/i)
-    if (optionMatch) {
-      // Take first word of the match
-      const firstWord = optionMatch[1].trim().split(/\s+/)[0].toLowerCase()
+    // Fallback: extract text before "Option" (e.g., "Beef Cattle Option" -> "beef")
+    const xOptionMatch = description.match(/^(.+?)\s*Option$/i)
+    if (xOptionMatch) {
+      const firstWord = xOptionMatch[1].trim().split(/\s+/)[0].toLowerCase()
       return firstWord
     }
 
@@ -426,18 +505,31 @@ function mergeBadgeVersion(
 
   for (let i = 0; i < scrapedVersion.requirements.length; i++) {
     const scraped = scrapedVersion.requirements[i]
+    const rawLabel = scraped.displayLabel || ''
+    const cleanLabel = rawLabel.replace(/[()[\].]/g, '').trim()
+    const isWrapped = /^[(\[]/.test(rawLabel.trim())
 
     // Check if this is an option header (no label, description describes option)
     if (!scraped.displayLabel && scraped.description) {
       const optName = extractOptionName(scraped.description)
       if (optName) {
         currentOption = optName
+        currentLetter = null
+        letterIsHeader = false
       }
     }
 
-    // Reset option context when we hit a new main requirement number
-    if (scraped.displayLabel && /^\d+$/.test(scraped.displayLabel.replace(/[()[\].]/g, ''))) {
+    // Main requirement number resets all context (only if not wrapped in parens)
+    if (/^\d+$/.test(cleanLabel) && parseInt(cleanLabel) <= 20 && !isWrapped) {
       currentOption = null
+      currentLetter = null
+      letterIsHeader = false
+    }
+
+    // Letter label (a, b, c, d...) - track it and whether it's a header
+    if (/^[a-z]$/i.test(cleanLabel)) {
+      currentLetter = cleanLabel.toLowerCase()
+      letterIsHeader = !scraped.hasCheckbox
     }
 
     // Try to match to CSV ID
@@ -446,7 +538,7 @@ function mergeBadgeVersion(
     if (scraped.displayLabel) {
       // Look for exact or fuzzy match in CSV IDs
       for (const csvId of requirementIds) {
-        if (idsMatch(csvId, scraped.displayLabel, scraped.parentNumber, currentOption)) {
+        if (idsMatch(csvId, scraped.displayLabel, scraped.parentNumber, currentOption, currentLetter, letterIsHeader)) {
           matchedCsvId = csvId
           matchedCsvIds.add(normalizeId(csvId))
           break
