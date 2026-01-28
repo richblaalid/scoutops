@@ -175,7 +175,29 @@ function idsMatch(
   const normCsv = normalizeId(csvId)
   const normUi = normalizeId(uiLabel)
 
+  // For bracket notation like "2d[1]": parent="2", currentLetter="d", label="(1)"
+  // Check this FIRST because we don't want "(1)" to match CSV "1" when we're under a letter header
+  if (letterIsHeader && currentLetter && parentNumber && /^\d+$/.test(normUi)) {
+    // Compare against original csvId (lowercase) since normalizeId strips brackets
+    const csvLower = csvId.toLowerCase()
+    const bracketId = `${parentNumber}${currentLetter}[${normUi}]`
+    if (csvLower === bracketId) return true
+
+    // Also try without brackets: "2d1" for CSV like "2d1"
+    const noBracketId = `${parentNumber}${currentLetter}${normUi}`
+    if (normCsv === noBracketId) return true
+
+    // Try parenthetical format: "3a(1)" for CSV like "3a(1)"
+    const parenId = `${parentNumber}${currentLetter}(${normUi})`
+    if (csvLower === parenId) return true
+
+    // Don't allow simple number match when we expect a more specific ID
+    // e.g., "(1)" should NOT match CSV "1" when we're under letter context
+    return false
+  }
+
   // Direct match (e.g., "1" matches "1", "1a" matches "1a")
+  // Only use this when NOT under a letter header context
   if (normCsv === normUi) return true
 
   // Try constructing full ID from parent + label
@@ -183,21 +205,6 @@ function idsMatch(
   if (parentNumber && uiLabel) {
     const compositeId = normalizeId(parentNumber + uiLabel)
     if (normCsv === compositeId) return true
-  }
-
-  // For bracket notation like "2d[1]": parent="2", currentLetter="d", label="(1)"
-  // Build: parent + letter + "[" + label + "]" = "2d[1]"
-  if (letterIsHeader && currentLetter && parentNumber && /^\d+$/.test(normUi)) {
-    const bracketId = `${parentNumber}${currentLetter}[${normUi}]`.toLowerCase()
-    if (normCsv === bracketId) return true
-
-    // Also try without brackets: "2d1" for CSV like "2d1"
-    const noBracketId = `${parentNumber}${currentLetter}${normUi}`.toLowerCase()
-    if (normCsv === noBracketId) return true
-
-    // Try parenthetical format: "2d(1)" for CSV like "2d(1)" or "3a(1)"
-    const parenId = `${parentNumber}${currentLetter}${normUi}`.toLowerCase()
-    if (normCsv === parenId) return true
   }
 
   // Try matching with option context
