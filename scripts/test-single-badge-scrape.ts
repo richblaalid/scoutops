@@ -202,7 +202,14 @@ async function extractRequirements(page: Page): Promise<ScrapedRequirement[]> {
           }
           description = description.trim();
 
-          if (description.includes('Select All') || description === parentDescription) {
+          // Skip "Select All" controls and duplicate parent descriptions
+          if (description === 'Select All' || description === parentDescription) {
+            continue;
+          }
+
+          // Skip items that look like "Select All" controls
+          var itemClasses = item.className || '';
+          if (itemClasses.includes('selectAll') || itemClasses.includes('SelectAll')) {
             continue;
           }
 
@@ -210,7 +217,8 @@ async function extractRequirements(page: Page): Promise<ScrapedRequirement[]> {
           var itemHasCheckbox = hasCheckbox(item);
           var itemRawHtml = item.innerHTML ? item.innerHTML.substring(0, 500) : '';
 
-          var isNoLabelHeader = !displayedLabel && !itemHasCheckbox;
+          // Items without checkboxes are headers (section labels, option names, etc.)
+          var isNoCheckboxHeader = !itemHasCheckbox;
 
           if (!displayedLabel && !description) continue;
 
@@ -222,7 +230,7 @@ async function extractRequirements(page: Page): Promise<ScrapedRequirement[]> {
             parentNumber: mainReqNum,
             depth: depth,
             visualDepth: visualDepth,
-            isHeader: isNoLabelHeader || (!displayedLabel && description.length > 0),
+            isHeader: isNoCheckboxHeader,
             hasCheckbox: itemHasCheckbox,
             links: itemLinks,
             rawHtml: itemRawHtml
@@ -532,21 +540,88 @@ async function main() {
   console.log(`  Max logical depth: ${stats.maxLogicalDepth}`)
   console.log(`  Depth distribution: ${JSON.stringify(stats.depthDistribution)}`)
 
-  // Show hierarchy
+  // Determine nesting level from label pattern
+  function getLabelLevel(label: string, description: string): number {
+    if (!label) {
+      // Named headers like "Triathlon Option"
+      if (/Option|Swimming|Biking|Running|Cycling|Ice|Inline|Alpine|Nordic/i.test(description)) {
+        return 1
+      }
+      return 0
+    }
+
+    const cleanLabel = label.replace(/[()[\].]/g, '').trim()
+
+    // Main requirement numbers: 1, 2, 3... (always level 0)
+    if (/^\d+$/.test(cleanLabel) && parseInt(cleanLabel) <= 20) {
+      return 0
+    }
+
+    // Letter labels: a, b, c...
+    if (/^[a-z]$/i.test(cleanLabel)) {
+      return 2
+    }
+
+    // Sub-numbers under letters: 1, 2, 3 (context determines this is level 3)
+    if (/^\d+$/.test(cleanLabel) && parseInt(cleanLabel) <= 10) {
+      return 3
+    }
+
+    return 1
+  }
+
+  // Check if label is a main requirement number (1, 2, 3... WITHOUT parentheses)
+  // (1), (2), (3) are sub-requirements, not main headers
+  function isMainRequirementNumber(label: string): boolean {
+    if (!label) return false
+    const trimmed = label.trim()
+    // Must NOT start with parenthesis - those are sub-requirements
+    if (trimmed.startsWith('(')) return false
+    const cleanLabel = trimmed.replace(/[[\].]/g, '').trim()
+    return /^\d+$/.test(cleanLabel) && parseInt(cleanLabel) <= 20
+  }
+
+  // Show hierarchy with computed levels
   console.log('\n' + '-'.repeat(60))
   console.log('REQUIREMENT HIERARCHY')
   console.log('-'.repeat(60))
 
-  for (const req of requirements) {
-    const indent = '  '.repeat(req.visualDepth)
-    const label = req.displayLabel || '[header]'
-    const checkbox = req.hasCheckbox ? '[x]' : '[ ]'
-    const header = req.isHeader ? ' (HEADER)' : ''
-    const links = req.links.length > 0 ? ` [${req.links.length} links]` : ''
-    const desc = req.description.substring(0, 60) + (req.description.length > 60 ? '...' : '')
+  const levelStack: { level: number; label: string }[] = []
 
-    console.log(`${indent}${checkbox} ${label}${header}${links}`)
-    console.log(`${indent}   ${desc}`)
+  for (const req of requirements) {
+    let displayLevel: number
+
+    // Main requirement numbers are ALWAYS headers for hierarchy, regardless of checkbox
+    const isEffectiveHeader = req.isHeader || isMainRequirementNumber(req.displayLabel)
+
+    if (isEffectiveHeader) {
+      const headerLevel = getLabelLevel(req.displayLabel, req.description)
+      // Pop stack to find parent level
+      while (levelStack.length > 0 && levelStack[levelStack.length - 1].level >= headerLevel) {
+        levelStack.pop()
+      }
+      displayLevel = levelStack.length
+      levelStack.push({ level: headerLevel, label: req.displayLabel || req.description })
+    } else {
+      // Requirements are children of current header
+      displayLevel = levelStack.length
+    }
+
+    const indent = '  '.repeat(displayLevel)
+    const checkbox = req.hasCheckbox && !isMainRequirementNumber(req.displayLabel) ? '[x]' : '[ ]'
+    const header = isEffectiveHeader ? ' (HEADER)' : ''
+    const links = req.links.length > 0 ? ` [${req.links.length} links]` : ''
+
+    if (req.displayLabel) {
+      // Has a label like (a), (1), 4, etc - show label and description
+      const desc = req.description.substring(0, 60) + (req.description.length > 60 ? '...' : '')
+      console.log(`${indent}${checkbox} ${req.displayLabel}${header}${links}`)
+      console.log(`${indent}   ${desc}`)
+    } else {
+      // No label - use description as the label (for named headers like "Triathlon Option")
+      const desc = req.description.substring(0, 60) + (req.description.length > 60 ? '...' : '')
+      console.log(`${indent}${checkbox} ${desc}${header}${links}`)
+    }
   }
 
   // Show links if any

@@ -432,8 +432,14 @@ async function extractRequirements(page: Page, versionYear: number, badgeName: s
           }
           description = description.trim();
 
-          // Skip "Select All" and duplicate parent descriptions
-          if (description.includes('Select All') || description === parentDescription) {
+          // Skip "Select All" controls and duplicate parent descriptions
+          if (description === 'Select All' || description === parentDescription) {
+            continue;
+          }
+
+          // Skip items that look like "Select All" controls
+          var itemClasses = item.className || '';
+          if (itemClasses.includes('selectAll') || itemClasses.includes('SelectAll')) {
             continue;
           }
 
@@ -494,8 +500,9 @@ async function extractRequirements(page: Page, versionYear: number, badgeName: s
             continue;
           }
 
-          // Detect items with no label as potential headers
-          var isNoLabelHeader = !displayedLabel && !itemHasCheckbox;
+          // Items without checkboxes are headers (section labels, option names, etc.)
+          // The merge script will use CSV to make final determination
+          var isNoCheckboxHeader = !itemHasCheckbox;
 
           // Skip if truly empty
           if (!displayedLabel && !description) continue;
@@ -505,8 +512,8 @@ async function extractRequirements(page: Page, versionYear: number, badgeName: s
           var letterMatch = displayedLabel.match(/^\\(?([a-z])\\)?$/i);
           var numberMatch = displayedLabel.match(/^\\(?([0-9]+)\\)?$/);
 
-          // Detect section headers by content
-          var isSectionHeader = /(Swimming|Biking|Running|Cycling)\\.?\\.?\\.?$/i.test(description) || isNoLabelHeader;
+          // Detect section headers by content or lack of checkbox
+          var isSectionHeader = /(Swimming|Biking|Running|Cycling)\\.?\\.?\\.?$/i.test(description) || isNoCheckboxHeader;
 
           // Calculate logical depth based on context
           var depth = 1;

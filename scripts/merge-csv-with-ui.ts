@@ -177,7 +177,45 @@ function idsMatch(csvId: string, uiLabel: string): boolean {
   return false
 }
 
-// Build parent-child hierarchy from flat list using visual depth
+// Determine nesting level from label pattern
+function getLabelLevel(label: string, description: string): number {
+  if (!label) {
+    // Named headers like "Triathlon Option" - check description
+    if (/Option|Swimming|Biking|Running|Cycling|Ice|Inline|Alpine|Nordic/i.test(description)) {
+      return 1 // Option or activity header
+    }
+    return 0 // Unknown header, treat as top level
+  }
+
+  const cleanLabel = label.replace(/[()[\].]/g, '').trim()
+
+  // Main requirement numbers: 1, 2, 3...
+  if (/^\d+$/.test(cleanLabel) && parseInt(cleanLabel) <= 20) {
+    return 0
+  }
+
+  // Letter labels: a, b, c...
+  if (/^[a-z]$/i.test(cleanLabel)) {
+    return 2
+  }
+
+  // Sub-numbers under letters: 1, 2, 3 (when parent is a letter)
+  if (/^\d+$/.test(cleanLabel) && parseInt(cleanLabel) <= 10) {
+    return 3
+  }
+
+  // Complex labels like "4a1" - parse the depth
+  const complexMatch = cleanLabel.match(/^(\d+)([a-z])?(\d)?/i)
+  if (complexMatch) {
+    if (complexMatch[3]) return 3  // Has number after letter: 4a1
+    if (complexMatch[2]) return 2  // Has letter: 4a
+    return 0 // Just number
+  }
+
+  return 1 // Default for unknown patterns
+}
+
+// Build parent-child hierarchy from flat list using display order + header detection
 function buildHierarchy(
   requirements: Array<{
     scoutbook_id: string
@@ -185,12 +223,13 @@ function buildHierarchy(
     description: string
     is_header: boolean
     display_order: number
-    visualDepth: number
+    hasCheckbox: boolean
     links: RequirementLink[]
   }>
 ): CanonicalRequirement[] {
   const result: CanonicalRequirement[] = []
-  const stack: { req: CanonicalRequirement; depth: number }[] = []
+  // Stack tracks: { requirement, level }
+  const stack: { req: CanonicalRequirement; level: number }[] = []
 
   for (const req of requirements) {
     const canonReq: CanonicalRequirement = {
@@ -204,23 +243,43 @@ function buildHierarchy(
       children: [],
     }
 
-    // Pop items from stack that are at same or deeper level
-    while (stack.length > 0 && stack[stack.length - 1].depth >= req.visualDepth) {
-      stack.pop()
+    // Determine this item's level
+    let level: number
+
+    if (req.is_header) {
+      // Headers: determine level from label pattern
+      level = getLabelLevel(req.requirement_number, req.description)
+    } else {
+      // Requirements with checkboxes: child of current header
+      // Level is one deeper than current stack top (or 0 if stack empty)
+      level = stack.length > 0 ? stack[stack.length - 1].level + 1 : 0
     }
 
+    // Pop stack until we find appropriate parent
+    // For headers: pop items at same or deeper level
+    // For requirements: keep current header as parent
+    if (req.is_header) {
+      while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+        stack.pop()
+      }
+    }
+
+    // Assign parent and add to tree
     if (stack.length === 0) {
-      // This is a root-level item
+      // Root level item
       result.push(canonReq)
     } else {
-      // This is a child of the last item on the stack
+      // Child of top of stack
       const parent = stack[stack.length - 1].req
       canonReq.parent_scoutbook_id = parent.scoutbook_id
       parent.children.push(canonReq)
     }
 
-    // Push this item onto the stack
-    stack.push({ req: canonReq, depth: req.visualDepth })
+    // Push headers onto stack (they can have children)
+    // Requirements don't go on stack (they're leaf nodes)
+    if (req.is_header) {
+      stack.push({ req: canonReq, level })
+    }
   }
 
   return result
@@ -273,7 +332,7 @@ function mergeBadgeVersion(
     description: string
     is_header: boolean
     display_order: number
-    visualDepth: number
+    hasCheckbox: boolean
     links: RequirementLink[]
   }> = []
 
@@ -295,8 +354,9 @@ function mergeBadgeVersion(
     }
 
     // Determine if this is a header
-    // A header is: no checkbox, OR no CSV match, OR explicitly marked
-    const isHeader = !scraped.hasCheckbox || !matchedCsvId || scraped.isHeader === true
+    // A header is: NOT in CSV (no CSV match)
+    // CSV is the source of truth - if it's in CSV, it's completable
+    const isHeader = !matchedCsvId
 
     // Generate scoutbook_id
     let scoutbookId: string
@@ -316,7 +376,7 @@ function mergeBadgeVersion(
       description: scraped.description,
       is_header: isHeader,
       display_order: i,
-      visualDepth: scraped.visualDepth,
+      hasCheckbox: scraped.hasCheckbox,
       links: scraped.links.map(l => ({
         url: l.url,
         text: l.text,

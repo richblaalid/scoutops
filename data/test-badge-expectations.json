@@ -7,9 +7,9 @@
       "target_version": 2022,
       "version_notes": "2022 version has standard 2-level hierarchy without complex nesting",
       "expected": {
-        "total_requirements_min": 40,
-        "total_requirements_max": 50,
-        "max_visual_depth": 1,
+        "total_requirements_min": 50,
+        "total_requirements_max": 60,
+        "max_visual_depth": 2,
         "headers_expected": true,
         "header_pattern": "Numbered main items (1, 2, 3...) should be headers if no checkbox",
         "sample_hierarchy": {
@@ -30,7 +30,7 @@
         "All numbered headers (1, 2, 3...) identified as is_header=true OR have checkbox",
         "Sub-requirements (a, b, c) have correct parent relationship",
         "Requirement IDs match CSV exactly",
-        "Visual depth is 0 for main, 1 for sub-requirements"
+        "Visual depth is 0 for main, 1-2 for sub-requirements"
       ]
     },
     {
@@ -70,9 +70,9 @@
       "target_version": 2025,
       "version_notes": "2025 version has 4-level deep nesting with named options (Triathlon, Duathlon, etc.)",
       "expected": {
-        "total_requirements_min": 45,
-        "total_requirements_max": 60,
-        "max_visual_depth": 3,
+        "total_requirements_min": 60,
+        "total_requirements_max": 75,
+        "max_visual_depth": 2,
         "headers_expected": true,
         "header_pattern": "Option headers (Triathlon Option, Duathlon Option) and section headers (a, b, c)",
         "sample_hierarchy": {
