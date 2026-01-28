@@ -21,11 +21,33 @@ import * as readline from 'readline'
 // Types
 // ============================================
 
+interface HierarchyPosition {
+  mainReq: string              // Main requirement number (1, 2, 3...)
+  option?: string              // Option name (e.g., "Triathlon", "Option A")
+  optionLetter?: string        // Option letter for 2026 format (A, B, C, D)
+  section?: string             // Section identifier (a, b, 1, 2...)
+  item?: string                // Item identifier within section
+}
+
+interface ScrapedLink {
+  url: string                  // Full href
+  text: string                 // Link text
+  context: string              // Surrounding text
+  type: 'pamphlet' | 'worksheet' | 'video' | 'external'  // Inferred type
+}
+
 interface ScrapedRequirement {
-  number: string
-  description: string
-  parentNumber: string | null
-  depth: number
+  id: string                   // Constructed canonical Scoutbook ID
+  displayLabel: string         // The displayed label exactly as shown (e.g., "(a)", "(1)")
+  description: string          // The requirement text
+  parentNumber: string | null  // The main requirement number this belongs to
+  depth: number                // Nesting depth for display (0 = main, 1+ = sub-requirements)
+  visualDepth: number          // Actual DOM nesting depth (0-4)
+  isHeader?: boolean           // True if this is an option/section header
+  hasCheckbox: boolean         // True if item has a checkbox (completable)
+  links: ScrapedLink[]         // Extracted links from content
+  rawHtml?: string             // Raw HTML for debugging complex cases
+  position?: HierarchyPosition // Full hierarchy position for ID construction
 }
 
 interface ScrapedBadgeVersion {
@@ -35,6 +57,9 @@ interface ScrapedBadgeVersion {
   versionLabel: string
   requirements: ScrapedRequirement[]
   scrapedAt: string
+  totalLinks: number           // Count of all links extracted
+  totalCheckboxes: number      // Count of items with checkboxes
+  maxDepth: number             // Maximum visual depth observed
 }
 
 interface ScrapeProgress {
@@ -45,6 +70,112 @@ interface ScrapeProgress {
   errors: string[]
   startedAt: string
   lastUpdatedAt: string
+}
+
+// ============================================
+// ID Construction
+// ============================================
+
+/**
+ * Construct canonical Scoutbook ID based on version year and hierarchy position.
+ *
+ * Pre-2026 formats:
+ *   - Simple: 1a, 2b, 3c
+ *   - Bracket: 2b[1], 5a[3]
+ *   - Named option: 4a1 Triathlon Option, 5a Opt B
+ *
+ * 2026+ formats:
+ *   - Simple: 1(a), 2(b), 3(c)
+ *   - Nested: 2(a)(1), 4(b)(3)
+ *   - Option: 4 Option A (1)(a), 5 Option B (2)
+ */
+function constructScoutbookId(
+  position: HierarchyPosition,
+  versionYear: number,
+  badgeName: string
+): string {
+  const { mainReq, option, optionLetter, section, item } = position
+  const is2026Format = versionYear >= 2026
+
+  // Main requirement only (no sub-requirements)
+  if (!section && !item && !option) {
+    return mainReq
+  }
+
+  // Simple sub-requirement (no options)
+  if (!option && section && !item) {
+    if (is2026Format) {
+      return `${mainReq}(${section})`
+    }
+    return `${mainReq}${section}`
+  }
+
+  // Nested sub-requirement (no options)
+  if (!option && section && item) {
+    if (is2026Format) {
+      return `${mainReq}(${section})(${item})`
+    }
+    // Pre-2026: bracket notation for some badges, concatenated for others
+    // Check if item is numeric (uses bracket) or letter (concatenated)
+    if (/^\d+$/.test(item)) {
+      return `${mainReq}${section}[${item}]`
+    }
+    return `${mainReq}${section}${item}`
+  }
+
+  // With options - this is where it gets badge-specific
+  if (option) {
+    // 2026 format uses "Option A", "Option B" etc
+    if (is2026Format) {
+      const optLetter = optionLetter || 'A'
+      if (section && item) {
+        return `${mainReq} Option ${optLetter} (${section})(${item})`
+      }
+      if (section) {
+        return `${mainReq} Option ${optLetter} (${section})`
+      }
+      return `${mainReq} Option ${optLetter}`
+    }
+
+    // Pre-2026 formats vary by badge
+    // Multisport: 4a1 Triathlon Option
+    // Archery: 5a Opt B
+    // Skating: 2a[1] Ice
+
+    // Check if it's a named option (Triathlon, Ice, Alpine, etc)
+    const namedOptions = ['Triathlon', 'Duathlon', 'Aquathlon', 'Aquabike', 'Ice', 'Inline', 'Alpine', 'Snowboard', 'Nordic', 'Snow']
+    const isNamedOption = namedOptions.some(n => option.includes(n))
+
+    if (isNamedOption) {
+      // Multisport style: 4a1 Triathlon Option
+      if (section && item) {
+        return `${mainReq}${section}${item} ${option} Option`
+      }
+      // Skating style: 2a[1] Ice
+      if (section) {
+        return `${mainReq}${section} ${option}`
+      }
+    }
+
+    // Opt A/B style (Archery, Shotgun)
+    if (optionLetter && section) {
+      if (item) {
+        return `${mainReq}${section}[${item}]${optionLetter && item ? '' : ''} Opt ${optionLetter}`
+      }
+      return `${mainReq}${section} Opt ${optionLetter}`
+    }
+
+    // Fallback: concatenate what we have
+    if (section && item) {
+      return `${mainReq}${section}${item} ${option}`
+    }
+    if (section) {
+      return `${mainReq}${section} ${option}`
+    }
+  }
+
+  // Fallback: just return main requirement
+  return mainReq
 }
 
 // ============================================
@@ -81,6 +212,22 @@ function saveProgress(progress: ScrapeProgress, filepath: string) {
 
 function isDuplicate(progress: ScrapeProgress, badgeName: string, versionLabel: string): boolean {
   return progress.badges.some(b => b.badgeName === badgeName && b.versionLabel === versionLabel)
+}
+
+function classifyLinkType(url: string, text: string): 'pamphlet' | 'worksheet' | 'video' | 'external' {
+  const lowerUrl = url.toLowerCase()
+  const lowerText = text.toLowerCase()
+
+  if (lowerUrl.includes('pamphlet') || lowerText.includes('pamphlet')) {
+    return 'pamphlet'
+  }
+  if (lowerUrl.includes('worksheet') || lowerText.includes('worksheet') || lowerUrl.includes('.pdf')) {
+    return 'worksheet'
+  }
+  if (lowerUrl.includes('youtube') || lowerUrl.includes('video') || lowerText.includes('video') || lowerUrl.includes('vimeo')) {
+    return 'video'
+  }
+  return 'external'
 }
 
 // ============================================
@@ -157,137 +304,304 @@ function setupPopupHandler(page: Page): void {
 // Extraction Logic
 // ============================================
 
-async function extractRequirements(page: Page): Promise<ScrapedRequirement[]> {
-  return await page.evaluate(() => {
-    const requirements: Array<{
-      number: string
-      description: string
-      parentNumber: string | null
-      depth: number
-    }> = []
+async function extractRequirements(page: Page, versionYear: number, badgeName: string): Promise<ScrapedRequirement[]> {
+  // Extract requirements with enhanced data: visual depth, checkbox detection, links.
+  // This captures everything needed to merge with CSV data later.
 
-    document.querySelectorAll('.ant-collapse-item').forEach((panel) => {
-      // Get main requirement number from CircleLabel
-      const circleLabel = panel.querySelector('[class*="CircleLabel__circle"], [class*="requirementGroupListNumber"]')
-      const mainReqNum = circleLabel?.textContent?.trim() || ''
+  const rawRequirements = await page.evaluate(`
+    (function() {
+      var requirements = [];
+      var panels = document.querySelectorAll('.ant-collapse-item');
+      var OPTION_LETTERS = 'ABCDEFGH';
 
-      // Get the first requirement content
-      const firstContent = panel.querySelector('[class*="requirementContent"]')
-      const parentDescription = firstContent?.textContent?.trim() || ''
+      // Helper to calculate visual depth from DOM structure
+      function getVisualDepth(element) {
+        var depth = 0;
+        var current = element.parentElement;
+        while (current) {
+          // Count nested collapse content and requirement containers
+          if (current.matches && (
+            current.matches('[class*="ant-collapse-content"]') ||
+            current.matches('[class*="requirementItemContainer"]') ||
+            current.matches('[class*="NestedRequirement"]')
+          )) {
+            depth++;
+          }
+          current = current.parentElement;
+        }
+        return Math.min(depth, 4); // Cap at 4 levels
+      }
 
-      if (mainReqNum) {
-        // Add main requirement
+      // Helper to detect checkbox
+      function hasCheckbox(element) {
+        return !!(
+          element.querySelector('input[type="checkbox"]') ||
+          element.querySelector('[class*="ant-checkbox"]') ||
+          element.querySelector('[class*="Checkbox"]') ||
+          element.querySelector('[class*="checkmark"]')
+        );
+      }
+
+      // Helper to extract links
+      function extractLinks(element) {
+        var links = [];
+        var anchors = element.querySelectorAll('a[href]');
+        for (var i = 0; i < anchors.length; i++) {
+          var a = anchors[i];
+          var href = a.getAttribute('href') || '';
+          var text = a.textContent?.trim() || '';
+          // Skip empty or javascript links
+          if (!href || href.startsWith('javascript:') || href === '#') continue;
+          // Get surrounding context (parent text minus link text)
+          var context = a.parentElement?.textContent?.trim() || '';
+          links.push({
+            url: href,
+            text: text,
+            context: context.substring(0, 200)
+          });
+        }
+        return links;
+      }
+
+      for (var p = 0; p < panels.length; p++) {
+        var panel = panels[p];
+
+        // Get main requirement number (the circled number like "1", "2", etc.)
+        var circleLabel = panel.querySelector('[class*="CircleLabel__circle"], [class*="requirementGroupListNumber"]');
+        var mainReqNum = circleLabel ? circleLabel.textContent.trim() : '';
+
+        // Get main requirement description and content element
+        var firstContent = panel.querySelector('[class*="requirementContent"]');
+        var parentDescription = firstContent ? firstContent.textContent.trim() : '';
+
+        if (!mainReqNum) continue;
+
+        // Get raw HTML for main requirement header
+        var headerElement = panel.querySelector('[class*="ant-collapse-header"]');
+        var mainRawHtml = headerElement ? headerElement.innerHTML.substring(0, 1000) : '';
+
+        // Extract links from main requirement
+        var mainLinks = firstContent ? extractLinks(firstContent) : [];
+
+        // Check for checkbox on main requirement
+        var mainHasCheckbox = hasCheckbox(panel);
+
+        // Add the main requirement
         requirements.push({
-          number: mainReqNum,
+          displayLabel: mainReqNum,
           description: parentDescription.substring(0, 500),
           parentNumber: null,
-          depth: 0
-        })
+          depth: 0,
+          visualDepth: 0,
+          isHeader: !mainHasCheckbox, // Main numbers without checkboxes are headers
+          hasCheckbox: mainHasCheckbox,
+          links: mainLinks,
+          rawHtml: mainRawHtml,
+          position: { mainReq: mainReqNum }
+        });
 
-        // Context tracking for Option A/B structure
-        let currentOption: string | null = null
-        let currentSubReq: string | null = null
-        let lastParentNumber = mainReqNum
+        // Context tracking for hierarchy position
+        var currentOption = null;
+        var currentOptionLetter = null;
+        var currentSection = null;
+        var optionIndex = 0;
+        var inOptionBlock = false;
 
-        // Find all sub-requirements within this panel
-        panel.querySelectorAll('[class*="requirementItemContainer"]').forEach((item) => {
-          const itemNumber = item.querySelector('[class*="itemListNumber"]')
-          const rawSubReqLabel = itemNumber?.textContent?.trim() || ''
+        var items = panel.querySelectorAll('[class*="requirementItemContainer"]');
 
-          // Get description
-          const contentDiv = item.querySelector('[class*="requirementContent"]')
-          let description = ''
-          contentDiv?.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE || (node as Element).tagName === 'DIV') {
-              description += (node.textContent || '') + ' '
+        for (var i = 0; i < items.length; i++) {
+          var item = items[i];
+
+          // Get visual depth from DOM
+          var visualDepth = getVisualDepth(item);
+
+          // Get the displayed requirement number/label
+          var itemNumber = item.querySelector('[class*="itemListNumber"]');
+          var displayedLabel = itemNumber ? itemNumber.textContent.trim() : '';
+
+          // Get the requirement description and content element
+          var contentDiv = item.querySelector('[class*="requirementContent"]');
+          var description = '';
+          if (contentDiv) {
+            for (var n = 0; n < contentDiv.childNodes.length; n++) {
+              var node = contentDiv.childNodes[n];
+              if (node.nodeType === Node.TEXT_NODE || node.tagName === 'DIV') {
+                description += (node.textContent || '') + ' ';
+              }
             }
-          })
-          description = description.trim()
+          }
+          description = description.trim();
 
-          // Skip empty or "Select All"
-          if (!rawSubReqLabel || description.includes('Select All') || description === parentDescription) {
-            return
+          // Skip "Select All" and duplicate parent descriptions
+          if (description.includes('Select All') || description === parentDescription) {
+            continue;
           }
 
-          // Detect Option A/B headers
-          const isOptionA = description.includes('Option A') || description.match(/^Option A[—\-\s]/i)
-          const isOptionB = description.includes('Option B') || description.match(/^Option B[—\-\s]/i)
+          // Extract links from this item
+          var itemLinks = contentDiv ? extractLinks(contentDiv) : [];
 
-          if (isOptionA || isOptionB) {
-            currentOption = isOptionA ? 'A' : 'B'
-            currentSubReq = null
+          // Check for checkbox
+          var itemHasCheckbox = hasCheckbox(item);
 
-            const fullNumber = mainReqNum + currentOption
-            lastParentNumber = fullNumber
+          // Get raw HTML for debugging complex cases
+          var itemRawHtml = item.innerHTML ? item.innerHTML.substring(0, 1000) : '';
+
+          // Detect option headers (no label, description contains option name)
+          var isOptionHeader = !displayedLabel && (
+            /Option\\s*[A-H]?\\s*[-—:]/.test(description) ||
+            /(Triathlon|Duathlon|Aquathlon|Aquabike)\\s*(Option)?/i.test(description) ||
+            /^Option\\s+[A-H]/i.test(description) ||
+            /(Ice|Inline)\\s+(Skating)?/i.test(description) ||
+            /(Alpine|Snowboard|Nordic|Cross-Country)/i.test(description)
+          );
+
+          if (isOptionHeader) {
+            // Extract option name from description
+            var namedOptMatch = description.match(/(Triathlon|Duathlon|Aquathlon|Aquabike|Ice|Inline|Alpine|Snowboard|Nordic|Cross-Country)/i);
+            if (namedOptMatch) {
+              currentOption = namedOptMatch[1];
+              currentOptionLetter = OPTION_LETTERS[optionIndex];
+            } else {
+              var letterMatch = description.match(/Option\\s+([A-H])/i);
+              if (letterMatch) {
+                currentOptionLetter = letterMatch[1].toUpperCase();
+                currentOption = 'Option ' + currentOptionLetter;
+              } else {
+                currentOptionLetter = OPTION_LETTERS[optionIndex];
+                currentOption = 'Option ' + currentOptionLetter;
+              }
+            }
+            optionIndex++;
+            currentSection = null;
+            inOptionBlock = true;
 
             requirements.push({
-              number: fullNumber,
+              displayLabel: '',
               description: description.substring(0, 500),
               parentNumber: mainReqNum,
-              depth: 1
-            })
-            return
+              depth: 1,
+              visualDepth: visualDepth,
+              isHeader: true,
+              hasCheckbox: itemHasCheckbox,
+              links: itemLinks,
+              rawHtml: itemRawHtml,
+              position: {
+                mainReq: mainReqNum,
+                option: currentOption,
+                optionLetter: currentOptionLetter
+              }
+            });
+            continue;
           }
 
-          // Determine if this is a letter (a, b, c) or number (1, 2, 3)
-          const letterMatch = rawSubReqLabel.match(/^\(([a-z])\)$/i)
-          const numberMatch = rawSubReqLabel.match(/^\((\d+)\)$/)
+          // Detect items with no label as potential headers
+          var isNoLabelHeader = !displayedLabel && !itemHasCheckbox;
 
-          let fullNumber: string
-          let parentNum: string
-          let depth: number
+          // Skip if truly empty
+          if (!displayedLabel && !description) continue;
 
-          if (letterMatch) {
-            const letter = letterMatch[1].toLowerCase()
-            currentSubReq = letter
+          // Parse the displayed label
+          var labelContent = displayedLabel.replace(/[()\\[\\]]/g, '').trim();
+          var letterMatch = displayedLabel.match(/^\\(?([a-z])\\)?$/i);
+          var numberMatch = displayedLabel.match(/^\\(?([0-9]+)\\)?$/);
 
-            if (currentOption) {
-              fullNumber = mainReqNum + currentOption + '(' + letter + ')'
-              parentNum = mainReqNum + currentOption
-              depth = 2
-            } else {
-              fullNumber = mainReqNum + letter
-              parentNum = mainReqNum
-              depth = 1
+          // Detect section headers by content
+          var isSectionHeader = /(Swimming|Biking|Running|Cycling)\\.?\\.?\\.?$/i.test(description) || isNoLabelHeader;
+
+          // Calculate logical depth based on context
+          var depth = 1;
+          if (inOptionBlock) {
+            depth = currentSection ? 3 : 2;
+          }
+
+          // Update section tracking
+          if ((isSectionHeader || (!currentSection && inOptionBlock)) && displayedLabel) {
+            if (letterMatch) {
+              currentSection = letterMatch[1].toLowerCase();
+            } else if (numberMatch) {
+              currentSection = numberMatch[1];
             }
-            lastParentNumber = fullNumber
-
-          } else if (numberMatch) {
-            const num = numberMatch[1]
-
-            if (currentOption && currentSubReq) {
-              fullNumber = mainReqNum + currentOption + '(' + currentSubReq + ')(' + num + ')'
-              parentNum = mainReqNum + currentOption + '(' + currentSubReq + ')'
-              depth = 3
-            } else if (currentOption) {
-              fullNumber = mainReqNum + currentOption + '(' + num + ')'
-              parentNum = mainReqNum + currentOption
-              depth = 2
-            } else {
-              fullNumber = mainReqNum + '(' + num + ')'
-              parentNum = mainReqNum
-              depth = 1
+            if (isSectionHeader) {
+              depth = inOptionBlock ? 2 : 1;
             }
+          }
 
-          } else {
-            const cleanLabel = rawSubReqLabel.replace(/[()]/g, '')
-            fullNumber = mainReqNum + cleanLabel
-            parentNum = lastParentNumber
-            depth = 1
+          // Build the position object
+          var position = { mainReq: mainReqNum };
+
+          if (currentOption) {
+            position.option = currentOption;
+            position.optionLetter = currentOptionLetter;
+          }
+
+          if (isSectionHeader && displayedLabel) {
+            position.section = labelContent.toLowerCase();
+          } else if (currentSection && inOptionBlock) {
+            position.section = currentSection;
+            position.item = labelContent.toLowerCase();
+          } else if (!inOptionBlock && displayedLabel) {
+            if (letterMatch) {
+              position.section = letterMatch[1].toLowerCase();
+            } else if (numberMatch) {
+              position.section = numberMatch[1];
+            } else {
+              var complexMatch = labelContent.match(/^([0-9]*)([a-z]?)([0-9]*)$/i);
+              if (complexMatch) {
+                if (complexMatch[2]) position.section = complexMatch[2].toLowerCase();
+                if (complexMatch[3]) position.item = complexMatch[3];
+              } else {
+                position.section = labelContent;
+              }
+            }
           }
 
           requirements.push({
-            number: fullNumber,
+            displayLabel: displayedLabel,
             description: description.substring(0, 500),
-            parentNumber: parentNum,
-            depth
-          })
-        })
+            parentNumber: mainReqNum,
+            depth: depth,
+            visualDepth: visualDepth,
+            isHeader: isSectionHeader || isNoLabelHeader,
+            hasCheckbox: itemHasCheckbox,
+            links: itemLinks,
+            rawHtml: itemRawHtml,
+            position: position
+          });
+        }
       }
-    })
 
-    return requirements
-  })
+      return requirements;
+    })()
+  `) as Array<{
+    displayLabel: string
+    description: string
+    parentNumber: string | null
+    depth: number
+    visualDepth: number
+    isHeader: boolean
+    hasCheckbox: boolean
+    links: Array<{ url: string; text: string; context: string }>
+    rawHtml: string
+    position: HierarchyPosition
+  }>
+
+  // Process and classify links, then construct canonical IDs
+  return rawRequirements.map(req => ({
+    id: constructScoutbookId(req.position, versionYear, badgeName),
+    displayLabel: req.displayLabel,
+    description: req.description,
+    parentNumber: req.parentNumber,
+    depth: req.depth,
+    visualDepth: req.visualDepth,
+    isHeader: req.isHeader,
+    hasCheckbox: req.hasCheckbox,
+    links: req.links.map(link => ({
+      ...link,
+      type: classifyLinkType(link.url, link.text)
+    })),
+    rawHtml: req.rawHtml,
+    position: req.position
+  }))
 }
 
 async function getBadgeName(page: Page): Promise<string> {
@@ -401,15 +715,20 @@ async function scrapeBadge(page: Page, progress: ScrapeProgress, outputPath: str
       return
     }
 
-    let requirements = await extractRequirements(page)
+    const versionYear = extractYearFromVersion(currentVersion)
+    let requirements = await extractRequirements(page, versionYear, badgeName)
 
     // Retry once if 0 requirements found
     if (requirements.length === 0) {
       console.log(`    ${currentVersion}: 0 requirements, retrying...`)
       await page.waitForTimeout(1000)
       await clearOverlays(page)
-      requirements = await extractRequirements(page)
+      requirements = await extractRequirements(page, versionYear, badgeName)
     }
+
+    const totalLinks = requirements.reduce((sum, r) => sum + r.links.length, 0)
+    const totalCheckboxes = requirements.filter(r => r.hasCheckbox).length
+    const maxDepth = Math.max(0, ...requirements.map(r => r.visualDepth))
 
     progress.badges.push({
       badgeName,
@@ -417,10 +736,13 @@ async function scrapeBadge(page: Page, progress: ScrapeProgress, outputPath: str
       versionYear: extractYearFromVersion(currentVersion),
       versionLabel: currentVersion,
       requirements,
-      scrapedAt: new Date().toISOString()
+      scrapedAt: new Date().toISOString(),
+      totalLinks,
+      totalCheckboxes,
+      maxDepth
     })
 
-    console.log(`    ${currentVersion}: ${requirements.length} requirements`)
+    console.log(`    ${currentVersion}: ${requirements.length} requirements, ${totalLinks} links, depth=${maxDepth}`)
     return
   }
 
@@ -450,26 +772,34 @@ async function scrapeBadge(page: Page, progress: ScrapeProgress, outputPath: str
     await page.waitForTimeout(500)
 
     // Extract requirements
-    let requirements = await extractRequirements(page)
+    const versionYear = extractYearFromVersion(versionLabel)
+    let requirements = await extractRequirements(page, versionYear, badgeName)
 
     // Retry once if 0 requirements found
     if (requirements.length === 0) {
       console.log(`    ${versionLabel}: 0 requirements, retrying...`)
       await page.waitForTimeout(1000)
       await clearOverlays(page)
-      requirements = await extractRequirements(page)
+      requirements = await extractRequirements(page, versionYear, badgeName)
     }
+
+    const totalLinks = requirements.reduce((sum, r) => sum + r.links.length, 0)
+    const totalCheckboxes = requirements.filter(r => r.hasCheckbox).length
+    const maxDepth = Math.max(0, ...requirements.map(r => r.visualDepth))
 
     progress.badges.push({
       badgeName,
       badgeSlug,
-      versionYear: extractYearFromVersion(versionLabel),
+      versionYear,
       versionLabel,
       requirements,
-      scrapedAt: new Date().toISOString()
+      scrapedAt: new Date().toISOString(),
+      totalLinks,
+      totalCheckboxes,
+      maxDepth
     })
 
-    console.log(`    ${versionLabel}: ${requirements.length} requirements${requirements.length === 0 ? ' (FAILED)' : ''}`)
+    console.log(`    ${versionLabel}: ${requirements.length} requirements, ${totalLinks} links, depth=${maxDepth}${requirements.length === 0 ? ' (FAILED)' : ''}`)
   }
 }
 
