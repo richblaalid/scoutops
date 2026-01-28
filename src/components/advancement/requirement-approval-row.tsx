@@ -252,12 +252,13 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
         onClick={handleRowClick}
         className={cn(
           'group relative flex items-start gap-2 rounded-lg border p-2 transition-all sm:gap-3 sm:p-3',
-          showSuccess && 'border-emerald-200 bg-emerald-50 ring-1 ring-emerald-200',
-          isComplete && !showSuccess && 'border-emerald-200 bg-emerald-50/30',
+          showSuccess && 'border-success bg-success-light ring-1 ring-success',
+          isComplete && !showSuccess && 'border-success bg-success-light',
           isPending && 'border-amber-200 bg-amber-50',
           isDenied && 'border-red-200 bg-red-50',
-          !isComplete && !isPending && !isDenied && !isSelected && 'border-stone-300 bg-stone-100/50 hover:bg-stone-100',
-          isSelected && 'border-blue-200 bg-blue-50 ring-1 ring-blue-200',
+          // Default: white background with pine green border
+          !isComplete && !isPending && !isDenied && !isSelected && 'border-forest-800 bg-white hover:bg-stone-50',
+          isSelected && 'border-blue-400 bg-blue-50 ring-1 ring-blue-200',
           // Clickable cursor when row can be interacted with
           !isComplete && !isLoading && (isMultiSelectMode || canApprove) && 'cursor-pointer'
         )}
@@ -271,8 +272,8 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
               onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
               className={cn(
                 'transition-all',
-                // Completed requirements always show green
-                (isComplete || showSuccess) && 'border-emerald-500 bg-emerald-500 text-white data-[state=checked]:bg-emerald-500',
+                // Completed requirements: bold campfire orange
+                (isComplete || showSuccess) && 'border-[#E85D04] bg-[#E85D04] text-white data-[state=checked]:bg-[#E85D04]',
                 // Multi-select mode: blue selection styling for incomplete requirements
                 isMultiSelectMode && isSelected && !isComplete && 'border-blue-500 bg-blue-500 text-white data-[state=checked]:bg-blue-500'
               )}
@@ -280,7 +281,7 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
           ) : (
             <div className="flex h-5 w-5 items-center justify-center">
               {isComplete ? (
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#E85D04]">
                   <Check className="h-3 w-3 text-white" />
                 </div>
               ) : isPending ? (
@@ -302,12 +303,13 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
               <p
                 className={cn(
                   'text-sm leading-relaxed',
-                  (isComplete || showSuccess) && 'text-stone-500 line-through decoration-emerald-400'
+                  (isComplete || showSuccess) && 'text-stone-500'
                 )}
               >
                 <span className={cn(
                   'mr-1.5 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-xs font-bold',
-                  isComplete ? 'bg-emerald-200 text-emerald-800' : 'bg-stone-300 text-stone-700'
+                  // Completed: campfire orange, Incomplete: campfire orange (actionable items)
+                  isComplete ? 'bg-[#E85D04] text-white' : 'bg-[#E85D04] text-white'
                 )}>
                   {displayLabel ?? requirementNumber}
                 </span>

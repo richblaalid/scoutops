@@ -327,6 +327,75 @@ function isRequirementComplete(req: Requirement) {
   return ['completed', 'approved', 'awarded'].includes(req.status)
 }
 
+/**
+ * Get tier-based styling for nested requirement levels.
+ * Refined Pine Green Design:
+ *
+ * - Headers (non-completable): Subtle pine green tinted backgrounds by depth
+ * - Completable requirements: Always white backgrounds
+ * - All borders: Pine green (#234D3E)
+ * - Left borders: Pine green for hierarchy indication
+ *
+ * Design rationale:
+ * - Clean, professional look with consistent pine green accents
+ * - Headers distinguished by subtle green tints
+ * - Completable items are clean white for clarity
+ * - Depth visible through tint intensity and left border lines
+ */
+function getTierStyles(depth: number, isHeader: boolean, isComplete: boolean, isSelected: boolean) {
+  // All borders use pine green (forest-800 = #234D3E)
+  const borderColor = 'border-forest-800'
+
+  // Header backgrounds: subtle pine green tints that fade with depth
+  // Using rgba for precise opacity control
+  const headerBackgrounds = [
+    'bg-forest-800/[0.12]',  // Depth 0: 12% pine
+    'bg-forest-800/[0.08]',  // Depth 1: 8% pine
+    'bg-forest-800/[0.05]',  // Depth 2: 5% pine
+    'bg-forest-800/[0.03]',  // Depth 3: 3% pine
+    'bg-forest-800/[0.02]',  // Depth 4+: 2% pine
+  ]
+
+  const idx = Math.min(depth, 4)
+
+  // Border width - thicker for root level headers
+  const borderWidth = depth === 0 && isHeader ? 'border-2' : 'border'
+
+  // Override for completed items - emerald success state
+  if (isComplete && !isHeader) {
+    return {
+      container: 'border-success bg-success-light',
+      leftBorder: 'border-success',
+      borderWidth: 'border',
+    }
+  }
+
+  // Override for selected items - blue selection state
+  if (isSelected && !isHeader) {
+    return {
+      container: 'border-blue-400 bg-blue-50/50',
+      leftBorder: borderColor,
+      borderWidth: 'border',
+    }
+  }
+
+  // Header styling - subtle pine green tinted backgrounds
+  if (isHeader) {
+    return {
+      container: `${borderColor} ${headerBackgrounds[idx]}`,
+      leftBorder: borderColor,
+      borderWidth,
+    }
+  }
+
+  // Completable requirements - always white background
+  return {
+    container: `${borderColor} bg-white`,
+    leftBorder: borderColor,
+    borderWidth: 'border',
+  }
+}
+
 // Recursive requirement node component
 const RequirementNodeView = memo(function RequirementNodeView({
   node,
@@ -341,6 +410,7 @@ const RequirementNodeView = memo(function RequirementNodeView({
   isMultiSelectMode,
   selectedIds,
   onSelectionChange,
+  depth = 0,
 }: {
   node: RequirementNode
   unitId: string
@@ -358,6 +428,7 @@ const RequirementNodeView = memo(function RequirementNodeView({
   isMultiSelectMode?: boolean
   selectedIds?: Set<string>
   onSelectionChange?: (id: string) => void
+  depth?: number
 }) {
   const hasChildren = node.children.length > 0
   const isCollapsed = collapsedNodes.has(node.requirement.id)
@@ -422,15 +493,17 @@ const RequirementNodeView = memo(function RequirementNodeView({
     }
   }
 
+  // Get tier-based styling for this depth level
+  // Treat any node with children as a "header" for styling (subtle pine background)
+  // Only leaf nodes without children get white completable styling
+  const isContainerNode = hasChildren || isHeader
+  const tierStyles = getTierStyles(depth, isContainerNode, isComplete, isSelected)
+
   return (
     <div className={cn(
-      'rounded-lg border transition-colors',
-      isHeader
-        ? 'border-stone-300 bg-stone-100/50'  // Header styling - more prominent
-        : isComplete
-          ? 'border-emerald-200 bg-emerald-50/30'
-          : 'border-stone-200 bg-stone-50/30',
-      isSelected && !isHeader && 'border-blue-200 bg-blue-50/30'
+      'rounded-lg transition-colors',
+      tierStyles.borderWidth,
+      tierStyles.container
     )}>
       {/* Collapsible Header */}
       <div
@@ -486,14 +559,12 @@ const RequirementNodeView = memo(function RequirementNodeView({
           </button>
         )}
 
-        {/* Requirement Number Badge - show abbreviated label for nested items */}
+        {/* Requirement Number Badge - Pine green with white text */}
         <span className={cn(
           'flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded px-1.5 text-xs font-bold',
-          isHeader
-            ? 'bg-stone-300 text-stone-700'  // Header badge styling
-            : isComplete
-              ? 'bg-emerald-200 text-emerald-800'
-              : 'bg-stone-200 text-stone-700'
+          isComplete && !isHeader
+            ? 'bg-success text-white'  // Completed: emerald green
+            : 'bg-forest-800 text-white'  // Default: pine green
         )}>
           {displayLabel}
         </span>
@@ -536,54 +607,61 @@ const RequirementNodeView = memo(function RequirementNodeView({
           </button>
         )}
 
-        {/* Status Indicator - headers show child count, non-headers show completion */}
-        {isHeader ? (
-          // Headers just show how many sub-requirements
-          <span className="text-xs text-stone-400">
-            {stats.total} sub-req{stats.total !== 1 ? 's' : ''}
+        {/* Status Indicator - show completion progress or celebratory completed state */}
+        {isComplete ? (
+          // Celebratory completion indicator - campfire orange accent
+          <span className="flex items-center gap-1.5 rounded-full bg-[#E85D04]/10 px-2.5 py-0.5 text-xs font-semibold text-[#E85D04]">
+            <span className="text-sm">🎯</span>
+            Completed!
           </span>
-        ) : isComplete ? (
-          <span className="flex items-center gap-1 text-xs text-emerald-600">
-            <Check className="h-3.5 w-3.5" />
-            Complete
-          </span>
-        ) : (
+        ) : !isHeader && stats.total > 0 ? (
+          // Progress indicator for non-headers
           <span className="text-xs text-stone-400">
             {stats.completed}/{stats.total}
           </span>
-        )}
+        ) : null}
       </div>
 
       {/* Expanded Content */}
       {!isCollapsed && (
         <div className="border-t border-stone-100 px-2 pb-2 pt-1">
           <div className="space-y-0.5">
-            {node.children.map((child) => (
-              <div
-                key={child.requirement.id}
-                className={cn(
-                  'ml-2 border-l-2 pl-2',
-                  child.requirement.isAlternative
-                    ? 'border-amber-200'
-                    : 'border-stone-200'
-                )}
-              >
-                <RequirementNodeView
-                  node={child}
-                  unitId={unitId}
-                  canEdit={canEdit}
-                  currentUserName={currentUserName}
-                  initData={initData}
-                  isMeritBadge={isMeritBadge}
-                  meritBadgeInitData={meritBadgeInitData}
-                  collapsedNodes={collapsedNodes}
-                  toggleNode={toggleNode}
-                  isMultiSelectMode={isMultiSelectMode}
-                  selectedIds={selectedIds}
-                  onSelectionChange={onSelectionChange}
-                />
-              </div>
-            ))}
+            {node.children.map((child) => {
+              // Get tier styling for the child's left border
+              const childTierStyles = getTierStyles(
+                depth + 1,
+                child.requirement.isHeader === true,
+                false, // completion determined inside child
+                false
+              )
+              return (
+                <div
+                  key={child.requirement.id}
+                  className={cn(
+                    'ml-2 border-l-2 pl-2',
+                    child.requirement.isAlternative
+                      ? 'border-amber-200'
+                      : childTierStyles.leftBorder
+                  )}
+                >
+                  <RequirementNodeView
+                    node={child}
+                    unitId={unitId}
+                    canEdit={canEdit}
+                    currentUserName={currentUserName}
+                    initData={initData}
+                    isMeritBadge={isMeritBadge}
+                    meritBadgeInitData={meritBadgeInitData}
+                    collapsedNodes={collapsedNodes}
+                    toggleNode={toggleNode}
+                    isMultiSelectMode={isMultiSelectMode}
+                    selectedIds={selectedIds}
+                    onSelectionChange={onSelectionChange}
+                    depth={depth + 1}
+                  />
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
