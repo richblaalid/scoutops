@@ -179,6 +179,7 @@ function RequirementNodeView({
   const hasAlternativeChildren = node.children.some(c => c.requirement.is_alternative)
 
   // For leaf nodes (no children), render just the requirement row
+  // White background with pine green border, campfire orange badge
   if (!hasChildren) {
     return (
       <div
@@ -186,10 +187,8 @@ function RequirementNodeView({
           'flex items-start gap-3 rounded-lg border p-2.5 transition-colors',
           isMultiSelectMode && 'cursor-pointer',
           isSelected
-            ? 'border-blue-200 bg-blue-50'
-            : depth === 0
-              ? 'border-stone-200 bg-white hover:bg-stone-50'
-              : 'border-stone-100 bg-stone-50 hover:bg-stone-100'
+            ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-200'
+            : 'border-forest-800 bg-white hover:bg-stone-50'
         )}
         onClick={() => isMultiSelectMode && onSelectionChange(req.id)}
       >
@@ -202,15 +201,11 @@ function RequirementNodeView({
         )}
         <div className="flex-1">
           <div className="flex items-start gap-2">
-            <span className={cn(
-              'flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded px-1 text-xs font-bold',
-              depth === 0 ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600'
-            )}>
+            {/* Campfire orange badge for completable items */}
+            <span className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded px-1 text-xs font-bold bg-[#E85D04] text-white">
               {displayLabel}
             </span>
-            <p className={cn(
-              depth === 0 ? 'text-sm text-stone-700' : 'text-xs text-stone-600'
-            )}>
+            <p className="text-sm text-stone-700">
               {req.description}
             </p>
           </div>
@@ -220,10 +215,16 @@ function RequirementNodeView({
   }
 
   // For nodes with children, render collapsible section
+  // Subtle pine green tinted background, pine green borders
+  // Background opacity decreases with depth: 12% -> 8% -> 5% -> 3%
+  const headerBgOpacity = depth === 0 ? '[0.12]' : depth === 1 ? '[0.08]' : depth === 2 ? '[0.05]' : '[0.03]'
+
   return (
     <div className={cn(
       'rounded-lg border transition-colors',
-      'border-stone-200 bg-stone-50/30'
+      depth === 0 ? 'border-2' : 'border',
+      'border-forest-800',
+      `bg-forest-800/${headerBgOpacity}`
     )}>
       {/* Collapsible Header */}
       <div
@@ -254,7 +255,7 @@ function RequirementNodeView({
               e.stopPropagation()
               toggleNode(req.id)
             }}
-            className="flex h-5 w-5 shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
+            className="flex h-5 w-5 shrink-0 items-center justify-center text-stone-500 hover:text-stone-700"
           >
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -264,13 +265,13 @@ function RequirementNodeView({
           </button>
         )}
 
-        {/* Requirement Number Badge */}
-        <span className="flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded bg-stone-200 px-1.5 text-xs font-bold text-stone-700">
+        {/* Requirement Number Badge - Pine green for containers */}
+        <span className="flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded bg-forest-800 px-1.5 text-xs font-bold text-white">
           {displayLabel}
         </span>
 
         {/* Title/Description */}
-        <span className="flex-1 font-medium text-stone-700 line-clamp-1">
+        <span className="flex-1 font-medium text-forest-800 line-clamp-1">
           {req.description.length > 80
             ? req.description.slice(0, 80) + '...'
             : req.description}
@@ -282,18 +283,11 @@ function RequirementNodeView({
             Options
           </span>
         )}
-
-        {/* Child count indicator (when not in multi-select) */}
-        {!isMultiSelectMode && (
-          <span className="text-xs text-stone-400">
-            {node.children.length} sub-req{node.children.length !== 1 ? 's' : ''}
-          </span>
-        )}
       </div>
 
       {/* Expanded Content */}
       {!isCollapsed && (
-        <div className="border-t border-stone-100 px-2 pb-2 pt-1">
+        <div className="border-t border-forest-800/20 px-2 pb-2 pt-1">
           <div className="space-y-1">
             {node.children.map((child) => (
               <div
@@ -302,7 +296,7 @@ function RequirementNodeView({
                   'ml-2 border-l-2 pl-2',
                   child.requirement.is_alternative
                     ? 'border-amber-200'
-                    : 'border-stone-200'
+                    : 'border-forest-800'
                 )}
               >
                 <RequirementNodeView
