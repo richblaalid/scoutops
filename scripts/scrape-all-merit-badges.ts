@@ -568,7 +568,7 @@ async function extractRequirements(page: Page, versionYear: number, badgeName: s
             parentNumber: mainReqNum,
             depth: depth,
             visualDepth: visualDepth,
-            isHeader: isSectionHeader || isNoLabelHeader,
+            isHeader: isSectionHeader || isNoCheckboxHeader,
             hasCheckbox: itemHasCheckbox,
             links: itemLinks,
             rawHtml: itemRawHtml,
