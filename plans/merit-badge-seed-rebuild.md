@@ -537,9 +537,9 @@ After this process is validated for merit badges, apply the same approach to ran
 |-------|-------|----------|--------|
 | Phase 0 (CSV) | 2 | 2 | ✅ Complete |
 | Phase 1 (Scraper Updates) | 5 | 5 | ✅ Complete |
-| Phase 0.5 (Test Validation) | 12 | 1 | 🔄 In Progress |
-| Phase 2 (Merge Logic) | 5 | 0 | ⬜ Not Started |
-| Phase 3 (Output) | 4 | 0 | ⬜ Not Started |
+| Phase 2 (Merge Logic) | 5 | 5 | ✅ Complete |
+| Phase 0.5 (Test Validation) | 12 | 2 | 🔄 Ready for Testing |
+| Phase 3 (Output) | 4 | 0 | ⬜ Pending Scrape |
 
 ### Validation Gate
 **Before running full scrape, ALL test badges must pass:**
@@ -553,10 +553,13 @@ After this process is validated for merit badges, apply the same approach to ran
 
 | Task | Date | Commit | Notes |
 |------|------|--------|-------|
-| 0.1.1 CSV Parser | 2026-01-28 | pending | Created `scripts/parse-achievement-csv.ts` |
-| 0.1.2 CSV Validation | 2026-01-28 | pending | 129 badges, 345 versions, 8,937 requirement IDs extracted |
-| 1.1.1-4 Scraper Updates | 2026-01-28 | pending | Added visual depth, checkbox detection, link extraction, raw HTML |
-| 0.2.1 Test Script | 2026-01-28 | pending | Created `scripts/test-single-badge-scrape.ts` |
+| 0.1.1 CSV Parser | 2026-01-28 | 883e21e | Created `scripts/parse-achievement-csv.ts` |
+| 0.1.2 CSV Validation | 2026-01-28 | 883e21e | 129 badges, 345 versions, 8,937 requirement IDs extracted |
+| 1.1.1-4 Scraper Updates | 2026-01-28 | 883e21e | Added visual depth, checkbox detection, link extraction, raw HTML |
+| 0.2.1 Test Script | 2026-01-28 | 883e21e | Created `scripts/test-single-badge-scrape.ts` |
+| 0.2.2 Test Expectations | 2026-01-28 | pending | Created `data/test-badge-expectations.json` with version targets |
+| 2.1.1-3 Merge Script | 2026-01-28 | pending | Created `scripts/merge-csv-with-ui.ts` with hierarchy building |
+| 2.2.1-3 Discrepancy Detection | 2026-01-28 | pending | Integrated into merge script |
 
 ---
 

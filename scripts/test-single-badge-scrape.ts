@@ -8,15 +8,21 @@
  * - Raw HTML capture
  *
  * Usage:
- *   npx tsx scripts/test-single-badge-scrape.ts "First Aid"
- *   npx tsx scripts/test-single-badge-scrape.ts "Environmental Science"
- *   npx tsx scripts/test-single-badge-scrape.ts "Multisport"
+ *   npx tsx scripts/test-single-badge-scrape.ts "First Aid" [version_year]
+ *   npx tsx scripts/test-single-badge-scrape.ts "Environmental Science" 2020
+ *   npx tsx scripts/test-single-badge-scrape.ts "Multisport" 2025
+ *
+ * Recommended test versions:
+ *   - First Aid: 2022 (standard 2-level hierarchy)
+ *   - Environmental Science: 2020 (bracket notation 3a[1], 3b[2])
+ *   - Multisport: 2025 (4-deep nesting with named options)
  *
  * The script will:
  * 1. Launch browser - you log in manually
- * 2. Navigate to the specified badge
- * 3. Scrape current version
- * 4. Output detailed results for inspection
+ * 2. Navigate to the specified badge and version
+ * 3. Scrape requirements
+ * 4. Compare against expected results if available
+ * 5. Output detailed results for inspection
  */
 
 import { chromium, Page } from 'playwright'
@@ -296,14 +302,114 @@ async function dismissSessionPopup(page: Page): Promise<boolean> {
   return false
 }
 
+// Load test expectations
+interface TestExpectation {
+  badge_name: string
+  target_version: number
+  version_notes: string
+  expected: {
+    total_requirements_min: number
+    total_requirements_max: number
+    max_visual_depth: number
+    headers_expected: boolean
+    csv_requirement_ids: string[]
+  }
+  validation_checks: string[]
+}
+
+function loadExpectations(badgeName: string): TestExpectation | null {
+  const expectationsPath = 'data/test-badge-expectations.json'
+  if (!fs.existsSync(expectationsPath)) return null
+
+  const data = JSON.parse(fs.readFileSync(expectationsPath, 'utf-8'))
+  const expectation = data.test_badges.find(
+    (t: TestExpectation) => t.badge_name.toLowerCase() === badgeName.toLowerCase()
+  )
+  return expectation || null
+}
+
+// Version selection
+async function getAvailableVersions(page: Page): Promise<string[]> {
+  const versionSelector = await page.$('[class*="VersionSelector__versionSelect"]')
+  if (!versionSelector) return []
+
+  await versionSelector.click({ force: true })
+  await page.waitForTimeout(300)
+
+  const versions = await page.evaluate(() => {
+    const options: string[] = []
+    document.querySelectorAll('.ant-select-dropdown-menu-item, .ant-select-item-option').forEach((opt) => {
+      const text = opt.textContent?.trim()
+      if (text && !options.includes(text)) options.push(text)
+    })
+    return options
+  })
+
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(200)
+
+  return versions
+}
+
+async function selectVersion(page: Page, targetYear: number): Promise<boolean> {
+  const versions = await getAvailableVersions(page)
+  const targetVersion = versions.find((v) => v.includes(String(targetYear)))
+
+  if (!targetVersion) {
+    console.log(`Version ${targetYear} not found. Available: ${versions.join(', ')}`)
+    return false
+  }
+
+  const versionSelector = await page.$('[class*="VersionSelector__versionSelect"]')
+  if (!versionSelector) return false
+
+  await versionSelector.click({ force: true })
+  await page.waitForTimeout(300)
+
+  const clicked = await page.evaluate((targetVersion) => {
+    const options = Array.from(
+      document.querySelectorAll('.ant-select-dropdown-menu-item, .ant-select-item-option')
+    )
+    for (const opt of options) {
+      if (opt.textContent?.trim() === targetVersion) {
+        ;(opt as HTMLElement).click()
+        return true
+      }
+    }
+    return false
+  }, targetVersion)
+
+  if (clicked) {
+    await page.waitForTimeout(800)
+    console.log(`Selected version: ${targetVersion}`)
+  }
+
+  return clicked
+}
+
 // Main
 async function main() {
   const badgeNameArg = process.argv[2]
+  const targetVersionArg = process.argv[3] ? parseInt(process.argv[3], 10) : null
 
   if (!badgeNameArg) {
-    console.error('Usage: npx tsx scripts/test-single-badge-scrape.ts "Badge Name"')
-    console.error('Example: npx tsx scripts/test-single-badge-scrape.ts "First Aid"')
+    console.error('Usage: npx tsx scripts/test-single-badge-scrape.ts "Badge Name" [version_year]')
+    console.error('')
+    console.error('Examples:')
+    console.error('  npx tsx scripts/test-single-badge-scrape.ts "First Aid" 2022')
+    console.error('  npx tsx scripts/test-single-badge-scrape.ts "Environmental Science" 2020')
+    console.error('  npx tsx scripts/test-single-badge-scrape.ts "Multisport" 2025')
     process.exit(1)
+  }
+
+  // Load expectations
+  const expectations = loadExpectations(badgeNameArg)
+  const targetVersion = targetVersionArg || expectations?.target_version
+
+  if (expectations) {
+    console.log(`Found test expectations for ${badgeNameArg}`)
+    console.log(`  Target version: ${expectations.target_version}`)
+    console.log(`  Notes: ${expectations.version_notes}`)
   }
 
   console.log('='.repeat(60))
@@ -354,6 +460,16 @@ async function main() {
   // Verify we're on the right badge
   const actualBadgeName = await getBadgeName(page)
   console.log(`\nDetected badge: ${actualBadgeName}`)
+
+  // Select target version if specified
+  if (targetVersion) {
+    console.log(`\nSelecting version ${targetVersion}...`)
+    const selected = await selectVersion(page, targetVersion)
+    if (!selected) {
+      console.warn(`Could not select version ${targetVersion}`)
+    }
+    await page.waitForTimeout(500)
+  }
 
   if (!actualBadgeName.toLowerCase().includes(badgeNameArg.toLowerCase())) {
     console.warn(`Warning: Expected "${badgeNameArg}" but found "${actualBadgeName}"`)
@@ -487,6 +603,80 @@ async function main() {
     } else {
       console.log(`\nNo CSV data found for badge: ${actualBadgeName}`)
     }
+  }
+
+  // Expectations comparison
+  if (expectations && versionYear === expectations.target_version) {
+    console.log('\n' + '-'.repeat(60))
+    console.log('EXPECTATIONS COMPARISON')
+    console.log('-'.repeat(60))
+
+    const exp = expectations.expected
+    const checks: { name: string; passed: boolean; details: string }[] = []
+
+    // Check requirement count
+    const countPassed =
+      stats.totalRequirements >= exp.total_requirements_min &&
+      stats.totalRequirements <= exp.total_requirements_max
+    checks.push({
+      name: 'Requirement count',
+      passed: countPassed,
+      details: `${stats.totalRequirements} (expected ${exp.total_requirements_min}-${exp.total_requirements_max})`,
+    })
+
+    // Check max depth
+    const depthPassed = stats.maxVisualDepth <= exp.max_visual_depth + 1 // Allow +1 for flexibility
+    checks.push({
+      name: 'Max visual depth',
+      passed: depthPassed,
+      details: `${stats.maxVisualDepth} (expected ~${exp.max_visual_depth})`,
+    })
+
+    // Check headers exist
+    const headersPassed = exp.headers_expected ? stats.headersCount > 0 : true
+    checks.push({
+      name: 'Headers detected',
+      passed: headersPassed,
+      details: `${stats.headersCount} headers found`,
+    })
+
+    // Check CSV ID coverage
+    const scrapedIds = requirements
+      .filter((r) => r.hasCheckbox || r.displayLabel)
+      .map((r) => r.displayLabel)
+      .filter(Boolean)
+    const expectedIds = exp.csv_requirement_ids
+    const matchedIds = expectedIds.filter((csvId) =>
+      scrapedIds.some((scraped) => {
+        const normCsv = csvId.replace(/[()[\]]/g, '').replace(/\.$/, '').toLowerCase()
+        const normScraped = scraped.replace(/[()[\]]/g, '').replace(/\.$/, '').toLowerCase()
+        return normCsv === normScraped || normCsv.includes(normScraped) || normScraped.includes(normCsv)
+      })
+    )
+    const coveragePct = Math.round((matchedIds.length / expectedIds.length) * 100)
+    checks.push({
+      name: 'CSV ID coverage',
+      passed: coveragePct >= 50, // At least 50% coverage
+      details: `${matchedIds.length}/${expectedIds.length} matched (${coveragePct}%)`,
+    })
+
+    // Print results
+    console.log('')
+    for (const check of checks) {
+      const icon = check.passed ? '✓' : '✗'
+      console.log(`${icon} ${check.name}: ${check.details}`)
+    }
+
+    const allPassed = checks.every((c) => c.passed)
+    console.log('')
+    console.log(allPassed ? '✓ ALL CHECKS PASSED' : '✗ SOME CHECKS FAILED')
+
+    // Print validation checklist
+    console.log('')
+    console.log('Manual validation checklist:')
+    expectations.validation_checks.forEach((check, i) => {
+      console.log(`  ${i + 1}. [ ] ${check}`)
+    })
   }
 
   console.log('')

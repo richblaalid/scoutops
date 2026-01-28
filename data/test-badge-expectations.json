@@ -1,0 +1,125 @@
+{
+  "description": "Expected results for test badge validation (Phase 0.5)",
+  "generated_at": "2026-01-28T01:00:00.000Z",
+  "test_badges": [
+    {
+      "badge_name": "First Aid",
+      "target_version": 2022,
+      "version_notes": "2022 version has standard 2-level hierarchy without complex nesting",
+      "expected": {
+        "total_requirements_min": 40,
+        "total_requirements_max": 50,
+        "max_visual_depth": 1,
+        "headers_expected": true,
+        "header_pattern": "Numbered main items (1, 2, 3...) should be headers if no checkbox",
+        "sample_hierarchy": {
+          "1": ["is main header"],
+          "2a": ["child of 2"],
+          "2b": ["child of 2"],
+          "2c": ["child of 2"]
+        },
+        "csv_requirement_ids": [
+          "1", "2a", "2b", "2c", "3", "4", "5a", "5b", "6a", "6b", "6c",
+          "7a", "7b", "8a", "8b", "8c", "8d", "9", "10a", "10b", "11a",
+          "11b", "11c", "11d", "11e", "11f", "12a", "12b", "12c", "12d",
+          "12e", "12f", "12g", "12h", "12i", "12j", "12k", "12l", "12m",
+          "12n", "12o", "12p", "13a", "13b", "13c", "14"
+        ]
+      },
+      "validation_checks": [
+        "All numbered headers (1, 2, 3...) identified as is_header=true OR have checkbox",
+        "Sub-requirements (a, b, c) have correct parent relationship",
+        "Requirement IDs match CSV exactly",
+        "Visual depth is 0 for main, 1 for sub-requirements"
+      ]
+    },
+    {
+      "badge_name": "Environmental Science",
+      "target_version": 2020,
+      "version_notes": "2020 version uses bracket notation: 3a[1], 3a[2], 3b[1], etc.",
+      "expected": {
+        "total_requirements_min": 25,
+        "total_requirements_max": 40,
+        "max_visual_depth": 2,
+        "headers_expected": true,
+        "header_pattern": "Section headers like 3a (Ecology), 3b (Air Pollution) should be headers",
+        "sample_hierarchy": {
+          "3": ["is main header - 'Do ONE activity from SEVEN...'"],
+          "3a": ["header for Ecology section, child of 3"],
+          "3a[1]": ["requirement, child of 3a"],
+          "3a[2]": ["requirement, child of 3a"],
+          "3b": ["header for Air Pollution section, child of 3"],
+          "3b[1]": ["requirement, child of 3b"]
+        },
+        "csv_requirement_ids": [
+          "1", "2", "3a[1]", "3a[2]", "3a[3]", "3b[1]", "3b[2]", "3b[3]",
+          "3c[1]", "3c[2]", "3c[3]", "3d[1]", "3d[2]", "3d[3]", "3e[1]",
+          "3e[2]", "3e[3]", "3f[1]", "3f[2]", "3f[3]", "3g[1]", "3g[2]",
+          "3g[3]", "3h[1]", "3h[2]", "3h[3]", "4a", "4b", "5", "6"
+        ]
+      },
+      "validation_checks": [
+        "3-level nesting captured: 3 → 3a → 3a[1]",
+        "Section headers (3a, 3b, etc.) identified as is_header=true",
+        "Bracket notation requirements have correct IDs from CSV",
+        "All 8 sections (a through h) present under requirement 3"
+      ]
+    },
+    {
+      "badge_name": "Multisport",
+      "target_version": 2025,
+      "version_notes": "2025 version has 4-level deep nesting with named options (Triathlon, Duathlon, etc.)",
+      "expected": {
+        "total_requirements_min": 45,
+        "total_requirements_max": 60,
+        "max_visual_depth": 3,
+        "headers_expected": true,
+        "header_pattern": "Option headers (Triathlon Option, Duathlon Option) and section headers (a, b, c)",
+        "sample_hierarchy": {
+          "4": ["main header - 'Complete ALL of the activities...'"],
+          "Triathlon Option": ["header, child of 4"],
+          "(a)": ["header for Swimming, child of Triathlon Option"],
+          "4a1 Triathlon Option": ["requirement, child of (a)"],
+          "4a2 Triathlon Option": ["requirement, child of (a)"],
+          "4a3 Triathlon Option": ["requirement, child of (a)"],
+          "(b)": ["header for Cycling, child of Triathlon Option"],
+          "4b1 Triathlon Option": ["requirement, child of (b)"]
+        },
+        "csv_requirement_ids": [
+          "1a.", "1b.", "2a.", "2b.", "2c.", "3a.", "3b.", "3c.", "3d.",
+          "4a1 Triathlon Option", "4a2 Triathlon Option", "4a3 Triathlon Option",
+          "4b1 Triathlon Option", "4b2 Triathlon Option", "4b3 Triathlon Option",
+          "4c1 Triathlon Option", "4c2 Triathlon Option", "4c3 Triathlon Option",
+          "4a1 Duathlon Option", "4a2 Duathlon Option", "4a3 Duathlon Option",
+          "4b1 Duathlon Option", "4b2 Duathlon Option", "4b3 Duathlon Option",
+          "4a1 Aquathlon Option", "4a2 Aquathlon Option", "4a3 Aquathlon Option",
+          "4b1 Aquathlon Option", "4b2 Aquathlon Option", "4b3 Aquathlon Option",
+          "4a1 Aquabike Option", "4a2 Aquabike Option", "4a3 Aquabike Option",
+          "4b1 Aquabike Option", "4b2 Aquabike Option", "4b3 Aquabike Option",
+          "5a.", "5b.", "5c.", "5d.", "6.", "7.", "8a.", "8b.", "8c.", "8d.", "8e."
+        ]
+      },
+      "validation_checks": [
+        "4-level nesting captured: 4 → Option → Section → Item",
+        "All 4 sport options present as separate branches (Triathlon, Duathlon, Aquathlon, Aquabike)",
+        "Option headers identified correctly",
+        "Section headers (a, b, c) identified within each option",
+        "Requirement IDs match CSV format exactly (e.g., '4a1 Triathlon Option')"
+      ]
+    }
+  ],
+  "alternative_versions": {
+    "Environmental Science 2025": {
+      "notes": "2025 version uses simpler format (2a, 2b, 3a, 3b) without brackets",
+      "csv_ids_sample": ["1", "2a", "2b", "3a", "3b", "3c", "4a", "4b", "4c"]
+    },
+    "Multisport 2026": {
+      "notes": "2026 version uses different format: 4 Option A (1)(a), 4 Option B (2)(b)",
+      "csv_ids_sample": ["1(a)", "1(b)", "4 Option A (1)(a)", "4 Option A (1)(b)"]
+    },
+    "First Aid 2025": {
+      "notes": "2025 version uses parenthetical format: 1(a), 2(b)(1)",
+      "csv_ids_sample": ["1(a)", "1(b)", "2(a)", "2(b)(1)", "2(b)(2)"]
+    }
+  }
+}

@@ -1,0 +1,2424 @@
+{
+  "generated_at": "2026-01-28T01:05:02.087Z",
+  "total_discrepancies": 345,
+  "by_type": {
+    "badge_not_accessible": 345
+  },
+  "discrepancies": [
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "American Business",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for American Business version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "American Business",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for American Business version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "American Business",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for American Business version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "American Heritage",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for American Heritage version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "American Indian Culture",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for American Indian Culture version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "American Indian Culture",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for American Indian Culture version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "American Indian Culture",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for American Indian Culture version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Animal Science",
+      "versionYear": 2007,
+      "description": "No scraped UI data found for Animal Science version 2007",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Animal Science",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Animal Science version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Animal Science",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Animal Science version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Animal Science",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Animal Science version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Animal Science",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Animal Science version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Animation",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Animation version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Archaeology",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Archaeology version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Archaeology",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Archaeology version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Archaeology",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Archaeology version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Archery",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Archery version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Archery",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Archery version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Archery",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Archery version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Archery",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Archery version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Art",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Art version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Astronomy",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Astronomy version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Astronomy",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Astronomy version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Astronomy",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Astronomy version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Athletics",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Athletics version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Athletics",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Athletics version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Athletics",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Athletics version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Athletics",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Athletics version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Automotive Maintenance",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Automotive Maintenance version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Automotive Maintenance",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Automotive Maintenance version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Automotive Maintenance",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Automotive Maintenance version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Aviation",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Aviation version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Aviation",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Aviation version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Backpacking",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Backpacking version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Backpacking",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Backpacking version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Basketry",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Basketry version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Bird Study",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Bird Study version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Bird Study",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Bird Study version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Bird Study",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Bird Study version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Bird Study",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Bird Study version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Bugling",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Bugling version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Bugling",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Bugling version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Camping",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Camping version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Camping",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Camping version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Camping",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Camping version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Camping",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Camping version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Canoeing",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Canoeing version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Canoeing",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Canoeing version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Canoeing",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Canoeing version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Canoeing",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Canoeing version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Chemistry",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Chemistry version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Chemistry",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Chemistry version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Chemistry",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Chemistry version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Chemistry",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Chemistry version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Chemistry",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Chemistry version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Chess",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Chess version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Chess",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Chess version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in Society",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Citizenship in Society version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in Society",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Citizenship in Society version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in the Community",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Citizenship in the Community version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in the Community",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Citizenship in the Community version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in the Community",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Citizenship in the Community version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in the Nation",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Citizenship in the Nation version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in the Nation",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Citizenship in the Nation version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Citizenship in the World",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Citizenship in the World version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Climbing",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Climbing version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Climbing",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Climbing version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Climbing",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Climbing version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Coin Collecting",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Coin Collecting version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Coin Collecting",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Coin Collecting version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Coin Collecting",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Coin Collecting version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Collections",
+      "versionYear": 2009,
+      "description": "No scraped UI data found for Collections version 2009",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Collections",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Collections version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Communication",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Communication version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Composite Materials",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Composite Materials version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Composite Materials",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Composite Materials version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cooking",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Cooking version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cooking",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Cooking version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cooking",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Cooking version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cooking",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Cooking version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Crime Prevention",
+      "versionYear": 2006,
+      "description": "No scraped UI data found for Crime Prevention version 2006",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Crime Prevention",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Crime Prevention version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Crime Prevention",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Crime Prevention version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cycling",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Cycling version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cycling",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Cycling version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cycling",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Cycling version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Cycling",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Cycling version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Dentistry",
+      "versionYear": 2010,
+      "description": "No scraped UI data found for Dentistry version 2010",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Dentistry",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Dentistry version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Digital Technology",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Digital Technology version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Digital Technology",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Digital Technology version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Digital Technology",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Digital Technology version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Digital Technology",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Digital Technology version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Disabilities Awareness",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Disabilities Awareness version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Disabilities Awareness",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Disabilities Awareness version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Disabilities Awareness",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Disabilities Awareness version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Dog Care",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Dog Care version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Dog Care",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Dog Care version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Dog Care",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Dog Care version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Drafting",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Drafting version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Drafting",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Drafting version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Electricity",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Electricity version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Electricity",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Electricity version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Electricity",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Electricity version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Electronics",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Electronics version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Electronics",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Electronics version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Electronics",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Electronics version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Electronics",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Electronics version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Emergency Preparedness",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Emergency Preparedness version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Emergency Preparedness",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Emergency Preparedness version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Emergency Preparedness",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Emergency Preparedness version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Emergency Preparedness",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Emergency Preparedness version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Energy",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Energy version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Energy",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Energy version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Engineering",
+      "versionYear": 2009,
+      "description": "No scraped UI data found for Engineering version 2009",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Engineering",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Engineering version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Environmental Science",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Environmental Science version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Environmental Science",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Environmental Science version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Environmental Science",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Environmental Science version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Exploration",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Exploration version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Exploration",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Exploration version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Family Life",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Family Life version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Family Life",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Family Life version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Family Life",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Family Life version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fingerprinting",
+      "versionYear": 2004,
+      "description": "No scraped UI data found for Fingerprinting version 2004",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fingerprinting",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Fingerprinting version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fire Safety",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Fire Safety version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fire Safety",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Fire Safety version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fire Safety",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Fire Safety version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fire Safety",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Fire Safety version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "First Aid",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for First Aid version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "First Aid",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for First Aid version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "First Aid",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for First Aid version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "First Aid",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for First Aid version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "First Aid",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for First Aid version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "First Aid",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for First Aid version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fish and Wildlife Management",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Fish and Wildlife Management version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fish and Wildlife Management",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Fish and Wildlife Management version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fish and Wildlife Management",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Fish and Wildlife Management version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fishing",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Fishing version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fishing",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Fishing version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fishing",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Fishing version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fly Fishing",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Fly Fishing version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fly Fishing",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Fly Fishing version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fly Fishing",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Fly Fishing version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Fly Fishing",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Fly Fishing version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Forestry",
+      "versionYear": 2006,
+      "description": "No scraped UI data found for Forestry version 2006",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Forestry",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Forestry version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Forestry",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Forestry version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Game Design",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Game Design version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Game Design",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Game Design version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Game Design",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Game Design version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Gardening",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Gardening version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Gardening",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Gardening version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Genealogy",
+      "versionYear": 2006,
+      "description": "No scraped UI data found for Genealogy version 2006",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Genealogy",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Genealogy version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Geocaching",
+      "versionYear": 2010,
+      "description": "No scraped UI data found for Geocaching version 2010",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Geocaching",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Geocaching version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Geology",
+      "versionYear": 2010,
+      "description": "No scraped UI data found for Geology version 2010",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Geology",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Geology version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Geology",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Geology version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Geology",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Geology version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Golf",
+      "versionYear": 2003,
+      "description": "No scraped UI data found for Golf version 2003",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Golf",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Golf version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Golf",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Golf version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Health Care Professions",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Health Care Professions version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Health Care Professions",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Health Care Professions version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Hiking",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Hiking version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Hiking",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Hiking version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Home Repairs",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Home Repairs version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Home Repairs",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Home Repairs version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Horsemanship",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Horsemanship version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Horsemanship",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Horsemanship version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Insect Study",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Insect Study version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Insect Study",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Insect Study version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Insect Study",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Insect Study version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Inventing",
+      "versionYear": 2010,
+      "description": "No scraped UI data found for Inventing version 2010",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Inventing",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Inventing version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Journalism",
+      "versionYear": 2007,
+      "description": "No scraped UI data found for Journalism version 2007",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Journalism",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Journalism version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Kayaking",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Kayaking version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Kayaking",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Kayaking version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Landscape Architecture",
+      "versionYear": 2010,
+      "description": "No scraped UI data found for Landscape Architecture version 2010",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Landscape Architecture",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Landscape Architecture version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Law",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Law version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Law",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Law version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Law",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Law version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Leatherwork",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Leatherwork version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Leatherwork",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Leatherwork version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Lifesaving",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Lifesaving version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Lifesaving",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Lifesaving version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Mammal Study",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Mammal Study version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Mammal Study",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Mammal Study version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Metalwork",
+      "versionYear": 2008,
+      "description": "No scraped UI data found for Metalwork version 2008",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Metalwork",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Metalwork version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Mining in Society",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Mining in Society version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Mining in Society",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Mining in Society version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Mining in Society",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Mining in Society version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Model Design and Building",
+      "versionYear": 2004,
+      "description": "No scraped UI data found for Model Design and Building version 2004",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Model Design and Building",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Model Design and Building version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Model Design and Building",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Model Design and Building version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Motorboating",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Motorboating version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Motorboating",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Motorboating version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Motorboating",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Motorboating version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Motorboating",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Motorboating version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Motorboating",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Motorboating version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Moviemaking",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Moviemaking version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Moviemaking",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Moviemaking version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Multisport",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Multisport version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Multisport",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Multisport version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Music",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Music version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Music",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Music version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Music",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Music version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Nature",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Nature version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Nature",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Nature version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Nuclear Science",
+      "versionYear": 2011,
+      "description": "No scraped UI data found for Nuclear Science version 2011",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Nuclear Science",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Nuclear Science version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Nuclear Science",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Nuclear Science version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Nuclear Science",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Nuclear Science version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Oceanography",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Oceanography version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Oceanography",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Oceanography version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Orienteering",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Orienteering version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Painting",
+      "versionYear": 2009,
+      "description": "No scraped UI data found for Painting version 2009",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Painting",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Painting version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Painting",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Painting version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Painting",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Painting version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Personal Fitness",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Personal Fitness version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Personal Fitness",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Personal Fitness version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Personal Fitness",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Personal Fitness version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Personal Fitness",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Personal Fitness version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Personal Fitness",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Personal Fitness version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Personal Management",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Personal Management version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Personal Management",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Personal Management version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Pets",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Pets version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Pets",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Pets version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Photography",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Photography version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Photography",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Photography version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Photography",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Photography version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Pioneering",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Pioneering version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Pioneering",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Pioneering version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Pioneering",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Pioneering version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Plant Science",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Plant Science version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Plant Science",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Plant Science version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Plant Science",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Plant Science version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Plant Science",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Plant Science version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Plumbing",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Plumbing version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Plumbing",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Plumbing version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Pottery",
+      "versionYear": 2009,
+      "description": "No scraped UI data found for Pottery version 2009",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Programming",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Programming version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Programming",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Programming version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Programming",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Programming version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Programming",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Programming version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Public Health",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Public Health version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Public Health",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Public Health version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Public Health",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Public Health version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Public Health",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Public Health version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Radio",
+      "versionYear": 2009,
+      "description": "No scraped UI data found for Radio version 2009",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Radio",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Radio version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Radio",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Radio version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Railroading",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Railroading version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Railroading",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Railroading version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Railroading",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Railroading version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Reading",
+      "versionYear": 2004,
+      "description": "No scraped UI data found for Reading version 2004",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Reading",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Reading version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Reading",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Reading version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Reading",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Reading version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Reptile and Amphibian Study",
+      "versionYear": 2006,
+      "description": "No scraped UI data found for Reptile and Amphibian Study version 2006",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Reptile and Amphibian Study",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Reptile and Amphibian Study version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Rifle Shooting",
+      "versionYear": 2002,
+      "description": "No scraped UI data found for Rifle Shooting version 2002",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Rifle Shooting",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Rifle Shooting version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Rifle Shooting",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Rifle Shooting version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Rifle Shooting",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Rifle Shooting version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Robotics",
+      "versionYear": 2011,
+      "description": "No scraped UI data found for Robotics version 2011",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Robotics",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Robotics version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Rowing",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Rowing version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Rowing",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Rowing version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Safety",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Safety version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Safety",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Safety version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Safety",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Safety version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Salesmanship",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Salesmanship version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Salesmanship",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Salesmanship version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Salesmanship",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Salesmanship version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Scholarship",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Scholarship version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Scouting Heritage",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Scouting Heritage version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Scouting Heritage",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Scouting Heritage version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sculpture",
+      "versionYear": 2008,
+      "description": "No scraped UI data found for Sculpture version 2008",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sculpture",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Sculpture version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Search and Rescue",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Search and Rescue version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Search and Rescue",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Search and Rescue version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Shotgun Shooting",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Shotgun Shooting version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Shotgun Shooting",
+      "versionYear": 2025,
+      "description": "No scraped UI data found for Shotgun Shooting version 2025",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Shotgun Shooting",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Shotgun Shooting version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Signs, Signals, and Codes",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Signs, Signals, and Codes version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Signs, Signals, and Codes",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Signs, Signals, and Codes version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Skating",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Skating version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Skating",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Skating version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Skating",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Skating version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Small-Boat Sailing",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Small-Boat Sailing version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Small-Boat Sailing",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Small-Boat Sailing version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Small-Boat Sailing",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Small-Boat Sailing version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Snow Sports",
+      "versionYear": 2016,
+      "description": "No scraped UI data found for Snow Sports version 2016",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Snow Sports",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Snow Sports version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Snow Sports",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Snow Sports version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Snow Sports",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Snow Sports version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Soil and Water Conservation",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Soil and Water Conservation version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Soil and Water Conservation",
+      "versionYear": 2019,
+      "description": "No scraped UI data found for Soil and Water Conservation version 2019",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Space Exploration",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Space Exploration version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Space Exploration",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Space Exploration version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Space Exploration",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Space Exploration version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sports",
+      "versionYear": 2011,
+      "description": "No scraped UI data found for Sports version 2011",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sports",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Sports version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sports",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Sports version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sports",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Sports version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Stamp Collecting",
+      "versionYear": 2007,
+      "description": "No scraped UI data found for Stamp Collecting version 2007",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Surveying",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Surveying version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Surveying",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Surveying version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sustainability",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Sustainability version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sustainability",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Sustainability version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Sustainability",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Sustainability version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Swimming",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Swimming version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Swimming",
+      "versionYear": 2023,
+      "description": "No scraped UI data found for Swimming version 2023",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Swimming",
+      "versionYear": 2024,
+      "description": "No scraped UI data found for Swimming version 2024",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Textile",
+      "versionYear": 2004,
+      "description": "No scraped UI data found for Textile version 2004",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Theater",
+      "versionYear": 2005,
+      "description": "No scraped UI data found for Theater version 2005",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Theater",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Theater version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Theater",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Theater version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Traffic Safety",
+      "versionYear": 2007,
+      "description": "No scraped UI data found for Traffic Safety version 2007",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Traffic Safety",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Traffic Safety version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Traffic Safety",
+      "versionYear": 2022,
+      "description": "No scraped UI data found for Traffic Safety version 2022",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Traffic Safety",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Traffic Safety version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Veterinary Medicine",
+      "versionYear": 2006,
+      "description": "No scraped UI data found for Veterinary Medicine version 2006",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Veterinary Medicine",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Veterinary Medicine version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Water Sports",
+      "versionYear": 2017,
+      "description": "No scraped UI data found for Water Sports version 2017",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Weather",
+      "versionYear": 2014,
+      "description": "No scraped UI data found for Weather version 2014",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Weather",
+      "versionYear": 2018,
+      "description": "No scraped UI data found for Weather version 2018",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Weather",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Weather version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Welding",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Welding version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Whitewater",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Whitewater version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Whitewater",
+      "versionYear": 2020,
+      "description": "No scraped UI data found for Whitewater version 2020",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Whitewater",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Whitewater version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Wilderness Survival",
+      "versionYear": 2013,
+      "description": "No scraped UI data found for Wilderness Survival version 2013",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Wilderness Survival",
+      "versionYear": 2026,
+      "description": "No scraped UI data found for Wilderness Survival version 2026",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Wood Carving",
+      "versionYear": 2015,
+      "description": "No scraped UI data found for Wood Carving version 2015",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Woodwork",
+      "versionYear": 2012,
+      "description": "No scraped UI data found for Woodwork version 2012",
+      "suggestedAction": "Run scraper on this badge version"
+    },
+    {
+      "type": "badge_not_accessible",
+      "badgeName": "Woodwork",
+      "versionYear": 2021,
+      "description": "No scraped UI data found for Woodwork version 2021",
+      "suggestedAction": "Run scraper on this badge version"
+    }
+  ]
+}
