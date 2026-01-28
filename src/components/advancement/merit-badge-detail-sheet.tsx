@@ -87,6 +87,40 @@ interface MeritBadgeDetailSheetProps {
   isLoading?: boolean
 }
 
+/**
+ * Extract display label from requirement_number when sub_requirement_letter is null.
+ * Handles bracket notation like "2d[1]" → "1" and parenthetical like "5a(1)" → "1"
+ */
+function getSubReqDisplayLabel(req: Requirement): string {
+  // Use sub_requirement_letter if available
+  if (req.sub_requirement_letter) {
+    return req.sub_requirement_letter
+  }
+
+  const num = req.requirement_number
+
+  // Check for bracket notation: "2d[1]" → "1"
+  const bracketMatch = num.match(/\[(\d+)\]$/)
+  if (bracketMatch) {
+    return bracketMatch[1]
+  }
+
+  // Check for parenthetical: "5a(1)" → "1"
+  const parenMatch = num.match(/\(([^)]+)\)$/)
+  if (parenMatch) {
+    return parenMatch[1]
+  }
+
+  // Check for simple letter suffix: "2d" → "d"
+  const letterMatch = num.match(/\d+([a-z])$/i)
+  if (letterMatch) {
+    return letterMatch[1].toLowerCase()
+  }
+
+  // Fallback to full requirement number
+  return num
+}
+
 export function MeritBadgeDetailSheet({
   open,
   onOpenChange,
@@ -360,7 +394,7 @@ export function MeritBadgeDetailSheet({
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-stone-100 text-xs font-medium text-stone-600">
-                                        {subReq.sub_requirement_letter}
+                                        {getSubReqDisplayLabel(subReq)}
                                       </span>
                                       {subStats.completed > 0 && subStats.total > 0 && (
                                         <span className="text-xs text-stone-400">

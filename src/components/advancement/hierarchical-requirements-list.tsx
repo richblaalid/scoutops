@@ -65,11 +65,19 @@ interface HierarchicalRequirementsListProps {
  * - "4" → "4"
  * - "1(a)" → "a"
  * - "1a" → "a" (for simple formats)
+ * - "2d[1]" → "1" (bracket notation)
+ * - "2d[2]" → "2"
  */
 function getDisplayLabel(reqNum: string, hasParent: boolean): string {
   // If no parent, show the full requirement number (it's a root)
   if (!hasParent) {
     return reqNum
+  }
+
+  // Check for bracket suffix like [1], [2] (e.g., "2d[1]" → "1")
+  const bracketMatch = reqNum.match(/\[(\d+)\]$/)
+  if (bracketMatch) {
+    return bracketMatch[1] // Return just the number inside brackets
   }
 
   // Check for parenthetical suffix like (a), (b), (1), (2)
