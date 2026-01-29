@@ -834,6 +834,81 @@ export type Database = {
           },
         ]
       }
+      import_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string
+          current_phase: string | null
+          error_message: string | null
+          id: string
+          processed_items: number | null
+          processed_scouts: number | null
+          result: Json | null
+          selected_scout_ids: Json
+          staged_data: Json
+          started_at: string | null
+          status: string
+          total_items: number | null
+          total_scouts: number | null
+          type: string
+          unit_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by: string
+          current_phase?: string | null
+          error_message?: string | null
+          id?: string
+          processed_items?: number | null
+          processed_scouts?: number | null
+          result?: Json | null
+          selected_scout_ids?: Json
+          staged_data: Json
+          started_at?: string | null
+          status?: string
+          total_items?: number | null
+          total_scouts?: number | null
+          type: string
+          unit_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string
+          current_phase?: string | null
+          error_message?: string | null
+          id?: string
+          processed_items?: number | null
+          processed_scouts?: number | null
+          result?: Json | null
+          selected_scout_ids?: Json
+          staged_data?: Json
+          started_at?: string | null
+          status?: string
+          total_items?: number | null
+          total_scouts?: number | null
+          type?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_jobs_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_requirement_mismatches: {
         Row: {
           advancement_type: string

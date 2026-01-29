@@ -9,17 +9,16 @@ import { useUnit } from '@/components/providers/unit-context'
 import { TroopAdvancementUpload } from '@/components/import/troop-advancement-upload'
 import { TroopAdvancementPreview } from '@/components/import/troop-advancement-preview'
 import { TroopAdvancementResult } from '@/components/import/troop-advancement-result'
-import {
-  stageTroopAdvancement,
-  importStagedAdvancement,
-} from '@/app/actions/troop-advancement-import'
+import { ImportJobProgress } from '@/components/import/import-job-progress'
+import { stageTroopAdvancement } from '@/app/actions/troop-advancement-import'
+import { createImportJob, processImportJob } from '@/app/actions/import-jobs'
 import type {
   ParsedTroopAdvancement,
   StagedTroopAdvancement,
   TroopAdvancementImportResult,
 } from '@/lib/import/troop-advancement-types'
 
-type ImportStep = 'upload' | 'staging' | 'preview' | 'result'
+type ImportStep = 'upload' | 'staging' | 'preview' | 'processing' | 'result'
 
 export default function TroopAdvancementImportPage() {
   const { currentUnit } = useUnit()
@@ -30,6 +29,7 @@ export default function TroopAdvancementImportPage() {
   const [isStaging, setIsStaging] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [result, setResult] = useState<TroopAdvancementImportResult | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
 
   const handleParsed = async (data: ParsedTroopAdvancement) => {
     setParsedData(data)
@@ -71,7 +71,7 @@ export default function TroopAdvancementImportPage() {
     setError(errorMessage)
   }
 
-  const handleImport = async (selectedBsaMemberIds: string[], createUnmatchedScouts: boolean) => {
+  const handleImport = async (selectedBsaMemberIds: string[], _createUnmatchedScouts: boolean) => {
     if (!currentUnit?.id || !stagedData) {
       setError('Missing required data')
       return
@@ -81,26 +81,43 @@ export default function TroopAdvancementImportPage() {
     setError(null)
 
     try {
-      const importResult = await importStagedAdvancement(
+      // Create the import job
+      const jobResult = await createImportJob(
         currentUnit.id,
+        'troop_advancement',
         stagedData,
-        selectedBsaMemberIds,
-        createUnmatchedScouts
+        selectedBsaMemberIds
       )
 
-      if (!importResult.success) {
-        setError(importResult.error || 'Import failed')
+      if (!jobResult.success || !jobResult.data) {
+        setError(jobResult.error || 'Failed to create import job')
         setIsImporting(false)
         return
       }
 
-      setResult(importResult.data || null)
-      setStep('result')
+      const newJobId = jobResult.data.jobId
+      setJobId(newJobId)
+      setStep('processing')
+      setIsImporting(false)
+
+      // Start processing the job (fire and forget - UI will poll for status)
+      processImportJob(newJobId).catch((err) => {
+        console.error('Background job processing error:', err)
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import failed')
-    } finally {
       setIsImporting(false)
     }
+  }
+
+  const handleJobComplete = (importResult: TroopAdvancementImportResult) => {
+    setResult(importResult)
+    setStep('result')
+  }
+
+  const handleJobError = (errorMessage: string) => {
+    setError(errorMessage)
+    setStep('preview')
   }
 
   const handleCancel = () => {
@@ -116,6 +133,7 @@ export default function TroopAdvancementImportPage() {
     setStagedData(null)
     setResult(null)
     setError(null)
+    setJobId(null)
   }
 
   return (
@@ -200,7 +218,16 @@ export default function TroopAdvancementImportPage() {
         />
       )}
 
-      {/* Step 4: Result */}
+      {/* Step 4: Processing */}
+      {step === 'processing' && jobId && (
+        <ImportJobProgress
+          jobId={jobId}
+          onComplete={handleJobComplete}
+          onError={handleJobError}
+        />
+      )}
+
+      {/* Step 5: Result */}
       {step === 'result' && result && (
         <TroopAdvancementResult result={result} onStartOver={handleStartOver} />
       )}

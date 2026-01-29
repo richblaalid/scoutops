@@ -1461,3 +1461,579 @@ export async function importStagedAdvancement(
 
   return { success: true, data: result }
 }
+
+// ============================================
+// Internal Processing Function for Background Jobs
+// ============================================
+
+export type ProgressCallback = (processedItems: number, phase: string) => Promise<void>
+
+/**
+ * Process import job internally - called from import-jobs.ts
+ * This is the same as importStagedAdvancement but accepts profileId directly
+ * and supports progress callbacks for background job tracking
+ */
+export async function processImportJobInternal(
+  unitId: string,
+  staged: StagedTroopAdvancement,
+  selectedBsaMemberIds: string[],
+  profileId: string,
+  onProgress?: ProgressCallback
+): Promise<TroopAdvancementImportResult> {
+  const adminSupabase = createAdminClient()
+
+  // Load reference data
+  const { data: ranks } = await adminSupabase
+    .from('bsa_ranks')
+    .select('id, code, name, requirement_version_year')
+    .order('display_order')
+
+  const rankByCode = new Map(ranks?.map((r) => [r.code, r]) || [])
+  const rankById = new Map(ranks?.map((r) => [r.id, r]) || [])
+
+  const { data: meritBadges } = await adminSupabase
+    .from('bsa_merit_badges')
+    .select('id, name, requirement_version_year')
+
+  const badgeByNormalizedName = new Map(
+    meritBadges?.map((mb) => [
+      mb.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
+      mb,
+    ]) || []
+  )
+  const badgeById = new Map(meritBadges?.map((mb) => [mb.id, mb]) || [])
+
+  const findBadge = (normalizedName: string) => {
+    let badge = badgeByNormalizedName.get(normalizedName)
+    if (badge) return badge
+    const aliasedName = MERIT_BADGE_ALIASES[normalizedName]
+    if (aliasedName) {
+      badge = badgeByNormalizedName.get(aliasedName)
+    }
+    return badge
+  }
+
+  // Load all rank requirements
+  const allRankRequirements: Array<{
+    id: string
+    rank_id: string
+    requirement_number: string
+    version_year: number | null
+  }> = []
+  let rankReqOffset = 0
+  const PAGE_SIZE = 1000
+  while (true) {
+    const { data: batch } = await adminSupabase
+      .from('bsa_rank_requirements')
+      .select('id, rank_id, requirement_number, version_year')
+      .range(rankReqOffset, rankReqOffset + PAGE_SIZE - 1)
+    if (!batch || batch.length === 0) break
+    allRankRequirements.push(...batch)
+    if (batch.length < PAGE_SIZE) break
+    rankReqOffset += PAGE_SIZE
+  }
+
+  const rankReqMap = new Map(
+    allRankRequirements.map((r) => [
+      `${r.rank_id}:${r.requirement_number}:${r.version_year}`,
+      r,
+    ])
+  )
+
+  // Load all merit badge requirements
+  const allBadgeRequirements: Array<{
+    id: string
+    merit_badge_id: string
+    requirement_number: string
+    scoutbook_requirement_number: string | null
+    version_year: number | null
+  }> = []
+  let badgeReqOffset = 0
+  while (true) {
+    const { data: batch } = await adminSupabase
+      .from('bsa_merit_badge_requirements')
+      .select('id, merit_badge_id, requirement_number, scoutbook_requirement_number, version_year')
+      .range(badgeReqOffset, badgeReqOffset + PAGE_SIZE - 1)
+    if (!batch || batch.length === 0) break
+    allBadgeRequirements.push(...batch)
+    if (batch.length < PAGE_SIZE) break
+    badgeReqOffset += PAGE_SIZE
+  }
+
+  const badgeReqMap = new Map<string, typeof allBadgeRequirements[0]>()
+  for (const r of allBadgeRequirements) {
+    if (r.scoutbook_requirement_number) {
+      badgeReqMap.set(`${r.merit_badge_id}:${r.scoutbook_requirement_number}:${r.version_year}`, r)
+    }
+    badgeReqMap.set(`${r.merit_badge_id}:${r.requirement_number}:${r.version_year}`, r)
+  }
+
+  const result: TroopAdvancementImportResult = {
+    scoutsCreated: 0,
+    ranksImported: 0,
+    rankRequirementsImported: 0,
+    badgesImported: 0,
+    badgeRequirementsImported: 0,
+    duplicatesSkipped: 0,
+    warnings: [],
+  }
+
+  let processedItems = 0
+
+  const selectedScouts = staged.scouts.filter((s) => selectedBsaMemberIds.includes(s.bsaMemberId))
+
+  // Create scouts first
+  const scoutsToCreate = selectedScouts.filter((s) => s.matchStatus === 'unmatched')
+  const scoutIdByBsaMemberId = new Map<string, string>()
+
+  for (const scout of selectedScouts) {
+    if (scout.scoutId) {
+      scoutIdByBsaMemberId.set(scout.bsaMemberId, scout.scoutId)
+    }
+  }
+
+  if (scoutsToCreate.length > 0) {
+    const scoutInserts = scoutsToCreate.map((s) => ({
+      unit_id: unitId,
+      first_name: s.firstName,
+      last_name: s.lastName,
+      bsa_member_id: s.bsaMemberId,
+      is_active: true,
+    }))
+
+    const { data: newScouts } = await adminSupabase
+      .from('scouts')
+      .insert(scoutInserts)
+      .select('id, bsa_member_id')
+
+    if (newScouts) {
+      result.scoutsCreated = newScouts.length
+      for (const scout of newScouts) {
+        if (scout.bsa_member_id) {
+          scoutIdByBsaMemberId.set(scout.bsa_member_id, scout.id)
+        }
+      }
+    }
+  }
+
+  if (onProgress) await onProgress(processedItems, 'scouts')
+
+  const allScoutIds = Array.from(scoutIdByBsaMemberId.values())
+
+  // Load existing progress
+  const [existingRankProgress, existingBadgeProgress] = await Promise.all([
+    adminSupabase.from('scout_rank_progress').select('id, scout_id, rank_id, status').in('scout_id', allScoutIds),
+    adminSupabase.from('scout_merit_badge_progress').select('id, scout_id, merit_badge_id, status').in('scout_id', allScoutIds),
+  ])
+
+  const existingRankProgressMap = new Map(
+    (existingRankProgress.data || []).map((p) => [`${p.scout_id}:${p.rank_id}`, p])
+  )
+  const existingBadgeProgressMap = new Map(
+    (existingBadgeProgress.data || []).map((p) => [`${p.scout_id}:${p.merit_badge_id}`, p])
+  )
+
+  // Process ranks
+  if (onProgress) await onProgress(processedItems, 'ranks')
+
+  type ProgressStatus = 'not_started' | 'in_progress' | 'pending_approval' | 'approved' | 'completed' | 'awarded'
+  const rankProgressToInsert: Array<{
+    scout_id: string
+    rank_id: string
+    status: ProgressStatus
+    started_at: string
+    awarded_at: string | null
+  }> = []
+
+  for (const scout of selectedScouts) {
+    const scoutId = scoutIdByBsaMemberId.get(scout.bsaMemberId)
+    if (!scoutId) continue
+
+    for (const stagedRank of scout.ranks) {
+      if (stagedRank.status === 'duplicate') {
+        result.duplicatesSkipped++
+        continue
+      }
+
+      const dbRank = rankByCode.get(stagedRank.code)
+      if (!dbRank) continue
+
+      const existing = existingRankProgressMap.get(`${scoutId}:${dbRank.id}`)
+
+      if (!existing) {
+        rankProgressToInsert.push({
+          scout_id: scoutId,
+          rank_id: dbRank.id,
+          status: 'awarded',
+          started_at: stagedRank.date || new Date().toISOString(),
+          awarded_at: stagedRank.date || null,
+        })
+      }
+    }
+  }
+
+  for (let i = 0; i < rankProgressToInsert.length; i += BATCH_SIZE) {
+    const batch = rankProgressToInsert.slice(i, i + BATCH_SIZE)
+    const { data } = await adminSupabase.from('scout_rank_progress').insert(batch).select('id, scout_id, rank_id')
+    if (data) {
+      result.ranksImported += data.length
+      processedItems += data.length
+      for (const p of data) {
+        existingRankProgressMap.set(`${p.scout_id}:${p.rank_id}`, { ...p, status: 'awarded' })
+      }
+    }
+  }
+
+  if (onProgress) await onProgress(processedItems, 'badges')
+
+  // Process badges
+  const badgeProgressToInsert: Array<{
+    scout_id: string
+    merit_badge_id: string
+    status: ProgressStatus
+    started_at: string
+    completed_at: string | null
+    awarded_at: string | null
+    requirement_version_year: number | null
+  }> = []
+
+  for (const scout of selectedScouts) {
+    const scoutId = scoutIdByBsaMemberId.get(scout.bsaMemberId)
+    if (!scoutId) continue
+
+    for (const stagedBadge of scout.meritBadges) {
+      if (stagedBadge.status === 'duplicate') {
+        result.duplicatesSkipped++
+        continue
+      }
+
+      const dbBadge = findBadge(stagedBadge.code)
+      if (!dbBadge) continue
+
+      const existing = existingBadgeProgressMap.get(`${scoutId}:${dbBadge.id}`)
+
+      if (!existing) {
+        const versionYear = stagedBadge.version
+          ? parseInt(stagedBadge.version, 10)
+          : dbBadge.requirement_version_year
+        badgeProgressToInsert.push({
+          scout_id: scoutId,
+          merit_badge_id: dbBadge.id,
+          status: 'awarded',
+          started_at: stagedBadge.date || new Date().toISOString(),
+          completed_at: stagedBadge.date || null,
+          awarded_at: stagedBadge.date || null,
+          requirement_version_year: versionYear || null,
+        })
+      }
+    }
+  }
+
+  for (let i = 0; i < badgeProgressToInsert.length; i += BATCH_SIZE) {
+    const batch = badgeProgressToInsert.slice(i, i + BATCH_SIZE)
+    const { data } = await adminSupabase.from('scout_merit_badge_progress').insert(batch).select('id, scout_id, merit_badge_id')
+    if (data) {
+      result.badgesImported += data.length
+      processedItems += data.length
+      for (const p of data) {
+        existingBadgeProgressMap.set(`${p.scout_id}:${p.merit_badge_id}`, { ...p, status: 'awarded' })
+      }
+    }
+  }
+
+  if (onProgress) await onProgress(processedItems, 'rank_requirements')
+
+  // Reload progress maps
+  const [updatedRankProgress, updatedBadgeProgress] = await Promise.all([
+    adminSupabase.from('scout_rank_progress').select('id, scout_id, rank_id').in('scout_id', allScoutIds).limit(10000),
+    adminSupabase.from('scout_merit_badge_progress').select('id, scout_id, merit_badge_id, requirement_version_year').in('scout_id', allScoutIds).limit(50000),
+  ])
+
+  let rankProgressIdMap = new Map((updatedRankProgress.data || []).map((p) => [`${p.scout_id}:${p.rank_id}`, p.id]))
+  let badgeProgressIdMap = new Map((updatedBadgeProgress.data || []).map((p) => [`${p.scout_id}:${p.merit_badge_id}`, p.id]))
+  const badgeProgressVersionMap = new Map<string, number | null>()
+  for (const p of updatedBadgeProgress.data || []) {
+    badgeProgressVersionMap.set(p.id, p.requirement_version_year)
+  }
+
+  // Create missing progress records for requirements
+  const missingRankProgress: Array<{ scout_id: string; rank_id: string; status: 'in_progress'; started_at: string }> = []
+  const missingBadgeProgress: Array<{ scout_id: string; merit_badge_id: string; status: 'in_progress'; started_at: string; requirement_version_year: number | null }> = []
+
+  for (const scout of selectedScouts) {
+    const scoutId = scoutIdByBsaMemberId.get(scout.bsaMemberId)
+    if (!scoutId) continue
+
+    for (const stagedReq of scout.rankRequirements) {
+      if (!stagedReq.requirementNumber) continue
+      const dbRank = rankByCode.get(stagedReq.code)
+      if (!dbRank) continue
+
+      const key = `${scoutId}:${dbRank.id}`
+      if (!rankProgressIdMap.has(key) && !missingRankProgress.some((p) => p.scout_id === scoutId && p.rank_id === dbRank.id)) {
+        missingRankProgress.push({ scout_id: scoutId, rank_id: dbRank.id, status: 'in_progress', started_at: new Date().toISOString() })
+      }
+    }
+
+    for (const stagedReq of scout.meritBadgeRequirements) {
+      if (!stagedReq.requirementNumber) continue
+      const dbBadge = findBadge(stagedReq.code)
+      if (!dbBadge) continue
+
+      const key = `${scoutId}:${dbBadge.id}`
+      if (!badgeProgressIdMap.has(key) && !missingBadgeProgress.some((p) => p.scout_id === scoutId && p.merit_badge_id === dbBadge.id)) {
+        const versionYear = stagedReq.version ? parseInt(stagedReq.version, 10) : dbBadge.requirement_version_year
+        missingBadgeProgress.push({ scout_id: scoutId, merit_badge_id: dbBadge.id, status: 'in_progress', started_at: new Date().toISOString(), requirement_version_year: versionYear || null })
+      }
+    }
+  }
+
+  // Insert missing progress
+  if (missingRankProgress.length > 0) {
+    for (let i = 0; i < missingRankProgress.length; i += BATCH_SIZE) {
+      const batch = missingRankProgress.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_rank_progress').upsert(batch, { onConflict: 'scout_id,rank_id', ignoreDuplicates: true })
+    }
+  }
+
+  if (missingBadgeProgress.length > 0) {
+    for (let i = 0; i < missingBadgeProgress.length; i += BATCH_SIZE) {
+      const batch = missingBadgeProgress.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_merit_badge_progress').upsert(batch, { onConflict: 'scout_id,merit_badge_id', ignoreDuplicates: true })
+    }
+  }
+
+  // Reload after inserts
+  const [reloadedRankProgress, reloadedBadgeProgress] = await Promise.all([
+    adminSupabase.from('scout_rank_progress').select('id, scout_id, rank_id').in('scout_id', allScoutIds).limit(10000),
+    adminSupabase.from('scout_merit_badge_progress').select('id, scout_id, merit_badge_id, requirement_version_year').in('scout_id', allScoutIds).limit(50000),
+  ])
+
+  rankProgressIdMap = new Map((reloadedRankProgress.data || []).map((p) => [`${p.scout_id}:${p.rank_id}`, p.id]))
+  badgeProgressIdMap = new Map((reloadedBadgeProgress.data || []).map((p) => [`${p.scout_id}:${p.merit_badge_id}`, p.id]))
+
+  for (const p of reloadedBadgeProgress.data || []) {
+    badgeProgressVersionMap.set(p.id, p.requirement_version_year)
+  }
+
+  // Load existing requirement progress
+  const rankProgressIds = Array.from(new Set(rankProgressIdMap.values()))
+  const badgeProgressIds = Array.from(new Set(badgeProgressIdMap.values()))
+
+  const [existingRankReqProgress, existingBadgeReqProgress] = await Promise.all([
+    rankProgressIds.length > 0
+      ? adminSupabase.from('scout_rank_requirement_progress').select('id, scout_rank_progress_id, requirement_id, status').in('scout_rank_progress_id', rankProgressIds).limit(50000)
+      : Promise.resolve({ data: [] }),
+    badgeProgressIds.length > 0
+      ? adminSupabase.from('scout_merit_badge_requirement_progress').select('id, scout_merit_badge_progress_id, requirement_id, status').in('scout_merit_badge_progress_id', badgeProgressIds).limit(100000)
+      : Promise.resolve({ data: [] }),
+  ])
+
+  const existingRankReqMap = new Map((existingRankReqProgress.data || []).map((p) => [`${p.scout_rank_progress_id}:${p.requirement_id}`, p]))
+  const existingBadgeReqMap = new Map((existingBadgeReqProgress.data || []).map((p) => [`${p.scout_merit_badge_progress_id}:${p.requirement_id}`, p]))
+
+  // Initialize all requirement progress
+  const uniqueRankIds = new Set<string>()
+  for (const [key] of rankProgressIdMap) {
+    const [, rankId] = key.split(':')
+    uniqueRankIds.add(rankId)
+  }
+
+  const rankAllRequirementsMap = new Map<string, string[]>()
+  for (const rankId of uniqueRankIds) {
+    const rank = rankById.get(rankId)
+    if (!rank) continue
+    const versionYear = rank.requirement_version_year
+    const reqIds: string[] = []
+    for (const [key, req] of rankReqMap) {
+      if (key.startsWith(`${rankId}:`) && key.endsWith(`:${versionYear}`)) {
+        reqIds.push(req.id)
+      }
+    }
+    rankAllRequirementsMap.set(rankId, reqIds)
+  }
+
+  const allRankReqInitRecords: Array<{ scout_rank_progress_id: string; requirement_id: string; status: 'not_started' }> = []
+
+  for (const [key, progressId] of rankProgressIdMap) {
+    const [, rankId] = key.split(':')
+    const allReqIds = rankAllRequirementsMap.get(rankId) || []
+    for (const reqId of allReqIds) {
+      if (!existingRankReqMap.has(`${progressId}:${reqId}`)) {
+        allRankReqInitRecords.push({ scout_rank_progress_id: progressId, requirement_id: reqId, status: 'not_started' })
+      }
+    }
+  }
+
+  if (allRankReqInitRecords.length > 0) {
+    for (let i = 0; i < allRankReqInitRecords.length; i += BATCH_SIZE) {
+      const batch = allRankReqInitRecords.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_rank_requirement_progress').upsert(batch, { onConflict: 'scout_rank_progress_id,requirement_id', ignoreDuplicates: true })
+    }
+    for (const rec of allRankReqInitRecords) {
+      existingRankReqMap.set(`${rec.scout_rank_progress_id}:${rec.requirement_id}`, { id: '', scout_rank_progress_id: rec.scout_rank_progress_id, requirement_id: rec.requirement_id, status: 'not_started' })
+    }
+  }
+
+  const allBadgeReqInitRecords: Array<{ scout_merit_badge_progress_id: string; requirement_id: string; status: 'not_started' }> = []
+
+  for (const [key, progressId] of badgeProgressIdMap) {
+    const [, badgeId] = key.split(':')
+    const badge = badgeById.get(badgeId)
+    if (!badge) continue
+    const versionYear = badgeProgressVersionMap.get(progressId) || badge.requirement_version_year
+    const reqIds: string[] = []
+    for (const [reqKey, req] of badgeReqMap) {
+      if (reqKey.startsWith(`${badgeId}:`) && reqKey.endsWith(`:${versionYear}`)) {
+        reqIds.push(req.id)
+      }
+    }
+    for (const reqId of reqIds) {
+      if (!existingBadgeReqMap.has(`${progressId}:${reqId}`)) {
+        allBadgeReqInitRecords.push({ scout_merit_badge_progress_id: progressId, requirement_id: reqId, status: 'not_started' })
+      }
+    }
+  }
+
+  if (allBadgeReqInitRecords.length > 0) {
+    for (let i = 0; i < allBadgeReqInitRecords.length; i += BATCH_SIZE) {
+      const batch = allBadgeReqInitRecords.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_merit_badge_requirement_progress').upsert(batch, { onConflict: 'scout_merit_badge_progress_id,requirement_id', ignoreDuplicates: true })
+    }
+    for (const rec of allBadgeReqInitRecords) {
+      existingBadgeReqMap.set(`${rec.scout_merit_badge_progress_id}:${rec.requirement_id}`, { id: '', scout_merit_badge_progress_id: rec.scout_merit_badge_progress_id, requirement_id: rec.requirement_id, status: 'not_started' })
+    }
+  }
+
+  if (onProgress) await onProgress(processedItems, 'badge_requirements')
+
+  // Collect requirement progress to update
+  type ReqProgressStatus = 'not_started' | 'in_progress' | 'pending_approval' | 'approved' | 'completed' | 'awarded'
+  const rankReqToInsert: Array<{ scout_rank_progress_id: string; requirement_id: string; status: ReqProgressStatus; completed_at: string | null; completed_by: string }> = []
+
+  for (const scout of selectedScouts) {
+    const scoutId = scoutIdByBsaMemberId.get(scout.bsaMemberId)
+    if (!scoutId) continue
+
+    for (const stagedReq of scout.rankRequirements) {
+      if (!stagedReq.requirementNumber) continue
+      const dbRank = rankByCode.get(stagedReq.code)
+      if (!dbRank) continue
+
+      const progressId = rankProgressIdMap.get(`${scoutId}:${dbRank.id}`)
+      if (!progressId) continue
+
+      const versionYear = dbRank.requirement_version_year || parseInt(stagedReq.version, 10)
+      const reqKey = `${dbRank.id}:${stagedReq.requirementNumber}:${versionYear}`
+      let requirement = rankReqMap.get(reqKey)
+
+      if (!requirement) {
+        for (const [key, req] of rankReqMap) {
+          if (key.startsWith(`${dbRank.id}:${stagedReq.requirementNumber}:`)) {
+            requirement = req
+            break
+          }
+        }
+      }
+
+      if (!requirement) continue
+
+      const existing = existingRankReqMap.get(`${progressId}:${requirement.id}`)
+      if (existing && ['completed', 'approved', 'awarded'].includes(existing.status)) continue
+
+      rankReqToInsert.push({
+        scout_rank_progress_id: progressId,
+        requirement_id: requirement.id,
+        status: 'completed',
+        completed_at: stagedReq.date || null,
+        completed_by: profileId,
+      })
+    }
+  }
+
+  const badgeReqToInsert: Array<{ scout_merit_badge_progress_id: string; requirement_id: string; status: ReqProgressStatus; completed_at: string | null; completed_by: string }> = []
+
+  for (const scout of selectedScouts) {
+    const scoutId = scoutIdByBsaMemberId.get(scout.bsaMemberId)
+    if (!scoutId) continue
+
+    for (const stagedReq of scout.meritBadgeRequirements) {
+      if (!stagedReq.requirementNumber) continue
+      const dbBadge = findBadge(stagedReq.code)
+      if (!dbBadge) continue
+
+      const progressId = badgeProgressIdMap.get(`${scoutId}:${dbBadge.id}`)
+      if (!progressId) continue
+
+      const versionYears = [parseInt(stagedReq.version, 10), dbBadge.requirement_version_year].filter((v) => v && !isNaN(v))
+      let requirement = null
+
+      for (const versionYear of versionYears) {
+        const reqKey = `${dbBadge.id}:${stagedReq.requirementNumber}:${versionYear}`
+        requirement = badgeReqMap.get(reqKey)
+        if (requirement) break
+      }
+
+      if (!requirement) {
+        const reqNumVariants = normalizeRequirementNumber(stagedReq.requirementNumber)
+        for (const reqNum of reqNumVariants) {
+          for (const versionYear of versionYears) {
+            const reqKey = `${dbBadge.id}:${reqNum}:${versionYear}`
+            requirement = badgeReqMap.get(reqKey)
+            if (requirement) break
+          }
+          if (requirement) break
+        }
+      }
+
+      if (!requirement) {
+        for (const [key, req] of badgeReqMap) {
+          if (key.startsWith(`${dbBadge.id}:${stagedReq.requirementNumber}:`)) {
+            requirement = req
+            break
+          }
+        }
+      }
+
+      if (!requirement) continue
+
+      const existing = existingBadgeReqMap.get(`${progressId}:${requirement.id}`)
+      if (existing && ['completed', 'approved', 'awarded'].includes(existing.status)) continue
+
+      badgeReqToInsert.push({
+        scout_merit_badge_progress_id: progressId,
+        requirement_id: requirement.id,
+        status: 'completed',
+        completed_at: stagedReq.date || null,
+        completed_by: profileId,
+      })
+    }
+  }
+
+  // Batch upsert requirements
+  for (let i = 0; i < rankReqToInsert.length; i += BATCH_SIZE) {
+    const batch = rankReqToInsert.slice(i, i + BATCH_SIZE)
+    const { error } = await adminSupabase.from('scout_rank_requirement_progress').upsert(batch, { onConflict: 'scout_rank_progress_id,requirement_id' })
+    if (!error) {
+      result.rankRequirementsImported += batch.length
+      processedItems += batch.length
+    }
+    if (onProgress) await onProgress(processedItems, 'rank_requirements')
+  }
+
+  for (let i = 0; i < badgeReqToInsert.length; i += BATCH_SIZE) {
+    const batch = badgeReqToInsert.slice(i, i + BATCH_SIZE)
+    const { error } = await adminSupabase.from('scout_merit_badge_requirement_progress').upsert(batch, { onConflict: 'scout_merit_badge_progress_id,requirement_id' })
+    if (!error) {
+      result.badgeRequirementsImported += batch.length
+      processedItems += batch.length
+    }
+    if (onProgress) await onProgress(processedItems, 'badge_requirements')
+  }
+
+  // Revalidate pages
+  revalidatePath('/advancement')
+  revalidatePath('/roster')
+
+  return result
+}
