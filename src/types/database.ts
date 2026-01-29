@@ -372,6 +372,7 @@ export type Database = {
           display_order: number
           id: string
           is_alternative: boolean | null
+          is_header: boolean | null
           merit_badge_id: string
           nesting_depth: number | null
           original_scoutbook_id: string | null
@@ -389,6 +390,7 @@ export type Database = {
           display_order: number
           id?: string
           is_alternative?: boolean | null
+          is_header?: boolean | null
           merit_badge_id: string
           nesting_depth?: number | null
           original_scoutbook_id?: string | null
@@ -406,6 +408,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_alternative?: boolean | null
+          is_header?: boolean | null
           merit_badge_id?: string
           nesting_depth?: number | null
           original_scoutbook_id?: string | null
@@ -831,6 +834,98 @@ export type Database = {
           },
         ]
       }
+      import_requirement_mismatches: {
+        Row: {
+          advancement_type: string
+          badge_or_rank_name: string
+          bsa_member_id: string | null
+          created_at: string
+          csv_row_data: Json | null
+          error_reason: string | null
+          id: string
+          import_file_name: string | null
+          import_type: string
+          imported_by: string | null
+          requirement_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          scout_id: string | null
+          scout_name: string | null
+          unit_id: string
+          version_year: number | null
+        }
+        Insert: {
+          advancement_type: string
+          badge_or_rank_name: string
+          bsa_member_id?: string | null
+          created_at?: string
+          csv_row_data?: Json | null
+          error_reason?: string | null
+          id?: string
+          import_file_name?: string | null
+          import_type: string
+          imported_by?: string | null
+          requirement_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          scout_id?: string | null
+          scout_name?: string | null
+          unit_id: string
+          version_year?: number | null
+        }
+        Update: {
+          advancement_type?: string
+          badge_or_rank_name?: string
+          bsa_member_id?: string | null
+          created_at?: string
+          csv_row_data?: Json | null
+          error_reason?: string | null
+          id?: string
+          import_file_name?: string | null
+          import_type?: string
+          imported_by?: string | null
+          requirement_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          scout_id?: string | null
+          scout_name?: string | null
+          unit_id?: string
+          version_year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_requirement_mismatches_imported_by_fkey"
+            columns: ["imported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_requirement_mismatches_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_requirement_mismatches_scout_id_fkey"
+            columns: ["scout_id"]
+            isOneToOne: false
+            referencedRelation: "scouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_requirement_mismatches_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_checkouts: {
         Row: {
           checked_out_at: string | null
@@ -1108,6 +1203,120 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      merit_badge_requirements: {
+        Row: {
+          badge_version_id: string
+          created_at: string | null
+          depth: number | null
+          description: string | null
+          display_label: string | null
+          id: string
+          is_header: boolean | null
+          item: string | null
+          main_req: string | null
+          option_letter: string | null
+          option_name: string | null
+          parent_id: string | null
+          scoutbook_id: string
+          section: string | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          badge_version_id: string
+          created_at?: string | null
+          depth?: number | null
+          description?: string | null
+          display_label?: string | null
+          id?: string
+          is_header?: boolean | null
+          item?: string | null
+          main_req?: string | null
+          option_letter?: string | null
+          option_name?: string | null
+          parent_id?: string | null
+          scoutbook_id: string
+          section?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          badge_version_id?: string
+          created_at?: string | null
+          depth?: number | null
+          description?: string | null
+          display_label?: string | null
+          id?: string
+          is_header?: boolean | null
+          item?: string | null
+          main_req?: string | null
+          option_letter?: string | null
+          option_name?: string | null
+          parent_id?: string | null
+          scoutbook_id?: string
+          section?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merit_badge_requirements_badge_version_id_fkey"
+            columns: ["badge_version_id"]
+            isOneToOne: false
+            referencedRelation: "merit_badge_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merit_badge_requirements_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "merit_badge_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merit_badge_versions: {
+        Row: {
+          badge_name: string
+          badge_slug: string
+          canonical_source: string | null
+          created_at: string | null
+          has_canonical_data: boolean | null
+          id: string
+          id_format: string | null
+          is_eagle_required: boolean | null
+          requirement_count: number | null
+          updated_at: string | null
+          version_year: number
+        }
+        Insert: {
+          badge_name: string
+          badge_slug: string
+          canonical_source?: string | null
+          created_at?: string | null
+          has_canonical_data?: boolean | null
+          id?: string
+          id_format?: string | null
+          is_eagle_required?: boolean | null
+          requirement_count?: number | null
+          updated_at?: string | null
+          version_year: number
+        }
+        Update: {
+          badge_name?: string
+          badge_slug?: string
+          canonical_source?: string | null
+          created_at?: string | null
+          has_canonical_data?: boolean | null
+          id?: string
+          id_format?: string | null
+          is_eagle_required?: boolean | null
+          requirement_count?: number | null
+          updated_at?: string | null
+          version_year?: number
+        }
+        Relationships: []
       }
       patrols: {
         Row: {
