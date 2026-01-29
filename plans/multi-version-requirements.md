@@ -212,6 +212,29 @@ CREATE TABLE bsa_merit_badge_versions (
 - [x] **4.2.2** Show "older version" indicator when not on current
 - [x] **4.2.3** Add version selector for leaders viewing badge info (covered by Phase 3 version switch dropdown)
 
+### Phase 5: Version-Aware Bulk Sign-Off (Future)
+
+> **Context**: On /advancement, leaders sign off requirements for multiple scouts at once.
+> Scouts may be tracking on different versions. Current implementation shows current version
+> requirements and signs off that specific requirement ID, which doesn't work for scouts on older versions.
+
+#### 5.1 Version-Aware Sign-Off Logic
+- [ ] **5.1.1** On bulk sign-off, check each scout's `requirement_version_year`
+- [ ] **5.1.2** Use existing requirement mapping to find equivalent requirement on scout's version
+- [ ] **5.1.3** Sign off the mapped requirement ID (not the displayed one)
+- [ ] **5.1.4** Track unmapped cases for reporting
+
+#### 5.2 Feedback UI
+- [ ] **5.2.1** Show summary after sign-off: "Signed off for X scouts"
+- [ ] **5.2.2** List scouts that couldn't be signed off due to version mismatch
+- [ ] **5.2.3** Suggest explicit version upgrade for scouts with mapping failures
+
+#### 5.3 Design Decisions
+- **Forward-only migrations**: Version upgrades only go from older → newer, never backward
+- **No silent migrations**: Keep scouts on their tracked version; explicit upgrade via scout profile
+- **Transparent mapping**: Leader sees what mapped and what didn't
+- **Mental model**: "Sign off this skill" → system handles per-scout requirement IDs
+
 ## File Changes
 
 ### Created Files (Phase 0-1)
@@ -335,8 +358,9 @@ interface ScrapedBadgeVersion {
 | 2026-01-23 | Fix badge slug normalization (AI, Fish & Wildlife) | `9d1269c` |
 | 2026-01-23 | Fix badge version year to match active version from scraped data | `af78c62` |
 | 2026-01-23 | Phase 2: Version fallback, warnings UI, unmatched requirements display | `af78c62` |
-| 2026-01-23 | Phase 3: Version switch UI + backend with requirement mapping | pending |
-| 2026-01-23 | Phase 4: Query & display updates with version-aware fetching | pending |
+| 2026-01-23 | Phase 3: Version switch UI + backend with requirement mapping | `af78c62` |
+| 2026-01-23 | Phase 4: Query & display updates with version-aware fetching | `af78c62` |
+| 2026-01-28 | Fix: BSA reference queries to bypass RLS (version selector not appearing) | `140c8b1` |
 
 ## Resolved Questions
 
@@ -346,8 +370,9 @@ interface ScrapedBadgeVersion {
 
 ## Open Questions
 
-1. **Version switching UI**: How should leaders map old requirements to new when switching versions?
-2. **Progress migration**: Should existing progress records be backfilled with version_year?
+1. ~~**Version switching UI**: How should leaders map old requirements to new when switching versions?~~ ✅ Resolved: Side-by-side comparison with fuzzy matching in VersionSwitchDialog
+2. ~~**Progress migration**: Should existing progress records be backfilled with version_year?~~ ✅ Resolved: Yes, backfilled from badge's current version
+3. **Bulk sign-off versioning**: How to handle /advancement sign-offs when scouts are on different versions? → See Phase 5
 
 ## Appendix: Scoutbook Requirement Format Reference
 
