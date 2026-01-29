@@ -623,8 +623,8 @@ const RequirementNodeView = memo(function RequirementNodeView({
 
         {/* Status Indicator - show completion progress or celebratory completed state */}
         {isComplete ? (
-          // Celebratory completion indicator - campfire orange accent
-          <span className="flex items-center gap-1.5 rounded-full bg-[#E85D04]/10 px-2.5 py-0.5 text-xs font-semibold text-[#E85D04]">
+          // Celebratory completion indicator - amber accent
+          <span className="flex items-center gap-1.5 rounded-full bg-amber-600/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600">
             <span className="text-sm">🎯</span>
             Completed!
           </span>

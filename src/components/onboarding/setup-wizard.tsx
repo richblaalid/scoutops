@@ -146,7 +146,7 @@ export function SetupWizard({
       </div>
 
       {/* Next Steps Preview */}
-      <div className="rounded-lg border border-tan-200 dark:border-tan-800 bg-tan-50 dark:bg-tan-900/20 p-6">
+      <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-6">
         <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-3">What&apos;s next?</h3>
         <ul className="space-y-2 text-sm text-stone-600 dark:text-stone-300">
           <li className="flex items-center gap-2">

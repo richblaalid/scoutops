@@ -122,7 +122,7 @@ export default function ContactPage() {
             {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-stone-700 mb-1">
-                Name <span className="text-tan-500">*</span>
+                Name <span className="text-amber-500">*</span>
               </label>
               <input
                 type="text"
@@ -139,7 +139,7 @@ export default function ContactPage() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-1">
-                Email <span className="text-tan-500">*</span>
+                Email <span className="text-amber-500">*</span>
               </label>
               <input
                 type="email"
@@ -156,7 +156,7 @@ export default function ContactPage() {
             {/* Subject */}
             <div>
               <label htmlFor="subject" className="block text-sm font-medium text-stone-700 mb-1">
-                Subject <span className="text-tan-500">*</span>
+                Subject <span className="text-amber-500">*</span>
               </label>
               <select
                 id="subject"
@@ -176,7 +176,7 @@ export default function ContactPage() {
             {/* Message */}
             <div>
               <label htmlFor="message" className="block text-sm font-medium text-stone-700 mb-1">
-                Message <span className="text-tan-500">*</span>
+                Message <span className="text-amber-500">*</span>
               </label>
               <textarea
                 id="message"

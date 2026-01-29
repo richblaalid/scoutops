@@ -19,9 +19,9 @@ const buttonVariants = cva(
         // Outline - Forest green border
         outline:
           "border-2 border-forest-700 bg-transparent text-forest-700 hover:bg-forest-700 hover:text-white hover:-translate-y-0.5 active:translate-y-0",
-        // Secondary - Tan/gold accent
+        // Secondary - Amber accent
         secondary:
-          "bg-tan-400 text-forest-900 shadow-sm hover:bg-tan-300 hover:shadow-tan hover:-translate-y-0.5 active:translate-y-0",
+          "bg-amber-400 text-forest-900 shadow-sm hover:bg-amber-300 hover:shadow-amber hover:-translate-y-0.5 active:translate-y-0",
         // Ghost - Subtle hover
         ghost:
           "text-forest-700 hover:bg-stone-100 hover:text-forest-800",

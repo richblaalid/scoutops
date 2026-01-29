@@ -6,10 +6,10 @@
 @config "../../tailwind.config.ts";
 
 /*
- * Chuckbox Brand Color System
+ * Chuckbox Brand Color System (Brand Guide January 2026)
  *
  * Primary: Pine greens (#234D3E family)
- * Accent: Campfire orange (#E85D04 family)
+ * Accent: Amber (#b45309 for highlights, #d97706 for UI actions)
  * Background: Cream (#FAF3EB family)
  * Neutrals: Warm stone grays
  * Semantic: Success, warning, error, info
@@ -44,8 +44,8 @@
     --muted: 40 6% 96%;                 /* stone-100 */
     --muted-foreground: 24 6% 32%;      /* stone-600: #57534E - WCAG AA compliant */
 
-    /* Accent - Campfire Orange */
-    --accent: 24 97% 46%;               /* campfire-500: #E85D04 */
+    /* Accent - Amber 700 (Brand Guide) */
+    --accent: 25 95% 37%;               /* amber-700: #b45309 */
     --accent-foreground: 0 0% 100%;     /* white for contrast */
 
     /* Destructive - Error Red */
@@ -57,9 +57,9 @@
     --input: 30 6% 90%;
     --ring: 160 37% 22%;                /* Pine 800 for focus rings */
 
-    /* Chart colors - Chuckbox branded (Brand Guide v3) */
+    /* Chart colors - Chuckbox branded (Brand Guide January 2026) */
     --chart-1: 160 37% 22%;             /* Pine 800: #234D3E */
-    --chart-2: 24 97% 46%;              /* Campfire 500: #E85D04 */
+    --chart-2: 25 95% 37%;              /* Amber 700: #b45309 */
     --chart-3: 160 84% 39%;             /* Success green */
     --chart-4: 157 39% 33%;             /* Pine 600: #3D8B6A */
     --chart-5: 32 95% 44%;              /* Warning amber */
@@ -102,7 +102,7 @@
     --muted: 24 6% 26%;
     --muted-foreground: 24 5% 64%;      /* stone-400 */
 
-    --accent: 35 97% 49%;               /* campfire-400: #F48C06 */
+    --accent: 43 96% 56%;               /* amber-600: #d97706 (dark mode) */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 63% 31%;

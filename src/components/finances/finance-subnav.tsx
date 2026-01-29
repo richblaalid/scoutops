@@ -74,9 +74,9 @@ export function FinanceSubnav({ showFinancialTabs = true }: FinanceSubnavProps) 
               key={tab.href}
               href={tab.href}
               className={cn(
-                'flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors',
+                'flex items-center gap-2 whitespace-nowrap border-b-3 px-4 py-3 text-sm font-semibold transition-colors',
                 isActive
-                  ? 'border-forest-600 text-forest-600'
+                  ? 'border-forest-600 text-stone-900'
                   : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
               )}
             >

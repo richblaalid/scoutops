@@ -7,8 +7,8 @@
   <path d="M8 18.5L4 26" stroke="#3D8B6A" stroke-width="2" stroke-linecap="round"/>
   <!-- Right leg -->
   <path d="M24 18.5L28 26" stroke="#3D8B6A" stroke-width="2" stroke-linecap="round"/>
-  <!-- Work surface -->
-  <path d="M26.5 20H5.5C5 20 4.5 20.4 4.5 21V22.5C4.5 23 5 23.5 5.5 23.5H26.5C27 23.5 27.5 23 27.5 22.5V21C27.5 20.4 27 20 26.5 20Z" fill="#E85D04"/>
+  <!-- Work surface (amber-700) -->
+  <path d="M26.5 20H5.5C5 20 4.5 20.4 4.5 21V22.5C4.5 23 5 23.5 5.5 23.5H26.5C27 23.5 27.5 23 27.5 22.5V21C27.5 20.4 27 20 26.5 20Z" fill="#b45309"/>
   <!-- Top right compartment -->
   <rect x="18" y="8" width="8" height="4" rx="1" fill="#52a07e"/>
   <!-- Bottom right compartment -->

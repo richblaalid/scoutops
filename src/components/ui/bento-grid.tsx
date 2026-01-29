@@ -59,7 +59,7 @@ export function BentoCard({
     default:
       'border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-800',
     accent:
-      'border-tan-200 bg-gradient-to-br from-tan-50 to-white dark:from-tan-900/20 dark:to-stone-800 dark:border-tan-800',
+      'border-amber-200 bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-stone-800 dark:border-amber-800',
     highlight:
       'border-forest-200 bg-gradient-to-br from-forest-50 to-white dark:from-forest-900/20 dark:to-stone-800 dark:border-forest-800',
     muted:
@@ -182,7 +182,7 @@ export function BentoCardIcon({
 }) {
   const variantClasses = {
     default: 'bg-forest-100 text-forest-700 dark:bg-forest-900/50 dark:text-forest-300',
-    accent: 'bg-tan-100 text-tan-700 dark:bg-tan-900/50 dark:text-tan-300',
+    accent: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
     success: 'bg-success-light text-success-dark dark:bg-success/20 dark:text-success',
     warning: 'bg-warning-light text-warning-dark dark:bg-warning/20 dark:text-warning',
   }

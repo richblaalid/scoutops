@@ -333,7 +333,7 @@ export function SignupWizard({ onComplete }: SignupWizardProps) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">
-              First Name <span className="text-tan-500">*</span>
+              First Name <span className="text-amber-500">*</span>
             </label>
             <input
               type="text"
@@ -346,7 +346,7 @@ export function SignupWizard({ onComplete }: SignupWizardProps) {
           </div>
           <div>
             <label htmlFor="lastName" className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">
-              Last Name <span className="text-tan-500">*</span>
+              Last Name <span className="text-amber-500">*</span>
             </label>
             <input
               type="text"
@@ -361,7 +361,7 @@ export function SignupWizard({ onComplete }: SignupWizardProps) {
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">
-            Email Address <span className="text-tan-500">*</span>
+            Email Address <span className="text-amber-500">*</span>
           </label>
           <input
             type="email"

@@ -281,29 +281,30 @@ export function ScoutMeritBadgePanel({
   }
 
   return (
-    <Card className={cn(
-      'overflow-hidden',
-      isAwarded && 'border-amber-200',
-      isInProgress && 'border-forest-200'
-    )}>
-      {/* Header with badge info */}
-      <CardHeader className={cn(
-        'pb-4',
-        isAwarded && 'bg-gradient-to-r from-amber-50/80 to-yellow-50/50',
-        isInProgress && 'bg-gradient-to-r from-forest-50/80 to-emerald-50/50'
-      )}>
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="-ml-2 mb-2 h-8 gap-1 text-stone-600 hover:text-stone-900"
-        >
+    <div className="space-y-4">
+      {/* Back navigation - prominent, above the card */}
+      <button
+        onClick={onBack}
+        className="group flex items-center gap-2 text-sm font-semibold text-stone-700 hover:text-forest-700 transition-colors"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-100 group-hover:bg-forest-100 transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Back to Badges
-        </Button>
+        </span>
+        Back to All Badges
+      </button>
 
-        <div className="flex items-start gap-4">
+      <Card className={cn(
+        'overflow-hidden',
+        isAwarded && 'border-amber-200',
+        isInProgress && 'border-forest-200'
+      )}>
+        {/* Header with badge info */}
+        <CardHeader className={cn(
+          'pb-4',
+          isAwarded && 'bg-gradient-to-r from-amber-50/80 to-yellow-50/50',
+          isInProgress && 'bg-gradient-to-r from-forest-50/80 to-emerald-50/50'
+        )}>
+          <div className="flex items-start gap-4">
           {/* Badge Icon */}
           <div className="relative shrink-0">
             <MeritBadgeIcon
@@ -527,5 +528,6 @@ export function ScoutMeritBadgePanel({
         />
       )}
     </Card>
+    </div>
   )
 }

@@ -201,8 +201,8 @@ function RequirementNodeView({
         )}
         <div className="flex-1">
           <div className="flex items-start gap-2">
-            {/* Campfire orange badge for completable items */}
-            <span className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded px-1 text-xs font-bold bg-[#E85D04] text-white">
+            {/* Amber badge for completable items */}
+            <span className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded px-1 text-xs font-bold bg-amber-600 text-white">
               {displayLabel}
             </span>
             <p className="text-sm text-stone-700">

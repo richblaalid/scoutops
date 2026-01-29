@@ -68,16 +68,17 @@ const config: Config = {
           900: '#1B3D30',   // Pine 900 - Deepest pine
           DEFAULT: '#234D3E', // Pine 800 as default
         },
-        // Chuckbox Brand Colors - Amber Accent (Updated January 2026)
-        // Renamed from 'campfire' to align with amber palette
-        tan: {
+        // Chuckbox Brand Colors - Amber Accent (Brand Guide January 2026)
+        // amber-700 (#b45309) is the primary accent color
+        // amber-600 (#d97706) is used for UI actions (checkboxes, badges)
+        amber: {
           50: '#fffbeb',    // amber-50
           100: '#fef3c7',   // amber-100
           200: '#fde68a',   // amber-200
           300: '#fcd34d',   // amber-300
           400: '#fbbf24',   // amber-400
           500: '#f59e0b',   // amber-500
-          600: '#d97706',   // amber-600
+          600: '#d97706',   // amber-600 - UI actions
           700: '#b45309',   // amber-700 - Primary accent
           800: '#92400e',   // amber-800
           900: '#78350f',   // amber-900
@@ -172,7 +173,7 @@ const config: Config = {
         '2xl': '0 25px 50px rgba(20, 83, 45, 0.15)',
         // Brand-specific accent shadows
         'forest': '0 4px 12px rgba(20, 83, 45, 0.3)',    // green-900
-        'tan': '0 4px 12px rgba(180, 83, 9, 0.3)',       // amber-700
+        'amber': '0 4px 12px rgba(180, 83, 9, 0.3)',      // amber-700
         // Amber glow for success/accent states
         'glow': '0 0 20px rgba(180, 83, 9, 0.25)',
         'glow-lg': '0 0 40px rgba(180, 83, 9, 0.3)',

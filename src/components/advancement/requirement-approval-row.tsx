@@ -272,8 +272,8 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
               onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
               className={cn(
                 'transition-all',
-                // Completed requirements: bold campfire orange
-                (isComplete || showSuccess) && 'border-[#E85D04] bg-[#E85D04] text-white data-[state=checked]:bg-[#E85D04]',
+                // Completed requirements: amber-600 for UI actions
+                (isComplete || showSuccess) && 'border-amber-600 bg-amber-600 text-white data-[state=checked]:bg-amber-600',
                 // Multi-select mode: blue selection styling for incomplete requirements
                 isMultiSelectMode && isSelected && !isComplete && 'border-blue-500 bg-blue-500 text-white data-[state=checked]:bg-blue-500'
               )}
@@ -281,7 +281,7 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
           ) : (
             <div className="flex h-5 w-5 items-center justify-center">
               {isComplete ? (
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#E85D04]">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-600">
                   <Check className="h-3 w-3 text-white" />
                 </div>
               ) : isPending ? (
@@ -308,8 +308,8 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
               >
                 <span className={cn(
                   'mr-1.5 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-xs font-bold',
-                  // Completable requirements always use campfire orange
-                  'bg-[#E85D04] text-white'
+                  // Completable requirements use amber-600
+                  'bg-amber-600 text-white'
                 )}>
                   {displayLabel ?? requirementNumber}
                 </span>
@@ -374,7 +374,7 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
             <div className="flex shrink-0 flex-col items-end gap-1">
               {/* Completed indicator - right justified, matches parent header style */}
               {isComplete && !showSuccess && (
-                <span className="flex items-center gap-1.5 rounded-full bg-[#E85D04]/10 px-2.5 py-0.5 text-xs font-semibold text-[#E85D04]">
+                <span className="flex items-center gap-1.5 rounded-full bg-amber-600/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600">
                   <span className="text-sm">🎯</span>
                   <span className="hidden sm:inline">Completed!</span>
                 </span>

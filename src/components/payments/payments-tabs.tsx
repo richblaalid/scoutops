@@ -37,9 +37,9 @@ export function PaymentsTabs({
         <nav className="-mb-px flex gap-6">
           <button
             onClick={() => setActiveTab('record')}
-            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+            className={`border-b-3 pb-3 text-sm font-semibold transition-colors ${
               activeTab === 'record'
-                ? 'border-forest-600 text-forest-600'
+                ? 'border-amber-600 text-stone-900'
                 : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
             }`}
           >
@@ -47,9 +47,9 @@ export function PaymentsTabs({
           </button>
           <button
             onClick={() => setActiveTab('funds')}
-            className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+            className={`border-b-3 pb-3 text-sm font-semibold transition-colors ${
               activeTab === 'funds'
-                ? 'border-forest-600 text-forest-600'
+                ? 'border-amber-600 text-stone-900'
                 : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
             }`}
           >
@@ -58,9 +58,9 @@ export function PaymentsTabs({
           {showSquareTab && (
             <button
               onClick={() => setActiveTab('square')}
-              className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+              className={`border-b-3 pb-3 text-sm font-semibold transition-colors ${
                 activeTab === 'square'
-                  ? 'border-forest-600 text-forest-600'
+                  ? 'border-amber-600 text-stone-900'
                   : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
               }`}
             >

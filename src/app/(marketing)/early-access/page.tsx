@@ -169,7 +169,7 @@ export default function EarlyAccessPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-1">
-                  Email <span className="text-tan-500">*</span>
+                  Email <span className="text-amber-500">*</span>
                 </label>
                 <input
                   type="email"

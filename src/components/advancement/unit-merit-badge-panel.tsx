@@ -192,16 +192,16 @@ export function UnitMeritBadgePanel({
 
   return (
     <div className="space-y-4">
-      {/* Back button */}
-      <Button
-        variant="ghost"
-        size="sm"
+      {/* Back navigation - prominent, above the card */}
+      <button
         onClick={onBack}
-        className="-ml-2 h-8 gap-1 text-stone-600 hover:text-stone-900"
+        className="group flex items-center gap-2 text-sm font-semibold text-stone-700 hover:text-forest-700 transition-colors"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Badges
-      </Button>
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-100 group-hover:bg-forest-100 transition-colors">
+          <ArrowLeft className="h-4 w-4" />
+        </span>
+        Back to All Badges
+      </button>
 
       <Card className={cn(
         'overflow-hidden',

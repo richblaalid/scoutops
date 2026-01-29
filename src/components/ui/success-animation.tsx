@@ -83,7 +83,7 @@ export function CampfireGlow({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 -z-10 rounded-xl bg-gradient-radial from-tan-400/30 via-tan-300/10 to-transparent blur-xl"
+            className="absolute inset-0 -z-10 rounded-xl bg-gradient-radial from-amber-400/30 via-amber-300/10 to-transparent blur-xl"
           />
         )}
       </AnimatePresence>
@@ -135,8 +135,8 @@ function ConfettiParticle({
 }
 
 const CONFETTI_COLORS = [
-  'bg-tan-400',
-  'bg-tan-500',
+  'bg-amber-400',
+  'bg-amber-500',
   'bg-forest-500',
   'bg-forest-600',
   'bg-success',

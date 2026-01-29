@@ -19,10 +19,10 @@ function EmptyChuckBox() {
       <path d="M25 60L12 90" stroke="#234D3E" strokeWidth="6" strokeLinecap="round"/>
       {/* Right leg */}
       <path d="M95 60L108 90" stroke="#234D3E" strokeWidth="6" strokeLinecap="round"/>
-      {/* Work surface (orange bar) */}
+      {/* Work surface (amber bar) */}
       <path
         d="M102 64H18C16.5 64 15 65.5 15 67V72C15 73.5 16.5 75 18 75H102C103.5 75 105 73.5 105 72V67C105 65.5 103.5 64 102 64Z"
-        fill="#E85D04"
+        fill="#b45309"
       />
 
       {/* Empty compartments with dashed outlines */}
@@ -40,8 +40,8 @@ function EmptyChuckBox() {
       <path d="M60 18V58" stroke="#3D8B6A" strokeWidth="2"/>
 
       {/* Magnifying glass searching */}
-      <circle cx="95" cy="12" r="10" fill="none" stroke="#E85D04" strokeWidth="3"/>
-      <path d="M102 19L112 29" stroke="#E85D04" strokeWidth="3" strokeLinecap="round"/>
+      <circle cx="95" cy="12" r="10" fill="none" stroke="#b45309" strokeWidth="3"/>
+      <path d="M102 19L112 29" stroke="#b45309" strokeWidth="3" strokeLinecap="round"/>
     </svg>
   )
 }
