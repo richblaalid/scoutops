@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AccessDenied } from '@/components/ui/access-denied'
 import { canAccessPage, canPerformAction } from '@/lib/roles'
-import { AddScoutButton } from '@/components/scouts/add-scout-button'
 import { RosterTabs } from '@/components/roster/roster-tabs'
 
 export default async function RosterPage() {
@@ -205,14 +204,11 @@ export default async function RosterPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">Roster</h1>
-          <p className="mt-1 text-stone-600 dark:text-stone-300">
-            {isParent ? 'Your linked scouts' : 'Manage your unit\'s roster'}
-          </p>
-        </div>
-        {canManageScouts && <AddScoutButton unitId={membership.unit_id} />}
+      <div>
+        <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">Roster</h1>
+        <p className="mt-1 text-stone-600 dark:text-stone-300">
+          {isParent ? 'Your linked scouts' : 'Manage your unit\'s roster'}
+        </p>
       </div>
 
       <Card>

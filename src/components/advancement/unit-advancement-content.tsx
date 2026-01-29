@@ -97,6 +97,8 @@ interface PrefetchedRankData {
   scouts: ScoutWithRankProgress[]
 }
 
+type TabValue = 'ranks' | 'badges' | 'summary'
+
 interface UnitAdvancementContentProps {
   // Summary tab data (loaded upfront)
   scouts: Scout[]
@@ -115,6 +117,8 @@ interface UnitAdvancementContentProps {
   unitId: string
   canEdit: boolean
   currentUserName?: string
+  // Initial tab to display (defaults to 'ranks')
+  initialTab?: TabValue
 }
 
 export function UnitAdvancementContent({
@@ -127,6 +131,7 @@ export function UnitAdvancementContent({
   unitId,
   canEdit,
   currentUserName = 'Leader',
+  initialTab = 'ranks',
 }: UnitAdvancementContentProps) {
   const [showPendingModal, setShowPendingModal] = useState(false)
 
@@ -156,6 +161,7 @@ export function UnitAdvancementContent({
         unitId={unitId}
         canEdit={canEdit}
         currentUserName={currentUserName}
+        initialTab={initialTab}
       />
 
       {/* Pending Approvals Modal */}

@@ -8,7 +8,14 @@ import {
   getRankBrowserData,
 } from '@/app/actions/advancement'
 
-export default async function AdvancementPage() {
+interface AdvancementPageProps {
+  searchParams: Promise<{ tab?: string }>
+}
+
+export default async function AdvancementPage({ searchParams }: AdvancementPageProps) {
+  const { tab } = await searchParams
+  const initialTab = (tab === 'summary' || tab === 'badges' || tab === 'ranks') ? tab : 'ranks'
+
   // Check feature flag
   if (!isFeatureEnabled(FeatureFlag.ADVANCEMENT_TRACKING)) {
     redirect('/dashboard')
@@ -245,6 +252,7 @@ export default async function AdvancementPage() {
         unitId={membership.unit_id}
         canEdit={canEdit}
         currentUserName={currentUserName}
+        initialTab={initialTab}
       />
     </div>
   )

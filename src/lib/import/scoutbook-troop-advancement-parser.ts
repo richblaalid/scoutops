@@ -141,6 +141,7 @@ function normalizeBadgeName(name: string): string {
     .toLowerCase()
     .replace(/\s+mb$/i, '') // Remove " MB" suffix
     .replace(/\s+merit\s+badge$/i, '') // Remove " Merit Badge" suffix
+    .replace(/\s*&\s*/g, ' and ') // Normalize & to "and" before other processing
     .trim()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_|_$/g, '')

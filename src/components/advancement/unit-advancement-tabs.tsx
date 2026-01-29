@@ -99,6 +99,8 @@ interface PrefetchedRankData {
   scouts: ScoutWithRankProgress[]
 }
 
+type TabValue = 'ranks' | 'badges' | 'summary'
+
 interface UnitAdvancementTabsProps {
   // Summary tab data (loaded upfront)
   scouts: Scout[]
@@ -112,6 +114,8 @@ interface UnitAdvancementTabsProps {
   unitId: string
   canEdit: boolean
   currentUserName?: string
+  // Initial tab to display (defaults to 'ranks')
+  initialTab?: TabValue
 }
 
 export function UnitAdvancementTabs({
@@ -124,10 +128,13 @@ export function UnitAdvancementTabs({
   unitId,
   canEdit,
   currentUserName = 'Leader',
+  initialTab = 'ranks',
 }: UnitAdvancementTabsProps) {
   // Track which tabs have been visited to enable lazy loading
-  // Ranks tab is the default and has data prefetched server-side
-  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(['ranks']))
+  // Include both ranks (prefetched) and the initial tab
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
+    new Set(['ranks', initialTab])
+  )
 
   const handleTabChange = (value: string) => {
     setVisitedTabs((prev) => {
@@ -139,7 +146,7 @@ export function UnitAdvancementTabs({
   }
 
   return (
-    <Tabs defaultValue="ranks" className="w-full" onValueChange={handleTabChange}>
+    <Tabs defaultValue={initialTab} className="w-full" onValueChange={handleTabChange}>
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="ranks" className="gap-1.5">
           <Award className="h-4 w-4 hidden sm:inline" />

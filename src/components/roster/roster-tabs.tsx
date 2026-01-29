@@ -1,8 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ScoutsList } from '@/components/scouts/scouts-list'
 import { AdultsList } from './adults-list'
+import { AddScoutButton } from '@/components/scouts/add-scout-button'
+import { AddAdultButton } from './add-adult-button'
 
 interface Scout {
   id: string
@@ -24,6 +27,14 @@ interface RosterAdult {
   first_name: string | null
   last_name: string | null
   full_name: string | null
+  email?: string | null
+  email_secondary?: string | null
+  phone_primary?: string | null
+  phone_secondary?: string | null
+  address_street?: string | null
+  address_city?: string | null
+  address_state?: string | null
+  address_zip?: string | null
   member_type: string | null
   position: string | null
   position_2: string | null
@@ -43,16 +54,29 @@ interface RosterTabsProps {
 }
 
 export function RosterTabs({ scouts, adults, canManageScouts, canManageAdults, unitId }: RosterTabsProps) {
+  const [activeTab, setActiveTab] = useState('scouts')
+
   return (
-    <Tabs defaultValue="scouts" className="w-full">
-      <TabsList>
-        <TabsTrigger value="scouts">
-          Scouts ({scouts.length})
-        </TabsTrigger>
-        <TabsTrigger value="adults">
-          Adults ({adults.length})
-        </TabsTrigger>
-      </TabsList>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <div className="flex items-center justify-between mb-4">
+        <TabsList>
+          <TabsTrigger value="scouts">
+            Scouts ({scouts.length})
+          </TabsTrigger>
+          <TabsTrigger value="adults">
+            Adults ({adults.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Contextual action button */}
+        {activeTab === 'scouts' && canManageScouts && (
+          <AddScoutButton unitId={unitId} />
+        )}
+        {activeTab === 'adults' && canManageAdults && (
+          <AddAdultButton unitId={unitId} />
+        )}
+      </div>
+
       <TabsContent value="scouts">
         <ScoutsList scouts={scouts} canManage={canManageScouts} unitId={unitId} />
       </TabsContent>

@@ -384,6 +384,14 @@ export default async function DashboardPage() {
                 Sync Scoutbook
               </Link>
             )}
+            {/* Advancement Tracking */}
+            <Link
+              href="/advancement?tab=summary"
+              className="inline-flex items-center justify-center gap-2.5 rounded-lg bg-amber-600 text-white px-5 py-3 text-base font-semibold transition-colors hover:bg-amber-700 shadow-sm w-full sm:w-auto"
+            >
+              <Award className="h-5 w-5" />
+              Advancement
+            </Link>
             {/* Future: Send Payment Reminders */}
             {isFinancialRole(role) && scoutsOwing > 0 && (
               <button
@@ -404,16 +412,6 @@ export default async function DashboardPage() {
             >
               <CalendarCheck className="h-5 w-5" />
               Record Attendance
-              <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Soon</span>
-            </button>
-            {/* Future: Advancement Tracking */}
-            <button
-              disabled
-              className="inline-flex items-center justify-center gap-2.5 rounded-lg border-2 border-stone-200 bg-stone-50 px-5 py-3 text-base font-semibold text-stone-400 cursor-not-allowed w-full sm:w-auto"
-              title="Coming soon"
-            >
-              <Award className="h-5 w-5" />
-              Advancement
               <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Soon</span>
             </button>
           </div>
