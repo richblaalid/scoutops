@@ -1405,38 +1405,31 @@ export async function importStagedAdvancement(
     }
   }
 
-  // Step 9: Update requirement progress to completed status
-  // We need to UPDATE existing records (not upsert with ignoreDuplicates)
-  // because step 6.75 already created all records as 'not_started'
-  for (const req of rankReqToInsert) {
+  // Step 9: Batch update requirement progress to completed status
+  // Use upsert with onConflict to update existing records
+  for (let i = 0; i < rankReqToInsert.length; i += BATCH_SIZE) {
+    const batch = rankReqToInsert.slice(i, i + BATCH_SIZE)
     const { error } = await adminSupabase
       .from('scout_rank_requirement_progress')
-      .update({
-        status: req.status,
-        completed_at: req.completed_at,
-        completed_by: req.completed_by,
+      .upsert(batch, {
+        onConflict: 'scout_rank_progress_id,requirement_id',
       })
-      .eq('scout_rank_progress_id', req.scout_rank_progress_id)
-      .eq('requirement_id', req.requirement_id)
 
     if (!error) {
-      result.rankRequirementsImported++
+      result.rankRequirementsImported += batch.length
     }
   }
 
-  for (const req of badgeReqToInsert) {
+  for (let i = 0; i < badgeReqToInsert.length; i += BATCH_SIZE) {
+    const batch = badgeReqToInsert.slice(i, i + BATCH_SIZE)
     const { error } = await adminSupabase
       .from('scout_merit_badge_requirement_progress')
-      .update({
-        status: req.status,
-        completed_at: req.completed_at,
-        completed_by: req.completed_by,
+      .upsert(batch, {
+        onConflict: 'scout_merit_badge_progress_id,requirement_id',
       })
-      .eq('scout_merit_badge_progress_id', req.scout_merit_badge_progress_id)
-      .eq('requirement_id', req.requirement_id)
 
     if (!error) {
-      result.badgeRequirementsImported++
+      result.badgeRequirementsImported += batch.length
     }
   }
 
