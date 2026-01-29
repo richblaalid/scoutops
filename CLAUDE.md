@@ -4,7 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Chuckbox is a financial management application for Scout units (troops, packs, crews). It handles scout accounts, billing, payments, and financial reporting with double-entry accounting.
+Chuckbox is a management application for Scout units (troops, packs, crews). It handles:
+- **Finances**: Scout accounts, billing, payments, and financial reporting with double-entry accounting
+- **Advancement**: Rank and merit badge tracking with bulk sign-off capabilities
+- **Roster**: Scout and adult member management with guardian associations
 
 ## Commands
 
@@ -17,6 +20,16 @@ npm run test:watch   # Watch mode
 npm run test:ui      # Vitest UI
 vitest run tests/unit/utils.test.ts  # Run single test file
 ```
+
+### Dev Server Restart (Port-Specific)
+
+**IMPORTANT:** This project runs on port 3000. To restart the dev server without affecting other projects:
+
+```bash
+lsof -ti:3000 | xargs kill 2>/dev/null; npm run dev
+```
+
+Never use `pkill -f "next dev"` as it kills ALL Next.js dev servers on the machine.
 
 ### Database Dev Tools
 
@@ -55,9 +68,7 @@ The application seeds BSA official reference data (ranks, merit badges, leadersh
 **Canonical data files** (source of truth in `data/`):
 | File | Purpose |
 |------|---------|
-| `merit-badges-canonical.json` | Merit badge definitions (141 badges with images, categories, pamphlet URLs) |
-| `merit-badge-requirements-scraped.json` | Requirement text and structure (11k+ requirements across 358 versions) |
-| `ranks-2025.json` | Rank requirements (144 requirements for 7 ranks) |
+| `bsa-data-canonical.json` | Unified BSA data: merit badges, requirements, ranks (primary source) |
 | `leadership-positions-2025.json` | Leadership positions (18 positions) |
 
 **Rules for modifying seeders** (`scripts/bsa-reference-data.ts`, `scripts/db.ts`):
@@ -67,9 +78,9 @@ The application seeds BSA official reference data (ranks, merit badges, leadersh
 - When adding new badge/requirement fields, update both the canonical data file AND the seeder
 
 **Expected counts after seeding:**
-- 141 merit badges (all with `image_url` and `category`)
-- 144+ rank requirements
-- 11,000+ merit badge requirements
+- 141 merit badges (with images and categories)
+- 7 ranks with 144+ requirements
+- 11,000+ merit badge requirements (across all versions)
 - 18 leadership positions
 
 **Seed validation**: The seeder automatically validates data integrity. If critical fields are missing or counts are too low, the seed process will fail with an error message.
@@ -210,6 +221,7 @@ Skip planning for:
 ### Important Notes
 - Supabase queries return single objects (not arrays) for one-to-one relations like `scout_accounts`
 - Protected routes check `unit_memberships` for role-based access (admin, treasurer, leader, parent, scout)
+- User management (invite, roles, remove) is in **Settings > Users tab** (admin only)
 - The middleware deprecation warning about "proxy" is expected - Next.js 16 is transitioning middleware conventions
 - Scout accounts use a dual-balance model:
   - `billing_balance`: Charges owed to unit (negative = owes money)
