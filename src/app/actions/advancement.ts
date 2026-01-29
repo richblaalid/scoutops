@@ -1875,7 +1875,8 @@ export async function getCurrentUserInfo(unitId: string): Promise<ActionResult<{
  * Get BSA ranks reference data
  */
 export async function getBsaRanks() {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for this read-only BSA reference query
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('bsa_ranks')
@@ -1894,7 +1895,8 @@ export async function getBsaRanks() {
  * Get BSA merit badges reference data
  */
 export async function getBsaMeritBadges(filters?: { category?: string; isEagleRequired?: boolean }) {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for this read-only BSA reference query
+  const supabase = createAdminClient()
 
   let query = supabase
     .from('bsa_merit_badges')
@@ -1923,7 +1925,8 @@ export async function getBsaMeritBadges(filters?: { category?: string; isEagleRe
  * Get leadership positions reference data
  */
 export async function getBsaLeadershipPositions() {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for this read-only BSA reference query
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('bsa_leadership_positions')
@@ -2364,7 +2367,8 @@ async function processMeritBadgeRequirementEntry(
  * @param versionYear - Optional version year (e.g., from scout's progress). If not provided, uses the current active version.
  */
 export async function getMeritBadgeRequirements(meritBadgeId: string, versionYear?: number) {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for this read-only BSA reference query
+  const supabase = createAdminClient()
 
   let effectiveVersionYear = versionYear
 
@@ -2409,7 +2413,8 @@ export async function getMeritBadgeRequirements(meritBadgeId: string, versionYea
       is_alternative,
       alternatives_group,
       nesting_depth,
-      required_count
+      required_count,
+      is_header
     `)
     .eq('merit_badge_id', meritBadgeId)
     .eq('version_year', effectiveVersionYear)
@@ -2434,6 +2439,7 @@ export async function getMeritBadgeRequirements(meritBadgeId: string, versionYea
     alternatives_group: string | null
     nesting_depth: number | null
     required_count: number | null
+    is_header: boolean | null
   }>
 }
 
@@ -2867,7 +2873,8 @@ export async function getMeritBadgeVersions(meritBadgeId: string): Promise<Actio
   }>
   currentYear: number | null
 }>> {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for this read-only BSA reference query
+  const supabase = createAdminClient()
 
   const { data: versions, error } = await supabase
     .from('bsa_merit_badge_versions')
@@ -2936,8 +2943,10 @@ export async function getMeritBadgeRequirementsForVersion(
   display_order: number
   parent_requirement_id: string | null
   nesting_depth: number | null
+  is_header: boolean | null
 }>>> {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for this read-only BSA reference query
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('bsa_merit_badge_requirements')
@@ -2948,7 +2957,8 @@ export async function getMeritBadgeRequirementsForVersion(
       description,
       display_order,
       parent_requirement_id,
-      nesting_depth
+      nesting_depth,
+      is_header
     `)
     .eq('merit_badge_id', meritBadgeId)
     .eq('version_year', versionYear)
