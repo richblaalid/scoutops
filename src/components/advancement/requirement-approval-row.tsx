@@ -303,13 +303,13 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
               <p
                 className={cn(
                   'text-sm leading-relaxed',
-                  (isComplete || showSuccess) && 'text-stone-500'
+                  (isComplete || showSuccess) && 'text-emerald-700'
                 )}
               >
                 <span className={cn(
                   'mr-1.5 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-xs font-bold',
-                  // Completed: campfire orange, Incomplete: campfire orange (actionable items)
-                  isComplete ? 'bg-[#E85D04] text-white' : 'bg-[#E85D04] text-white'
+                  // Completable requirements always use campfire orange
+                  'bg-[#E85D04] text-white'
                 )}>
                   {displayLabel ?? requirementNumber}
                 </span>
@@ -370,101 +370,112 @@ export const RequirementApprovalRow = memo(function RequirementApprovalRow({
               </div>
             </div>
 
-            {/* Actions - always visible on mobile, hover on desktop */}
-            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-              {/* Add Notes Button */}
-              {canAddNotes && (
-                <Popover open={notesOpen} onOpenChange={setNotesOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'h-7 w-7 p-0 sm:h-8 sm:w-8',
-                        'sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100',
-                        hasNotes && 'sm:opacity-100'
-                      )}
-                    >
-                      <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72" align="end">
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium">Add Note</h4>
-                      <Textarea
-                        placeholder="Add a note about this requirement..."
-                        value={noteValue}
-                        onChange={(e) => setNoteValue(e.target.value)}
-                        rows={3}
-                        className="text-sm"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setNotesOpen(false)
-                            setNoteValue('')
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={handleSaveNotes}
-                          disabled={isSavingNotes || !noteValue.trim()}
-                        >
-                          {isSavingNotes ? (
-                            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                          ) : null}
-                          Save
-                        </Button>
+            {/* Actions - stacked layout with completed label on top */}
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              {/* Completed indicator - right justified, matches parent header style */}
+              {isComplete && !showSuccess && (
+                <span className="flex items-center gap-1.5 rounded-full bg-[#E85D04]/10 px-2.5 py-0.5 text-xs font-semibold text-[#E85D04]">
+                  <span className="text-sm">🎯</span>
+                  <span className="hidden sm:inline">Completed!</span>
+                </span>
+              )}
+
+              {/* Action buttons row - below the completed label */}
+              <div className="flex items-center gap-0.5 sm:gap-1">
+                {/* Add Notes Button */}
+                {canAddNotes && (
+                  <Popover open={notesOpen} onOpenChange={setNotesOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          'h-7 w-7 p-0 sm:h-8 sm:w-8',
+                          'sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100',
+                          hasNotes && 'sm:opacity-100'
+                        )}
+                      >
+                        <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72" align="end">
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium">Add Note</h4>
+                        <Textarea
+                          placeholder="Add a note about this requirement..."
+                          value={noteValue}
+                          onChange={(e) => setNoteValue(e.target.value)}
+                          rows={3}
+                          className="text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setNotesOpen(false)
+                              setNoteValue('')
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleSaveNotes}
+                            disabled={isSavingNotes || !noteValue.trim()}
+                          >
+                            {isSavingNotes ? (
+                              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                            ) : null}
+                            Save
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+                    </PopoverContent>
+                  </Popover>
+                )}
 
-              {/* Undo Button - for completed requirements */}
-              {canUndo && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    'h-7 w-7 p-0 sm:h-8 sm:w-8',
-                    'sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100',
-                    'text-amber-600 hover:bg-amber-50 hover:text-amber-700'
-                  )}
-                  onClick={() => setUndoDialogOpen(true)}
-                  disabled={isLoading}
-                >
-                  <Undo2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </Button>
-              )}
+                {/* Undo Button - for completed requirements */}
+                {canUndo && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      'h-7 w-7 p-0 sm:h-8 sm:w-8',
+                      'sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100',
+                      'text-amber-600 hover:bg-amber-50 hover:text-amber-700'
+                    )}
+                    onClick={() => setUndoDialogOpen(true)}
+                    disabled={isLoading}
+                  >
+                    <Undo2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </Button>
+                )}
 
-              {/* Complete Button - icon only on mobile */}
-              {canApprove && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    'h-7 w-7 p-0 sm:h-8 sm:w-auto sm:px-2',
-                    'sm:opacity-0 sm:transition-all sm:group-hover:opacity-100',
-                    'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
-                  )}
-                  onClick={() => setCompletionDialogOpen(true)}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Check className="h-3.5 w-3.5 sm:mr-1 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Complete</span>
-                    </>
-                  )}
-                </Button>
-              )}
+                {/* Complete Button - icon only on mobile */}
+                {canApprove && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      'h-7 w-7 p-0 sm:h-8 sm:w-auto sm:px-2',
+                      'sm:opacity-0 sm:transition-all sm:group-hover:opacity-100',
+                      'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
+                    )}
+                    onClick={() => setCompletionDialogOpen(true)}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Check className="h-3.5 w-3.5 sm:mr-1 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">Complete</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

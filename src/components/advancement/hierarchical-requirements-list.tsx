@@ -333,6 +333,7 @@ function isRequirementComplete(req: Requirement) {
  *
  * - Headers (non-completable): Subtle pine green tinted backgrounds by depth
  * - Completable requirements: Always white backgrounds
+ * - Completed items: Green success background (emerald)
  * - All borders: Pine green (#234D3E)
  * - Left borders: Pine green for hierarchy indication
  *
@@ -340,9 +341,16 @@ function isRequirementComplete(req: Requirement) {
  * - Clean, professional look with consistent pine green accents
  * - Headers distinguished by subtle green tints
  * - Completable items are clean white for clarity
+ * - Completed items get green treatment whether single or collapsed parent
  * - Depth visible through tint intensity and left border lines
  */
-function getTierStyles(depth: number, isHeader: boolean, isComplete: boolean, isSelected: boolean) {
+function getTierStyles(
+  depth: number,
+  isHeader: boolean,
+  isComplete: boolean,
+  isSelected: boolean,
+  isCollapsedParent: boolean = false
+) {
   // All borders use pine green (forest-800 = #234D3E)
   const borderColor = 'border-forest-800'
 
@@ -362,7 +370,11 @@ function getTierStyles(depth: number, isHeader: boolean, isComplete: boolean, is
   const borderWidth = depth === 0 && isHeader ? 'border-2' : 'border'
 
   // Override for completed items - emerald success state
-  if (isComplete && !isHeader) {
+  // Apply green treatment when:
+  // 1. Single completable requirement that is complete (!isHeader && isComplete)
+  // 2. Parent with children that is complete AND collapsed (isCollapsedParent && isComplete)
+  const showCompleteStyle = isComplete && (!isHeader || isCollapsedParent)
+  if (showCompleteStyle) {
     return {
       container: 'border-success bg-success-light',
       leftBorder: 'border-success',
@@ -496,8 +508,10 @@ const RequirementNodeView = memo(function RequirementNodeView({
   // Get tier-based styling for this depth level
   // Treat any node with children as a "header" for styling (subtle pine background)
   // Only leaf nodes without children get white completable styling
+  // When collapsed and complete, show green treatment to indicate rolled-up completion
   const isContainerNode = hasChildren || isHeader
-  const tierStyles = getTierStyles(depth, isContainerNode, isComplete, isSelected)
+  const isCollapsedParent = hasChildren && isCollapsed
+  const tierStyles = getTierStyles(depth, isContainerNode, isComplete, isSelected, isCollapsedParent)
 
   return (
     <div className={cn(
@@ -512,7 +526,7 @@ const RequirementNodeView = memo(function RequirementNodeView({
           'flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors',
           'hover:bg-stone-100/50',
           isCollapsed ? 'rounded-lg' : 'rounded-t-lg',
-          isComplete && !isHeader && 'hover:bg-emerald-100/50',
+          isComplete && (!isHeader || isCollapsedParent) && 'hover:bg-emerald-100/50',
           isMultiSelectMode && !isComplete && !isHeader && 'cursor-pointer'
         )}
       >
@@ -572,9 +586,9 @@ const RequirementNodeView = memo(function RequirementNodeView({
         {/* Title/Description */}
         <span className={cn(
           'flex-1 line-clamp-1',
-          isHeader
+          isHeader && !isCollapsedParent
             ? 'font-semibold text-stone-600 italic'  // Header text styling
-            : isComplete
+            : isComplete && (!isHeader || isCollapsedParent)
               ? 'font-medium text-emerald-700'
               : 'font-medium text-stone-700'
         )}>
