@@ -48,6 +48,95 @@ const MERIT_BADGE_ALIASES: Record<string, string> = {
 // Batch size for database operations
 const BATCH_SIZE = 500
 
+/**
+ * Normalize requirement number format from Scoutbook to database format
+ * Handles various format mismatches:
+ * - "2b[1]" -> "2(1)" (bracket with letter prefix)
+ * - "3a[3]" -> "3a" (sub-option of a lettered requirement)
+ * - "6a[1]a Aerobic" -> "6Aa", "6a" (complex nested format)
+ *
+ * Returns an array of possible matches to try (ordered by specificity)
+ */
+function normalizeRequirementNumber(reqNum: string): string[] {
+  const variants: string[] = [reqNum]
+
+  // Strip trailing descriptive text first: "6a[1]a Aerobic" -> "6a[1]a"
+  let cleaned = reqNum
+  const textMatch = reqNum.match(/^(.+?)\s+[A-Z]/)
+  if (textMatch) {
+    cleaned = textMatch[1]
+    variants.push(cleaned)
+  }
+
+  // Remove trailing periods: "1a." -> "1a"
+  if (cleaned.endsWith('.')) {
+    cleaned = cleaned.slice(0, -1)
+    variants.push(cleaned)
+  }
+
+  // Convert brackets to parentheses: "2b[1]" -> "2b(1)"
+  if (cleaned.includes('[')) {
+    variants.push(cleaned.replace(/\[/g, '(').replace(/\]/g, ')'))
+  }
+
+  // Pattern: "2b[1]" or "9b[4]" -> "2(1)", "9(4)" (number + bracket, strip letter)
+  const numLetterBracketNum = cleaned.match(/^(\d+)[a-z]\[(\d+)\]$/i)
+  if (numLetterBracketNum) {
+    const [, num, idx] = numLetterBracketNum
+    variants.push(`${num}(${idx})`)
+    variants.push(`${num}[${idx}]`)
+  }
+
+  // Pattern: "3a[3]" -> "3a" (lettered requirement with sub-option, try parent)
+  const letterBracket = cleaned.match(/^(\d+[a-z])\[\d+\]$/i)
+  if (letterBracket) {
+    variants.push(letterBracket[1]) // Just "3a"
+  }
+
+  // Pattern: "6a[1]a" -> "6Aa" (nested with trailing letter)
+  // Scoutbook: 6a[1]a means requirement 6, sub a, option 1, sub-sub a
+  // Database might have: 6Aa (capitalized second letter)
+  const nestedPattern = cleaned.match(/^(\d+)([a-z])\[(\d+)\]([a-z])$/i)
+  if (nestedPattern) {
+    const [, num, firstLetter, , secondLetter] = nestedPattern
+    // Try: "6Aa" format (number + uppercase first letter + lowercase second)
+    variants.push(`${num}${firstLetter.toUpperCase()}${secondLetter.toLowerCase()}`)
+    // Try: "6a" (just the first part)
+    variants.push(`${num}${firstLetter.toLowerCase()}`)
+  }
+
+  // Pattern: "2b(1)" -> "2(1)" (parentheses format, strip letter)
+  const parenMatch = cleaned.match(/^(\d+)[a-z]\((\d+)\)$/i)
+  if (parenMatch) {
+    const [, num, idx] = parenMatch
+    variants.push(`${num}(${idx})`)
+  }
+
+  // Pattern: "2a1" or "2a2" -> "2(1)", "2(2)", "2a" (letter+number suffix)
+  const letterNumSuffix = cleaned.match(/^(\d+)([a-z])(\d+)$/i)
+  if (letterNumSuffix) {
+    const [, num, letter, suffix] = letterNumSuffix
+    variants.push(`${num}(${suffix})`)  // 2a1 -> 2(1)
+    variants.push(`${num}${letter}`)     // 2a1 -> 2a
+  }
+
+  // Pattern: "1c[1]" -> "1A(1)", "1(1)" (try uppercase letter variant)
+  const lcBracket = cleaned.match(/^(\d+)([a-z])\[(\d+)\]$/i)
+  if (lcBracket) {
+    const [, num, letter, idx] = lcBracket
+    variants.push(`${num}${letter.toUpperCase()}(${idx})`)  // 1c[1] -> 1C(1)
+    variants.push(`${num}(${idx})`)                          // 1c[1] -> 1(1)
+  }
+
+  // Fallback: try just the base number if nothing else works
+  const baseNum = cleaned.match(/^(\d+)/)
+  if (baseNum) {
+    variants.push(baseNum[1])
+  }
+
+  return [...new Set(variants)]
+}
+
 // ============================================
 // Auth Helpers
 // ============================================
@@ -446,34 +535,67 @@ export async function importStagedAdvancement(
     return badge
   }
 
-  // Load all rank requirements
-  // NOTE: Must specify limit > 1000 as Supabase defaults to 1000 rows
-  const { data: allRankRequirements } = await adminSupabase
-    .from('bsa_rank_requirements')
-    .select('id, rank_id, requirement_number, version_year')
-    .limit(10000)
+  // Load all rank requirements using pagination
+  // Supabase has a server-side limit of 1000 rows per query
+  const allRankRequirements: Array<{
+    id: string
+    rank_id: string
+    requirement_number: string
+    version_year: number | null
+  }> = []
+  let rankReqOffset = 0
+  const PAGE_SIZE = 1000
+  while (true) {
+    const { data: batch } = await adminSupabase
+      .from('bsa_rank_requirements')
+      .select('id, rank_id, requirement_number, version_year')
+      .range(rankReqOffset, rankReqOffset + PAGE_SIZE - 1)
+    if (!batch || batch.length === 0) break
+    allRankRequirements.push(...batch)
+    if (batch.length < PAGE_SIZE) break
+    rankReqOffset += PAGE_SIZE
+  }
 
   const rankReqMap = new Map(
-    (allRankRequirements || []).map((r) => [
+    allRankRequirements.map((r) => [
       `${r.rank_id}:${r.requirement_number}:${r.version_year}`,
       r,
     ])
   )
 
-  // Load all merit badge requirements
-  // NOTE: Must specify limit > 1000 as Supabase defaults to 1000 rows
+  // Load all merit badge requirements using pagination
   // We have ~11,000+ requirements across all badges and versions
-  const { data: allBadgeRequirements } = await adminSupabase
-    .from('bsa_merit_badge_requirements')
-    .select('id, merit_badge_id, requirement_number, version_year')
-    .limit(50000)
+  // Include scoutbook_requirement_number for matching against CSV format
+  const allBadgeRequirements: Array<{
+    id: string
+    merit_badge_id: string
+    requirement_number: string
+    scoutbook_requirement_number: string | null
+    version_year: number | null
+  }> = []
+  let badgeReqOffset = 0
+  while (true) {
+    const { data: batch } = await adminSupabase
+      .from('bsa_merit_badge_requirements')
+      .select('id, merit_badge_id, requirement_number, scoutbook_requirement_number, version_year')
+      .range(badgeReqOffset, badgeReqOffset + PAGE_SIZE - 1)
+    if (!batch || batch.length === 0) break
+    allBadgeRequirements.push(...batch)
+    if (batch.length < PAGE_SIZE) break
+    badgeReqOffset += PAGE_SIZE
+  }
 
-  const badgeReqMap = new Map(
-    (allBadgeRequirements || []).map((r) => [
-      `${r.merit_badge_id}:${r.requirement_number}:${r.version_year}`,
-      r,
-    ])
-  )
+  // Build lookup maps - primary key is scoutbook_requirement_number (CSV format like "2b[1]")
+  // Fallback to requirement_number for records without scoutbook mapping
+  const badgeReqMap = new Map<string, typeof allBadgeRequirements[0]>()
+  for (const r of allBadgeRequirements) {
+    // Primary lookup: use scoutbook_requirement_number if available
+    if (r.scoutbook_requirement_number) {
+      badgeReqMap.set(`${r.merit_badge_id}:${r.scoutbook_requirement_number}:${r.version_year}`, r)
+    }
+    // Also index by requirement_number for fallback matching
+    badgeReqMap.set(`${r.merit_badge_id}:${r.requirement_number}:${r.version_year}`, r)
+  }
 
   const result: TroopAdvancementImportResult = {
     scoutsCreated: 0,
@@ -484,6 +606,21 @@ export async function importStagedAdvancement(
     duplicatesSkipped: 0,
     warnings: [],
   }
+
+  // Collect unmatched requirements for admin logging
+  const unmatchedRequirements: Array<{
+    unit_id: string
+    import_type: 'troop_advancement'
+    imported_by: string
+    scout_id: string | null
+    bsa_member_id: string
+    scout_name: string
+    advancement_type: 'rank_requirement' | 'badge_requirement'
+    badge_or_rank_name: string
+    version_year: number | null
+    requirement_id: string
+    error_reason: string
+  }> = []
 
   // Filter to selected scouts
   const selectedScouts = staged.scouts.filter((s) => selectedBsaMemberIds.includes(s.bsaMemberId))
@@ -614,6 +751,7 @@ export async function importStagedAdvancement(
     started_at: string
     completed_at: string | null
     awarded_at: string | null
+    requirement_version_year: number | null
   }> = []
   const badgeProgressToUpdate: Array<{
     id: string
@@ -649,6 +787,10 @@ export async function importStagedAdvancement(
           result.duplicatesSkipped++
         }
       } else {
+        // Parse version from staged data, fallback to badge's default version
+        const versionYear = stagedBadge.version
+          ? parseInt(stagedBadge.version, 10)
+          : dbBadge.requirement_version_year
         badgeProgressToInsert.push({
           scout_id: scoutId,
           merit_badge_id: dbBadge.id,
@@ -656,6 +798,7 @@ export async function importStagedAdvancement(
           started_at: stagedBadge.date || new Date().toISOString(),
           completed_at: stagedBadge.date || null,
           awarded_at: stagedBadge.date || null,
+          requirement_version_year: versionYear || null,
         })
       }
     }
@@ -724,23 +867,193 @@ export async function importStagedAdvancement(
     adminSupabase
       .from('scout_rank_progress')
       .select('id, scout_id, rank_id')
-      .in('scout_id', allScoutIds),
+      .in('scout_id', allScoutIds)
+      .limit(10000),
     adminSupabase
       .from('scout_merit_badge_progress')
       .select('id, scout_id, merit_badge_id')
-      .in('scout_id', allScoutIds),
+      .in('scout_id', allScoutIds)
+      .limit(50000),
   ])
 
-  const rankProgressIdMap = new Map(
+  let rankProgressIdMap = new Map(
     (updatedRankProgress.data || []).map((p) => [`${p.scout_id}:${p.rank_id}`, p.id])
   )
-  const badgeProgressIdMap = new Map(
+  let badgeProgressIdMap = new Map(
     (updatedBadgeProgress.data || []).map((p) => [`${p.scout_id}:${p.merit_badge_id}`, p.id])
   )
 
+  // Step 6.5: Pre-create any missing progress records in batch
+  // First pass: identify all missing rank progress records needed for requirements
+  const missingRankProgress: Array<{
+    scout_id: string
+    rank_id: string
+    status: 'in_progress'
+    started_at: string
+  }> = []
+
+  for (const scout of selectedScouts) {
+    const scoutId = scoutIdByBsaMemberId.get(scout.bsaMemberId)
+    if (!scoutId) continue
+
+    for (const stagedReq of scout.rankRequirements) {
+      if (!stagedReq.requirementNumber) continue
+      const dbRank = rankByCode.get(stagedReq.code)
+      if (!dbRank) continue
+
+      const key = `${scoutId}:${dbRank.id}`
+      if (!rankProgressIdMap.has(key)) {
+        // Check if we already added this to missing list
+        const alreadyAdded = missingRankProgress.some(
+          (p) => p.scout_id === scoutId && p.rank_id === dbRank.id
+        )
+        if (!alreadyAdded) {
+          missingRankProgress.push({
+            scout_id: scoutId,
+            rank_id: dbRank.id,
+            status: 'in_progress',
+            started_at: new Date().toISOString(),
+          })
+        }
+      }
+    }
+  }
+
+  // First pass: identify all missing badge progress records needed for requirements
+  const missingBadgeProgress: Array<{
+    scout_id: string
+    merit_badge_id: string
+    status: 'in_progress'
+    started_at: string
+    requirement_version_year: number | null
+  }> = []
+
+  for (const scout of selectedScouts) {
+    const scoutId = scoutIdByBsaMemberId.get(scout.bsaMemberId)
+    if (!scoutId) continue
+
+    for (const stagedReq of scout.meritBadgeRequirements) {
+      if (!stagedReq.requirementNumber) continue
+      const dbBadge = findBadge(stagedReq.code)
+      if (!dbBadge) continue
+
+      const key = `${scoutId}:${dbBadge.id}`
+      if (!badgeProgressIdMap.has(key)) {
+        const alreadyAdded = missingBadgeProgress.some(
+          (p) => p.scout_id === scoutId && p.merit_badge_id === dbBadge.id
+        )
+        if (!alreadyAdded) {
+          // Parse version from staged data, fallback to badge's default version
+          const versionYear = stagedReq.version
+            ? parseInt(stagedReq.version, 10)
+            : dbBadge.requirement_version_year
+          missingBadgeProgress.push({
+            scout_id: scoutId,
+            merit_badge_id: dbBadge.id,
+            status: 'in_progress',
+            started_at: new Date().toISOString(),
+            requirement_version_year: versionYear || null,
+          })
+        }
+      }
+    }
+  }
+
+  // Batch insert missing rank progress records
+  if (missingRankProgress.length > 0) {
+    for (let i = 0; i < missingRankProgress.length; i += BATCH_SIZE) {
+      const batch = missingRankProgress.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_rank_progress').upsert(batch, {
+        onConflict: 'scout_id,rank_id',
+        ignoreDuplicates: true,
+      })
+    }
+  }
+
+  // Batch insert missing badge progress records
+  if (missingBadgeProgress.length > 0) {
+    for (let i = 0; i < missingBadgeProgress.length; i += BATCH_SIZE) {
+      const batch = missingBadgeProgress.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_merit_badge_progress').upsert(batch, {
+        onConflict: 'scout_id,merit_badge_id',
+        ignoreDuplicates: true,
+      })
+    }
+  }
+
+  // Reload progress maps after batch inserts (always reload to get version years)
+  const [reloadedRankProgress, reloadedBadgeProgress] = await Promise.all([
+    adminSupabase
+      .from('scout_rank_progress')
+      .select('id, scout_id, rank_id')
+      .in('scout_id', allScoutIds)
+      .limit(10000),
+    adminSupabase
+      .from('scout_merit_badge_progress')
+      .select('id, scout_id, merit_badge_id, requirement_version_year')
+      .in('scout_id', allScoutIds)
+      .limit(50000),
+  ])
+
+  rankProgressIdMap = new Map(
+    (reloadedRankProgress.data || []).map((p) => [`${p.scout_id}:${p.rank_id}`, p.id])
+  )
+  badgeProgressIdMap = new Map(
+    (reloadedBadgeProgress.data || []).map((p) => [`${p.scout_id}:${p.merit_badge_id}`, p.id])
+  )
+
+  // Build map of badge progress -> version year (from DB or staged data)
+  const badgeProgressVersionMap = new Map<string, number | null>()
+  for (const p of reloadedBadgeProgress.data || []) {
+    badgeProgressVersionMap.set(p.id, p.requirement_version_year)
+  }
+
+  // Build map to look up staged version by scoutId:badgeId for updating null versions
+  const stagedBadgeVersionMap = new Map<string, number>()
+  for (const scout of selectedScouts) {
+    for (const req of scout.meritBadgeRequirements) {
+      if (req.version) {
+        const dbBadge = findBadge(req.code)
+        if (dbBadge) {
+          const key = `${scoutIdByBsaMemberId.get(scout.bsaMemberId)}:${dbBadge.id}`
+          if (!stagedBadgeVersionMap.has(key)) {
+            stagedBadgeVersionMap.set(key, parseInt(req.version, 10))
+          }
+        }
+      }
+    }
+  }
+
+  // Update badge progress records that have null version_year with the staged version
+  const badgeProgressToUpdateVersion: Array<{ id: string; requirement_version_year: number }> = []
+  for (const p of reloadedBadgeProgress.data || []) {
+    if (p.requirement_version_year === null) {
+      const key = `${p.scout_id}:${p.merit_badge_id}`
+      const stagedVersion = stagedBadgeVersionMap.get(key)
+      if (stagedVersion) {
+        badgeProgressToUpdateVersion.push({
+          id: p.id,
+          requirement_version_year: stagedVersion,
+        })
+        // Update our local map too
+        badgeProgressVersionMap.set(p.id, stagedVersion)
+      }
+    }
+  }
+
+  // Batch update version years
+  if (badgeProgressToUpdateVersion.length > 0) {
+    for (const update of badgeProgressToUpdateVersion) {
+      await adminSupabase
+        .from('scout_merit_badge_progress')
+        .update({ requirement_version_year: update.requirement_version_year })
+        .eq('id', update.id)
+    }
+  }
+
   // Load existing requirement progress
-  const rankProgressIds = Array.from(new Set(updatedRankProgress.data?.map((p) => p.id) || []))
-  const badgeProgressIds = Array.from(new Set(updatedBadgeProgress.data?.map((p) => p.id) || []))
+  const rankProgressIds = Array.from(new Set(rankProgressIdMap.values()))
+  const badgeProgressIds = Array.from(new Set(badgeProgressIdMap.values()))
 
   const [existingRankReqProgress, existingBadgeReqProgress] = await Promise.all([
     rankProgressIds.length > 0
@@ -748,12 +1061,14 @@ export async function importStagedAdvancement(
           .from('scout_rank_requirement_progress')
           .select('id, scout_rank_progress_id, requirement_id, status')
           .in('scout_rank_progress_id', rankProgressIds)
+          .limit(50000)
       : Promise.resolve({ data: [] }),
     badgeProgressIds.length > 0
       ? adminSupabase
           .from('scout_merit_badge_requirement_progress')
           .select('id, scout_merit_badge_progress_id, requirement_id, status')
           .in('scout_merit_badge_progress_id', badgeProgressIds)
+          .limit(100000)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -769,6 +1084,129 @@ export async function importStagedAdvancement(
       p,
     ])
   )
+
+  // Step 6.75: Initialize ALL requirement progress records for any progress that's missing them
+  // This ensures scouts see all requirements (not just completed ones) on their profile
+  // Get unique rank IDs from progress records
+  const uniqueRankIds = new Set<string>()
+  for (const [key] of rankProgressIdMap) {
+    const [, rankId] = key.split(':')
+    uniqueRankIds.add(rankId)
+  }
+
+  // Build map of rank -> all requirements
+  const rankAllRequirementsMap = new Map<string, string[]>()
+  for (const rankId of uniqueRankIds) {
+    const rank = rankById.get(rankId)
+    if (!rank) continue
+    const versionYear = rank.requirement_version_year
+    const reqIds: string[] = []
+    for (const [key, req] of rankReqMap) {
+      if (key.startsWith(`${rankId}:`) && key.endsWith(`:${versionYear}`)) {
+        reqIds.push(req.id)
+      }
+    }
+    rankAllRequirementsMap.set(rankId, reqIds)
+  }
+
+  // For each rank progress, create missing requirement progress records
+  const allRankReqInitRecords: Array<{
+    scout_rank_progress_id: string
+    requirement_id: string
+    status: 'not_started'
+  }> = []
+
+  for (const [key, progressId] of rankProgressIdMap) {
+    const [, rankId] = key.split(':')
+    const allReqIds = rankAllRequirementsMap.get(rankId) || []
+
+    for (const reqId of allReqIds) {
+      const existingKey = `${progressId}:${reqId}`
+      if (!existingRankReqMap.has(existingKey)) {
+        allRankReqInitRecords.push({
+          scout_rank_progress_id: progressId,
+          requirement_id: reqId,
+          status: 'not_started',
+        })
+      }
+    }
+  }
+
+  // Batch insert missing rank requirement progress
+  if (allRankReqInitRecords.length > 0) {
+    for (let i = 0; i < allRankReqInitRecords.length; i += BATCH_SIZE) {
+      const batch = allRankReqInitRecords.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_rank_requirement_progress').upsert(batch, {
+        onConflict: 'scout_rank_progress_id,requirement_id',
+        ignoreDuplicates: true,
+      })
+    }
+    // Update existing map with newly created records
+    for (const rec of allRankReqInitRecords) {
+      existingRankReqMap.set(`${rec.scout_rank_progress_id}:${rec.requirement_id}`, {
+        id: '', // We don't have the ID but don't need it for duplicate checking
+        scout_rank_progress_id: rec.scout_rank_progress_id,
+        requirement_id: rec.requirement_id,
+        status: 'not_started',
+      })
+    }
+  }
+
+  // For each badge progress, create missing requirement progress records
+  // Uses the version year from the progress record (set from staged data) to get correct requirements
+  const allBadgeReqInitRecords: Array<{
+    scout_merit_badge_progress_id: string
+    requirement_id: string
+    status: 'not_started'
+  }> = []
+
+  for (const [key, progressId] of badgeProgressIdMap) {
+    const [, badgeId] = key.split(':')
+    const badge = badgeById.get(badgeId)
+    if (!badge) continue
+
+    // Use version from progress record, or fall back to badge default
+    const versionYear = badgeProgressVersionMap.get(progressId) || badge.requirement_version_year
+
+    // Find all requirements for this badge+version
+    const reqIds: string[] = []
+    for (const [reqKey, req] of badgeReqMap) {
+      if (reqKey.startsWith(`${badgeId}:`) && reqKey.endsWith(`:${versionYear}`)) {
+        reqIds.push(req.id)
+      }
+    }
+
+    for (const reqId of reqIds) {
+      const existingKey = `${progressId}:${reqId}`
+      if (!existingBadgeReqMap.has(existingKey)) {
+        allBadgeReqInitRecords.push({
+          scout_merit_badge_progress_id: progressId,
+          requirement_id: reqId,
+          status: 'not_started',
+        })
+      }
+    }
+  }
+
+  // Batch insert missing badge requirement progress
+  if (allBadgeReqInitRecords.length > 0) {
+    for (let i = 0; i < allBadgeReqInitRecords.length; i += BATCH_SIZE) {
+      const batch = allBadgeReqInitRecords.slice(i, i + BATCH_SIZE)
+      await adminSupabase.from('scout_merit_badge_requirement_progress').upsert(batch, {
+        onConflict: 'scout_merit_badge_progress_id,requirement_id',
+        ignoreDuplicates: true,
+      })
+    }
+    // Update existing map with newly created records
+    for (const rec of allBadgeReqInitRecords) {
+      existingBadgeReqMap.set(`${rec.scout_merit_badge_progress_id}:${rec.requirement_id}`, {
+        id: '',
+        scout_merit_badge_progress_id: rec.scout_merit_badge_progress_id,
+        requirement_id: rec.requirement_id,
+        status: 'not_started',
+      })
+    }
+  }
 
   // Step 7: Collect rank requirement progress to insert
   type ReqProgressStatus = 'not_started' | 'in_progress' | 'pending_approval' | 'approved' | 'completed' | 'awarded'
@@ -792,21 +1230,7 @@ export async function importStagedAdvancement(
 
       const progressId = rankProgressIdMap.get(`${scoutId}:${dbRank.id}`)
       if (!progressId) {
-        // Need to create rank progress first
-        const { data: newProgress } = await adminSupabase
-          .from('scout_rank_progress')
-          .insert({
-            scout_id: scoutId,
-            rank_id: dbRank.id,
-            status: 'in_progress',
-            started_at: new Date().toISOString(),
-          })
-          .select('id')
-          .single()
-
-        if (newProgress) {
-          rankProgressIdMap.set(`${scoutId}:${dbRank.id}`, newProgress.id)
-        }
+        // Should have been created in batch - skip with warning
         continue
       }
 
@@ -839,7 +1263,22 @@ export async function importStagedAdvancement(
             type: 'requirement_not_found',
             rank: dbRank.name,
             requirement: stagedReq.requirementNumber,
-            message: `Rank requirement not found: ${dbRank.name} ${stagedReq.requirementNumber}`,
+            version: stagedReq.version,
+            message: `Rank requirement not found: ${dbRank.name} ${stagedReq.requirementNumber} (version ${stagedReq.version})`,
+          })
+          // Log for admin review
+          unmatchedRequirements.push({
+            unit_id: unitId,
+            import_type: 'troop_advancement',
+            imported_by: auth.profileId,
+            scout_id: scoutId,
+            bsa_member_id: scout.bsaMemberId,
+            scout_name: scout.fullName,
+            advancement_type: 'rank_requirement',
+            badge_or_rank_name: dbRank.name,
+            version_year: stagedReq.version ? parseInt(stagedReq.version, 10) : null,
+            requirement_id: stagedReq.requirementNumber,
+            error_reason: `No matching requirement found for ${dbRank.name} ${stagedReq.requirementNumber} (version ${stagedReq.version})`,
           })
         }
         continue
@@ -880,43 +1319,43 @@ export async function importStagedAdvancement(
       const dbBadge = findBadge(stagedReq.code)
       if (!dbBadge) continue
 
-      let progressId = badgeProgressIdMap.get(`${scoutId}:${dbBadge.id}`)
+      const progressId = badgeProgressIdMap.get(`${scoutId}:${dbBadge.id}`)
       if (!progressId) {
-        // Need to create badge progress first
-        const { data: newProgress } = await adminSupabase
-          .from('scout_merit_badge_progress')
-          .insert({
-            scout_id: scoutId,
-            merit_badge_id: dbBadge.id,
-            status: 'in_progress',
-            started_at: new Date().toISOString(),
-          })
-          .select('id')
-          .single()
-
-        if (newProgress) {
-          progressId = newProgress.id
-          badgeProgressIdMap.set(`${scoutId}:${dbBadge.id}`, progressId)
-        } else {
-          continue
-        }
+        // Should have been created in batch - skip
+        continue
       }
 
-      // Find requirement ID (try multiple versions)
+      // Find requirement ID
+      // The map is keyed by scoutbook_requirement_number (e.g., "2b[1]") which matches CSV format
       const versionYears = [
         parseInt(stagedReq.version, 10),
         dbBadge.requirement_version_year,
       ].filter((v) => v && !isNaN(v))
 
       let requirement = null
+
+      // First: Try direct match with CSV requirement number (should match scoutbook_requirement_number)
       for (const versionYear of versionYears) {
         const reqKey = `${dbBadge.id}:${stagedReq.requirementNumber}:${versionYear}`
         requirement = badgeReqMap.get(reqKey)
         if (requirement) break
       }
 
+      // Second: If no direct match, try normalized variants (for edge cases)
       if (!requirement) {
-        // Try to find any matching requirement for this badge
+        const reqNumVariants = normalizeRequirementNumber(stagedReq.requirementNumber)
+        for (const reqNum of reqNumVariants) {
+          for (const versionYear of versionYears) {
+            const reqKey = `${dbBadge.id}:${reqNum}:${versionYear}`
+            requirement = badgeReqMap.get(reqKey)
+            if (requirement) break
+          }
+          if (requirement) break
+        }
+      }
+
+      // Third: Try any version as last resort
+      if (!requirement) {
         for (const [key, req] of badgeReqMap) {
           if (key.startsWith(`${dbBadge.id}:${stagedReq.requirementNumber}:`)) {
             requirement = req
@@ -930,7 +1369,22 @@ export async function importStagedAdvancement(
           type: 'requirement_not_found',
           badge: dbBadge.name,
           requirement: stagedReq.requirementNumber,
-          message: `Merit badge requirement not found: ${dbBadge.name} ${stagedReq.requirementNumber}`,
+          version: stagedReq.version,
+          message: `Merit badge requirement not found: ${dbBadge.name} ${stagedReq.requirementNumber} (version ${stagedReq.version})`,
+        })
+        // Log for admin review
+        unmatchedRequirements.push({
+          unit_id: unitId,
+          import_type: 'troop_advancement',
+          imported_by: auth.profileId,
+          scout_id: scoutId,
+          bsa_member_id: scout.bsaMemberId,
+          scout_name: scout.fullName,
+          advancement_type: 'badge_requirement',
+          badge_or_rank_name: dbBadge.name,
+          version_year: stagedReq.version ? parseInt(stagedReq.version, 10) : null,
+          requirement_id: stagedReq.requirementNumber,
+          error_reason: `No matching requirement found for ${dbBadge.name} ${stagedReq.requirementNumber} (version ${stagedReq.version})`,
         })
         continue
       }
@@ -951,32 +1405,61 @@ export async function importStagedAdvancement(
     }
   }
 
-  // Step 9: Batch insert requirement progress
-  // Use upsert pattern with conflict handling
-  for (let i = 0; i < rankReqToInsert.length; i += BATCH_SIZE) {
-    const batch = rankReqToInsert.slice(i, i + BATCH_SIZE)
-    const { error } = await adminSupabase.from('scout_rank_requirement_progress').upsert(batch, {
-      onConflict: 'scout_rank_progress_id,requirement_id',
-      ignoreDuplicates: true,
-    })
+  // Step 9: Update requirement progress to completed status
+  // We need to UPDATE existing records (not upsert with ignoreDuplicates)
+  // because step 6.75 already created all records as 'not_started'
+  for (const req of rankReqToInsert) {
+    const { error } = await adminSupabase
+      .from('scout_rank_requirement_progress')
+      .update({
+        status: req.status,
+        completed_at: req.completed_at,
+        completed_by: req.completed_by,
+      })
+      .eq('scout_rank_progress_id', req.scout_rank_progress_id)
+      .eq('requirement_id', req.requirement_id)
 
     if (!error) {
-      result.rankRequirementsImported += batch.length
+      result.rankRequirementsImported++
     }
   }
 
-  for (let i = 0; i < badgeReqToInsert.length; i += BATCH_SIZE) {
-    const batch = badgeReqToInsert.slice(i, i + BATCH_SIZE)
+  for (const req of badgeReqToInsert) {
     const { error } = await adminSupabase
       .from('scout_merit_badge_requirement_progress')
-      .upsert(batch, {
-        onConflict: 'scout_merit_badge_progress_id,requirement_id',
-        ignoreDuplicates: true,
+      .update({
+        status: req.status,
+        completed_at: req.completed_at,
+        completed_by: req.completed_by,
       })
+      .eq('scout_merit_badge_progress_id', req.scout_merit_badge_progress_id)
+      .eq('requirement_id', req.requirement_id)
 
     if (!error) {
-      result.badgeRequirementsImported += batch.length
+      result.badgeRequirementsImported++
     }
+  }
+
+  // Step 10: Log unmatched requirements for admin review
+  if (unmatchedRequirements.length > 0) {
+    // Batch insert unmatched requirements
+    for (let i = 0; i < unmatchedRequirements.length; i += BATCH_SIZE) {
+      const batch = unmatchedRequirements.slice(i, i + BATCH_SIZE)
+      const { error } = await adminSupabase
+        .from('import_requirement_mismatches')
+        .insert(batch)
+
+      if (error) {
+        console.error('Failed to log unmatched requirements:', error.message)
+      }
+    }
+
+    // Add summary to warnings
+    result.warnings.push({
+      type: 'unmatched_requirements_logged',
+      count: unmatchedRequirements.length,
+      message: `${unmatchedRequirements.length} unmatched requirement(s) logged for admin review`,
+    })
   }
 
   // Revalidate relevant pages
