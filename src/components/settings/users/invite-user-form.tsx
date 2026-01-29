@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { inviteMember, type MemberRole } from '@/app/actions/members'
+import { inviteUser, type UserRole } from '@/app/actions/users'
 
 interface Scout {
   id: string
@@ -12,14 +12,14 @@ interface Scout {
   last_name: string
 }
 
-interface InviteMemberFormProps {
+interface InviteUserFormProps {
   unitId: string
   scouts: Scout[]
   onClose: () => void
   onSuccess: () => void
 }
 
-const ROLES: { value: MemberRole; label: string; description: string }[] = [
+const ROLES: { value: UserRole; label: string; description: string }[] = [
   { value: 'admin', label: 'Admin', description: 'Full access to all unit features' },
   { value: 'treasurer', label: 'Treasurer', description: 'Manage billing and payments' },
   { value: 'leader', label: 'Leader', description: 'Manage scouts and events' },
@@ -27,11 +27,11 @@ const ROLES: { value: MemberRole; label: string; description: string }[] = [
   { value: 'scout', label: 'Scout', description: 'View events and own account' },
 ]
 
-export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteMemberFormProps) {
+export function InviteUserForm({ unitId, scouts, onClose, onSuccess }: InviteUserFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<MemberRole>('parent')
+  const [role, setRole] = useState<UserRole>('parent')
   const [selectedScoutIds, setSelectedScoutIds] = useState<string[]>([])
 
   const [selectedScoutId, setSelectedScoutId] = useState<string>('')
@@ -64,7 +64,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
     }
 
     // Note: Parent-guardian links are now created separately after invite acceptance
-    const result = await inviteMember({
+    const result = await inviteUser({
       unitId,
       email: email.trim(),
       role,
@@ -83,7 +83,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="mb-4 text-xl font-bold">Invite Member</h2>
+        <h2 className="mb-4 text-xl font-bold">Invite User</h2>
         <p className="mb-4 text-sm text-stone-600">
           Send an invitation to join your unit. They&apos;ll receive an email with a magic link to sign up or log in.
         </p>
@@ -95,7 +95,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
               id="email"
               type="email"
               required
-              placeholder="member@example.com"
+              placeholder="user@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -107,7 +107,7 @@ export function InviteMemberForm({ unitId, scouts, onClose, onSuccess }: InviteM
               id="role"
               value={role}
               onChange={(e) => {
-                const newRole = e.target.value as MemberRole
+                const newRole = e.target.value as UserRole
                 setRole(newRole)
                 // Clear scout selections when changing roles
                 if (newRole !== 'parent') {

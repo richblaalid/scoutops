@@ -4,13 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
-export type MemberRole = 'admin' | 'treasurer' | 'leader' | 'parent' | 'scout'
-export type MemberStatus = 'roster' | 'invited' | 'active' | 'inactive'
+export type UserRole = 'admin' | 'treasurer' | 'leader' | 'parent' | 'scout'
+export type UserStatus = 'roster' | 'invited' | 'active' | 'inactive'
 
-interface InviteMemberParams {
+interface InviteUserParams {
   unitId: string
   email: string
-  role: MemberRole
+  role: UserRole
   linkedScoutId?: string
 }
 
@@ -20,9 +20,9 @@ interface ActionResult {
   warning?: string
 }
 
-// Invite a new member to the unit
+// Invite a new user to the unit
 // Creates a membership record with status='invited'
-export async function inviteMember({ unitId, email, role, linkedScoutId }: InviteMemberParams): Promise<ActionResult> {
+export async function inviteUser({ unitId, email, role, linkedScoutId }: InviteUserParams): Promise<ActionResult> {
   const supabase = await createClient()
 
   // Get current user
@@ -58,7 +58,7 @@ export async function inviteMember({ unitId, email, role, linkedScoutId }: Invit
   }
 
   if (!membership || membership.role !== 'admin') {
-    return { success: false, error: 'Only admins can invite members' }
+    return { success: false, error: 'Only admins can invite users' }
   }
 
   // Check for existing active membership and pending invite in parallel
@@ -82,11 +82,11 @@ export async function inviteMember({ unitId, email, role, linkedScoutId }: Invit
 
   if (activeResult.error) {
     console.error('Active check error:', activeResult.error)
-    return { success: false, error: 'Failed to check existing members' }
+    return { success: false, error: 'Failed to check existing users' }
   }
 
   if (activeResult.data) {
-    return { success: false, error: 'This email is already a member of this unit' }
+    return { success: false, error: 'This email is already a user of this unit' }
   }
 
   if (inviteResult.error) {
@@ -141,7 +141,7 @@ export async function inviteMember({ unitId, email, role, linkedScoutId }: Invit
     return { success: true, warning: 'Invite created but email may not have been sent. Check service role key configuration.' }
   }
 
-  revalidatePath('/members')
+  revalidatePath('/settings')
   return { success: true }
 }
 
@@ -272,11 +272,11 @@ export async function acceptPendingInvites(): Promise<{ accepted: number; unitId
   return { accepted, unitId: lastUnitId }
 }
 
-// Update a member's role
-export async function updateMemberRole(
+// Update a user's role
+export async function updateUserRole(
   unitId: string,
-  memberId: string,
-  newRole: MemberRole
+  userId: string,
+  newRole: UserRole
 ): Promise<ActionResult> {
   const supabase = await createClient()
 
@@ -297,7 +297,7 @@ export async function updateMemberRole(
     return { success: false, error: 'Profile not found' }
   }
 
-  // Check admin permissions and get target member in parallel
+  // Check admin permissions and get target user in parallel
   const [adminResult, targetResult] = await Promise.all([
     supabase
       .from('unit_memberships')
@@ -309,7 +309,7 @@ export async function updateMemberRole(
     supabase
       .from('unit_memberships')
       .select('profile_id, role')
-      .eq('id', memberId)
+      .eq('id', userId)
       .maybeSingle(),
   ])
 
@@ -323,13 +323,13 @@ export async function updateMemberRole(
   }
 
   if (targetResult.error) {
-    console.error('Target member error:', targetResult.error)
-    return { success: false, error: 'Failed to find member' }
+    console.error('Target user error:', targetResult.error)
+    return { success: false, error: 'Failed to find user' }
   }
 
-  const targetMember = targetResult.data
+  const targetUser = targetResult.data
 
-  if (targetMember?.profile_id === user.id && targetMember?.role === 'admin' && newRole !== 'admin') {
+  if (targetUser?.profile_id === user.id && targetUser?.role === 'admin' && newRole !== 'admin') {
     const { data: otherAdmins } = await supabase
       .from('unit_memberships')
       .select('id')
@@ -347,19 +347,19 @@ export async function updateMemberRole(
   const { error } = await supabase
     .from('unit_memberships')
     .update({ role: newRole })
-    .eq('id', memberId)
+    .eq('id', userId)
 
   if (error) {
     console.error('Update role error:', error)
     return { success: false, error: 'Failed to update role' }
   }
 
-  revalidatePath('/members')
+  revalidatePath('/settings')
   return { success: true }
 }
 
-// Remove a member from the unit (or cancel invite)
-export async function removeMember(unitId: string, memberId: string): Promise<ActionResult> {
+// Remove a user from the unit (or cancel invite)
+export async function removeUser(unitId: string, userId: string): Promise<ActionResult> {
   const supabase = await createClient()
 
   // Get current user
@@ -379,7 +379,7 @@ export async function removeMember(unitId: string, memberId: string): Promise<Ac
     return { success: false, error: 'Profile not found' }
   }
 
-  // Check admin permissions and get target member info in parallel
+  // Check admin permissions and get target user info in parallel
   const [adminResult, targetResult] = await Promise.all([
     supabase
       .from('unit_memberships')
@@ -391,7 +391,7 @@ export async function removeMember(unitId: string, memberId: string): Promise<Ac
     supabase
       .from('unit_memberships')
       .select('profile_id, role, status')
-      .eq('id', memberId)
+      .eq('id', userId)
       .maybeSingle(),
   ])
 
@@ -401,18 +401,18 @@ export async function removeMember(unitId: string, memberId: string): Promise<Ac
   }
 
   if (!adminResult.data || adminResult.data.role !== 'admin') {
-    return { success: false, error: 'Only admins can remove members' }
+    return { success: false, error: 'Only admins can remove users' }
   }
 
   if (targetResult.error) {
-    console.error('Target member error:', targetResult.error)
-    return { success: false, error: 'Failed to find member' }
+    console.error('Target user error:', targetResult.error)
+    return { success: false, error: 'Failed to find user' }
   }
 
-  const targetMember = targetResult.data
+  const targetUser = targetResult.data
 
   // Prevent removing yourself if you're the only admin
-  if (targetMember?.profile_id === user.id && targetMember?.role === 'admin') {
+  if (targetUser?.profile_id === user.id && targetUser?.role === 'admin') {
     const { data: otherAdmins } = await supabase
       .from('unit_memberships')
       .select('id')
@@ -426,12 +426,12 @@ export async function removeMember(unitId: string, memberId: string): Promise<Ac
     }
   }
 
-  // For invited members, delete the record. For active members, set status to inactive
-  if (targetMember?.status === 'invited') {
+  // For invited users, delete the record. For active users, set status to inactive
+  if (targetUser?.status === 'invited') {
     const { error } = await supabase
       .from('unit_memberships')
       .delete()
-      .eq('id', memberId)
+      .eq('id', userId)
 
     if (error) {
       console.error('Delete invite error:', error)
@@ -441,20 +441,20 @@ export async function removeMember(unitId: string, memberId: string): Promise<Ac
     const { error } = await supabase
       .from('unit_memberships')
       .update({ status: 'inactive' })
-      .eq('id', memberId)
+      .eq('id', userId)
 
     if (error) {
-      console.error('Remove member error:', error)
-      return { success: false, error: 'Failed to remove member' }
+      console.error('Remove user error:', error)
+      return { success: false, error: 'Failed to remove user' }
     }
   }
 
-  revalidatePath('/members')
+  revalidatePath('/settings')
   return { success: true }
 }
 
 // Resend an invite
-export async function resendInvite(memberId: string): Promise<ActionResult> {
+export async function resendInvite(userId: string): Promise<ActionResult> {
   const supabase = await createClient()
 
   // Get current user
@@ -478,20 +478,20 @@ export async function resendInvite(memberId: string): Promise<ActionResult> {
   const { data: membership, error: membershipError } = await supabase
     .from('unit_memberships')
     .select('id, unit_id, email, status')
-    .eq('id', memberId)
+    .eq('id', userId)
     .maybeSingle()
 
   if (membershipError) {
     console.error('Membership lookup error:', membershipError)
-    return { success: false, error: 'Failed to find member' }
+    return { success: false, error: 'Failed to find user' }
   }
 
   if (!membership) {
-    return { success: false, error: 'Member not found' }
+    return { success: false, error: 'User not found' }
   }
 
   if (membership.status !== 'invited') {
-    return { success: false, error: 'Can only resend invites for pending members' }
+    return { success: false, error: 'Can only resend invites for pending users' }
   }
 
   if (!membership.email) {
@@ -520,7 +520,7 @@ export async function resendInvite(memberId: string): Promise<ActionResult> {
   const { error: updateError } = await supabase
     .from('unit_memberships')
     .update({ invited_at: new Date().toISOString() })
-    .eq('id', memberId)
+    .eq('id', userId)
 
   if (updateError) {
     return { success: false, error: 'Failed to update invite' }
@@ -548,12 +548,12 @@ export async function resendInvite(memberId: string): Promise<ActionResult> {
     return { success: false, error: 'Failed to send invite email. Check service role key configuration.' }
   }
 
-  revalidatePath('/members')
+  revalidatePath('/settings')
   return { success: true }
 }
 
-// Update a member's profile (admin only)
-export async function updateMemberProfile(
+// Update a user's profile (admin only)
+export async function updateUserProfile(
   unitId: string,
   profileId: string,
   data: {
@@ -603,10 +603,10 @@ export async function updateMemberProfile(
   }
 
   if (!currentMembership || currentMembership.role !== 'admin') {
-    return { success: false, error: 'Only admins can update member profiles' }
+    return { success: false, error: 'Only admins can update user profiles' }
   }
 
-  // Verify the target profile is a member of the same unit
+  // Verify the target profile is a user of the same unit
   const { data: targetMembership, error: targetError } = await supabase
     .from('unit_memberships')
     .select('id')
@@ -617,11 +617,11 @@ export async function updateMemberProfile(
 
   if (targetError) {
     console.error('Target membership check error:', targetError)
-    return { success: false, error: 'Failed to verify member' }
+    return { success: false, error: 'Failed to verify user' }
   }
 
   if (!targetMembership) {
-    return { success: false, error: 'Member not found in your unit' }
+    return { success: false, error: 'User not found in your unit' }
   }
 
   // Update the profile using admin client to bypass RLS
@@ -655,11 +655,11 @@ export async function updateMemberProfile(
     return { success: false, error: 'Failed to update profile' }
   }
 
-  revalidatePath(`/members`)
+  revalidatePath(`/settings`)
   return { success: true }
 }
 
-// Add a scout guardian association (admin only)
+// Add a scout guardian association (admin/treasurer only)
 export async function addScoutGuardian(
   unitId: string,
   profileId: string,
@@ -699,8 +699,8 @@ export async function addScoutGuardian(
     return { success: false, error: 'Failed to verify permissions' }
   }
 
-  if (!currentMembership || currentMembership.role !== 'admin') {
-    return { success: false, error: 'Only admins can manage scout associations' }
+  if (!currentMembership || !['admin', 'treasurer'].includes(currentMembership.role)) {
+    return { success: false, error: 'Only admins and treasurers can manage scout associations' }
   }
 
   // Verify the scout belongs to the specified unit
@@ -754,12 +754,14 @@ export async function addScoutGuardian(
     return { success: false, error: 'Failed to add scout association' }
   }
 
-  revalidatePath(`/members`)
+  revalidatePath(`/settings`)
   revalidatePath(`/scouts`)
+  revalidatePath(`/roster`)
+  revalidatePath(`/adults/${profileId}`)
   return { success: true }
 }
 
-// Remove a scout guardian association (admin only)
+// Remove a scout guardian association (admin/treasurer only)
 export async function removeScoutGuardian(unitId: string, guardianshipId: string): Promise<ActionResult> {
   const supabase = await createClient()
 
@@ -794,8 +796,8 @@ export async function removeScoutGuardian(unitId: string, guardianshipId: string
     return { success: false, error: 'Failed to verify permissions' }
   }
 
-  if (!currentMembership || currentMembership.role !== 'admin') {
-    return { success: false, error: 'Only admins can manage scout associations' }
+  if (!currentMembership || !['admin', 'treasurer'].includes(currentMembership.role)) {
+    return { success: false, error: 'Only admins and treasurers can manage scout associations' }
   }
 
   // Delete the guardian association using admin client
@@ -811,8 +813,10 @@ export async function removeScoutGuardian(unitId: string, guardianshipId: string
     return { success: false, error: 'Failed to remove scout association' }
   }
 
-  revalidatePath(`/members`)
+  revalidatePath(`/settings`)
   revalidatePath(`/scouts`)
+  revalidatePath(`/roster`)
+  // Note: Adults detail page is refreshed via router.refresh() in the UI
   return { success: true }
 }
 
@@ -826,7 +830,7 @@ export async function inviteProfileToApp({
   unitId: string
   profileId: string
   email: string
-  role: MemberRole
+  role: UserRole
 }): Promise<ActionResult> {
   const supabase = await createClient()
 
@@ -934,6 +938,6 @@ export async function inviteProfileToApp({
   }
 
   revalidatePath('/roster')
-  revalidatePath('/members')
+  revalidatePath('/settings')
   return { success: true }
 }

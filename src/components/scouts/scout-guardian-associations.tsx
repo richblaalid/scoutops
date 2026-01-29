@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
+import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/users'
 import { Mail, Star, UserCircle } from 'lucide-react'
 
 interface LinkedGuardian {

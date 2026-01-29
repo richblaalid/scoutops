@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { InviteMemberForm } from './invite-member-form'
+import { InviteUserForm } from './invite-user-form'
 
 interface Scout {
   id: string
@@ -11,20 +11,20 @@ interface Scout {
   last_name: string
 }
 
-interface InviteMemberButtonProps {
+interface InviteUserButtonProps {
   unitId: string
   scouts: Scout[]
 }
 
-export function InviteMemberButton({ unitId, scouts }: InviteMemberButtonProps) {
+export function InviteUserButton({ unitId, scouts }: InviteUserButtonProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}>Invite Member</Button>
+      <Button onClick={() => setIsOpen(true)}>Invite User</Button>
       {isOpen && (
-        <InviteMemberForm
+        <InviteUserForm
           unitId={unitId}
           scouts={scouts}
           onClose={() => setIsOpen(false)}

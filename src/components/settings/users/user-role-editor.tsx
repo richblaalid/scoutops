@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { updateMemberRole, type MemberRole } from '@/app/actions/members'
+import { updateUserRole, type UserRole } from '@/app/actions/users'
 
-interface MemberRoleEditorProps {
+interface UserRoleEditorProps {
   membershipId: string
   unitId: string
   currentRole: string
   isCurrentUser: boolean
 }
 
-const ROLES: { value: MemberRole; label: string }[] = [
+const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Admin' },
   { value: 'treasurer', label: 'Treasurer' },
   { value: 'leader', label: 'Leader' },
@@ -18,25 +18,25 @@ const ROLES: { value: MemberRole; label: string }[] = [
   { value: 'scout', label: 'Scout' },
 ]
 
-export function MemberRoleEditor({
+export function UserRoleEditor({
   membershipId,
   unitId,
   currentRole,
   isCurrentUser,
-}: MemberRoleEditorProps) {
+}: UserRoleEditorProps) {
   const [role, setRole] = useState(currentRole)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const handleRoleChange = async (newRole: MemberRole) => {
+  const handleRoleChange = async (newRole: UserRole) => {
     if (newRole === role) return
 
     setLoading(true)
     setError(null)
     setSuccess(false)
 
-    const result = await updateMemberRole(unitId, membershipId, newRole)
+    const result = await updateUserRole(unitId, membershipId, newRole)
 
     if (result.success) {
       setRole(newRole)
@@ -62,7 +62,7 @@ export function MemberRoleEditor({
     <div className="space-y-2">
       <select
         value={role}
-        onChange={(e) => handleRoleChange(e.target.value as MemberRole)}
+        onChange={(e) => handleRoleChange(e.target.value as UserRole)}
         disabled={loading}
         className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm capitalize focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600 disabled:opacity-50"
       >

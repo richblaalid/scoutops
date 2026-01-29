@@ -6,6 +6,7 @@ interface SettingsTabsProps {
   defaultTab: string
   isAdmin: boolean
   unitTabContent: React.ReactNode
+  usersTabContent: React.ReactNode
   dataTabContent: React.ReactNode
   integrationsTabContent: React.ReactNode
 }
@@ -14,6 +15,7 @@ export function SettingsTabs({
   defaultTab,
   isAdmin,
   unitTabContent,
+  usersTabContent,
   dataTabContent,
   integrationsTabContent,
 }: SettingsTabsProps) {
@@ -21,6 +23,7 @@ export function SettingsTabs({
     <Tabs defaultValue={defaultTab}>
       <TabsList>
         {isAdmin && <TabsTrigger value="unit">Unit</TabsTrigger>}
+        {isAdmin && <TabsTrigger value="users">Users</TabsTrigger>}
         <TabsTrigger value="data">Data</TabsTrigger>
         <TabsTrigger value="integrations">Integrations</TabsTrigger>
       </TabsList>
@@ -28,6 +31,12 @@ export function SettingsTabs({
       {isAdmin && (
         <TabsContent value="unit">
           {unitTabContent}
+        </TabsContent>
+      )}
+
+      {isAdmin && (
+        <TabsContent value="users">
+          {usersTabContent}
         </TabsContent>
       )}
 

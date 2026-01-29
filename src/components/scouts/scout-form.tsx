@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
+import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/users'
 import { MONTHS, SCOUT_RANKS, parseDateParts } from '@/lib/constants'
 import { Mail, Star } from 'lucide-react'
 

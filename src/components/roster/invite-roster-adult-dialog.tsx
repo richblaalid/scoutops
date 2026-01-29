@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { inviteProfileToApp } from '@/app/actions/members'
+import { inviteProfileToApp } from '@/app/actions/users'
 
 type MemberRole = 'admin' | 'treasurer' | 'leader' | 'parent'
 

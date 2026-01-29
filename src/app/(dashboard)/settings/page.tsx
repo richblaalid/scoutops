@@ -6,10 +6,13 @@ import { PatrolList } from '@/components/settings/patrol-list'
 import { LogoUpload } from '@/components/settings/logo-upload'
 import { PaymentProcessingCard } from '@/components/settings/payment-processing-card'
 import { ScoutbookSyncCardLazy } from '@/components/settings/scoutbook-sync-card-lazy'
+import { UsersList } from '@/components/settings/users/users-list'
+import { InviteUserButton } from '@/components/settings/users/invite-user-button'
+import { resendInvite, removeUser } from '@/app/actions/users'
 import { isFinancialRole, isAdmin as checkIsAdmin } from '@/lib/roles'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { FileSpreadsheet, Award } from 'lucide-react'
+import { FileSpreadsheet, Award, Users } from 'lucide-react'
 import { SettingsTabs } from '@/components/settings/settings-tabs'
 
 export default async function SettingsPage({
@@ -97,6 +100,66 @@ export default async function SettingsPage({
     .order('display_order', { ascending: true })
     .order('name', { ascending: true })
 
+  // Get all users for this unit (both active and invited) - for Users tab
+  const { data: usersData } = await supabase
+    .from('unit_memberships')
+    .select(`
+      id,
+      role,
+      status,
+      email,
+      joined_at,
+      invited_at,
+      profiles!unit_memberships_profile_id_fkey (
+        id,
+        email,
+        full_name
+      ),
+      invited_by_profile:profiles!unit_memberships_invited_by_fkey (
+        full_name
+      )
+    `)
+    .eq('unit_id', membership.unit_id)
+    .in('status', ['active', 'invited'])
+    .order('status', { ascending: true })
+    .order('joined_at', { ascending: true, nullsFirst: false })
+
+  interface User {
+    id: string
+    role: string
+    status: string
+    email: string | null
+    joined_at: string | null
+    invited_at: string | null
+    profiles: {
+      id: string
+      email: string
+      full_name: string | null
+    } | null
+    invited_by_profile: {
+      full_name: string | null
+    } | null
+  }
+
+  const allUsers = (usersData as unknown as User[]) || []
+  const activeUsers = allUsers.filter(u => u.status === 'active')
+  const pendingInvites = allUsers.filter(u => u.status === 'invited')
+
+  // Get all active scouts for this unit (for invite form)
+  const { data: scoutsData } = await supabase
+    .from('scouts')
+    .select('id, first_name, last_name')
+    .eq('unit_id', membership.unit_id)
+    .eq('is_active', true)
+    .order('last_name', { ascending: true })
+
+  interface Scout {
+    id: string
+    first_name: string
+    last_name: string
+  }
+  const scouts = (scoutsData as Scout[]) || []
+
   // Get Square credentials for this unit
   const { data: squareCredentials } = await supabase
     .from('unit_square_credentials')
@@ -168,6 +231,114 @@ export default async function SettingsPage({
     </div>
   ) : null
 
+  // Users Tab Content (admin only)
+  const usersTabContent = isAdmin ? (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-stone-900">Unit Users</h2>
+          <p className="text-sm text-stone-600">
+            Manage who has access to {unit.name}
+          </p>
+        </div>
+        <InviteUserButton unitId={membership.unit_id} scouts={scouts} />
+      </div>
+
+      {/* Pending Invites */}
+      {pendingInvites.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Invites</CardTitle>
+            <CardDescription>
+              {pendingInvites.length} pending invitation{pendingInvites.length !== 1 ? 's' : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {pendingInvites.map((invite) => (
+                <div
+                  key={invite.id}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
+                  <div>
+                    <p className="font-medium text-stone-900">{invite.email}</p>
+                    <p className="text-sm text-stone-500">
+                      Role: <span className="capitalize">{invite.role}</span>
+                      {invite.invited_at && (
+                        <>
+                          {' • '}
+                          Invited: {new Date(invite.invited_at).toLocaleDateString()}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <form action={async () => {
+                      'use server'
+                      await resendInvite(invite.id)
+                    }}>
+                      <button
+                        type="submit"
+                        className="text-sm text-forest-600 hover:text-forest-800"
+                      >
+                        Resend
+                      </button>
+                    </form>
+                    <form action={async () => {
+                      'use server'
+                      await removeUser(membership.unit_id, invite.id)
+                    }}>
+                      <button
+                        type="submit"
+                        className="text-sm text-error hover:text-error/80"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Current Users */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Users</CardTitle>
+          <CardDescription>
+            {activeUsers.length} active user{activeUsers.length !== 1 ? 's' : ''}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <UsersList
+            users={activeUsers}
+            isAdmin={isAdmin}
+            currentUserId={user.id}
+            unitId={membership.unit_id}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Role Descriptions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Role Permissions</CardTitle>
+        </CardHeader>
+        <CardContent className="prose prose-sm max-w-none text-stone-600">
+          <ul className="list-disc pl-4 space-y-2">
+            <li><strong>Admin</strong> – Full access: manage users, billing, payments, scouts, and settings</li>
+            <li><strong>Treasurer</strong> – Financial access: manage billing, payments, and scout accounts</li>
+            <li><strong>Leader</strong> – Unit access: manage scouts, events, and view accounts</li>
+            <li><strong>Parent</strong> – Family access: view and manage their own scouts&apos; accounts</li>
+            <li><strong>Scout</strong> – View only: view events and their own account</li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  ) : null
+
   // Data Tab Content
   const dataTabContent = (
     <div className="grid gap-6">
@@ -205,6 +376,18 @@ export default async function SettingsPage({
             </div>
             <Button asChild variant="outline">
               <Link href="/settings/import/advancement">Import</Link>
+            </Button>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-stone-200 p-4">
+            <div className="flex items-center gap-3">
+              <Users className="h-8 w-8 text-stone-400" />
+              <div>
+                <p className="font-medium">Import Troop Advancement</p>
+                <p className="text-sm text-stone-500">Bulk import advancement for all scouts from ScoutBook</p>
+              </div>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/settings/import/troop-advancement">Import</Link>
             </Button>
           </div>
         </CardContent>
@@ -277,6 +460,7 @@ export default async function SettingsPage({
         defaultTab={defaultTab}
         isAdmin={isAdmin}
         unitTabContent={unitTabContent}
+        usersTabContent={usersTabContent}
         dataTabContent={dataTabContent}
         integrationsTabContent={integrationsTabContent}
       />

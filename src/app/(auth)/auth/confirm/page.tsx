@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { acceptPendingInvites } from '@/app/actions/members'
+import { acceptPendingInvites } from '@/app/actions/users'
 import { verifyProvisioningToken } from '@/app/actions/onboarding'
 import { trackLoginCompleted } from '@/lib/analytics'
 

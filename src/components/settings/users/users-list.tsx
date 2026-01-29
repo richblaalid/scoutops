@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { updateMemberRole, removeMember, type MemberRole } from '@/app/actions/members'
+import { updateUserRole, removeUser, type UserRole } from '@/app/actions/users'
 
-interface Member {
+interface User {
   id: string
   role: string
   status: string
@@ -17,14 +17,14 @@ interface Member {
   } | null
 }
 
-interface MembersListProps {
-  members: Member[]
+interface UsersListProps {
+  users: User[]
   isAdmin: boolean
   currentUserId: string
   unitId: string
 }
 
-const ROLES: { value: MemberRole; label: string }[] = [
+const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Admin' },
   { value: 'treasurer', label: 'Treasurer' },
   { value: 'leader', label: 'Leader' },
@@ -32,15 +32,15 @@ const ROLES: { value: MemberRole; label: string }[] = [
   { value: 'scout', label: 'Scout' },
 ]
 
-export function MembersList({ members, isAdmin, currentUserId, unitId }: MembersListProps) {
+export function UsersList({ users, isAdmin, currentUserId, unitId }: UsersListProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleRoleChange = async (memberId: string, newRole: MemberRole) => {
-    setLoadingId(memberId)
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    setLoadingId(userId)
     setError(null)
 
-    const result = await updateMemberRole(unitId, memberId, newRole)
+    const result = await updateUserRole(unitId, userId, newRole)
 
     if (!result.success) {
       setError(result.error || 'Failed to update role')
@@ -49,27 +49,27 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
     setLoadingId(null)
   }
 
-  const handleRemove = async (memberId: string, memberName: string) => {
-    if (!confirm(`Are you sure you want to remove ${memberName} from this unit?`)) {
+  const handleRemove = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to remove ${userName} from this unit?`)) {
       return
     }
 
-    setLoadingId(memberId)
+    setLoadingId(userId)
     setError(null)
 
-    const result = await removeMember(unitId, memberId)
+    const result = await removeUser(unitId, userId)
 
     if (!result.success) {
-      setError(result.error || 'Failed to remove member')
+      setError(result.error || 'Failed to remove user')
     }
 
     setLoadingId(null)
   }
 
-  if (members.length === 0) {
+  if (users.length === 0) {
     return (
       <div className="py-8 text-center">
-        <p className="text-stone-500">No members in this unit yet.</p>
+        <p className="text-stone-500">No users in this unit yet.</p>
       </div>
     )
   }
@@ -94,12 +94,12 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
             </tr>
           </thead>
           <tbody>
-            {members.map((member) => {
-              const isCurrentUser = member.profiles?.id === currentUserId
-              const displayName = member.profiles?.full_name || member.profiles?.email || 'Unknown'
+            {users.map((user) => {
+              const isCurrentUser = user.profiles?.id === currentUserId
+              const displayName = user.profiles?.full_name || user.profiles?.email || 'Unknown'
 
               return (
-                <tr key={member.id} className="border-b last:border-0">
+                <tr key={user.id} className="border-b last:border-0">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-stone-900">
@@ -113,14 +113,14 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
                     </div>
                   </td>
                   <td className="py-3 pr-4 text-stone-600">
-                    {member.profiles?.email || '—'}
+                    {user.profiles?.email || '—'}
                   </td>
                   <td className="py-3 pr-4">
                     {isAdmin && !isCurrentUser ? (
                       <select
-                        value={member.role}
-                        onChange={(e) => handleRoleChange(member.id, e.target.value as MemberRole)}
-                        disabled={loadingId === member.id}
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                        disabled={loadingId === user.id}
                         className="rounded-md border border-stone-300 bg-white px-2 py-1 text-sm capitalize focus:border-forest-600 focus:outline-none focus:ring-1 focus:ring-forest-600"
                       >
                         {ROLES.map((role) => (
@@ -131,19 +131,19 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
                       </select>
                     ) : (
                       <span className="inline-flex rounded-full bg-stone-100 px-2 py-1 text-xs font-medium capitalize text-stone-700">
-                        {member.role}
+                        {user.role}
                       </span>
                     )}
                   </td>
                   <td className="py-3 pr-4 text-stone-600">
-                    {member.joined_at ? new Date(member.joined_at).toLocaleDateString() : '—'}
+                    {user.joined_at ? new Date(user.joined_at).toLocaleDateString() : '—'}
                   </td>
                   {isAdmin && (
                     <td className="py-3">
                       <div className="flex items-center gap-3">
-                        {member.profiles && (
+                        {user.profiles && (
                           <Link
-                            href={`/adults/${member.profiles.id}`}
+                            href={`/adults/${user.profiles.id}`}
                             className="text-sm text-forest-600 hover:text-forest-800"
                           >
                             View
@@ -151,11 +151,11 @@ export function MembersList({ members, isAdmin, currentUserId, unitId }: Members
                         )}
                         {!isCurrentUser && (
                           <button
-                            onClick={() => handleRemove(member.id, displayName)}
-                            disabled={loadingId === member.id}
+                            onClick={() => handleRemove(user.id, displayName)}
+                            disabled={loadingId === user.id}
                             className="text-sm text-error hover:text-error/80 disabled:opacity-50"
                           >
-                            {loadingId === member.id ? 'Removing...' : 'Remove'}
+                            {loadingId === user.id ? 'Removing...' : 'Remove'}
                           </button>
                         )}
                       </div>

@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Users,
   Wallet,
-  UserCog,
   Award,
   type LucideIcon,
 } from 'lucide-react'
@@ -20,7 +19,6 @@ export type AppPage =
   | 'payments'
   | 'reports'
   | 'finances'
-  | 'members'
   | 'advancement'
 
 // Actions that can be performed
@@ -47,7 +45,6 @@ const PAGE_ACCESS: Record<AppPage, MemberRole[]> = {
   payments: ['admin', 'treasurer'],
   reports: ['admin', 'treasurer', 'leader'],
   finances: ['admin', 'treasurer', 'leader', 'parent', 'scout'], // Single nav entry for all financial pages
-  members: ['admin'],
   advancement: ['admin', 'treasurer', 'leader'], // Feature flag controlled
 }
 
@@ -81,7 +78,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/roster', label: 'Roster', page: 'scouts', icon: Users },
   { href: '/finances', label: 'Finances', page: 'finances', icon: Wallet },
   { href: '/advancement', label: 'Advancement', page: 'advancement', icon: Award },
-  { href: '/members', label: 'Members', page: 'members', icon: UserCog },
 ]
 
 /**

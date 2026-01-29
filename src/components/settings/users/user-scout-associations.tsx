@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/members'
+import { addScoutGuardian, removeScoutGuardian } from '@/app/actions/users'
 
 interface LinkedScout {
   guardianshipId: string
@@ -22,19 +22,19 @@ interface AvailableScout {
   last_name: string
 }
 
-interface MemberScoutAssociationsProps {
+interface UserScoutAssociationsProps {
   unitId: string
   profileId: string
   linkedScouts: LinkedScout[]
   availableScouts: AvailableScout[]
 }
 
-export function MemberScoutAssociations({
+export function UserScoutAssociations({
   unitId,
   profileId,
   linkedScouts,
   availableScouts,
-}: MemberScoutAssociationsProps) {
+}: UserScoutAssociationsProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [selectedScoutId, setSelectedScoutId] = useState('')
   const [relationship, setRelationship] = useState('parent')
@@ -89,7 +89,7 @@ export function MemberScoutAssociations({
           <div>
             <CardTitle>Associated Scouts</CardTitle>
             <CardDescription>
-              Scouts linked to this member (for parent/guardian access)
+              Scouts linked to this user (for parent/guardian access)
             </CardDescription>
           </div>
           {availableScouts.length > 0 && !isAdding && (
@@ -196,7 +196,7 @@ export function MemberScoutAssociations({
           </div>
         ) : (
           <p className="text-stone-500">
-            No scouts are associated with this member.
+            No scouts are associated with this user.
             {availableScouts.length > 0 && ' Click "Add Scout" to create an association.'}
           </p>
         )}
