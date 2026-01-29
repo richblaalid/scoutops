@@ -1210,13 +1210,14 @@ export async function startMeritBadge(
     return { success: false, error: 'Failed to start merit badge tracking' }
   }
 
-  // Get all requirements for this badge's active version
+  // Get all completable requirements for this badge's active version
+  // (exclude headers which are just grouping containers)
   const { data: requirements } = await adminSupabase
     .from('bsa_merit_badge_requirements')
     .select('id')
     .eq('merit_badge_id', meritBadgeId)
     .eq('version_year', effectiveVersionYear)
-    .is('parent_requirement_id', null)
+    .neq('is_header', true)
 
   if (requirements && requirements.length > 0) {
     // Create requirement progress records

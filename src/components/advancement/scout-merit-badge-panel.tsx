@@ -208,13 +208,15 @@ export function ScoutMeritBadgePanel({
   }, [requirements, progressMap])
 
   // Calculate progress stats and multi-select helpers in single pass (memoized)
+  // Only count completable requirements (exclude headers which are just grouping containers)
   const { completedCount, totalCount, progressPercent, incompleteRequirements, incompleteIds } = useMemo(() => {
-    const completed = formattedRequirements.filter(
+    const completable = formattedRequirements.filter(r => !r.isHeader)
+    const completed = completable.filter(
       r => ['completed', 'approved'].includes(r.status)
     ).length
-    const total = formattedRequirements.length
+    const total = completable.length
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0
-    const incomplete = formattedRequirements.filter(
+    const incomplete = completable.filter(
       r => !['completed', 'approved', 'awarded'].includes(r.status)
     )
     const incompleteSet = new Set(incomplete.map(r => r.id))

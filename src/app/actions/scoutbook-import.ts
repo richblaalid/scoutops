@@ -370,6 +370,24 @@ export async function importScoutbookHistory(
       }
       progressId = newProgress.id
       result.badgesImported++
+
+      // Create progress records for ALL completable requirements (not just completed ones)
+      // This ensures accurate progress counts (e.g., "5/37" instead of "5/5")
+      const { data: allCompletableReqs } = await adminSupabase
+        .from('bsa_merit_badge_requirements')
+        .select('id')
+        .eq('merit_badge_id', badgeId)
+        .eq('version_year', versionYear)
+        .neq('is_header', true)
+
+      if (allCompletableReqs && allCompletableReqs.length > 0) {
+        const reqProgressRecords = allCompletableReqs.map((req) => ({
+          scout_merit_badge_progress_id: progressId,
+          requirement_id: req.id,
+          status: 'not_started' as const,
+        }))
+        await adminSupabase.from('scout_merit_badge_requirement_progress').insert(reqProgressRecords)
+      }
     } else {
       progressId = existingProgress.id
     }
@@ -483,12 +501,27 @@ export async function importScoutbookHistory(
           // Check if this requirement progress already exists
           const { data: existingReqProgress } = await adminSupabase
             .from('scout_merit_badge_requirement_progress')
-            .select('id')
+            .select('id, status')
             .eq('scout_merit_badge_progress_id', progressId)
             .eq('requirement_id', requirementId)
             .maybeSingle()
 
-          if (!existingReqProgress) {
+          if (existingReqProgress) {
+            // Update existing record to completed (may have been pre-created as not_started)
+            if (existingReqProgress.status !== 'completed' && existingReqProgress.status !== 'approved') {
+              await adminSupabase
+                .from('scout_merit_badge_requirement_progress')
+                .update({
+                  status: 'completed',
+                  completed_at: badgeEntry.startDate || new Date().toISOString(),
+                  completed_by: auth.profileId,
+                  notes: 'Imported from ScoutBook history',
+                })
+                .eq('id', existingReqProgress.id)
+              result.requirementsImported++
+            }
+          } else {
+            // Insert new record as completed (for existing badges without pre-created records)
             await adminSupabase.from('scout_merit_badge_requirement_progress').insert({
               scout_merit_badge_progress_id: progressId,
               requirement_id: requirementId,

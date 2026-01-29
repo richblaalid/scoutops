@@ -154,6 +154,7 @@ export function ScoutRankPanel({
   const hasProgressData = rank !== null
   const hasRawRequirements = !hasProgressData && rankRequirementsData !== null
 
+  // Calculate completion stats - ranks don't have headers so all requirements are completable
   const completedCount = sortedRequirements.filter(
     (r) => r.status === 'completed' || r.status === 'approved' || r.status === 'awarded'
   ).length
