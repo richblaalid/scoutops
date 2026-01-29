@@ -177,14 +177,16 @@ export interface StagedTroopAdvancement {
 // ============================================
 
 export interface ImportWarning {
-  type: 'version_fallback' | 'requirement_not_found' | 'version_mismatch' | 'scout_not_found'
+  type: 'version_fallback' | 'requirement_not_found' | 'version_mismatch' | 'scout_not_found' | 'unmatched_requirements_logged'
   scout?: string
   badge?: string
   rank?: string
   requirement?: string
+  version?: string // Version year from the CSV
   message: string
   requestedVersion?: number
   usedVersion?: number
+  count?: number // For unmatched_requirements_logged
 }
 
 export interface TroopAdvancementImportResult {
